@@ -26,4 +26,14 @@ struct ToriiClient *client_new(const char *torii_url,
                                uintptr_t entities_len,
                                struct Error *error);
 
+void client_add_entities_to_sync(struct ToriiClient *client,
+                                 const struct EntityModel *entities,
+                                 uintptr_t entities_len,
+                                 struct Error *error);
+
+void client_remove_entities_to_sync(struct ToriiClient *client,
+                                    const struct EntityModel *entities,
+                                    uintptr_t entities_len,
+                                    struct Error *error);
+
 void client_free(struct ToriiClient *client);

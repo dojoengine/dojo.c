@@ -78,6 +78,62 @@ pub extern "C" fn client_new(
     }
 }
 
+#[no_mangle]
+pub extern "C" fn client_add_entities_to_sync(
+    client: *mut ToriiClient,
+    entities: *const EntityModel,
+    entities_len: usize,
+    error: *mut Error,
+) {
+    let entities = unsafe { std::slice::from_raw_parts(entities, entities_len).to_vec() };
+
+    let client_future = unsafe {
+        (*client)
+            .0
+            .add_entities_to_sync(entities.iter().map(|e| e.into()).collect())
+    };
+
+    let result = tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on(client_future);
+
+    if let Err(e) = result {
+        unsafe {
+            *error = Error {
+                message: CString::new(e.to_string()).unwrap().into_raw(),
+            };
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn client_remove_entities_to_sync(
+    client: *mut ToriiClient,
+    entities: *const EntityModel,
+    entities_len: usize,
+    error: *mut Error,
+) {
+    let entities = unsafe { std::slice::from_raw_parts(entities, entities_len).to_vec() };
+
+    let client_future = unsafe {
+        (*client)
+            .0
+            .remove_entities_to_sync(entities.iter().map(|e| e.into()).collect())
+    };
+
+    let result = tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on(client_future);
+
+    if let Err(e) = result {
+        unsafe {
+            *error = Error {
+                message: CString::new(e.to_string()).unwrap().into_raw(),
+            };
+        }
+    }
+}
+
 // This function takes a raw pointer to ToriiClient as an argument.
 // It checks if the pointer is not null. If it's not, it converts the raw pointer
 // back into a Box<ToriiClient>, which gets dropped at the end of the scope,
