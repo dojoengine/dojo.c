@@ -1,12 +1,12 @@
-extern crate cbindgen;
-
 use std::env;
 
 fn main() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
-    let mut config: cbindgen::Config = Default::default();
-    config.language = cbindgen::Language::C;
+    let config = cbindgen::Config {
+        language: cbindgen::Language::C,
+        ..Default::default()
+    };
 
     cbindgen::Builder::new()
         .with_config(config)

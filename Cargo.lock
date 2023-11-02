@@ -4044,6 +4044,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "torii-c"
+version = "0.3.1"
+dependencies = [
+ "cbindgen",
+ "dojo-types",
+ "parking_lot 0.12.1",
+ "starknet 0.6.0",
+ "starknet-crypto",
+ "tokio",
+ "torii-client",
+ "torii-grpc",
+]
+
+[[package]]
 name = "torii-client"
 version = "0.3.3"
 source = "git+https://github.com/dojoengine/dojo#bbdd5f22a8238cfa17212df217b339712e4e714c"
@@ -4102,20 +4116,6 @@ dependencies = [
  "tower",
  "tracing",
  "url",
-]
-
-[[package]]
-name = "torii-unity"
-version = "0.3.1"
-dependencies = [
- "cbindgen",
- "dojo-types",
- "parking_lot 0.12.1",
- "starknet 0.6.0",
- "starknet-crypto",
- "tokio",
- "torii-client",
- "torii-grpc",
 ]
 
 [[package]]

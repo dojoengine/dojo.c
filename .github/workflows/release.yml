@@ -1,0 +1,110 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "*"
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_VERSION: 1.70.0
+
+jobs:
+  prepare:
+    name: Prepare release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+  build-and-release:
+    name: ${{ matrix.job.target }} (${{ matrix.job.os }})
+    needs: prepare
+    runs-on: ${{ matrix.job.os }}
+    strategy:
+      matrix:
+        job:
+          # The OS is used for the runner
+          # The platform is a generic platform name
+          # The target is used by Cargo
+          # The arch is either 386, arm64 or amd64
+          # The svm target platform to use for the binary https://github.com/roynalnaruto/svm-rs/blob/84cbe0ac705becabdc13168bae28a45ad2299749/svm-builds/build.rs#L4-L24
+          - os: ubuntu-latest-32-cores
+            platform: linux
+            target: x86_64-unknown-linux-gnu
+            arch: amd64
+          - os: ubuntu-latest-32-cores
+            platform: linux
+            target: aarch64-unknown-linux-gnu
+            arch: arm64
+            svm_target_platform: linux-aarch64
+          - os: macos-latest
+            platform: darwin
+            target: x86_64-apple-darwin
+            arch: amd64
+          - os: macos-latest
+            platform: darwin
+            target: aarch64-apple-darwin
+            arch: arm64
+          - os: windows-latest
+            platform: win32
+            target: x86_64-pc-windows-msvc
+            arch: amd64
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: dtolnay/rust-toolchain@master
+        name: Rust Toolchain Setup
+        with:
+          targets: ${{ matrix.job.target }}
+          toolchain: ${{ env.RUST_VERSION }}
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          cache-on-failure: true
+
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Apple M1 setup
+        if: ${{ matrix.job.target == 'aarch64-apple-darwin' }}
+        run: |
+          echo "SDKROOT=$(xcrun -sdk macosx --show-sdk-path)" >> $GITHUB_ENV
+          echo "MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version)" >> $GITHUB_ENV
+
+      - name: Linux ARM setup
+        if: ${{ matrix.job.target == 'aarch64-unknown-linux-gnu' }}
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y gcc-aarch64-linux-gnu libssl-dev
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+
+      - name: Build binaries
+        run: cargo build --release --target ${{ matrix.job.target }}
+
+      - name: debug
+        run: ls target/${{ matrix.job.target }}/release
+
+      - name: Package
+        id: artifacts
+        run: |
+          if [[ "${{ matrix.job.os }}" == "macos-latest" ]]; then
+            tar -czvf torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz target/${{ matrix.job.target }}/release/libtorii_c.dylib
+          elif [[ "${{ matrix.job.os }}" == "windows-latest" ]]; then
+            tar -czvf torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz target/${{ matrix.job.target }}/release/libtorii_c.dll
+          else
+            tar -czvf torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz target/${{ matrix.job.target }}/release/libtorii_c.so
+          fi
+          echo "file_name=torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz" >> $GITHUB_OUTPUT
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            ${{ steps.artifacts.outputs.file_name }}

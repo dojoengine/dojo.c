@@ -6,5 +6,5 @@ This package provides C bindings for the Torii Client SDK. The approach is to ge
 
 ```
 cargo build --release
-gcc example/main.c -L target/release -l torii_unity -I ..
+gcc example/main.c -L target/release -l torii_c -I ..
 ```

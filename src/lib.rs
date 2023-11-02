@@ -15,9 +15,9 @@ pub struct FieldElement {
     data: [u8; 32],
 }
 
-impl Into<starknet::core::types::FieldElement> for &FieldElement {
-    fn into(self) -> starknet::core::types::FieldElement {
-        starknet::core::types::FieldElement::from_bytes_be(&self.data).unwrap()
+impl From<&FieldElement> for starknet::core::types::FieldElement {
+    fn from(val: &FieldElement) -> Self {
+        starknet::core::types::FieldElement::from_bytes_be(&val.data).unwrap()
     }
 }
 
@@ -29,10 +29,10 @@ pub struct EntityModel {
     pub keys_len: usize,
 }
 
-impl Into<dojo_types::schema::EntityModel> for &EntityModel {
-    fn into(self) -> dojo_types::schema::EntityModel {
-        let model = unsafe { CStr::from_ptr(self.model).to_string_lossy().into_owned() };
-        let keys = unsafe { std::slice::from_raw_parts(self.keys, self.keys_len).to_vec() };
+impl From<&EntityModel> for dojo_types::schema::EntityModel {
+    fn from(val: &EntityModel) -> Self {
+        let model = unsafe { CStr::from_ptr(val.model).to_string_lossy().into_owned() };
+        let keys = unsafe { std::slice::from_raw_parts(val.keys, val.keys_len).to_vec() };
 
         dojo_types::schema::EntityModel {
             model,
@@ -42,7 +42,8 @@ impl Into<dojo_types::schema::EntityModel> for &EntityModel {
 }
 
 #[no_mangle]
-pub extern "C" fn client_new(
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_new(
     torii_url: *const c_char,
     rpc_url: *const c_char,
     world: &FieldElement,
@@ -79,7 +80,8 @@ pub extern "C" fn client_new(
 }
 
 #[no_mangle]
-pub extern "C" fn client_add_entities_to_sync(
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_add_entities_to_sync(
     client: *mut ToriiClient,
     entities: *const EntityModel,
     entities_len: usize,
@@ -107,7 +109,8 @@ pub extern "C" fn client_add_entities_to_sync(
 }
 
 #[no_mangle]
-pub extern "C" fn client_remove_entities_to_sync(
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_remove_entities_to_sync(
     client: *mut ToriiClient,
     entities: *const EntityModel,
     entities_len: usize,
@@ -139,7 +142,8 @@ pub extern "C" fn client_remove_entities_to_sync(
 // back into a Box<ToriiClient>, which gets dropped at the end of the scope,
 // deallocating the memory.
 #[no_mangle]
-pub extern "C" fn client_free(client: *mut ToriiClient) {
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_free(client: *mut ToriiClient) {
     if !client.is_null() {
         unsafe {
             let _ = Box::from_raw(client);
