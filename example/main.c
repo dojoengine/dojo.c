@@ -1,7 +1,8 @@
 #include "../dojo.h"
 #include <stdio.h>
 
-int main() {
+int main()
+{
     const char *torii_url = "http://localhost:50051";
     const char *rpc_url = "http://localhost:50052";
 
@@ -15,7 +16,8 @@ int main() {
 
     ToriiClient *client = client_new(torii_url, rpc_url, &world, entities, 1, &error);
 
-    if (client == NULL) {
+    if (client == NULL)
+    {
         printf("Failed to create client: %s\n", error.message);
         return 1;
     }
@@ -23,8 +25,7 @@ int main() {
     // Use client here...
 
     // Remember to free the client when you're done with it.
-    // This assumes that there's a function like client_free for this purpose.
-    // client_free(client);
+    client_free(client);
 
     return 0;
 }

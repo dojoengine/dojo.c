@@ -77,3 +77,16 @@ pub extern "C" fn client_new(
         }
     }
 }
+
+// This function takes a raw pointer to ToriiClient as an argument.
+// It checks if the pointer is not null. If it's not, it converts the raw pointer
+// back into a Box<ToriiClient>, which gets dropped at the end of the scope,
+// deallocating the memory.
+#[no_mangle]
+pub extern "C" fn client_free(client: *mut ToriiClient) {
+    if !client.is_null() {
+        unsafe {
+            let _ = Box::from_raw(client);
+        }
+    }
+}

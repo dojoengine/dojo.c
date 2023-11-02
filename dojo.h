@@ -25,3 +25,5 @@ struct ToriiClient *client_new(const char *torii_url,
                                const struct EntityModel *entities,
                                uintptr_t entities_len,
                                struct Error *error);
+
+void client_free(struct ToriiClient *client);
