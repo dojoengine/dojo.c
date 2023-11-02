@@ -2,6 +2,8 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use torii_client::client::Client;
 
+pub struct ToriiClient(Client);
+
 #[repr(C)]
 pub struct Error {
     message: *const c_char,
@@ -47,7 +49,7 @@ pub extern "C" fn client_new(
     entities: *const EntityModel,
     entities_len: usize,
     error: *mut Error,
-) -> *mut Client {
+) -> *mut ToriiClient {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let entities = unsafe { std::slice::from_raw_parts(entities, entities_len).to_vec() };
@@ -64,7 +66,7 @@ pub extern "C" fn client_new(
         .block_on(client_future);
 
     match client {
-        Ok(client) => Box::into_raw(Box::new(client)),
+        Ok(client) => Box::into_raw(Box::new(ToriiClient(client))),
         Err(e) => {
             unsafe {
                 *error = Error {
