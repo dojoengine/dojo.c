@@ -113,6 +113,10 @@ struct ToriiClient *client_new(const char *torii_url,
                                uintptr_t entities_len,
                                struct Error *error);
 
+Ty *client_entity(struct ToriiClient *client,
+                  const struct EntityQuery *entity,
+                  struct Error *error);
+
 void client_add_entities_to_sync(struct ToriiClient *client,
                                  const struct EntityQuery *entities,
                                  uintptr_t entities_len,

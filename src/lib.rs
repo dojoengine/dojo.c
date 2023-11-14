@@ -1,3 +1,4 @@
+use dojo_types::schema::Ty;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use torii_client::client::Client as TClient;
@@ -58,7 +59,7 @@ pub struct AttributeClause {
 pub struct CompositeClause {
     pub operator: LogicalOperator,
     pub clauses: *const Clause,
-    pub clauses_len: usize
+    pub clauses_len: usize,
 }
 
 #[derive(Clone)]
@@ -90,7 +91,7 @@ pub enum Value {
 }
 
 impl From<&EntityQuery> for dojo_types::schema::EntityQuery {
-    fn from(val: &EntityQuery) -> Self { 
+    fn from(val: &EntityQuery) -> Self {
         dojo_types::schema::EntityQuery {
             model: unsafe { CStr::from_ptr(val.model).to_string_lossy().into_owned() },
             clause: (&val.clause.clone()).into(),
@@ -102,8 +103,12 @@ impl From<&Clause> for dojo_types::schema::Clause {
     fn from(val: &Clause) -> Self {
         match val {
             Clause::Keys(keys) => dojo_types::schema::Clause::Keys((&keys.clone()).into()),
-            Clause::Attribute(attribute) => dojo_types::schema::Clause::Attribute((&attribute.clone()).into()),
-            Clause::Composite(composite) => dojo_types::schema::Clause::Composite((&composite.clone()).into()),
+            Clause::Attribute(attribute) => {
+                dojo_types::schema::Clause::Attribute((&attribute.clone()).into())
+            }
+            Clause::Composite(composite) => {
+                dojo_types::schema::Clause::Composite((&composite.clone()).into())
+            }
         }
     }
 }
@@ -129,13 +134,13 @@ impl From<&AttributeClause> for dojo_types::schema::AttributeClause {
 }
 
 impl From<&CompositeClause> for dojo_types::schema::CompositeClause {
-    fn from(val: &CompositeClause) -> Self {        
+    fn from(val: &CompositeClause) -> Self {
         let operator = &val.operator.clone();
         let clauses = unsafe { std::slice::from_raw_parts(val.clauses, val.clauses_len).to_vec() };
-        
+
         dojo_types::schema::CompositeClause {
             operator: operator.into(),
-            clauses: clauses.iter().map(|c| c.into()).collect()
+            clauses: clauses.iter().map(|c| c.into()).collect(),
         }
     }
 }
@@ -165,9 +170,9 @@ impl From<&ComparisonOperator> for dojo_types::schema::ComparisonOperator {
 impl From<&Value> for dojo_types::schema::Value {
     fn from(val: &Value) -> Self {
         match val {
-            Value::String(string) => dojo_types::schema::Value::String(
-                unsafe { CStr::from_ptr(*string).to_string_lossy().into_owned() },
-            ),
+            Value::String(string) => dojo_types::schema::Value::String(unsafe {
+                CStr::from_ptr(*string).to_string_lossy().into_owned()
+            }),
             Value::Int(int) => dojo_types::schema::Value::Int(*int),
             Value::UInt(uint) => dojo_types::schema::Value::UInt(*uint),
             Value::Bool(bool) => dojo_types::schema::Value::Bool(*bool),
@@ -179,7 +184,6 @@ impl From<&Value> for dojo_types::schema::Value {
         }
     }
 }
-
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -219,9 +223,40 @@ pub unsafe extern "C" fn client_new(
     }
 }
 
-// #[no_mangle]
-// #[allow(clippy::missing_safety_doc)]
-// pub unsafe extern "C" fn client_entity(entity: &EntityQuery) -> *mut
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_entity(
+    client: *mut ToriiClient,
+    entity: &EntityQuery,
+    error: *mut Error,
+) -> *mut Ty {
+    let entity: dojo_types::schema::EntityQuery = (&entity.clone()).into();
+    let entity_future = unsafe { (*client).0.entity(&entity) };
+
+
+    let result = tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on(entity_future);
+
+    match result {
+        Ok(entity) => {
+            if let Some(entity) = entity {
+                let entity = entity.into();
+                Box::into_raw(Box::new(entity))
+            } else {
+                std::ptr::null_mut()
+            }
+        },
+        Err(e) => {
+            unsafe {
+                *error = Error {
+                    message: CString::new(e.to_string()).unwrap().into_raw(),
+                };
+            }
+            std::ptr::null_mut()
+        }
+    }
+}
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
