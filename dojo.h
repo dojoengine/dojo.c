@@ -106,6 +106,121 @@ typedef struct Error {
   const char *message;
 } Error;
 
+typedef enum Primitive_Tag {
+  U8,
+  U16,
+  U32,
+  U64,
+  U128,
+  U256,
+  USize,
+  Bool,
+  Felt252,
+  ClassHash,
+  ContractAddress,
+} Primitive_Tag;
+
+typedef struct Primitive {
+  Primitive_Tag tag;
+  union {
+    struct {
+      const uint8_t *u8;
+    };
+    struct {
+      const uint16_t *u16;
+    };
+    struct {
+      const uint32_t *u32;
+    };
+    struct {
+      const uint64_t *u64;
+    };
+    struct {
+      uint8_t u128[16];
+    };
+    struct {
+      uint64_t u256[4];
+    };
+    struct {
+      const uint32_t *u_size;
+    };
+    struct {
+      const bool *bool_;
+    };
+    struct {
+      const struct FieldElement *felt252;
+    };
+    struct {
+      const struct FieldElement *class_hash;
+    };
+    struct {
+      const struct FieldElement *contract_address;
+    };
+  };
+} Primitive;
+
+typedef struct Member {
+  const char *name;
+  struct Ty ty;
+  bool key;
+} Member;
+
+typedef struct CArray_Member {
+  const struct Member *data;
+  uintptr_t data_len;
+} CArray_Member;
+
+typedef struct Struct {
+  const char *name;
+  struct CArray_Member children;
+} Struct;
+
+typedef struct EnumOption {
+  const char *name;
+  struct Ty ty;
+} EnumOption;
+
+typedef struct CArray_EnumOption {
+  const struct EnumOption *data;
+  uintptr_t data_len;
+} CArray_EnumOption;
+
+typedef struct Enum {
+  const char *name;
+  uint8_t option;
+  struct CArray_EnumOption options;
+} Enum;
+
+typedef struct CArray_Ty {
+  const struct Ty *data;
+  uintptr_t data_len;
+} CArray_Ty;
+
+typedef enum Ty_Tag {
+  Primitive,
+  Struct,
+  Enum,
+  Tuple,
+} Ty_Tag;
+
+typedef struct Ty {
+  Ty_Tag tag;
+  union {
+    struct {
+      struct Primitive primitive;
+    };
+    struct {
+      struct Struct struct_;
+    };
+    struct {
+      struct Enum enum_;
+    };
+    struct {
+      struct CArray_Ty tuple;
+    };
+  };
+} Ty;
+
 struct ToriiClient *client_new(const char *torii_url,
                                const char *rpc_url,
                                const struct FieldElement *world,
@@ -113,9 +228,9 @@ struct ToriiClient *client_new(const char *torii_url,
                                uintptr_t entities_len,
                                struct Error *error);
 
-Ty *client_entity(struct ToriiClient *client,
-                  const struct EntityQuery *entity,
-                  struct Error *error);
+struct Ty *client_entity(struct ToriiClient *client,
+                         const struct EntityQuery *entity,
+                         struct Error *error);
 
 void client_add_entities_to_sync(struct ToriiClient *client,
                                  const struct EntityQuery *entities,
