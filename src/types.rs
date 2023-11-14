@@ -28,6 +28,14 @@ impl From<&FieldElement> for starknet::core::types::FieldElement {
     }
 }
 
+impl From<&starknet::core::types::FieldElement> for FieldElement {
+    fn from(val: &starknet::core::types::FieldElement) -> Self {
+        FieldElement {
+            data: val.to_bytes_be(),
+        }
+    }
+}
+
 #[derive(Clone)]
 #[repr(C)]
 pub struct EntityQuery {
@@ -43,7 +51,7 @@ pub enum Clause {
     Composite(CompositeClause),
 }
 
-type KeysClause = CArray<FieldElement>;
+pub type KeysClause = CArray<FieldElement>;
 
 #[derive(Clone)]
 #[repr(C)]
@@ -103,10 +111,18 @@ impl From<&dojo_types::schema::Ty> for Ty {
         match value {
             dojo_types::schema::Ty::Primitive(primitive) => {
                 let primitive = match primitive {
-                    dojo_types::primitive::Primitive::U8(v) => Primitive::U8((v.clone()).as_mut().unwrap()),
-                    dojo_types::primitive::Primitive::U16(v) => Primitive::U16((v.clone()).as_mut().unwrap()),
-                    dojo_types::primitive::Primitive::U32(v) => Primitive::U32((v.clone()).as_mut().unwrap()),
-                    dojo_types::primitive::Primitive::U64(v) => Primitive::U64((v.clone()).as_mut().unwrap()),
+                    dojo_types::primitive::Primitive::U8(v) => {
+                        Primitive::U8((v.clone()).as_mut().unwrap())
+                    }
+                    dojo_types::primitive::Primitive::U16(v) => {
+                        Primitive::U16((v.clone()).as_mut().unwrap())
+                    }
+                    dojo_types::primitive::Primitive::U32(v) => {
+                        Primitive::U32((v.clone()).as_mut().unwrap())
+                    }
+                    dojo_types::primitive::Primitive::U64(v) => {
+                        Primitive::U64((v.clone()).as_mut().unwrap())
+                    }
                     dojo_types::primitive::Primitive::U128(v) => {
                         Primitive::U128(v.unwrap().to_be_bytes())
                     }
@@ -120,13 +136,16 @@ impl From<&dojo_types::schema::Ty> for Ty {
                         Primitive::Bool((v.clone()).as_mut().unwrap())
                     }
                     dojo_types::primitive::Primitive::Felt252(v) => {
-                        Primitive::Felt252(&FieldElement{data:v.unwrap().to_bytes_be()})
+                        let fe: FieldElement = (&v.unwrap().clone()).into();
+                        Primitive::Felt252(&fe)
                     }
                     dojo_types::primitive::Primitive::ClassHash(v) => {
-                        Primitive::Felt252(&FieldElement{data:v.unwrap().to_bytes_be()})
+                        let fe: FieldElement = (&v.unwrap().clone()).into();
+                        Primitive::Felt252(&fe)
                     }
                     dojo_types::primitive::Primitive::ContractAddress(v) => {
-                        Primitive::Felt252(&FieldElement{data:v.unwrap().to_bytes_be()})
+                        let fe: FieldElement = (&v.unwrap().clone()).into();
+                        Primitive::Felt252(&fe)
                     }
                 };
 
@@ -322,6 +341,119 @@ impl From<&Value> for dojo_types::schema::Value {
                 dojo_types::schema::Value::Bytes(
                     std::slice::from_raw_parts(bytes.data, bytes.data_len).to_vec(),
                 )
+            },
+        }
+    }
+}
+
+pub type EntityKeys = CArray<FieldElement>;
+pub type StorageKey = FieldElement;
+pub type StorageValue = FieldElement;
+
+#[derive(Clone)]
+#[repr(C)]
+pub struct CHashMap<K, V> {
+    keys: *const K,
+    values: *const V,
+    len: usize,
+}
+
+#[derive(Clone)]
+#[repr(C)]
+pub struct ModelIndex {
+    model: FieldElement,
+    keys: CArray<EntityKeys>,
+}
+
+#[derive(Clone)]
+#[repr(C)]
+pub struct ModelStorage {
+    metadata: WorldMetadata,
+    storage: CHashMap<StorageKey, StorageValue>,
+    // a map of model name to a set of entity keys.
+    model_index: CHashMap<FieldElement, CArray<EntityKeys>>,
+    // listener for storage updates.
+    // senders: Mutex<HashMap<u8, Sender<()>>>,
+    // listeners: Mutex<HashMap<StorageKey, Vec<u8>>>,
+}
+
+// impl From<&torii_client::client::storage::ModelStorage> for ModelStorage {
+//     fn from(value: &torii_client::client::storage::ModelStorage) -> Self {
+//         let metadata = value.metadata;
+//         let storage = value.storage.clone();
+//         let model_index = value.model_index.clone();
+
+//         Self {
+//             metadata: (&metadata).into(),
+//             storage: (&storage).into(),
+//             model_index: (&model_index).into(),
+//         }
+//     }
+// }
+
+#[derive(Clone)]
+#[repr(C)]
+pub struct WorldMetadata {
+    pub world_address: FieldElement,
+    pub world_class_hash: FieldElement,
+    pub executor_address: FieldElement,
+    pub executor_class_hash: FieldElement,
+    pub models: CHashMap<*const c_char, ModelMetadata>,
+}
+
+impl From<&dojo_types::WorldMetadata> for WorldMetadata {
+    fn from(value: &dojo_types::WorldMetadata) -> Self {
+        WorldMetadata {
+            world_address: (&value.world_address.clone()).into(),
+            world_class_hash: (&value.world_class_hash.clone()).into(),
+            executor_address: (&value.executor_address.clone()).into(),
+            executor_class_hash: (&value.executor_class_hash.clone()).into(),
+            models: CHashMap {
+                keys: value
+                    .models
+                    .iter()
+                    .map(|(k, _)| CString::new(k.clone()).unwrap().into_raw() as *const c_char)
+                    .collect::<Vec<_>>()
+                    .as_ptr(),
+                values: value
+                    .models
+                    .iter()
+                    .map(|(_, v)| (&v.clone()).into())
+                    .collect::<Vec<_>>()
+                    .as_ptr(),
+                len: value.models.len(),
+            },
+        }
+    }
+}
+
+#[derive(Clone)]
+#[repr(C)]
+pub struct ModelMetadata {
+    pub schema: Ty,
+    pub name: *const c_char,
+    pub packed_size: u32,
+    pub unpacked_size: u32,
+    pub class_hash: FieldElement,
+    pub layout: CArray<FieldElement>,
+}
+
+impl From<&dojo_types::schema::ModelMetadata> for ModelMetadata {
+    fn from(value: &dojo_types::schema::ModelMetadata) -> Self {
+        ModelMetadata {
+            schema: (&value.schema.clone()).into(),
+            name: CString::new(value.name.clone()).unwrap().into_raw(),
+            packed_size: value.packed_size.clone(),
+            unpacked_size: value.unpacked_size.clone(),
+            class_hash: (&value.class_hash.clone()).into(),
+            layout: CArray {
+                data: value
+                    .layout
+                    .iter()
+                    .map(|v| (&v.clone()).into())
+                    .collect::<Vec<_>>()
+                    .as_ptr(),
+                data_len: value.layout.len(),
             },
         }
     }

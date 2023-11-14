@@ -2,9 +2,10 @@ mod types;
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
+use std::sync::Arc;
 use torii_client::client::Client as TClient;
 use types::{
-    EntityQuery, Error, FieldElement, ToriiClient, Ty,
+    EntityQuery, Error, FieldElement, ToriiClient, Ty, ModelStorage, WorldMetadata,
 };
 
 #[no_mangle]
@@ -75,6 +76,31 @@ pub unsafe extern "C" fn client_entity(
                 };
             }
             std::ptr::null_mut()
+        }
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetadata {
+    unsafe { (&(*client).0.metadata().clone()).into() }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_start_subscription(client: *mut ToriiClient, error: *mut Error) {
+    let client_future = unsafe { (*client).0.start_subscription() };
+
+    let result = tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on(client_future);
+
+
+    if let Err(e) = result {
+        unsafe {
+            *error = Error {
+                message: CString::new(e.to_string()).unwrap().into_raw(),
+            };
         }
     }
 }

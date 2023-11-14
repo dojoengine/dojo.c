@@ -221,6 +221,29 @@ typedef struct Ty {
   };
 } Ty;
 
+typedef struct ModelMetadata {
+  struct Ty schema;
+  const char *name;
+  uint32_t packed_size;
+  uint32_t unpacked_size;
+  struct FieldElement class_hash;
+  struct CArray_FieldElement layout;
+} ModelMetadata;
+
+typedef struct CHashMap______c_char__ModelMetadata {
+  const char *const *keys;
+  const struct ModelMetadata *values;
+  uintptr_t len;
+} CHashMap______c_char__ModelMetadata;
+
+typedef struct WorldMetadata {
+  struct FieldElement world_address;
+  struct FieldElement world_class_hash;
+  struct FieldElement executor_address;
+  struct FieldElement executor_class_hash;
+  struct CHashMap______c_char__ModelMetadata models;
+} WorldMetadata;
+
 struct ToriiClient *client_new(const char *torii_url,
                                const char *rpc_url,
                                const struct FieldElement *world,
@@ -231,6 +254,10 @@ struct ToriiClient *client_new(const char *torii_url,
 struct Ty *client_entity(struct ToriiClient *client,
                          const struct EntityQuery *entity,
                          struct Error *error);
+
+struct WorldMetadata client_metadata(struct ToriiClient *client);
+
+void client_start_subscription(struct ToriiClient *client, struct Error *error);
 
 void client_add_entities_to_sync(struct ToriiClient *client,
                                  const struct EntityQuery *entities,
