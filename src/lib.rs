@@ -4,6 +4,13 @@ use torii_client::client::Client as TClient;
 
 pub struct ToriiClient(TClient);
 
+#[derive(Clone)]
+#[repr(C)]
+pub struct CArray<T> {
+    data: *const T,
+    data_len: usize,
+}
+
 #[repr(C)]
 pub struct Error {
     message: *const c_char,
@@ -36,12 +43,7 @@ pub enum Clause {
     Composite(CompositeClause),
 }
 
-#[derive(Clone)]
-#[repr(C)]
-pub struct KeysClause {
-    pub keys: *const FieldElement,
-    pub keys_len: usize,
-}
+type KeysClause = CArray<FieldElement>;
 
 #[derive(Clone)]
 #[repr(C)]
@@ -79,20 +81,12 @@ pub enum ComparisonOperator {
 
 #[derive(Clone)]
 #[repr(C)]
-pub struct Bytes {
-    data: *const u8,
-    data_len: usize,
-}
-
-
-#[derive(Clone)]
-#[repr(C)]
 pub enum Value {
     String(*const c_char),
     Int(i64),
     UInt(u64),
     Bool(bool),
-    Bytes(Bytes),
+    Bytes(CArray<u8>),
 }
 
 impl From<&EntityQuery> for dojo_types::schema::EntityQuery {
@@ -116,7 +110,7 @@ impl From<&Clause> for dojo_types::schema::Clause {
 
 impl From<&KeysClause> for dojo_types::schema::KeysClause {
     fn from(val: &KeysClause) -> Self {
-        let keys = unsafe { std::slice::from_raw_parts(val.keys, val.keys_len).to_vec() };
+        let keys = unsafe { std::slice::from_raw_parts(val.data, val.data_len).to_vec() };
 
         dojo_types::schema::KeysClause {
             keys: keys.iter().map(|k| k.into()).collect(),
@@ -224,6 +218,10 @@ pub unsafe extern "C" fn client_new(
         }
     }
 }
+
+// #[no_mangle]
+// #[allow(clippy::missing_safety_doc)]
+// pub unsafe extern "C" fn client_entity(entity: &EntityQuery) -> *mut
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]

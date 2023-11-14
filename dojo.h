@@ -23,15 +23,17 @@ typedef struct FieldElement {
   uint8_t data[32];
 } FieldElement;
 
-typedef struct KeysClause {
-  const struct FieldElement *keys;
-  uintptr_t keys_len;
-} KeysClause;
+typedef struct CArray_FieldElement {
+  const struct FieldElement *data;
+  uintptr_t data_len;
+} CArray_FieldElement;
 
-typedef struct Bytes {
+typedef struct CArray_FieldElement KeysClause;
+
+typedef struct CArray_u8 {
   const uint8_t *data;
   uintptr_t data_len;
-} Bytes;
+} CArray_u8;
 
 typedef enum Value_Tag {
   String,
@@ -57,7 +59,7 @@ typedef struct Value {
       bool bool_;
     };
     struct {
-      struct Bytes bytes;
+      struct CArray_u8 bytes;
     };
   };
 } Value;
@@ -84,7 +86,7 @@ typedef struct Clause {
   Clause_Tag tag;
   union {
     struct {
-      struct KeysClause keys;
+      KeysClause keys;
     };
     struct {
       struct AttributeClause attribute;
