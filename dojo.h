@@ -23,89 +23,6 @@ typedef struct FieldElement {
   uint8_t data[32];
 } FieldElement;
 
-typedef struct CArray_FieldElement {
-  const struct FieldElement *data;
-  uintptr_t data_len;
-} CArray_FieldElement;
-
-typedef struct CArray_FieldElement KeysClause;
-
-typedef struct CArray_u8 {
-  const uint8_t *data;
-  uintptr_t data_len;
-} CArray_u8;
-
-typedef enum Value_Tag {
-  String,
-  Int,
-  UInt,
-  Bool,
-  Bytes,
-} Value_Tag;
-
-typedef struct Value {
-  Value_Tag tag;
-  union {
-    struct {
-      const char *string;
-    };
-    struct {
-      int64_t int_;
-    };
-    struct {
-      uint64_t u_int;
-    };
-    struct {
-      bool bool_;
-    };
-    struct {
-      struct CArray_u8 bytes;
-    };
-  };
-} Value;
-
-typedef struct AttributeClause {
-  const char *attribute;
-  enum ComparisonOperator operator_;
-  struct Value value;
-} AttributeClause;
-
-typedef struct CompositeClause {
-  enum LogicalOperator operator_;
-  const struct Clause *clauses;
-  uintptr_t clauses_len;
-} CompositeClause;
-
-typedef enum Clause_Tag {
-  Keys,
-  Attribute,
-  Composite,
-} Clause_Tag;
-
-typedef struct Clause {
-  Clause_Tag tag;
-  union {
-    struct {
-      KeysClause keys;
-    };
-    struct {
-      struct AttributeClause attribute;
-    };
-    struct {
-      struct CompositeClause composite;
-    };
-  };
-} Clause;
-
-typedef struct EntityQuery {
-  const char *model;
-  struct Clause clause;
-} EntityQuery;
-
-typedef struct Error {
-  const char *message;
-} Error;
-
 typedef enum Primitive_Tag {
   U8,
   U16,
@@ -221,6 +138,89 @@ typedef struct Ty {
   };
 } Ty;
 
+typedef struct CArray_FieldElement {
+  const struct FieldElement *data;
+  uintptr_t data_len;
+} CArray_FieldElement;
+
+typedef struct CArray_FieldElement KeysClause;
+
+typedef struct CArray_u8 {
+  const uint8_t *data;
+  uintptr_t data_len;
+} CArray_u8;
+
+typedef enum Value_Tag {
+  String,
+  Int,
+  UInt,
+  Bool,
+  Bytes,
+} Value_Tag;
+
+typedef struct Value {
+  Value_Tag tag;
+  union {
+    struct {
+      const char *string;
+    };
+    struct {
+      int64_t int_;
+    };
+    struct {
+      uint64_t u_int;
+    };
+    struct {
+      bool bool_;
+    };
+    struct {
+      struct CArray_u8 bytes;
+    };
+  };
+} Value;
+
+typedef struct AttributeClause {
+  const char *attribute;
+  enum ComparisonOperator operator_;
+  struct Value value;
+} AttributeClause;
+
+typedef struct CompositeClause {
+  enum LogicalOperator operator_;
+  const struct Clause *clauses;
+  uintptr_t clauses_len;
+} CompositeClause;
+
+typedef enum Clause_Tag {
+  Keys,
+  Attribute,
+  Composite,
+} Clause_Tag;
+
+typedef struct Clause {
+  Clause_Tag tag;
+  union {
+    struct {
+      KeysClause keys;
+    };
+    struct {
+      struct AttributeClause attribute;
+    };
+    struct {
+      struct CompositeClause composite;
+    };
+  };
+} Clause;
+
+typedef struct EntityQuery {
+  const char *model;
+  struct Clause clause;
+} EntityQuery;
+
+typedef struct Error {
+  const char *message;
+} Error;
+
 typedef struct ModelMetadata {
   struct Ty schema;
   const char *name;
@@ -244,29 +244,26 @@ typedef struct WorldMetadata {
   struct CHashMap______c_char__ModelMetadata models;
 } WorldMetadata;
 
-struct ToriiClient *client_new(const char *torii_url,
-                               const char *rpc_url,
-                               const struct FieldElement *world,
+typedef struct Client {
+  struct ToriiClient *client;
+  struct Ty *(*entity)(struct ToriiClient *client,
+                       const struct EntityQuery *entity,
+                       struct Error *error);
+  struct WorldMetadata (*metadata)(struct ToriiClient *client);
+  void (*add_entities_to_sync)(struct ToriiClient *client,
                                const struct EntityQuery *entities,
                                uintptr_t entities_len,
                                struct Error *error);
+  void (*remove_entities_to_sync)(struct ToriiClient *client,
+                                  const struct EntityQuery *entities,
+                                  uintptr_t entities_len,
+                                  struct Error *error);
+  void (*free)(struct ToriiClient *client);
+} Client;
 
-struct Ty *client_entity(struct ToriiClient *client,
-                         const struct EntityQuery *entity,
-                         struct Error *error);
-
-struct WorldMetadata client_metadata(struct ToriiClient *client);
-
-void client_start_subscription(struct ToriiClient *client, struct Error *error);
-
-void client_add_entities_to_sync(struct ToriiClient *client,
-                                 const struct EntityQuery *entities,
-                                 uintptr_t entities_len,
-                                 struct Error *error);
-
-void client_remove_entities_to_sync(struct ToriiClient *client,
-                                    const struct EntityQuery *entities,
-                                    uintptr_t entities_len,
-                                    struct Error *error);
-
-void client_free(struct ToriiClient *client);
+struct Client *client_new(const char *torii_url,
+                          const char *rpc_url,
+                          const struct FieldElement *world,
+                          const struct EntityQuery *entities,
+                          uintptr_t entities_len,
+                          struct Error *error);

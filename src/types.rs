@@ -4,6 +4,32 @@ use torii_client::client::Client as TClient;
 
 pub struct ToriiClient(pub TClient);
 
+#[repr(C)]
+pub struct Client {
+    pub client: *mut ToriiClient,
+    pub entity: unsafe extern "C" fn(
+        client: *mut ToriiClient,
+        entity: &EntityQuery,
+        error: *mut Error,
+    ) -> *mut Ty,
+    pub metadata: unsafe extern "C" fn(
+        client: *mut ToriiClient
+    ) -> WorldMetadata,
+    pub add_entities_to_sync: unsafe extern "C" fn(
+        client: *mut ToriiClient,
+        entities: *const EntityQuery,
+        entities_len: usize,
+        error: *mut Error,
+    ),
+    pub remove_entities_to_sync: unsafe extern "C" fn(
+        client: *mut ToriiClient,
+        entities: *const EntityQuery,
+        entities_len: usize,
+        error: *mut Error,
+    ),
+    pub free: unsafe extern "C" fn(client: *mut ToriiClient),
+}
+
 #[derive(Clone)]
 #[repr(C)]
 pub struct CArray<T> {
