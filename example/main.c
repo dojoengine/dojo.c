@@ -14,7 +14,7 @@ int main()
 
     Error error;
 
-    Client *client = client_new(torii_url, rpc_url, &world, entities, 1, &error);
+    ToriiClient *client = client_new(torii_url, rpc_url, &world, entities, 1, &error);
 
     if (client == NULL)
     {
@@ -22,17 +22,10 @@ int main()
         return 1;
     }
 
-    client->entity(client->client, &entities[0], &error);
-    if (error.message != NULL)
-    {
-        printf("Failed to get entity: %s\n", error.message);
-        return 1;
-    }
-
     // Use client here...
 
     // Remember to free the client when you're done with it.
-    client->free(client->client);
+    client_free(client);
 
     return 0;
 }

@@ -5,7 +5,7 @@ use std::os::raw::c_char;
 use std::sync::Arc;
 use torii_client::client::Client as TClient;
 use types::{
-    EntityQuery, Error, FieldElement, ToriiClient, Ty, ModelStorage, WorldMetadata, Client,
+    EntityQuery, Error, FieldElement, ToriiClient, Ty, ModelStorage, WorldMetadata,
 };
 
 #[no_mangle]
@@ -17,7 +17,7 @@ pub unsafe extern "C" fn client_new(
     entities: *const EntityQuery,
     entities_len: usize,
     error: *mut Error,
-) -> *mut Client {
+) -> *mut ToriiClient {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let entities = unsafe { std::slice::from_raw_parts(entities, entities_len).to_vec() };
@@ -34,18 +34,7 @@ pub unsafe extern "C" fn client_new(
         .block_on(client_future);
 
     match client {
-        Ok(client) => {
-            let torii: *mut ToriiClient = Box::into_raw(Box::new(ToriiClient(client)));
-
-            Box::into_raw(Box::new(Client{
-                client: torii,
-                entity: client_entity,
-                metadata: client_metadata,
-                add_entities_to_sync: client_add_entities_to_sync,
-                remove_entities_to_sync: client_remove_entities_to_sync,
-                free: client_free,
-            }))
-        }
+        Ok(client) => Box::into_raw(Box::new(ToriiClient(client))),
         Err(e) => {
             unsafe {
                 *error = Error {
@@ -59,7 +48,7 @@ pub unsafe extern "C" fn client_new(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-unsafe extern "C" fn client_entity(
+pub unsafe extern "C" fn client_entity(
     client: *mut ToriiClient,
     entity: &EntityQuery,
     error: *mut Error,
@@ -91,17 +80,15 @@ unsafe extern "C" fn client_entity(
     }
 }
 
-
-
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetadata {
+pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetadata {
     unsafe { (&(*client).0.metadata().clone()).into() }
 }
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-unsafe extern "C" fn client_start_subscription(client: *mut ToriiClient, error: *mut Error) {
+pub unsafe extern "C" fn client_start_subscription(client: *mut ToriiClient, error: *mut Error) {
     let client_future = unsafe { (*client).0.start_subscription() };
 
     let result = tokio::runtime::Runtime::new()
@@ -120,7 +107,7 @@ unsafe extern "C" fn client_start_subscription(client: *mut ToriiClient, error: 
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-unsafe extern "C" fn client_add_entities_to_sync(
+pub unsafe extern "C" fn client_add_entities_to_sync(
     client: *mut ToriiClient,
     entities: *const EntityQuery,
     entities_len: usize,
@@ -149,7 +136,7 @@ unsafe extern "C" fn client_add_entities_to_sync(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-unsafe extern "C" fn client_remove_entities_to_sync(
+pub unsafe extern "C" fn client_remove_entities_to_sync(
     client: *mut ToriiClient,
     entities: *const EntityQuery,
     entities_len: usize,
@@ -182,7 +169,7 @@ unsafe extern "C" fn client_remove_entities_to_sync(
 // deallocating the memory.
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-unsafe extern "C" fn client_free(client: *mut ToriiClient) {
+pub unsafe extern "C" fn client_free(client: *mut ToriiClient) {
     if !client.is_null() {
         unsafe {
             let _ = Box::from_raw(client);
