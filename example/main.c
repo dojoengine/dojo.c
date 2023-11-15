@@ -9,16 +9,23 @@ int main()
     FieldElement world;
     // Initialize world.data here...
 
-    EntityModel entities[1];
+    EntityQuery entities[1];
     // Initialize entities[0].model, entities[0].keys, and entities[0].keys_len here...
 
     Error error;
 
-    ToriiClient *client = client_new(torii_url, rpc_url, &world, entities, 1, &error);
+    Client *client = client_new(torii_url, rpc_url, &world, entities, 1, &error);
 
     if (client == NULL)
     {
         printf("Failed to create client: %s\n", error.message);
+        return 1;
+    }
+
+    client->entity(client, &entities[0], &error);
+    if (error.message != NULL)
+    {
+        printf("Failed to get entity: %s\n", error.message);
         return 1;
     }
 
