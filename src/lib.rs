@@ -1,45 +1,12 @@
+mod types;
+
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use torii_client::client::Client;
-
-pub struct ToriiClient(Client);
-
-#[repr(C)]
-pub struct Error {
-    message: *const c_char,
-}
-
-#[derive(Clone)]
-#[repr(C)]
-pub struct FieldElement {
-    data: [u8; 32],
-}
-
-impl From<&FieldElement> for starknet::core::types::FieldElement {
-    fn from(val: &FieldElement) -> Self {
-        starknet::core::types::FieldElement::from_bytes_be(&val.data).unwrap()
-    }
-}
-
-#[derive(Clone)]
-#[repr(C)]
-pub struct EntityModel {
-    pub model: *const c_char,
-    pub keys: *const FieldElement,
-    pub keys_len: usize,
-}
-
-impl From<&EntityModel> for dojo_types::schema::EntityModel {
-    fn from(val: &EntityModel) -> Self {
-        let model = unsafe { CStr::from_ptr(val.model).to_string_lossy().into_owned() };
-        let keys = unsafe { std::slice::from_raw_parts(val.keys, val.keys_len).to_vec() };
-
-        dojo_types::schema::EntityModel {
-            model,
-            keys: keys.iter().map(|e| e.into()).collect(),
-        }
-    }
-}
+use std::sync::Arc;
+use torii_client::client::Client as TClient;
+use types::{
+    EntityQuery, Error, FieldElement, ToriiClient, Ty, ModelStorage, WorldMetadata,
+};
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -47,7 +14,7 @@ pub unsafe extern "C" fn client_new(
     torii_url: *const c_char,
     rpc_url: *const c_char,
     world: &FieldElement,
-    entities: *const EntityModel,
+    entities: *const EntityQuery,
     entities_len: usize,
     error: *mut Error,
 ) -> *mut ToriiClient {
@@ -55,7 +22,7 @@ pub unsafe extern "C" fn client_new(
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let entities = unsafe { std::slice::from_raw_parts(entities, entities_len).to_vec() };
 
-    let client_future = Client::new(
+    let client_future = TClient::new(
         torii_url,
         rpc_url,
         world.into(),
@@ -81,9 +48,68 @@ pub unsafe extern "C" fn client_new(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_entity(
+    client: *mut ToriiClient,
+    entity: &EntityQuery,
+    error: *mut Error,
+) -> *mut Ty {
+    let entity: dojo_types::schema::EntityQuery = (&entity.clone()).into();
+    let entity_future = unsafe { (*client).0.entity(&entity) };
+
+
+    let result = tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on(entity_future);
+
+    match result {
+        Ok(ty) => {
+            if let Some(ty) = ty {
+                Box::into_raw(Box::new((&ty.clone()).into()))
+            } else {
+                std::ptr::null_mut()
+            }
+        },
+        Err(e) => {
+            unsafe {
+                *error = Error {
+                    message: CString::new(e.to_string()).unwrap().into_raw(),
+                };
+            }
+            std::ptr::null_mut()
+        }
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetadata {
+    unsafe { (&(*client).0.metadata().clone()).into() }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_start_subscription(client: *mut ToriiClient, error: *mut Error) {
+    let client_future = unsafe { (*client).0.start_subscription() };
+
+    let result = tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on(client_future);
+
+
+    if let Err(e) = result {
+        unsafe {
+            *error = Error {
+                message: CString::new(e.to_string()).unwrap().into_raw(),
+            };
+        }
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_add_entities_to_sync(
     client: *mut ToriiClient,
-    entities: *const EntityModel,
+    entities: *const EntityQuery,
     entities_len: usize,
     error: *mut Error,
 ) {
@@ -112,7 +138,7 @@ pub unsafe extern "C" fn client_add_entities_to_sync(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_remove_entities_to_sync(
     client: *mut ToriiClient,
-    entities: *const EntityModel,
+    entities: *const EntityQuery,
     entities_len: usize,
     error: *mut Error,
 ) {
