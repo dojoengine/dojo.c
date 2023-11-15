@@ -22,7 +22,7 @@ int main()
         return 1;
     }
 
-    client->entity(client, &entities[0], &error);
+    client->entity(client->client, &entities[0], &error);
     if (error.message != NULL)
     {
         printf("Failed to get entity: %s\n", error.message);
@@ -32,7 +32,7 @@ int main()
     // Use client here...
 
     // Remember to free the client when you're done with it.
-    client_free(client);
+    client->free(client->client);
 
     return 0;
 }
