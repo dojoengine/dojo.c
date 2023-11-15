@@ -25,6 +25,9 @@ namespace Dojo
         [DllImport(__DllName, EntryPoint = "client_metadata", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern WorldMetadata client_metadata(ToriiClient* client);
 
+        [DllImport(__DllName, EntryPoint = "client_subscribed_entities", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern CArray* client_subscribed_entities(ToriiClient* client);
+
         [DllImport(__DllName, EntryPoint = "client_start_subscription", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void client_start_subscription(ToriiClient* client, Error* error);
 
@@ -43,6 +46,13 @@ namespace Dojo
     [StructLayout(LayoutKind.Sequential)]
     internal unsafe partial struct ToriiClient
     {
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal unsafe partial struct CArray
+    {
+        public T* data;
+        public nuint data_len;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -65,21 +75,13 @@ namespace Dojo
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal unsafe partial struct CHashMap
-    {
-        public K* keys;
-        public V* values;
-        public nuint len;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal unsafe partial struct WorldMetadata
     {
         public FieldElement world_address;
         public FieldElement world_class_hash;
         public FieldElement executor_address;
         public FieldElement executor_class_hash;
-        public CHashMap models;
+        public CArray models;
     }
 
 

@@ -2,11 +2,8 @@ mod types;
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use std::sync::Arc;
 use torii_client::client::Client as TClient;
-use types::{
-    EntityQuery, Error, FieldElement, ToriiClient, Ty, ModelStorage, WorldMetadata,
-};
+use types::{CArray, EntityQuery, Error, FieldElement, ToriiClient, Ty, WorldMetadata};
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -56,7 +53,6 @@ pub unsafe extern "C" fn client_entity(
     let entity: dojo_types::schema::EntityQuery = (&entity.clone()).into();
     let entity_future = unsafe { (*client).0.entity(&entity) };
 
-
     let result = tokio::runtime::Runtime::new()
         .unwrap()
         .block_on(entity_future);
@@ -68,7 +64,7 @@ pub unsafe extern "C" fn client_entity(
             } else {
                 std::ptr::null_mut()
             }
-        },
+        }
         Err(e) => {
             unsafe {
                 *error = Error {
@@ -88,13 +84,26 @@ pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetad
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_subscribed_entities(
+    client: *mut ToriiClient,
+) -> *const CArray<EntityQuery> {
+    let entities = unsafe { (*client).0.subscribed_entities().clone() };
+    let entities: Vec<EntityQuery> = entities.into_iter().map(|e| (&e.clone()).into()).collect();
+
+    &CArray {
+        data: entities.as_ptr(),
+        data_len: entities.len(),
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_start_subscription(client: *mut ToriiClient, error: *mut Error) {
     let client_future = unsafe { (*client).0.start_subscription() };
 
     let result = tokio::runtime::Runtime::new()
         .unwrap()
         .block_on(client_future);
-
 
     if let Err(e) = result {
         unsafe {

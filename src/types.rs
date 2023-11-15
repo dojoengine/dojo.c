@@ -7,8 +7,14 @@ pub struct ToriiClient(pub TClient);
 #[derive(Clone)]
 #[repr(C)]
 pub struct CArray<T> {
-    data: *const T,
-    data_len: usize,
+    pub data: *const T,
+    pub data_len: usize,
+}
+#[derive(Clone)]
+#[repr(C)]
+pub struct CHashItem<K, V> {
+    pub key: K,
+    pub value: V,
 }
 
 #[repr(C)]
@@ -260,6 +266,15 @@ impl From<&EntityQuery> for dojo_types::schema::EntityQuery {
     }
 }
 
+impl From<&dojo_types::schema::EntityQuery> for EntityQuery {
+    fn from(val: &dojo_types::schema::EntityQuery) -> Self {
+        EntityQuery {
+            model: CString::new(val.model.clone()).unwrap().into_raw(),
+            clause: (&val.clause.clone()).into(),
+        }
+    }
+}
+
 impl From<&Clause> for dojo_types::schema::Clause {
     fn from(val: &Clause) -> Self {
         match val {
@@ -269,6 +284,20 @@ impl From<&Clause> for dojo_types::schema::Clause {
             }
             Clause::Composite(composite) => {
                 dojo_types::schema::Clause::Composite((&composite.clone()).into())
+            }
+        }
+    }
+}
+
+impl From<&dojo_types::schema::Clause> for Clause {
+    fn from(val: &dojo_types::schema::Clause) -> Self {
+        match val {
+            dojo_types::schema::Clause::Keys(keys) => Clause::Keys((&keys.clone()).into()),
+            dojo_types::schema::Clause::Attribute(attribute) => {
+                Clause::Attribute((&attribute.clone()).into())
+            }
+            dojo_types::schema::Clause::Composite(composite) => {
+                Clause::Composite((&composite.clone()).into())
             }
         }
     }
@@ -284,10 +313,35 @@ impl From<&KeysClause> for dojo_types::schema::KeysClause {
     }
 }
 
+impl From<&dojo_types::schema::KeysClause> for KeysClause {
+    fn from(val: &dojo_types::schema::KeysClause) -> Self {
+        let keys = val
+            .keys
+            .iter()
+            .map(|k| (&k.clone()).into())
+            .collect::<Vec<_>>();
+
+        KeysClause {
+            data: keys.as_ptr(),
+            data_len: keys.len(),
+        }
+    }
+}
+
 impl From<&AttributeClause> for dojo_types::schema::AttributeClause {
     fn from(val: &AttributeClause) -> Self {
         dojo_types::schema::AttributeClause {
             attribute: unsafe { CStr::from_ptr(val.attribute).to_string_lossy().into_owned() },
+            operator: (&val.operator.clone()).into(),
+            value: (&val.value.clone()).into(),
+        }
+    }
+}
+
+impl From<&dojo_types::schema::AttributeClause> for AttributeClause {
+    fn from(val: &dojo_types::schema::AttributeClause) -> Self {
+        AttributeClause {
+            attribute: CString::new(val.attribute.clone()).unwrap().into_raw(),
             operator: (&val.operator.clone()).into(),
             value: (&val.value.clone()).into(),
         }
@@ -306,11 +360,37 @@ impl From<&CompositeClause> for dojo_types::schema::CompositeClause {
     }
 }
 
+impl From<&dojo_types::schema::CompositeClause> for CompositeClause {
+    fn from(val: &dojo_types::schema::CompositeClause) -> Self {
+        let operator = &val.operator.clone();
+        let clauses = val
+            .clauses
+            .iter()
+            .map(|c| (&c.clone()).into())
+            .collect::<Vec<_>>();
+
+        CompositeClause {
+            operator: operator.into(),
+            clauses: clauses.as_ptr(),
+            clauses_len: clauses.len(),
+        }
+    }
+}
+
 impl From<&LogicalOperator> for dojo_types::schema::LogicalOperator {
     fn from(val: &LogicalOperator) -> Self {
         match val {
             LogicalOperator::And => dojo_types::schema::LogicalOperator::And,
             LogicalOperator::Or => dojo_types::schema::LogicalOperator::Or,
+        }
+    }
+}
+
+impl From<&dojo_types::schema::LogicalOperator> for LogicalOperator {
+    fn from(val: &dojo_types::schema::LogicalOperator) -> Self {
+        match val {
+            dojo_types::schema::LogicalOperator::And => LogicalOperator::And,
+            dojo_types::schema::LogicalOperator::Or => LogicalOperator::Or,
         }
     }
 }
@@ -324,6 +404,19 @@ impl From<&ComparisonOperator> for dojo_types::schema::ComparisonOperator {
             ComparisonOperator::Gte => dojo_types::schema::ComparisonOperator::Gte,
             ComparisonOperator::Lt => dojo_types::schema::ComparisonOperator::Lt,
             ComparisonOperator::Lte => dojo_types::schema::ComparisonOperator::Lte,
+        }
+    }
+}
+
+impl From<&dojo_types::schema::ComparisonOperator> for ComparisonOperator {
+    fn from(val: &dojo_types::schema::ComparisonOperator) -> Self {
+        match val {
+            dojo_types::schema::ComparisonOperator::Eq => ComparisonOperator::Eq,
+            dojo_types::schema::ComparisonOperator::Neq => ComparisonOperator::Neq,
+            dojo_types::schema::ComparisonOperator::Gt => ComparisonOperator::Gt,
+            dojo_types::schema::ComparisonOperator::Gte => ComparisonOperator::Gte,
+            dojo_types::schema::ComparisonOperator::Lt => ComparisonOperator::Lt,
+            dojo_types::schema::ComparisonOperator::Lte => ComparisonOperator::Lte,
         }
     }
 }
@@ -346,17 +439,26 @@ impl From<&Value> for dojo_types::schema::Value {
     }
 }
 
+impl From<&dojo_types::schema::Value> for Value {
+    fn from(val: &dojo_types::schema::Value) -> Self {
+        match val {
+            dojo_types::schema::Value::String(string) => {
+                Value::String(CString::new(string.clone()).unwrap().into_raw())
+            }
+            dojo_types::schema::Value::Int(int) => Value::Int(*int),
+            dojo_types::schema::Value::UInt(uint) => Value::UInt(*uint),
+            dojo_types::schema::Value::Bool(bool) => Value::Bool(*bool),
+            dojo_types::schema::Value::Bytes(bytes) => Value::Bytes(CArray {
+                data: bytes.as_ptr(),
+                data_len: bytes.len(),
+            }),
+        }
+    }
+}
+
 pub type EntityKeys = CArray<FieldElement>;
 pub type StorageKey = FieldElement;
 pub type StorageValue = FieldElement;
-
-#[derive(Clone)]
-#[repr(C)]
-pub struct CHashMap<K, V> {
-    keys: *const K,
-    values: *const V,
-    len: usize,
-}
 
 #[derive(Clone)]
 #[repr(C)]
@@ -369,9 +471,9 @@ pub struct ModelIndex {
 #[repr(C)]
 pub struct ModelStorage {
     metadata: WorldMetadata,
-    storage: CHashMap<StorageKey, StorageValue>,
+    storage: CArray<CHashItem<StorageKey, StorageValue>>,
     // a map of model name to a set of entity keys.
-    model_index: CHashMap<FieldElement, CArray<EntityKeys>>,
+    model_index: CArray<CHashItem<FieldElement, CArray<EntityKeys>>>,
     // listener for storage updates.
     // senders: Mutex<HashMap<u8, Sender<()>>>,
     // listeners: Mutex<HashMap<StorageKey, Vec<u8>>>,
@@ -398,7 +500,7 @@ pub struct WorldMetadata {
     pub world_class_hash: FieldElement,
     pub executor_address: FieldElement,
     pub executor_class_hash: FieldElement,
-    pub models: CHashMap<*const c_char, ModelMetadata>,
+    pub models: CArray<CHashItem<*const c_char, ModelMetadata>>,
 }
 
 impl From<&dojo_types::WorldMetadata> for WorldMetadata {
@@ -408,20 +510,17 @@ impl From<&dojo_types::WorldMetadata> for WorldMetadata {
             world_class_hash: (&value.world_class_hash.clone()).into(),
             executor_address: (&value.executor_address.clone()).into(),
             executor_class_hash: (&value.executor_class_hash.clone()).into(),
-            models: CHashMap {
-                keys: value
+            models: CArray {
+                data: value
                     .models
                     .iter()
-                    .map(|(k, _)| CString::new(k.clone()).unwrap().into_raw() as *const c_char)
+                    .map(|(k, v)| CHashItem {
+                        key: CString::new(k.clone()).unwrap().into_raw() as *const c_char,
+                        value: (&v.clone()).into(),
+                    })
                     .collect::<Vec<_>>()
                     .as_ptr(),
-                values: value
-                    .models
-                    .iter()
-                    .map(|(_, v)| (&v.clone()).into())
-                    .collect::<Vec<_>>()
-                    .as_ptr(),
-                len: value.models.len(),
+                data_len: value.models.len(),
             },
         }
     }
