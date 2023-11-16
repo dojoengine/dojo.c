@@ -1074,6 +1074,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "csbindgen"
+version = "1.8.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df2f2752e26ade4753a17512e2b072489b7eb1df357a8c62cbdb464cff809b27"
+dependencies = [
+ "regex",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "ctr"
 version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4098,6 +4108,7 @@ name = "torii-c"
 version = "0.0.3"
 dependencies = [
  "cbindgen",
+ "csbindgen",
  "dojo-types",
  "parking_lot 0.12.1",
  "starknet 0.6.0",

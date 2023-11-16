@@ -230,19 +230,28 @@ typedef struct ModelMetadata {
   struct CArray_FieldElement layout;
 } ModelMetadata;
 
-typedef struct CHashMap______c_char__ModelMetadata {
-  const char *const *keys;
-  const struct ModelMetadata *values;
-  uintptr_t len;
-} CHashMap______c_char__ModelMetadata;
+typedef struct CHashItem______c_char__ModelMetadata {
+  const char *key;
+  struct ModelMetadata value;
+} CHashItem______c_char__ModelMetadata;
+
+typedef struct CArray_CHashItem______c_char__ModelMetadata {
+  const struct CHashItem______c_char__ModelMetadata *data;
+  uintptr_t data_len;
+} CArray_CHashItem______c_char__ModelMetadata;
 
 typedef struct WorldMetadata {
   struct FieldElement world_address;
   struct FieldElement world_class_hash;
   struct FieldElement executor_address;
   struct FieldElement executor_class_hash;
-  struct CHashMap______c_char__ModelMetadata models;
+  struct CArray_CHashItem______c_char__ModelMetadata models;
 } WorldMetadata;
+
+typedef struct CArray_EntityQuery {
+  const struct EntityQuery *data;
+  uintptr_t data_len;
+} CArray_EntityQuery;
 
 struct ToriiClient *client_new(const char *torii_url,
                                const char *rpc_url,
@@ -256,6 +265,8 @@ struct Ty *client_entity(struct ToriiClient *client,
                          struct Error *error);
 
 struct WorldMetadata client_metadata(struct ToriiClient *client);
+
+const struct CArray_EntityQuery *client_subscribed_entities(struct ToriiClient *client);
 
 void client_start_subscription(struct ToriiClient *client, struct Error *error);
 

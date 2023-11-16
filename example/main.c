@@ -9,7 +9,7 @@ int main()
     FieldElement world;
     // Initialize world.data here...
 
-    EntityModel entities[1];
+    EntityQuery entities[1];
     // Initialize entities[0].model, entities[0].keys, and entities[0].keys_len here...
 
     Error error;
