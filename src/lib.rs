@@ -61,7 +61,7 @@ pub unsafe extern "C" fn client_entity(
     match result {
         Ok(ty) => {
             if let Some(ty) = ty {
-                Box::into_raw(Box::new((&ty.clone()).into()))
+                Box::into_raw(Box::new((&ty).into()))
             } else {
                 std::ptr::null_mut()
             }
@@ -89,7 +89,7 @@ pub unsafe extern "C" fn client_subscribed_entities(
     client: *mut ToriiClient,
 ) -> *const CArray<EntityQuery> {
     let entities = unsafe { (*client).0.subscribed_entities().clone() };
-    let entities: Vec<EntityQuery> = entities.into_iter().map(|e| (&e.clone()).into()).collect();
+    let entities: Vec<EntityQuery> = entities.into_iter().map(|e| (&e).into()).collect();
 
     &CArray {
         data: entities.as_ptr(),

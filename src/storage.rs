@@ -20,7 +20,7 @@ pub unsafe extern "C" fn storage_get_entity_storage(
             .collect()
     };
     let result =
-        unsafe { (*storage).get_entity_storage((&model.clone()).into(), raw_keys.as_slice()) };
+        unsafe { (*storage).get_entity_storage((&model).into(), raw_keys.as_slice()) };
 
     match result {
         Ok(ty) => {
@@ -72,7 +72,7 @@ pub unsafe extern "C" fn storage_set_entity_storage(
             .collect()
     };
     let result =
-        unsafe { (*storage).set_entity_storage((&model.clone()).into(), raw_keys, raw_values) };
+        unsafe { (*storage).set_entity_storage((&model).into(), raw_keys, raw_values) };
 
     match result {
         Ok(_) => {}
