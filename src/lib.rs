@@ -1,4 +1,3 @@
-mod storage;
 mod types;
 
 use std::ffi::{CStr, CString};
