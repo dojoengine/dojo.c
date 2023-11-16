@@ -94,10 +94,10 @@ namespace Dojo
 
     internal enum Ty : uint
     {
-        Primitive,
-        Struct,
-        Enum,
-        Tuple,
+        TyPrimitive,
+        TyStruct,
+        TyEnum,
+        TyTuple,
     }
 
 

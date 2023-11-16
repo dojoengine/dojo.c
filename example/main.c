@@ -6,11 +6,12 @@ int main()
     const char *torii_url = "http://localhost:50051";
     const char *rpc_url = "http://localhost:50052";
 
-    FieldElement world;
+    FieldElement world = {};
     // Initialize world.data here...
 
-    EntityQuery entities[1];
+    EntityQuery entities[1] = {};
     // Initialize entities[0].model, entities[0].keys, and entities[0].keys_len here...
+    entities[0].model = "";
 
     Error error;
 

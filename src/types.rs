@@ -99,17 +99,18 @@ pub enum Value {
     String(*const c_char),
     Int(i64),
     UInt(u64),
-    Bool(bool),
+    VBool(bool),
     Bytes(CArray<u8>),
 }
 
 #[derive(Clone)]
 #[repr(C)]
+#[allow(clippy::enum_variant_names)]
 pub enum Ty {
-    Primitive(Primitive),
-    Struct(Struct),
-    Enum(Enum),
-    Tuple(CArray<Ty>),
+    TyPrimitive(Primitive),
+    TyStruct(Struct),
+    TyEnum(Enum),
+    TyTuple(CArray<Ty>),
 }
 
 impl From<&dojo_types::schema::Ty> for Ty {
@@ -117,45 +118,33 @@ impl From<&dojo_types::schema::Ty> for Ty {
         match value {
             dojo_types::schema::Ty::Primitive(primitive) => {
                 let primitive = match primitive {
-                    dojo_types::primitive::Primitive::U8(v) => {
-                        Primitive::U8((v.clone()).as_mut().unwrap())
-                    }
-                    dojo_types::primitive::Primitive::U16(v) => {
-                        Primitive::U16((v.clone()).as_mut().unwrap())
-                    }
-                    dojo_types::primitive::Primitive::U32(v) => {
-                        Primitive::U32((v.clone()).as_mut().unwrap())
-                    }
-                    dojo_types::primitive::Primitive::U64(v) => {
-                        Primitive::U64((v.clone()).as_mut().unwrap())
-                    }
+                    dojo_types::primitive::Primitive::U8(v) => Primitive::U8(v.unwrap()),
+                    dojo_types::primitive::Primitive::U16(v) => Primitive::U16(v.unwrap()),
+                    dojo_types::primitive::Primitive::U32(v) => Primitive::U32(v.unwrap()),
+                    dojo_types::primitive::Primitive::U64(v) => Primitive::U64(v.unwrap()),
                     dojo_types::primitive::Primitive::U128(v) => {
                         Primitive::U128(v.unwrap().to_be_bytes())
                     }
                     dojo_types::primitive::Primitive::U256(v) => {
                         Primitive::U256(v.unwrap().to_words())
                     }
-                    dojo_types::primitive::Primitive::USize(v) => {
-                        Primitive::USize((v.clone()).as_mut().unwrap())
-                    }
-                    dojo_types::primitive::Primitive::Bool(v) => {
-                        Primitive::Bool((v.clone()).as_mut().unwrap())
-                    }
+                    dojo_types::primitive::Primitive::USize(v) => Primitive::USize(v.unwrap()),
+                    dojo_types::primitive::Primitive::Bool(v) => Primitive::PBool(v.unwrap()),
                     dojo_types::primitive::Primitive::Felt252(v) => {
                         let fe: FieldElement = (&v.unwrap().clone()).into();
-                        Primitive::Felt252(&fe)
+                        Primitive::Felt252(fe)
                     }
                     dojo_types::primitive::Primitive::ClassHash(v) => {
                         let fe: FieldElement = (&v.unwrap().clone()).into();
-                        Primitive::Felt252(&fe)
+                        Primitive::Felt252(fe)
                     }
                     dojo_types::primitive::Primitive::ContractAddress(v) => {
                         let fe: FieldElement = (&v.unwrap().clone()).into();
-                        Primitive::Felt252(&fe)
+                        Primitive::Felt252(fe)
                     }
                 };
 
-                Ty::Primitive(primitive)
+                Ty::TyPrimitive(primitive)
             }
             dojo_types::schema::Ty::Struct(struct_) => {
                 let children = struct_
@@ -163,12 +152,12 @@ impl From<&dojo_types::schema::Ty> for Ty {
                     .iter()
                     .map(|c| Member {
                         name: CString::new(c.name.clone()).unwrap().into_raw(),
-                        ty: (&c.ty.clone()).into(),
+                        ty: &((&c.ty.clone()).into()),
                         key: c.key,
                     })
                     .collect::<Vec<_>>();
 
-                Ty::Struct(Struct {
+                Ty::TyStruct(Struct {
                     name: CString::new(struct_.name.clone()).unwrap().into_raw(),
                     children: CArray {
                         data: children.as_ptr(),
@@ -182,11 +171,11 @@ impl From<&dojo_types::schema::Ty> for Ty {
                     .iter()
                     .map(|o| EnumOption {
                         name: CString::new(o.name.clone()).unwrap().into_raw(),
-                        ty: (&o.ty.clone()).into(),
+                        ty: &((&o.ty.clone()).into()),
                     })
                     .collect::<Vec<_>>();
 
-                Ty::Enum(Enum {
+                Ty::TyEnum(Enum {
                     name: CString::new(enum_.name.clone()).unwrap().into_raw(),
                     option: enum_.option.unwrap(),
                     options: CArray {
@@ -201,7 +190,7 @@ impl From<&dojo_types::schema::Ty> for Ty {
                     .map(|c| (&c.clone()).into())
                     .collect::<Vec<_>>();
 
-                Ty::Tuple(CArray {
+                Ty::TyTuple(CArray {
                     data: children.as_ptr(),
                     data_len: children.len(),
                 })
@@ -222,7 +211,7 @@ pub struct Enum {
 #[repr(C)]
 pub struct EnumOption {
     pub name: *const c_char,
-    pub ty: Ty,
+    pub ty: *const Ty,
 }
 
 #[derive(Clone)]
@@ -236,25 +225,25 @@ pub struct Struct {
 #[repr(C)]
 pub struct Member {
     pub name: *const c_char,
-    pub ty: Ty,
+    pub ty: *const Ty,
     pub key: bool,
 }
 
 #[derive(Clone)]
 #[repr(C)]
 pub enum Primitive {
-    U8(*const u8),
-    U16(*const u16),
-    U32(*const u32),
-    U64(*const u64),
+    U8(u8),
+    U16(u16),
+    U32(u32),
+    U64(u64),
     // TODO: better way?
     U128([u8; 16]),
     U256([u64; 4]),
-    USize(*const u32),
-    Bool(*const bool),
-    Felt252(*const FieldElement),
-    ClassHash(*const FieldElement),
-    ContractAddress(*const FieldElement),
+    USize(u32),
+    PBool(bool),
+    Felt252(FieldElement),
+    ClassHash(FieldElement),
+    ContractAddress(FieldElement),
 }
 
 impl From<&EntityQuery> for dojo_types::schema::EntityQuery {
@@ -429,7 +418,7 @@ impl From<&Value> for dojo_types::schema::Value {
             }),
             Value::Int(int) => dojo_types::schema::Value::Int(*int),
             Value::UInt(uint) => dojo_types::schema::Value::UInt(*uint),
-            Value::Bool(bool) => dojo_types::schema::Value::Bool(*bool),
+            Value::VBool(bool) => dojo_types::schema::Value::Bool(*bool),
             Value::Bytes(bytes) => unsafe {
                 dojo_types::schema::Value::Bytes(
                     std::slice::from_raw_parts(bytes.data, bytes.data_len).to_vec(),
@@ -447,7 +436,7 @@ impl From<&dojo_types::schema::Value> for Value {
             }
             dojo_types::schema::Value::Int(int) => Value::Int(*int),
             dojo_types::schema::Value::UInt(uint) => Value::UInt(*uint),
-            dojo_types::schema::Value::Bool(bool) => Value::Bool(*bool),
+            dojo_types::schema::Value::Bool(bool) => Value::VBool(*bool),
             dojo_types::schema::Value::Bytes(bytes) => Value::Bytes(CArray {
                 data: bytes.as_ptr(),
                 data_len: bytes.len(),
