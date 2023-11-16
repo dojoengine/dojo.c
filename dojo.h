@@ -253,6 +253,43 @@ typedef struct CArray_EntityQuery {
   uintptr_t data_len;
 } CArray_EntityQuery;
 
+typedef struct FieldElement StorageKey;
+
+typedef struct FieldElement StorageValue;
+
+typedef struct CHashItem_StorageKey__StorageValue {
+  StorageKey key;
+  StorageValue value;
+} CHashItem_StorageKey__StorageValue;
+
+typedef struct CArray_CHashItem_StorageKey__StorageValue {
+  const struct CHashItem_StorageKey__StorageValue *data;
+  uintptr_t data_len;
+} CArray_CHashItem_StorageKey__StorageValue;
+
+typedef struct CArray_FieldElement EntityKeys;
+
+typedef struct CArray_EntityKeys {
+  const EntityKeys *data;
+  uintptr_t data_len;
+} CArray_EntityKeys;
+
+typedef struct CHashItem_FieldElement__CArray_EntityKeys {
+  struct FieldElement key;
+  struct CArray_EntityKeys value;
+} CHashItem_FieldElement__CArray_EntityKeys;
+
+typedef struct CArray_CHashItem_FieldElement__CArray_EntityKeys {
+  const struct CHashItem_FieldElement__CArray_EntityKeys *data;
+  uintptr_t data_len;
+} CArray_CHashItem_FieldElement__CArray_EntityKeys;
+
+typedef struct ModelStorage {
+  struct WorldMetadata metadata;
+  struct CArray_CHashItem_StorageKey__StorageValue storage;
+  struct CArray_CHashItem_FieldElement__CArray_EntityKeys model_index;
+} ModelStorage;
+
 struct ToriiClient *client_new(const char *torii_url,
                                const char *rpc_url,
                                const struct FieldElement *world,
@@ -281,3 +318,14 @@ void client_remove_entities_to_sync(struct ToriiClient *client,
                                     struct Error *error);
 
 void client_free(struct ToriiClient *client);
+
+struct CArray_FieldElement *storage_get_entity_storage(struct ModelStorage *storage,
+                                                       struct FieldElement model,
+                                                       struct CArray_FieldElement raw_keys,
+                                                       struct Error *error);
+
+void storage_set_entity_storage(struct ModelStorage *storage,
+                                struct FieldElement model,
+                                struct CArray_FieldElement raw_keys,
+                                struct CArray_FieldElement raw_values,
+                                struct Error *error);
