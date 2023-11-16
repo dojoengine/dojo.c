@@ -1,5 +1,5 @@
-mod types;
 mod storage;
+mod types;
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;

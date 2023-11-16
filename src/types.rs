@@ -542,8 +542,8 @@ impl From<&dojo_types::schema::ModelMetadata> for ModelMetadata {
         ModelMetadata {
             schema: (&value.schema.clone()).into(),
             name: CString::new(value.name.clone()).unwrap().into_raw(),
-            packed_size: value.packed_size.clone(),
-            unpacked_size: value.unpacked_size.clone(),
+            packed_size: value.packed_size,
+            unpacked_size: value.unpacked_size,
             class_hash: (&value.class_hash.clone()).into(),
             layout: CArray {
                 data: value

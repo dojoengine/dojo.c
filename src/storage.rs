@@ -29,7 +29,10 @@ pub unsafe extern "C" fn storage_get_entity_storage(
                     .iter()
                     .map(|f| (&f.clone()).into())
                     .collect::<Vec<FieldElement>>();
-                Box::into_raw(Box::new(CArray { data: ty.as_ptr(), data_len: ty.len() }))
+                Box::into_raw(Box::new(CArray {
+                    data: ty.as_ptr(),
+                    data_len: ty.len(),
+                }))
             } else {
                 std::ptr::null_mut()
             }
@@ -68,22 +71,15 @@ pub unsafe extern "C" fn storage_set_entity_storage(
             .map(|f| (&f.clone()).into())
             .collect()
     };
-    let result = unsafe {
-        (*storage).set_entity_storage(
-            (&model.clone()).into(),
-            raw_keys,
-            raw_values,
-        )
-    };
+    let result =
+        unsafe { (*storage).set_entity_storage((&model.clone()).into(), raw_keys, raw_values) };
 
     match result {
         Ok(_) => {}
-        Err(e) => {
-            unsafe {
-                *error = Error {
-                    message: CString::new(e.to_string()).unwrap().into_raw(),
-                };
-            }
-        }
+        Err(e) => unsafe {
+            *error = Error {
+                message: CString::new(e.to_string()).unwrap().into_raw(),
+            };
+        },
     }
 }
