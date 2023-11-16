@@ -39,7 +39,7 @@ typedef enum Value_Tag {
   String,
   Int,
   UInt,
-  Bool,
+  VBool,
   Bytes,
 } Value_Tag;
 
@@ -56,7 +56,7 @@ typedef struct Value {
       uint64_t u_int;
     };
     struct {
-      bool bool_;
+      bool v_bool;
     };
     struct {
       struct CArray_u8 bytes;
@@ -114,7 +114,7 @@ typedef enum Primitive_Tag {
   U128,
   U256,
   USize,
-  Bool,
+  PBool,
   Felt252,
   ClassHash,
   ContractAddress,
@@ -124,16 +124,16 @@ typedef struct Primitive {
   Primitive_Tag tag;
   union {
     struct {
-      const uint8_t *u8;
+      uint8_t u8;
     };
     struct {
-      const uint16_t *u16;
+      uint16_t u16;
     };
     struct {
-      const uint32_t *u32;
+      uint32_t u32;
     };
     struct {
-      const uint64_t *u64;
+      uint64_t u64;
     };
     struct {
       uint8_t u128[16];
@@ -142,26 +142,26 @@ typedef struct Primitive {
       uint64_t u256[4];
     };
     struct {
-      const uint32_t *u_size;
+      uint32_t u_size;
     };
     struct {
-      const bool *bool_;
+      bool p_bool;
     };
     struct {
-      const struct FieldElement *felt252;
+      struct FieldElement felt252;
     };
     struct {
-      const struct FieldElement *class_hash;
+      struct FieldElement class_hash;
     };
     struct {
-      const struct FieldElement *contract_address;
+      struct FieldElement contract_address;
     };
   };
 } Primitive;
 
 typedef struct Member {
   const char *name;
-  struct Ty ty;
+  const struct Ty *ty;
   bool key;
 } Member;
 
@@ -177,7 +177,7 @@ typedef struct Struct {
 
 typedef struct EnumOption {
   const char *name;
-  struct Ty ty;
+  const struct Ty *ty;
 } EnumOption;
 
 typedef struct CArray_EnumOption {
@@ -197,26 +197,26 @@ typedef struct CArray_Ty {
 } CArray_Ty;
 
 typedef enum Ty_Tag {
-  Primitive,
-  Struct,
-  Enum,
-  Tuple,
+  TyPrimitive,
+  TyStruct,
+  TyEnum,
+  TyTuple,
 } Ty_Tag;
 
 typedef struct Ty {
   Ty_Tag tag;
   union {
     struct {
-      struct Primitive primitive;
+      struct Primitive ty_primitive;
     };
     struct {
-      struct Struct struct_;
+      struct Struct ty_struct;
     };
     struct {
-      struct Enum enum_;
+      struct Enum ty_enum;
     };
     struct {
-      struct CArray_Ty tuple;
+      struct CArray_Ty ty_tuple;
     };
   };
 } Ty;
