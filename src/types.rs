@@ -203,6 +203,104 @@ impl From<&dojo_types::schema::Ty> for Ty {
     }
 }
 
+// Implement opposite conversion
+// use CString and other alike types to destruct the data
+impl From<&Ty> for dojo_types::schema::Ty {
+    fn from(value: &Ty) -> Self {
+        match value {
+            Ty::TyPrimitive(primitive) => {
+                let primitive = match primitive {
+                    Primitive::U8(v) => dojo_types::primitive::Primitive::U8(Some(*v)),
+                    Primitive::U16(v) => dojo_types::primitive::Primitive::U16(Some(*v)),
+                    Primitive::U32(v) => dojo_types::primitive::Primitive::U32(Some(*v)),
+                    Primitive::U64(v) => dojo_types::primitive::Primitive::U64(Some(*v)),
+                    Primitive::U128(v) => {
+                        dojo_types::primitive::Primitive::U128(Some(u128::from_be_bytes(*v)))
+                    }
+                    Primitive::U256(v) => dojo_types::primitive::Primitive::U256(Some((*v).into())),
+                    Primitive::USize(v) => dojo_types::primitive::Primitive::USize(Some(*v)),
+                    Primitive::PBool(v) => dojo_types::primitive::Primitive::Bool(Some(*v)),
+                    Primitive::Felt252(v) => {
+                        dojo_types::primitive::Primitive::Felt252(Some((&v.clone()).into()))
+                    }
+                    Primitive::ClassHash(v) => {
+                        dojo_types::primitive::Primitive::ClassHash(Some((&v.clone()).into()))
+                    }
+                    Primitive::ContractAddress(v) => {
+                        dojo_types::primitive::Primitive::ContractAddress(Some((&v.clone()).into()))
+                    }
+                };
+
+                dojo_types::schema::Ty::Primitive(primitive)
+            }
+            Ty::TyStruct(struct_) => {
+                let children = unsafe {
+                    Vec::from_raw_parts(
+                        struct_.children.data,
+                        struct_.children.data_len,
+                        struct_.children.data_len,
+                    )
+                    .iter()
+                    .map(|c| dojo_types::schema::Member {
+                        name: CString::from_raw(c.name as *mut c_char)
+                            .into_string()
+                            .unwrap(),
+                        ty: (&*c.ty.clone()).into(),
+                        key: c.key,
+                    })
+                    .collect::<Vec<_>>()
+                };
+
+                dojo_types::schema::Ty::Struct(dojo_types::schema::Struct {
+                    name: unsafe {
+                        CString::from_raw(struct_.name as *mut c_char)
+                            .into_string()
+                            .unwrap()
+                    },
+                    children,
+                })
+            }
+            Ty::TyEnum(enum_) => {
+                let options = unsafe {
+                    Vec::from_raw_parts(
+                        enum_.options.data,
+                        enum_.options.data_len,
+                        enum_.options.data_len,
+                    )
+                    .iter()
+                    .map(|o| dojo_types::schema::EnumOption {
+                        name: CString::from_raw(o.name as *mut c_char)
+                            .into_string()
+                            .unwrap(),
+                        ty: (&*o.ty.clone()).into(),
+                    })
+                    .collect::<Vec<_>>()
+                };
+
+                dojo_types::schema::Ty::Enum(dojo_types::schema::Enum {
+                    name: unsafe {
+                        CString::from_raw(enum_.name as *mut c_char)
+                            .into_string()
+                            .unwrap()
+                    },
+                    option: Some(enum_.option),
+                    options,
+                })
+            }
+            Ty::TyTuple(tuple) => {
+                let children = unsafe {
+                    Vec::from_raw_parts(tuple.data, tuple.data_len, tuple.data_len)
+                        .iter()
+                        .map(|c| (&c.clone()).into())
+                        .collect::<Vec<_>>()
+                };
+
+                dojo_types::schema::Ty::Tuple(children)
+            }
+        }
+    }
+}
+
 #[derive(Clone)]
 #[repr(C)]
 pub struct Enum {
@@ -341,7 +439,9 @@ impl From<&dojo_types::schema::AttributeClause> for AttributeClause {
 impl From<&CompositeClause> for dojo_types::schema::CompositeClause {
     fn from(val: &CompositeClause) -> Self {
         let operator = &val.operator.clone();
-        let clauses = unsafe { Vec::from_raw_parts(val.clauses.data, val.clauses.data_len, val.clauses.data_len) };
+        let clauses = unsafe {
+            Vec::from_raw_parts(val.clauses.data, val.clauses.data_len, val.clauses.data_len)
+        };
 
         dojo_types::schema::CompositeClause {
             operator: operator.into(),
@@ -420,9 +520,11 @@ impl From<&Value> for dojo_types::schema::Value {
             Value::UInt(uint) => dojo_types::schema::Value::UInt(*uint),
             Value::VBool(bool) => dojo_types::schema::Value::Bool(*bool),
             Value::Bytes(bytes) => unsafe {
-                dojo_types::schema::Value::Bytes(
-                    Vec::from_raw_parts(bytes.data, bytes.data_len, bytes.data_len),
-                )
+                dojo_types::schema::Value::Bytes(Vec::from_raw_parts(
+                    bytes.data,
+                    bytes.data_len,
+                    bytes.data_len,
+                ))
             },
         }
     }
@@ -523,7 +625,7 @@ pub struct ModelMetadata {
 
 impl From<&dojo_types::schema::ModelMetadata> for ModelMetadata {
     fn from(value: &dojo_types::schema::ModelMetadata) -> Self {
-        let mut layout: Vec<FieldElement> = value
+        let layout: Vec<FieldElement> = value
             .layout
             .iter()
             .map(|v| (&v.clone()).into())

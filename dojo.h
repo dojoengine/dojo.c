@@ -225,6 +225,11 @@ typedef struct Ty {
   };
 } Ty;
 
+typedef struct CArray_EntityQuery {
+  struct EntityQuery *data;
+  uintptr_t data_len;
+} CArray_EntityQuery;
+
 typedef struct ModelMetadata {
   struct Ty schema;
   const char *name;
@@ -263,6 +268,10 @@ struct Ty *client_entity(struct ToriiClient *client,
                          const struct EntityQuery *entity,
                          struct Error *error);
 
+const struct CArray_EntityQuery *client_subscribed_entities(struct ToriiClient *client);
+
+void client_start_subscription(struct ToriiClient *client, struct Error *error);
+
 struct WorldMetadata client_metadata(struct ToriiClient *client);
 
 void client_add_entities_to_sync(struct ToriiClient *client,
@@ -281,3 +290,7 @@ void client_remove_entities_to_sync(struct ToriiClient *client,
                                     struct Error *error);
 
 void client_free(struct ToriiClient *client);
+
+void carray_free(const struct CArray_EntityQuery *array);
+
+void ty_free(const struct Ty *ty);
