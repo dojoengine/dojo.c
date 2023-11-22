@@ -236,7 +236,7 @@ typedef struct ModelMetadata {
   uint32_t packed_size;
   uint32_t unpacked_size;
   struct FieldElement class_hash;
-  const struct CArray_FieldElement *layout;
+  struct CArray_FieldElement layout;
 } ModelMetadata;
 
 typedef struct CHashItem______c_char__ModelMetadata {
@@ -254,7 +254,7 @@ typedef struct WorldMetadata {
   struct FieldElement world_class_hash;
   struct FieldElement executor_address;
   struct FieldElement executor_class_hash;
-  const struct CArray_CHashItem______c_char__ModelMetadata *models;
+  struct CArray_CHashItem______c_char__ModelMetadata models;
 } WorldMetadata;
 
 struct ToriiClient *client_new(const char *torii_url,

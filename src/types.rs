@@ -1,5 +1,4 @@
 use std::ffi::{c_char, CStr, CString};
-
 use torii_client::client::Client as TClient;
 
 pub struct ToriiClient(pub TClient);
@@ -11,16 +10,21 @@ pub struct CArray<T> {
     pub data_len: usize,
 }
 
-impl<T> From<Vec<T>> for CArray<T> {
-    fn from(mut val: Vec<T>) -> Self {
+impl<T> From<&mut Vec<T>> for CArray<T> {
+    fn from(val: &mut Vec<T>) -> Self {
         val.shrink_to_fit();
-        let cdata: CArray<T> = CArray {
+
+        let mut val = std::mem::ManuallyDrop::new(val);
+        CArray {
             data: val.as_mut_ptr(),
             data_len: val.len(),
-        };
-        std::mem::forget(val);
+        }
+    }
+}
 
-        cdata
+impl<T> From<&CArray<T>> for Vec<T> {
+    fn from(val: &CArray<T>) -> Self {
+        unsafe { Vec::from_raw_parts(val.data, val.data_len, val.data_len) }
     }
 }
 
@@ -160,7 +164,7 @@ impl From<&dojo_types::schema::Ty> for Ty {
                 Ty::TyPrimitive(primitive)
             }
             dojo_types::schema::Ty::Struct(struct_) => {
-                let children = struct_
+                let children = &mut struct_
                     .children
                     .iter()
                     .map(|c| Member {
@@ -168,7 +172,7 @@ impl From<&dojo_types::schema::Ty> for Ty {
                         ty: &((&c.ty.clone()).into()),
                         key: c.key,
                     })
-                    .collect::<Vec<_>>();
+                    .collect::<Vec<Member>>();
 
                 Ty::TyStruct(Struct {
                     name: CString::new(struct_.name.clone()).unwrap().into_raw(),
@@ -176,28 +180,28 @@ impl From<&dojo_types::schema::Ty> for Ty {
                 })
             }
             dojo_types::schema::Ty::Enum(enum_) => {
-                let options = enum_
+                let options = &mut enum_
                     .options
                     .iter()
                     .map(|o| EnumOption {
                         name: CString::new(o.name.clone()).unwrap().into_raw(),
                         ty: &((&o.ty.clone()).into()),
                     })
-                    .collect::<Vec<_>>();
+                    .collect::<Vec<EnumOption>>();
 
                 Ty::TyEnum(Enum {
                     name: CString::new(enum_.name.clone()).unwrap().into_raw(),
                     option: enum_.option.unwrap(),
-                    options: options.into(),
+                    options: (options).into(),
                 })
             }
             dojo_types::schema::Ty::Tuple(tuple) => {
-                let children = tuple
+                let children = &mut tuple
                     .iter()
                     .map(|c| (&c.clone()).into())
-                    .collect::<Vec<_>>();
+                    .collect::<Vec<Ty>>();
 
-                Ty::TyTuple(children.into())
+                Ty::TyTuple((children).into())
             }
         }
     }
@@ -406,13 +410,13 @@ impl From<&KeysClause> for dojo_types::schema::KeysClause {
 
 impl From<&dojo_types::schema::KeysClause> for KeysClause {
     fn from(val: &dojo_types::schema::KeysClause) -> Self {
-        let keys = val
+        let keys = &mut val
             .keys
             .iter()
             .map(|k| (&k.clone()).into())
-            .collect::<Vec<_>>();
+            .collect::<Vec<FieldElement>>();
 
-        keys.into()
+        (keys).into()
     }
 }
 
@@ -453,15 +457,15 @@ impl From<&CompositeClause> for dojo_types::schema::CompositeClause {
 impl From<&dojo_types::schema::CompositeClause> for CompositeClause {
     fn from(val: &dojo_types::schema::CompositeClause) -> Self {
         let operator = &val.operator.clone();
-        let clauses = val
+        let clauses = &mut val
             .clauses
             .iter()
             .map(|c| (&c.clone()).into())
-            .collect::<Vec<_>>();
+            .collect::<Vec<Clause>>();
 
         CompositeClause {
             operator: operator.into(),
-            clauses: clauses.into(),
+            clauses: (clauses).into(),
         }
     }
 }
@@ -539,7 +543,7 @@ impl From<&dojo_types::schema::Value> for Value {
             dojo_types::schema::Value::Int(int) => Value::Int(*int),
             dojo_types::schema::Value::UInt(uint) => Value::UInt(*uint),
             dojo_types::schema::Value::Bool(bool) => Value::VBool(*bool),
-            dojo_types::schema::Value::Bytes(bytes) => Value::Bytes((bytes.clone()).into()),
+            dojo_types::schema::Value::Bytes(bytes) => Value::Bytes((&mut bytes.clone()).into()),
         }
     }
 }
@@ -588,26 +592,26 @@ pub struct WorldMetadata {
     pub world_class_hash: FieldElement,
     pub executor_address: FieldElement,
     pub executor_class_hash: FieldElement,
-    pub models: *const CArray<CHashItem<*const c_char, ModelMetadata>>,
+    pub models: CArray<CHashItem<*const c_char, ModelMetadata>>,
 }
 
 impl From<&dojo_types::WorldMetadata> for WorldMetadata {
     fn from(value: &dojo_types::WorldMetadata) -> Self {
-        let models: Vec<CHashItem<*const c_char, ModelMetadata>> = value
+        let models = &mut value
             .models
             .iter()
             .map(|(k, v)| CHashItem {
                 key: CString::new(k.clone()).unwrap().into_raw() as *const c_char,
                 value: (&v.clone()).into(),
             })
-            .collect::<Vec<_>>();
+            .collect::<Vec<CHashItem<*const c_char, ModelMetadata>>>();
 
         WorldMetadata {
             world_address: (&value.world_address.clone()).into(),
             world_class_hash: (&value.world_class_hash.clone()).into(),
             executor_address: (&value.executor_address.clone()).into(),
             executor_class_hash: (&value.executor_class_hash.clone()).into(),
-            models: &models.into(),
+            models: (models).into(),
         }
     }
 }
@@ -620,16 +624,16 @@ pub struct ModelMetadata {
     pub packed_size: u32,
     pub unpacked_size: u32,
     pub class_hash: FieldElement,
-    pub layout: *const CArray<FieldElement>,
+    pub layout: CArray<FieldElement>,
 }
 
 impl From<&dojo_types::schema::ModelMetadata> for ModelMetadata {
     fn from(value: &dojo_types::schema::ModelMetadata) -> Self {
-        let layout: Vec<FieldElement> = value
+        let layout = &mut value
             .layout
             .iter()
             .map(|v| (&v.clone()).into())
-            .collect::<Vec<_>>();
+            .collect::<Vec<FieldElement>>();
 
         ModelMetadata {
             schema: (&value.schema.clone()).into(),
@@ -637,7 +641,7 @@ impl From<&dojo_types::schema::ModelMetadata> for ModelMetadata {
             packed_size: value.packed_size,
             unpacked_size: value.unpacked_size,
             class_hash: (&value.class_hash.clone()).into(),
-            layout: &layout.into(),
+            layout: (layout).into(),
         }
     }
 }

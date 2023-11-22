@@ -83,9 +83,9 @@ pub unsafe extern "C" fn client_subscribed_entities(
     client: *mut ToriiClient,
 ) -> *const CArray<EntityQuery> {
     let entities = unsafe { (*client).0.subscribed_entities().clone() };
-    let entities: Vec<EntityQuery> = entities.into_iter().map(|e| (&e).into()).collect();
+    let entities = &mut entities.into_iter().map(|e| (&e).into()).collect::<Vec<EntityQuery>>();
 
-    &entities.into()
+    &(entities).into()
 }
 
 #[no_mangle]
