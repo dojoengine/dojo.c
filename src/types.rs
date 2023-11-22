@@ -10,6 +10,16 @@ pub struct CArray<T> {
     pub data: *const T,
     pub data_len: usize,
 }
+
+impl<T> From<&Vec<T>> for CArray<T> {
+    fn from(val: &Vec<T>) -> Self {
+        CArray {
+            data: val.as_ptr(),
+            data_len: val.len(),
+        }
+    }
+}
+
 #[derive(Clone)]
 #[repr(C)]
 pub struct CHashItem<K, V> {
@@ -96,7 +106,7 @@ pub enum ComparisonOperator {
 #[derive(Clone)]
 #[repr(C)]
 pub enum Value {
-    String(*const c_char),
+    VString(*const c_char),
     Int(i64),
     UInt(u64),
     VBool(bool),
@@ -413,7 +423,7 @@ impl From<&dojo_types::schema::ComparisonOperator> for ComparisonOperator {
 impl From<&Value> for dojo_types::schema::Value {
     fn from(val: &Value) -> Self {
         match val {
-            Value::String(string) => dojo_types::schema::Value::String(unsafe {
+            Value::VString(string) => dojo_types::schema::Value::String(unsafe {
                 CStr::from_ptr(*string).to_string_lossy().into_owned()
             }),
             Value::Int(int) => dojo_types::schema::Value::Int(*int),
@@ -432,7 +442,7 @@ impl From<&dojo_types::schema::Value> for Value {
     fn from(val: &dojo_types::schema::Value) -> Self {
         match val {
             dojo_types::schema::Value::String(string) => {
-                Value::String(CString::new(string.clone()).unwrap().into_raw())
+                Value::VString(CString::new(string.clone()).unwrap().into_raw())
             }
             dojo_types::schema::Value::Int(int) => Value::Int(*int),
             dojo_types::schema::Value::UInt(uint) => Value::UInt(*uint),

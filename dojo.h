@@ -36,7 +36,7 @@ typedef struct CArray_u8 {
 } CArray_u8;
 
 typedef enum Value_Tag {
-  String,
+  VString,
   Int,
   UInt,
   VBool,
@@ -47,7 +47,7 @@ typedef struct Value {
   Value_Tag tag;
   union {
     struct {
-      const char *string;
+      const char *v_string;
     };
     struct {
       int64_t int_;
@@ -248,11 +248,6 @@ typedef struct WorldMetadata {
   struct CArray_CHashItem______c_char__ModelMetadata models;
 } WorldMetadata;
 
-typedef struct CArray_EntityQuery {
-  const struct EntityQuery *data;
-  uintptr_t data_len;
-} CArray_EntityQuery;
-
 struct ToriiClient *client_new(const char *torii_url,
                                const char *rpc_url,
                                const struct FieldElement *world,
@@ -266,14 +261,15 @@ struct Ty *client_entity(struct ToriiClient *client,
 
 struct WorldMetadata client_metadata(struct ToriiClient *client);
 
-const struct CArray_EntityQuery *client_subscribed_entities(struct ToriiClient *client);
-
-void client_start_subscription(struct ToriiClient *client, struct Error *error);
-
 void client_add_entities_to_sync(struct ToriiClient *client,
                                  const struct EntityQuery *entities,
                                  uintptr_t entities_len,
                                  struct Error *error);
+
+void client_on_entity_state_change(struct ToriiClient *client,
+                                   const struct EntityQuery *entity,
+                                   void (*callback)(void),
+                                   struct Error *error);
 
 void client_remove_entities_to_sync(struct ToriiClient *client,
                                     const struct EntityQuery *entities,
