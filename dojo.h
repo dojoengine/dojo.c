@@ -24,14 +24,14 @@ typedef struct FieldElement {
 } FieldElement;
 
 typedef struct CArray_FieldElement {
-  const struct FieldElement *data;
+  struct FieldElement *data;
   uintptr_t data_len;
 } CArray_FieldElement;
 
 typedef struct CArray_FieldElement KeysClause;
 
 typedef struct CArray_u8 {
-  const uint8_t *data;
+  uint8_t *data;
   uintptr_t data_len;
 } CArray_u8;
 
@@ -70,10 +70,14 @@ typedef struct AttributeClause {
   struct Value value;
 } AttributeClause;
 
+typedef struct CArray_Clause {
+  struct Clause *data;
+  uintptr_t data_len;
+} CArray_Clause;
+
 typedef struct CompositeClause {
   enum LogicalOperator operator_;
-  const struct Clause *clauses;
-  uintptr_t clauses_len;
+  struct CArray_Clause clauses;
 } CompositeClause;
 
 typedef enum Clause_Tag {
@@ -166,7 +170,7 @@ typedef struct Member {
 } Member;
 
 typedef struct CArray_Member {
-  const struct Member *data;
+  struct Member *data;
   uintptr_t data_len;
 } CArray_Member;
 
@@ -181,7 +185,7 @@ typedef struct EnumOption {
 } EnumOption;
 
 typedef struct CArray_EnumOption {
-  const struct EnumOption *data;
+  struct EnumOption *data;
   uintptr_t data_len;
 } CArray_EnumOption;
 
@@ -192,7 +196,7 @@ typedef struct Enum {
 } Enum;
 
 typedef struct CArray_Ty {
-  const struct Ty *data;
+  struct Ty *data;
   uintptr_t data_len;
 } CArray_Ty;
 
@@ -227,7 +231,7 @@ typedef struct ModelMetadata {
   uint32_t packed_size;
   uint32_t unpacked_size;
   struct FieldElement class_hash;
-  struct CArray_FieldElement layout;
+  const struct CArray_FieldElement *layout;
 } ModelMetadata;
 
 typedef struct CHashItem______c_char__ModelMetadata {
@@ -236,7 +240,7 @@ typedef struct CHashItem______c_char__ModelMetadata {
 } CHashItem______c_char__ModelMetadata;
 
 typedef struct CArray_CHashItem______c_char__ModelMetadata {
-  const struct CHashItem______c_char__ModelMetadata *data;
+  struct CHashItem______c_char__ModelMetadata *data;
   uintptr_t data_len;
 } CArray_CHashItem______c_char__ModelMetadata;
 
@@ -245,7 +249,7 @@ typedef struct WorldMetadata {
   struct FieldElement world_class_hash;
   struct FieldElement executor_address;
   struct FieldElement executor_class_hash;
-  struct CArray_CHashItem______c_char__ModelMetadata models;
+  const struct CArray_CHashItem______c_char__ModelMetadata *models;
 } WorldMetadata;
 
 struct ToriiClient *client_new(const char *torii_url,
@@ -266,7 +270,7 @@ void client_add_entities_to_sync(struct ToriiClient *client,
                                  uintptr_t entities_len,
                                  struct Error *error);
 
-void client_on_entity_state_change(struct ToriiClient *client,
+void client_on_entity_state_update(struct ToriiClient *client,
                                    const struct EntityQuery *entity,
                                    void (*callback)(void),
                                    struct Error *error);

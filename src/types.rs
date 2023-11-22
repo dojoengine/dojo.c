@@ -7,16 +7,20 @@ pub struct ToriiClient(pub TClient);
 #[derive(Clone)]
 #[repr(C)]
 pub struct CArray<T> {
-    pub data: *const T,
+    pub data: *mut T,
     pub data_len: usize,
 }
 
-impl<T> From<&Vec<T>> for CArray<T> {
-    fn from(val: &Vec<T>) -> Self {
-        CArray {
-            data: val.as_ptr(),
+impl<T> From<Vec<T>> for CArray<T> {
+    fn from(mut val: Vec<T>) -> Self {
+        val.shrink_to_fit();
+        let cdata: CArray<T> = CArray {
+            data: val.as_mut_ptr(),
             data_len: val.len(),
-        }
+        };
+        std::mem::forget(val);
+
+        cdata
     }
 }
 
@@ -81,8 +85,7 @@ pub struct AttributeClause {
 #[repr(C)]
 pub struct CompositeClause {
     pub operator: LogicalOperator,
-    pub clauses: *const Clause,
-    pub clauses_len: usize,
+    pub clauses: CArray<Clause>,
 }
 
 #[derive(Clone)]
@@ -169,10 +172,7 @@ impl From<&dojo_types::schema::Ty> for Ty {
 
                 Ty::TyStruct(Struct {
                     name: CString::new(struct_.name.clone()).unwrap().into_raw(),
-                    children: CArray {
-                        data: children.as_ptr(),
-                        data_len: children.len(),
-                    },
+                    children: children.into(),
                 })
             }
             dojo_types::schema::Ty::Enum(enum_) => {
@@ -188,10 +188,7 @@ impl From<&dojo_types::schema::Ty> for Ty {
                 Ty::TyEnum(Enum {
                     name: CString::new(enum_.name.clone()).unwrap().into_raw(),
                     option: enum_.option.unwrap(),
-                    options: CArray {
-                        data: options.as_ptr(),
-                        data_len: options.len(),
-                    },
+                    options: options.into(),
                 })
             }
             dojo_types::schema::Ty::Tuple(tuple) => {
@@ -200,10 +197,7 @@ impl From<&dojo_types::schema::Ty> for Ty {
                     .map(|c| (&c.clone()).into())
                     .collect::<Vec<_>>();
 
-                Ty::TyTuple(CArray {
-                    data: children.as_ptr(),
-                    data_len: children.len(),
-                })
+                Ty::TyTuple(children.into())
             }
         }
     }
@@ -320,10 +314,7 @@ impl From<&dojo_types::schema::KeysClause> for KeysClause {
             .map(|k| (&k.clone()).into())
             .collect::<Vec<_>>();
 
-        KeysClause {
-            data: keys.as_ptr(),
-            data_len: keys.len(),
-        }
+        keys.into()
     }
 }
 
@@ -350,7 +341,7 @@ impl From<&dojo_types::schema::AttributeClause> for AttributeClause {
 impl From<&CompositeClause> for dojo_types::schema::CompositeClause {
     fn from(val: &CompositeClause) -> Self {
         let operator = &val.operator.clone();
-        let clauses = unsafe { std::slice::from_raw_parts(val.clauses, val.clauses_len).to_vec() };
+        let clauses = unsafe { Vec::from_raw_parts(val.clauses.data, val.clauses.data_len, val.clauses.data_len) };
 
         dojo_types::schema::CompositeClause {
             operator: operator.into(),
@@ -370,8 +361,7 @@ impl From<&dojo_types::schema::CompositeClause> for CompositeClause {
 
         CompositeClause {
             operator: operator.into(),
-            clauses: clauses.as_ptr(),
-            clauses_len: clauses.len(),
+            clauses: clauses.into(),
         }
     }
 }
@@ -431,7 +421,7 @@ impl From<&Value> for dojo_types::schema::Value {
             Value::VBool(bool) => dojo_types::schema::Value::Bool(*bool),
             Value::Bytes(bytes) => unsafe {
                 dojo_types::schema::Value::Bytes(
-                    std::slice::from_raw_parts(bytes.data, bytes.data_len).to_vec(),
+                    Vec::from_raw_parts(bytes.data, bytes.data_len, bytes.data_len),
                 )
             },
         }
@@ -447,10 +437,7 @@ impl From<&dojo_types::schema::Value> for Value {
             dojo_types::schema::Value::Int(int) => Value::Int(*int),
             dojo_types::schema::Value::UInt(uint) => Value::UInt(*uint),
             dojo_types::schema::Value::Bool(bool) => Value::VBool(*bool),
-            dojo_types::schema::Value::Bytes(bytes) => Value::Bytes(CArray {
-                data: bytes.as_ptr(),
-                data_len: bytes.len(),
-            }),
+            dojo_types::schema::Value::Bytes(bytes) => Value::Bytes((bytes.clone()).into()),
         }
     }
 }
@@ -499,28 +486,26 @@ pub struct WorldMetadata {
     pub world_class_hash: FieldElement,
     pub executor_address: FieldElement,
     pub executor_class_hash: FieldElement,
-    pub models: CArray<CHashItem<*const c_char, ModelMetadata>>,
+    pub models: *const CArray<CHashItem<*const c_char, ModelMetadata>>,
 }
 
 impl From<&dojo_types::WorldMetadata> for WorldMetadata {
     fn from(value: &dojo_types::WorldMetadata) -> Self {
+        let models: Vec<CHashItem<*const c_char, ModelMetadata>> = value
+            .models
+            .iter()
+            .map(|(k, v)| CHashItem {
+                key: CString::new(k.clone()).unwrap().into_raw() as *const c_char,
+                value: (&v.clone()).into(),
+            })
+            .collect::<Vec<_>>();
+
         WorldMetadata {
             world_address: (&value.world_address.clone()).into(),
             world_class_hash: (&value.world_class_hash.clone()).into(),
             executor_address: (&value.executor_address.clone()).into(),
             executor_class_hash: (&value.executor_class_hash.clone()).into(),
-            models: CArray {
-                data: value
-                    .models
-                    .iter()
-                    .map(|(k, v)| CHashItem {
-                        key: CString::new(k.clone()).unwrap().into_raw() as *const c_char,
-                        value: (&v.clone()).into(),
-                    })
-                    .collect::<Vec<_>>()
-                    .as_ptr(),
-                data_len: value.models.len(),
-            },
+            models: &models.into(),
         }
     }
 }
@@ -533,26 +518,24 @@ pub struct ModelMetadata {
     pub packed_size: u32,
     pub unpacked_size: u32,
     pub class_hash: FieldElement,
-    pub layout: CArray<FieldElement>,
+    pub layout: *const CArray<FieldElement>,
 }
 
 impl From<&dojo_types::schema::ModelMetadata> for ModelMetadata {
     fn from(value: &dojo_types::schema::ModelMetadata) -> Self {
+        let mut layout: Vec<FieldElement> = value
+            .layout
+            .iter()
+            .map(|v| (&v.clone()).into())
+            .collect::<Vec<_>>();
+
         ModelMetadata {
             schema: (&value.schema.clone()).into(),
             name: CString::new(value.name.clone()).unwrap().into_raw(),
             packed_size: value.packed_size,
             unpacked_size: value.unpacked_size,
             class_hash: (&value.class_hash.clone()).into(),
-            layout: CArray {
-                data: value
-                    .layout
-                    .iter()
-                    .map(|v| (&v.clone()).into())
-                    .collect::<Vec<_>>()
-                    .as_ptr(),
-                data_len: value.layout.len(),
-            },
+            layout: &layout.into(),
         }
     }
 }

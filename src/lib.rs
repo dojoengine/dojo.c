@@ -4,7 +4,7 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use starknet::core::utils::cairo_short_string_to_felt;
 use torii_client::client::Client as TClient;
-use types::{CArray, EntityQuery, Error, FieldElement, ToriiClient, Ty, WorldMetadata};
+use types::{EntityQuery, Error, FieldElement, ToriiClient, Ty, WorldMetadata};
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -114,7 +114,7 @@ pub unsafe extern "C" fn client_add_entities_to_sync(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_on_entity_state_change(
+pub unsafe extern "C" fn client_on_entity_state_update(
     client: *mut ToriiClient,
     entity: &EntityQuery,
     callback: extern "C" fn(),
