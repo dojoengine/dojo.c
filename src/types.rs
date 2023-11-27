@@ -135,29 +135,46 @@ impl From<&dojo_types::schema::Ty> for Ty {
         match value {
             dojo_types::schema::Ty::Primitive(primitive) => {
                 let primitive = match primitive {
-                    dojo_types::primitive::Primitive::U8(v) => Primitive::U8(v.unwrap()),
-                    dojo_types::primitive::Primitive::U16(v) => Primitive::U16(v.unwrap()),
-                    dojo_types::primitive::Primitive::U32(v) => Primitive::U32(v.unwrap()),
-                    dojo_types::primitive::Primitive::U64(v) => Primitive::U64(v.unwrap()),
+                    dojo_types::primitive::Primitive::U8(v) => Primitive::U8(v.unwrap_or(0)),
+                    dojo_types::primitive::Primitive::U16(v) => Primitive::U16(v.unwrap_or(0)),
+                    dojo_types::primitive::Primitive::U32(v) => Primitive::U32(v.unwrap_or(0)),
+                    dojo_types::primitive::Primitive::U64(v) => Primitive::U64(v.unwrap_or(0)),
                     dojo_types::primitive::Primitive::U128(v) => {
-                        Primitive::U128(v.unwrap().to_be_bytes())
+                        if let Some(v) = v {
+                            Primitive::U128(v.to_be_bytes())
+                        } else {
+                            Primitive::U128([0; 16])
+                        }
                     }
                     dojo_types::primitive::Primitive::U256(v) => {
-                        Primitive::U256(v.unwrap().to_words())
+                        if let Some(v) = v {
+                            Primitive::U256(v.to_words())
+                        } else {
+                            Primitive::U256([0; 4])
+                        }
                     }
-                    dojo_types::primitive::Primitive::USize(v) => Primitive::USize(v.unwrap()),
-                    dojo_types::primitive::Primitive::Bool(v) => Primitive::PBool(v.unwrap()),
+                    dojo_types::primitive::Primitive::USize(v) => Primitive::USize(v.unwrap_or(0)),
+                    dojo_types::primitive::Primitive::Bool(v) => Primitive::PBool(v.unwrap_or(false)),
                     dojo_types::primitive::Primitive::Felt252(v) => {
-                        let fe: FieldElement = (&v.unwrap().clone()).into();
-                        Primitive::Felt252(fe)
+                        if let Some(v) = v {
+                            Primitive::Felt252((&v.clone()).into())
+                        } else {
+                            Primitive::Felt252(FieldElement{data: [0; 32]})
+                        }
                     }
                     dojo_types::primitive::Primitive::ClassHash(v) => {
-                        let fe: FieldElement = (&v.unwrap().clone()).into();
-                        Primitive::Felt252(fe)
+                        if let Some(v) = v {
+                            Primitive::Felt252((&v.clone()).into())
+                        } else {
+                            Primitive::Felt252(FieldElement{data: [0; 32]})
+                        }
                     }
                     dojo_types::primitive::Primitive::ContractAddress(v) => {
-                        let fe: FieldElement = (&v.unwrap().clone()).into();
-                        Primitive::Felt252(fe)
+                        if let Some(v) = v {
+                            Primitive::Felt252((&v.clone()).into())
+                        } else {
+                            Primitive::Felt252(FieldElement{data: [0; 32]})
+                        }
                     }
                 };
 
@@ -191,7 +208,7 @@ impl From<&dojo_types::schema::Ty> for Ty {
 
                 Ty::TyEnum(Enum {
                     name: CString::new(enum_.name.clone()).unwrap().into_raw(),
-                    option: enum_.option.unwrap(),
+                    option: enum_.option.unwrap_or(0),
                     options: (options).into(),
                 })
             }

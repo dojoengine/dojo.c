@@ -259,7 +259,7 @@ typedef struct WorldMetadata {
 
 struct ToriiClient *client_new(const char *torii_url,
                                const char *rpc_url,
-                               const struct FieldElement *world,
+                               const char *world,
                                const struct EntityQuery *entities,
                                uintptr_t entities_len,
                                struct Error *error);

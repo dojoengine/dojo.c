@@ -1,29 +1,42 @@
 mod types;
 
 use starknet::core::utils::cairo_short_string_to_felt;
+use starknet_crypto::FieldElement;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use torii_client::client::Client as TClient;
-use types::{CArray, EntityQuery, Error, FieldElement, ToriiClient, Ty, WorldMetadata};
+use types::{CArray, EntityQuery, Error, ToriiClient, Ty, WorldMetadata};
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_new(
     torii_url: *const c_char,
     rpc_url: *const c_char,
-    world: &FieldElement,
+    world: *const c_char,
     entities: *const EntityQuery,
     entities_len: usize,
     error: *mut Error,
 ) -> *mut ToriiClient {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
+    let world = unsafe { CStr::from_ptr(world).to_string_lossy().into_owned() };
     let entities = unsafe { std::slice::from_raw_parts(entities, entities_len).to_vec() };
+
+    let world = FieldElement::from_hex_be(world.as_str());
+    if let Err(e) = world {
+        unsafe {
+            *error = Error {
+                message: CString::new(e.to_string()).unwrap().into_raw(),
+            };
+        }
+        return std::ptr::null_mut();
+    }
+    let world = world.unwrap();
 
     let client_future = TClient::new(
         torii_url,
         rpc_url,
-        world.into(),
+        world,
         Some(entities.iter().map(|e| e.into()).collect()),
     );
 
