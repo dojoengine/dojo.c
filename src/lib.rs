@@ -2,8 +2,10 @@ mod types;
 
 use starknet::core::utils::cairo_short_string_to_felt;
 use starknet_crypto::FieldElement;
+use std::f32::consts::E;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
+use std::thread;
 use torii_client::client::Client as TClient;
 use types::{CArray, EntityQuery, Error, ToriiClient, Ty, WorldMetadata};
 
@@ -74,6 +76,7 @@ pub unsafe extern "C" fn client_entity(
     match result {
         Ok(ty) => {
             if let Some(ty) = ty {
+                println!("{:?}", ty);
                 Box::into_raw(Box::new((&ty).into()))
             } else {
                 std::ptr::null_mut()
@@ -96,9 +99,12 @@ pub unsafe extern "C" fn client_subscribed_entities(
     client: *mut ToriiClient,
 ) -> *const CArray<EntityQuery> {
     let entities = unsafe { (*client).0.subscribed_entities().clone() };
-    let entities = &mut entities.into_iter().map(|e| (&e).into()).collect::<Vec<EntityQuery>>();
+    let entities = entities
+        .into_iter()
+        .map(|e| (&e).into())
+        .collect::<Vec<EntityQuery>>();
 
-    &(entities).into()
+    &(entities.to_owned()).into()
 }
 
 #[no_mangle]
@@ -165,12 +171,12 @@ pub unsafe extern "C" fn client_add_entities_to_sync(
 pub unsafe extern "C" fn client_on_entity_state_update(
     client: *mut ToriiClient,
     entity: &EntityQuery,
-    callback: extern "C" fn(),
+    callback: unsafe extern "C" fn(),
     error: *mut Error,
 ) {
     let entity: dojo_types::schema::EntityQuery = (&entity.clone()).into();
     let model = cairo_short_string_to_felt(&entity.model).unwrap();
-    let keys = if let dojo_types::schema::Clause::Keys(clause) = entity.clause {
+    let keys: Vec<FieldElement> = if let dojo_types::schema::Clause::Keys(clause) = entity.clause {
         clause.keys
     } else {
         *error = Error {
@@ -180,15 +186,16 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     };
     let mut rcv = (*client).0.storage().add_listener(model, &keys).unwrap();
 
-    if let Ok(Some(_)) = rcv.try_next() {
-        callback();
-    } else {
-        *error = Error {
-            message: CString::new("Failed to receive entity state change")
-                .unwrap()
-                .into_raw(),
-        };
-    }
+    println!("{:?}", keys);
+
+    thread::spawn(move || {
+        loop {
+            if let Ok(Some(_)) = rcv.try_next() {
+                println!("Received update");
+                callback();
+            }
+        }
+    });
 }
 
 #[no_mangle]
@@ -244,8 +251,8 @@ pub unsafe extern "C" fn carray_free(array: *const CArray<EntityQuery>) {
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn ty_free(ty: *const Ty) {
+pub unsafe extern "C" fn ty_free(ty: *mut Ty) {
     if !ty.is_null() {
-        let _: dojo_types::schema::Ty = (&*ty).into();
+        let _: dojo_types::schema::Ty = (&*Box::<Ty>::from_raw(ty)).into();
     }
 }

@@ -3,18 +3,18 @@ use torii_client::client::Client as TClient;
 
 pub struct ToriiClient(pub TClient);
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct CArray<T> {
     pub data: *mut T,
     pub data_len: usize,
 }
 
-impl<T> From<&mut Vec<T>> for CArray<T> {
-    fn from(val: &mut Vec<T>) -> Self {
+impl<T> From<Vec<T>> for CArray<T> {
+    fn from(val: Vec<T>) -> Self {
+        let mut val = std::mem::ManuallyDrop::new(val);
         val.shrink_to_fit();
 
-        let mut val = std::mem::ManuallyDrop::new(val);
         CArray {
             data: val.as_mut_ptr(),
             data_len: val.len(),
@@ -28,7 +28,7 @@ impl<T> From<&CArray<T>> for Vec<T> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct CHashItem<K, V> {
     pub key: K,
@@ -40,7 +40,7 @@ pub struct Error {
     pub message: *const c_char,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct FieldElement {
     data: [u8; 32],
@@ -60,14 +60,14 @@ impl From<&starknet::core::types::FieldElement> for FieldElement {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct EntityQuery {
     pub model: *const c_char,
     pub clause: Clause,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub enum Clause {
     Keys(KeysClause),
@@ -77,7 +77,7 @@ pub enum Clause {
 
 pub type KeysClause = CArray<FieldElement>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct AttributeClause {
     pub attribute: *const c_char,
@@ -85,21 +85,21 @@ pub struct AttributeClause {
     pub value: Value,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct CompositeClause {
     pub operator: LogicalOperator,
     pub clauses: CArray<Clause>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub enum LogicalOperator {
     And,
     Or,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub enum ComparisonOperator {
     Eq,
@@ -110,7 +110,7 @@ pub enum ComparisonOperator {
     Lte,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub enum Value {
     VString(*const c_char),
@@ -120,7 +120,7 @@ pub enum Value {
     Bytes(CArray<u8>),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 #[allow(clippy::enum_variant_names)]
 pub enum Ty {
@@ -154,26 +154,28 @@ impl From<&dojo_types::schema::Ty> for Ty {
                         }
                     }
                     dojo_types::primitive::Primitive::USize(v) => Primitive::USize(v.unwrap_or(0)),
-                    dojo_types::primitive::Primitive::Bool(v) => Primitive::PBool(v.unwrap_or(false)),
+                    dojo_types::primitive::Primitive::Bool(v) => {
+                        Primitive::PBool(v.unwrap_or(false))
+                    }
                     dojo_types::primitive::Primitive::Felt252(v) => {
                         if let Some(v) = v {
                             Primitive::Felt252((&v.clone()).into())
                         } else {
-                            Primitive::Felt252(FieldElement{data: [0; 32]})
+                            Primitive::Felt252(FieldElement { data: [0; 32] })
                         }
                     }
                     dojo_types::primitive::Primitive::ClassHash(v) => {
                         if let Some(v) = v {
                             Primitive::Felt252((&v.clone()).into())
                         } else {
-                            Primitive::Felt252(FieldElement{data: [0; 32]})
+                            Primitive::Felt252(FieldElement { data: [0; 32] })
                         }
                     }
                     dojo_types::primitive::Primitive::ContractAddress(v) => {
                         if let Some(v) = v {
                             Primitive::Felt252((&v.clone()).into())
                         } else {
-                            Primitive::Felt252(FieldElement{data: [0; 32]})
+                            Primitive::Felt252(FieldElement { data: [0; 32] })
                         }
                     }
                 };
@@ -181,12 +183,12 @@ impl From<&dojo_types::schema::Ty> for Ty {
                 Ty::TyPrimitive(primitive)
             }
             dojo_types::schema::Ty::Struct(struct_) => {
-                let children = &mut struct_
+                let children = struct_
                     .children
                     .iter()
                     .map(|c| Member {
                         name: CString::new(c.name.clone()).unwrap().into_raw(),
-                        ty: &((&c.ty.clone()).into()),
+                        ty: Box::into_raw(Box::new((&c.ty.clone()).into())),
                         key: c.key,
                     })
                     .collect::<Vec<Member>>();
@@ -197,28 +199,28 @@ impl From<&dojo_types::schema::Ty> for Ty {
                 })
             }
             dojo_types::schema::Ty::Enum(enum_) => {
-                let options = &mut enum_
+                let options = enum_
                     .options
                     .iter()
                     .map(|o| EnumOption {
                         name: CString::new(o.name.clone()).unwrap().into_raw(),
-                        ty: &((&o.ty.clone()).into()),
+                        ty: Box::into_raw(Box::new((&o.ty.clone()).into())),
                     })
                     .collect::<Vec<EnumOption>>();
 
                 Ty::TyEnum(Enum {
                     name: CString::new(enum_.name.clone()).unwrap().into_raw(),
                     option: enum_.option.unwrap_or(0),
-                    options: (options).into(),
+                    options: options.into(),
                 })
             }
             dojo_types::schema::Ty::Tuple(tuple) => {
-                let children = &mut tuple
+                let children = tuple
                     .iter()
                     .map(|c| (&c.clone()).into())
                     .collect::<Vec<Ty>>();
 
-                Ty::TyTuple((children).into())
+                Ty::TyTuple(children.into())
             }
         }
     }
@@ -266,7 +268,7 @@ impl From<&Ty> for dojo_types::schema::Ty {
                         name: CString::from_raw(c.name as *mut c_char)
                             .into_string()
                             .unwrap(),
-                        ty: (&*c.ty.clone()).into(),
+                        ty: (&*Box::<Ty>::from_raw(c.ty)).into(),
                         key: c.key,
                     })
                     .collect::<Vec<_>>()
@@ -289,11 +291,11 @@ impl From<&Ty> for dojo_types::schema::Ty {
                         enum_.options.data_len,
                     )
                     .iter()
-                    .map(|o| dojo_types::schema::EnumOption {
+                    .map(|o: &EnumOption| dojo_types::schema::EnumOption {
                         name: CString::from_raw(o.name as *mut c_char)
                             .into_string()
                             .unwrap(),
-                        ty: (&*o.ty.clone()).into(),
+                        ty: (&*Box::<Ty>::from_raw(o.ty)).into(),
                     })
                     .collect::<Vec<_>>()
                 };
@@ -322,7 +324,7 @@ impl From<&Ty> for dojo_types::schema::Ty {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Enum {
     pub name: *const c_char,
@@ -330,29 +332,29 @@ pub struct Enum {
     pub options: CArray<EnumOption>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct EnumOption {
     pub name: *const c_char,
-    pub ty: *const Ty,
+    pub ty: *mut Ty,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Struct {
     pub name: *const c_char,
     pub children: CArray<Member>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Member {
     pub name: *const c_char,
-    pub ty: *const Ty,
+    pub ty: *mut Ty,
     pub key: bool,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub enum Primitive {
     U8(u8),
@@ -427,13 +429,13 @@ impl From<&KeysClause> for dojo_types::schema::KeysClause {
 
 impl From<&dojo_types::schema::KeysClause> for KeysClause {
     fn from(val: &dojo_types::schema::KeysClause) -> Self {
-        let keys = &mut val
+        let keys = val
             .keys
             .iter()
             .map(|k| (&k.clone()).into())
             .collect::<Vec<FieldElement>>();
 
-        (keys).into()
+        keys.into()
     }
 }
 
@@ -474,7 +476,7 @@ impl From<&CompositeClause> for dojo_types::schema::CompositeClause {
 impl From<&dojo_types::schema::CompositeClause> for CompositeClause {
     fn from(val: &dojo_types::schema::CompositeClause) -> Self {
         let operator = &val.operator.clone();
-        let clauses = &mut val
+        let clauses = val
             .clauses
             .iter()
             .map(|c| (&c.clone()).into())
@@ -482,7 +484,7 @@ impl From<&dojo_types::schema::CompositeClause> for CompositeClause {
 
         CompositeClause {
             operator: operator.into(),
-            clauses: (clauses).into(),
+            clauses: clauses.into(),
         }
     }
 }
@@ -560,7 +562,7 @@ impl From<&dojo_types::schema::Value> for Value {
             dojo_types::schema::Value::Int(int) => Value::Int(*int),
             dojo_types::schema::Value::UInt(uint) => Value::UInt(*uint),
             dojo_types::schema::Value::Bool(bool) => Value::VBool(*bool),
-            dojo_types::schema::Value::Bytes(bytes) => Value::Bytes((&mut bytes.clone()).into()),
+            dojo_types::schema::Value::Bytes(bytes) => Value::Bytes(bytes.to_owned().into()),
         }
     }
 }
@@ -569,14 +571,14 @@ pub type EntityKeys = CArray<FieldElement>;
 pub type StorageKey = FieldElement;
 pub type StorageValue = FieldElement;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct ModelIndex {
     model: FieldElement,
     keys: CArray<EntityKeys>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct ModelStorage {
     metadata: WorldMetadata,
@@ -602,7 +604,7 @@ pub struct ModelStorage {
 //     }
 // }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct WorldMetadata {
     pub world_address: FieldElement,
@@ -614,7 +616,7 @@ pub struct WorldMetadata {
 
 impl From<&dojo_types::WorldMetadata> for WorldMetadata {
     fn from(value: &dojo_types::WorldMetadata) -> Self {
-        let models = &mut value
+        let models = value
             .models
             .iter()
             .map(|(k, v)| CHashItem {
@@ -628,12 +630,12 @@ impl From<&dojo_types::WorldMetadata> for WorldMetadata {
             world_class_hash: (&value.world_class_hash.clone()).into(),
             executor_address: (&value.executor_address.clone()).into(),
             executor_class_hash: (&value.executor_class_hash.clone()).into(),
-            models: (models).into(),
+            models: models.into(),
         }
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct ModelMetadata {
     pub schema: Ty,
@@ -646,7 +648,7 @@ pub struct ModelMetadata {
 
 impl From<&dojo_types::schema::ModelMetadata> for ModelMetadata {
     fn from(value: &dojo_types::schema::ModelMetadata) -> Self {
-        let layout = &mut value
+        let layout = value
             .layout
             .iter()
             .map(|v| (&v.clone()).into())
@@ -658,7 +660,7 @@ impl From<&dojo_types::schema::ModelMetadata> for ModelMetadata {
             packed_size: value.packed_size,
             unpacked_size: value.unpacked_size,
             class_hash: (&value.class_hash.clone()).into(),
-            layout: (layout).into(),
+            layout: layout.into(),
         }
     }
 }

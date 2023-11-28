@@ -165,7 +165,7 @@ typedef struct Primitive {
 
 typedef struct Member {
   const char *name;
-  const struct Ty *ty;
+  struct Ty *ty;
   bool key;
 } Member;
 
@@ -181,7 +181,7 @@ typedef struct Struct {
 
 typedef struct EnumOption {
   const char *name;
-  const struct Ty *ty;
+  struct Ty *ty;
 } EnumOption;
 
 typedef struct CArray_EnumOption {
@@ -293,4 +293,4 @@ void client_free(struct ToriiClient *client);
 
 void carray_free(const struct CArray_EntityQuery *array);
 
-void ty_free(const struct Ty *ty);
+void ty_free(struct Ty *ty);
