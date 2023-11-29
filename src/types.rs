@@ -62,8 +62,9 @@ impl From<&starknet::core::types::FieldElement> for FieldElement {
 
 #[derive(Clone, Debug)]
 #[repr(C)]
-pub struct EntityQuery {
-    pub model: *const c_char,
+pub struct Query {
+    pub limit: u32,
+    pub offset: u32,
     pub clause: Clause,
 }
 
@@ -71,16 +72,29 @@ pub struct EntityQuery {
 #[repr(C)]
 pub enum Clause {
     Keys(KeysClause),
-    Attribute(AttributeClause),
+    Member(MemberClause),
     Composite(CompositeClause),
 }
 
-pub type KeysClause = CArray<FieldElement>;
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct KeysClause {
+    pub model: *const c_char,
+    pub keys: CArray<FieldElement>,
+}
 
 #[derive(Clone, Debug)]
 #[repr(C)]
-pub struct AttributeClause {
-    pub attribute: *const c_char,
+pub struct Keys {
+    pub model: *const c_char,
+    pub keys: CArray<FieldElement>,
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct MemberClause {
+    pub model: *const c_char,
+    pub member: *const c_char,
     pub operator: ComparisonOperator,
     pub value: Value,
 }
@@ -88,6 +102,7 @@ pub struct AttributeClause {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct CompositeClause {
+    pub model: *const c_char,
     pub operator: LogicalOperator,
     pub clauses: CArray<Clause>,
 }
@@ -371,110 +386,139 @@ pub enum Primitive {
     ContractAddress(FieldElement),
 }
 
-impl From<&EntityQuery> for dojo_types::schema::EntityQuery {
-    fn from(val: &EntityQuery) -> Self {
-        dojo_types::schema::EntityQuery {
-            model: unsafe { CStr::from_ptr(val.model).to_string_lossy().into_owned() },
+impl From<&Query> for torii_grpc::types::Query {
+    fn from(val: &Query) -> Self {
+        torii_grpc::types::Query {
+            limit: val.limit,
+            offset: val.offset,
             clause: (&val.clause.clone()).into(),
         }
     }
 }
 
-impl From<&dojo_types::schema::EntityQuery> for EntityQuery {
-    fn from(val: &dojo_types::schema::EntityQuery) -> Self {
-        EntityQuery {
-            model: CString::new(val.model.clone()).unwrap().into_raw(),
+impl From<&torii_grpc::types::Query> for Query {
+    fn from(val: &torii_grpc::types::Query) -> Self {
+        Query {
+            limit: val.limit,
+            offset: val.offset,
             clause: (&val.clause.clone()).into(),
         }
     }
 }
 
-impl From<&Clause> for dojo_types::schema::Clause {
+impl From<&Clause> for torii_grpc::types::Clause {
     fn from(val: &Clause) -> Self {
         match val {
-            Clause::Keys(keys) => dojo_types::schema::Clause::Keys((&keys.clone()).into()),
-            Clause::Attribute(attribute) => {
-                dojo_types::schema::Clause::Attribute((&attribute.clone()).into())
-            }
+            Clause::Keys(keys) => torii_grpc::types::Clause::Keys((&keys.clone()).into()),
+            Clause::Member(member) => torii_grpc::types::Clause::Member((&member.clone()).into()),
             Clause::Composite(composite) => {
-                dojo_types::schema::Clause::Composite((&composite.clone()).into())
+                torii_grpc::types::Clause::Composite((&composite.clone()).into())
             }
         }
     }
 }
 
-impl From<&dojo_types::schema::Clause> for Clause {
-    fn from(val: &dojo_types::schema::Clause) -> Self {
+impl From<&torii_grpc::types::Clause> for Clause {
+    fn from(val: &torii_grpc::types::Clause) -> Self {
         match val {
-            dojo_types::schema::Clause::Keys(keys) => Clause::Keys((&keys.clone()).into()),
-            dojo_types::schema::Clause::Attribute(attribute) => {
-                Clause::Attribute((&attribute.clone()).into())
-            }
-            dojo_types::schema::Clause::Composite(composite) => {
+            torii_grpc::types::Clause::Keys(keys) => Clause::Keys((&keys.clone()).into()),
+            torii_grpc::types::Clause::Member(member) => Clause::Member((&member.clone()).into()),
+            torii_grpc::types::Clause::Composite(composite) => {
                 Clause::Composite((&composite.clone()).into())
             }
         }
     }
 }
 
-impl From<&KeysClause> for dojo_types::schema::KeysClause {
-    fn from(val: &KeysClause) -> Self {
-        let keys = unsafe { std::slice::from_raw_parts(val.data, val.data_len).to_vec() };
+impl From<&Keys> for torii_grpc::types::KeysClause {
+    fn from(val: &Keys) -> Self {
+        let keys: Vec<FieldElement> = (&val.keys).into();
+        let keys = std::mem::ManuallyDrop::new(keys);
 
-        dojo_types::schema::KeysClause {
+        torii_grpc::types::KeysClause {
+            model: unsafe { CStr::from_ptr(val.model).to_string_lossy().to_string() },
             keys: keys.iter().map(|k| k.into()).collect(),
         }
     }
 }
 
-impl From<&dojo_types::schema::KeysClause> for KeysClause {
-    fn from(val: &dojo_types::schema::KeysClause) -> Self {
+impl From<&KeysClause> for torii_grpc::types::KeysClause {
+    fn from(val: &KeysClause) -> Self {
+        let keys: Vec<FieldElement> = (&val.keys).into();
+
+        torii_grpc::types::KeysClause {
+            model: unsafe { CString::from_raw(val.model as *mut c_char).into_string().unwrap() },
+            keys: keys.iter().map(|k| k.into()).collect(),
+        }
+    }
+}
+
+impl From<&torii_grpc::types::KeysClause> for KeysClause {
+    fn from(val: &torii_grpc::types::KeysClause) -> Self {
         let keys = val
             .keys
             .iter()
             .map(|k| (&k.clone()).into())
-            .collect::<Vec<FieldElement>>();
+            .collect::<Vec<FieldElement>>().to_owned();
 
-        keys.into()
+        KeysClause {
+            model: CString::new(val.model.clone()).unwrap().into_raw(),
+            keys: keys.into(),
+        }
     }
 }
 
-impl From<&AttributeClause> for dojo_types::schema::AttributeClause {
-    fn from(val: &AttributeClause) -> Self {
-        dojo_types::schema::AttributeClause {
-            attribute: unsafe { CStr::from_ptr(val.attribute).to_string_lossy().into_owned() },
+impl From<&MemberClause> for torii_grpc::types::MemberClause {
+    fn from(val: &MemberClause) -> Self {
+        torii_grpc::types::MemberClause {
+            member: unsafe {
+                CString::from_raw(val.member as *mut c_char)
+                    .into_string()
+                    .unwrap()
+            },
+            model: unsafe {
+                CString::from_raw(val.model as *mut c_char)
+                    .into_string()
+                    .unwrap()
+            },
             operator: (&val.operator.clone()).into(),
             value: (&val.value.clone()).into(),
         }
     }
 }
 
-impl From<&dojo_types::schema::AttributeClause> for AttributeClause {
-    fn from(val: &dojo_types::schema::AttributeClause) -> Self {
-        AttributeClause {
-            attribute: CString::new(val.attribute.clone()).unwrap().into_raw(),
+impl From<&torii_grpc::types::MemberClause> for MemberClause {
+    fn from(val: &torii_grpc::types::MemberClause) -> Self {
+        MemberClause {
+            model: CString::new(val.model.clone()).unwrap().into_raw(),
+            member: CString::new(val.member.clone()).unwrap().into_raw(),
             operator: (&val.operator.clone()).into(),
             value: (&val.value.clone()).into(),
         }
     }
 }
 
-impl From<&CompositeClause> for dojo_types::schema::CompositeClause {
+impl From<&CompositeClause> for torii_grpc::types::CompositeClause {
     fn from(val: &CompositeClause) -> Self {
         let operator = &val.operator.clone();
         let clauses = unsafe {
             Vec::from_raw_parts(val.clauses.data, val.clauses.data_len, val.clauses.data_len)
         };
 
-        dojo_types::schema::CompositeClause {
+        torii_grpc::types::CompositeClause {
+            model: unsafe {
+                CString::from_raw(val.model as *mut c_char)
+                    .into_string()
+                    .unwrap()
+            },
             operator: operator.into(),
             clauses: clauses.iter().map(|c| c.into()).collect(),
         }
     }
 }
 
-impl From<&dojo_types::schema::CompositeClause> for CompositeClause {
-    fn from(val: &dojo_types::schema::CompositeClause) -> Self {
+impl From<&torii_grpc::types::CompositeClause> for CompositeClause {
+    fn from(val: &torii_grpc::types::CompositeClause) -> Self {
         let operator = &val.operator.clone();
         let clauses = val
             .clauses
@@ -483,67 +527,68 @@ impl From<&dojo_types::schema::CompositeClause> for CompositeClause {
             .collect::<Vec<Clause>>();
 
         CompositeClause {
+            model: CString::new(val.model.clone()).unwrap().into_raw(),
             operator: operator.into(),
             clauses: clauses.into(),
         }
     }
 }
 
-impl From<&LogicalOperator> for dojo_types::schema::LogicalOperator {
+impl From<&LogicalOperator> for torii_grpc::types::LogicalOperator {
     fn from(val: &LogicalOperator) -> Self {
         match val {
-            LogicalOperator::And => dojo_types::schema::LogicalOperator::And,
-            LogicalOperator::Or => dojo_types::schema::LogicalOperator::Or,
+            LogicalOperator::And => torii_grpc::types::LogicalOperator::And,
+            LogicalOperator::Or => torii_grpc::types::LogicalOperator::Or,
         }
     }
 }
 
-impl From<&dojo_types::schema::LogicalOperator> for LogicalOperator {
-    fn from(val: &dojo_types::schema::LogicalOperator) -> Self {
+impl From<&torii_grpc::types::LogicalOperator> for LogicalOperator {
+    fn from(val: &torii_grpc::types::LogicalOperator) -> Self {
         match val {
-            dojo_types::schema::LogicalOperator::And => LogicalOperator::And,
-            dojo_types::schema::LogicalOperator::Or => LogicalOperator::Or,
+            torii_grpc::types::LogicalOperator::And => LogicalOperator::And,
+            torii_grpc::types::LogicalOperator::Or => LogicalOperator::Or,
         }
     }
 }
 
-impl From<&ComparisonOperator> for dojo_types::schema::ComparisonOperator {
+impl From<&ComparisonOperator> for torii_grpc::types::ComparisonOperator {
     fn from(val: &ComparisonOperator) -> Self {
         match val {
-            ComparisonOperator::Eq => dojo_types::schema::ComparisonOperator::Eq,
-            ComparisonOperator::Neq => dojo_types::schema::ComparisonOperator::Neq,
-            ComparisonOperator::Gt => dojo_types::schema::ComparisonOperator::Gt,
-            ComparisonOperator::Gte => dojo_types::schema::ComparisonOperator::Gte,
-            ComparisonOperator::Lt => dojo_types::schema::ComparisonOperator::Lt,
-            ComparisonOperator::Lte => dojo_types::schema::ComparisonOperator::Lte,
+            ComparisonOperator::Eq => torii_grpc::types::ComparisonOperator::Eq,
+            ComparisonOperator::Neq => torii_grpc::types::ComparisonOperator::Neq,
+            ComparisonOperator::Gt => torii_grpc::types::ComparisonOperator::Gt,
+            ComparisonOperator::Gte => torii_grpc::types::ComparisonOperator::Gte,
+            ComparisonOperator::Lt => torii_grpc::types::ComparisonOperator::Lt,
+            ComparisonOperator::Lte => torii_grpc::types::ComparisonOperator::Lte,
         }
     }
 }
 
-impl From<&dojo_types::schema::ComparisonOperator> for ComparisonOperator {
-    fn from(val: &dojo_types::schema::ComparisonOperator) -> Self {
+impl From<&torii_grpc::types::ComparisonOperator> for ComparisonOperator {
+    fn from(val: &torii_grpc::types::ComparisonOperator) -> Self {
         match val {
-            dojo_types::schema::ComparisonOperator::Eq => ComparisonOperator::Eq,
-            dojo_types::schema::ComparisonOperator::Neq => ComparisonOperator::Neq,
-            dojo_types::schema::ComparisonOperator::Gt => ComparisonOperator::Gt,
-            dojo_types::schema::ComparisonOperator::Gte => ComparisonOperator::Gte,
-            dojo_types::schema::ComparisonOperator::Lt => ComparisonOperator::Lt,
-            dojo_types::schema::ComparisonOperator::Lte => ComparisonOperator::Lte,
+            torii_grpc::types::ComparisonOperator::Eq => ComparisonOperator::Eq,
+            torii_grpc::types::ComparisonOperator::Neq => ComparisonOperator::Neq,
+            torii_grpc::types::ComparisonOperator::Gt => ComparisonOperator::Gt,
+            torii_grpc::types::ComparisonOperator::Gte => ComparisonOperator::Gte,
+            torii_grpc::types::ComparisonOperator::Lt => ComparisonOperator::Lt,
+            torii_grpc::types::ComparisonOperator::Lte => ComparisonOperator::Lte,
         }
     }
 }
 
-impl From<&Value> for dojo_types::schema::Value {
+impl From<&Value> for torii_grpc::types::Value {
     fn from(val: &Value) -> Self {
         match val {
-            Value::VString(string) => dojo_types::schema::Value::String(unsafe {
+            Value::VString(string) => torii_grpc::types::Value::String(unsafe {
                 CStr::from_ptr(*string).to_string_lossy().into_owned()
             }),
-            Value::Int(int) => dojo_types::schema::Value::Int(*int),
-            Value::UInt(uint) => dojo_types::schema::Value::UInt(*uint),
-            Value::VBool(bool) => dojo_types::schema::Value::Bool(*bool),
+            Value::Int(int) => torii_grpc::types::Value::Int(*int),
+            Value::UInt(uint) => torii_grpc::types::Value::UInt(*uint),
+            Value::VBool(bool) => torii_grpc::types::Value::Bool(*bool),
             Value::Bytes(bytes) => unsafe {
-                dojo_types::schema::Value::Bytes(Vec::from_raw_parts(
+                torii_grpc::types::Value::Bytes(Vec::from_raw_parts(
                     bytes.data,
                     bytes.data_len,
                     bytes.data_len,
@@ -553,16 +598,16 @@ impl From<&Value> for dojo_types::schema::Value {
     }
 }
 
-impl From<&dojo_types::schema::Value> for Value {
-    fn from(val: &dojo_types::schema::Value) -> Self {
+impl From<&torii_grpc::types::Value> for Value {
+    fn from(val: &torii_grpc::types::Value) -> Self {
         match val {
-            dojo_types::schema::Value::String(string) => {
+            torii_grpc::types::Value::String(string) => {
                 Value::VString(CString::new(string.clone()).unwrap().into_raw())
             }
-            dojo_types::schema::Value::Int(int) => Value::Int(*int),
-            dojo_types::schema::Value::UInt(uint) => Value::UInt(*uint),
-            dojo_types::schema::Value::Bool(bool) => Value::VBool(*bool),
-            dojo_types::schema::Value::Bytes(bytes) => Value::Bytes(bytes.to_owned().into()),
+            torii_grpc::types::Value::Int(int) => Value::Int(*int),
+            torii_grpc::types::Value::UInt(uint) => Value::UInt(*uint),
+            torii_grpc::types::Value::Bool(bool) => Value::VBool(*bool),
+            torii_grpc::types::Value::Bytes(bytes) => Value::Bytes(bytes.to_owned().into()),
         }
     }
 }

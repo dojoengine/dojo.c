@@ -3,20 +3,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-typedef enum ComparisonOperator {
-  Eq,
-  Neq,
-  Gt,
-  Gte,
-  Lt,
-  Lte,
-} ComparisonOperator;
-
-typedef enum LogicalOperator {
-  And,
-  Or,
-} LogicalOperator;
-
 typedef struct ToriiClient ToriiClient;
 
 typedef struct FieldElement {
@@ -28,83 +14,10 @@ typedef struct CArray_FieldElement {
   uintptr_t data_len;
 } CArray_FieldElement;
 
-typedef struct CArray_FieldElement KeysClause;
-
-typedef struct CArray_u8 {
-  uint8_t *data;
-  uintptr_t data_len;
-} CArray_u8;
-
-typedef enum Value_Tag {
-  VString,
-  Int,
-  UInt,
-  VBool,
-  Bytes,
-} Value_Tag;
-
-typedef struct Value {
-  Value_Tag tag;
-  union {
-    struct {
-      const char *v_string;
-    };
-    struct {
-      int64_t int_;
-    };
-    struct {
-      uint64_t u_int;
-    };
-    struct {
-      bool v_bool;
-    };
-    struct {
-      struct CArray_u8 bytes;
-    };
-  };
-} Value;
-
-typedef struct AttributeClause {
-  const char *attribute;
-  enum ComparisonOperator operator_;
-  struct Value value;
-} AttributeClause;
-
-typedef struct CArray_Clause {
-  struct Clause *data;
-  uintptr_t data_len;
-} CArray_Clause;
-
-typedef struct CompositeClause {
-  enum LogicalOperator operator_;
-  struct CArray_Clause clauses;
-} CompositeClause;
-
-typedef enum Clause_Tag {
-  Keys,
-  Attribute,
-  Composite,
-} Clause_Tag;
-
-typedef struct Clause {
-  Clause_Tag tag;
-  union {
-    struct {
-      KeysClause keys;
-    };
-    struct {
-      struct AttributeClause attribute;
-    };
-    struct {
-      struct CompositeClause composite;
-    };
-  };
-} Clause;
-
-typedef struct EntityQuery {
+typedef struct Keys {
   const char *model;
-  struct Clause clause;
-} EntityQuery;
+  struct CArray_FieldElement keys;
+} Keys;
 
 typedef struct Error {
   const char *message;
@@ -225,10 +138,15 @@ typedef struct Ty {
   };
 } Ty;
 
-typedef struct CArray_EntityQuery {
-  struct EntityQuery *data;
+typedef struct KeysClause {
+  const char *model;
+  struct CArray_FieldElement keys;
+} KeysClause;
+
+typedef struct CArray_KeysClause {
+  struct KeysClause *data;
   uintptr_t data_len;
-} CArray_EntityQuery;
+} CArray_KeysClause;
 
 typedef struct ModelMetadata {
   struct Ty schema;
@@ -260,37 +178,35 @@ typedef struct WorldMetadata {
 struct ToriiClient *client_new(const char *torii_url,
                                const char *rpc_url,
                                const char *world,
-                               const struct EntityQuery *entities,
+                               const struct Keys *entities,
                                uintptr_t entities_len,
                                struct Error *error);
 
-struct Ty *client_entity(struct ToriiClient *client,
-                         const struct EntityQuery *entity,
-                         struct Error *error);
+struct Ty *client_entity(struct ToriiClient *client, const struct Keys *keys, struct Error *error);
 
-const struct CArray_EntityQuery *client_subscribed_entities(struct ToriiClient *client);
+const struct CArray_KeysClause *client_subscribed_entities(struct ToriiClient *client);
 
 void client_start_subscription(struct ToriiClient *client, struct Error *error);
 
 struct WorldMetadata client_metadata(struct ToriiClient *client);
 
 void client_add_entities_to_sync(struct ToriiClient *client,
-                                 const struct EntityQuery *entities,
+                                 const struct Keys *entities,
                                  uintptr_t entities_len,
                                  struct Error *error);
 
 void client_on_entity_state_update(struct ToriiClient *client,
-                                   const struct EntityQuery *entity,
+                                   const struct Keys *entity,
                                    void (*callback)(void),
                                    struct Error *error);
 
 void client_remove_entities_to_sync(struct ToriiClient *client,
-                                    const struct EntityQuery *entities,
+                                    const struct KeysClause *entities,
                                     uintptr_t entities_len,
                                     struct Error *error);
 
 void client_free(struct ToriiClient *client);
 
-void carray_free(const struct CArray_EntityQuery *array);
+void keys_free(const struct CArray_KeysClause *array);
 
 void ty_free(struct Ty *ty);

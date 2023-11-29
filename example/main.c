@@ -31,53 +31,64 @@ int main()
     const char *world = "0x05010c31f127114c6198df8a5239e2b7a5151e1156fb43791e37e7385faa8138";
     // Initialize world.data here...
 
-    EntityQuery entities[1] = {};
+    KeysClause entities[1] = {};
     // Initialize entities[0].model, entities[0].keys, and entities[0].keys_len here...
     entities[0].model = "Moves";
+    entities[0].keys.data = malloc(sizeof(FieldElement)*1);
+    entities[0].keys.data_len = 1;
 
-    Error error;
-    ToriiClient *client = client_new(torii_url, rpc_url, world, entities, 1, &error);
-
-    if (client == NULL)
-    {
-        printf("Failed to create client: %s\n", error.message);
-        return 1;
-    }
-
-    // Use client here...
-    EntityQuery entity = {};
-    entity.model = "Moves";
-    entity.clause.keys.data = malloc(sizeof(FieldElement));
-    entity.clause.keys.data_len = 1;
-
-    if (hex_to_bytes(player, entity.clause.keys.data->data) == 0) {
+    if (hex_to_bytes(player, entities[0].keys.data->data) == 0) {
         for (size_t i = 0; i < 32; i++) {
-            printf("%02x", entity.clause.keys.data->data[i]);
+            printf("%02x", entities[0].keys.data->data[i]);
         }
         printf("\n");
     } else {
         printf("Invalid hex string\n");
     }
 
-    Ty *ty = client_entity(client, &entity, &error);
+    Error error;
+    ToriiClient *client = client_new(torii_url, rpc_url, world, entities, 1, &error);
+    if (client == NULL)
+    {
+        printf("Failed to create client: %s\n", error.message);
+        return 1;
+    }
 
+    error = (Error){};
+    Ty *ty = client_entity(client, entities, &error);
     if (ty == NULL)
     {
         printf("Failed to get entity: %s\n", error.message);
         return 1;
     }
 
+    // printf("model: %s\n", entities[0].model);
+
+    printf("Got entity\n");
+    printf("Struct: %s\n", ty->ty_struct.name);
+    printf("Fields: %s\n", ty->ty_struct.children.data[2].name);
+    printf("Enum: %s\n", ty->ty_struct.children.data[2].ty->ty_enum.name);
+
+    CArray_KeysClause* subscribed_entities = client_subscribed_entities(client);
+    for (size_t i = 0; i < subscribed_entities->data_len; i++)
+    {
+        // print player key
+        const char* hex;
+        printf("Subscribed entity: ");
+        for (size_t j = 0; j < 32; j++) {
+            printf("%02x", entities[i].keys.data->data[j]);
+        }
+        printf("\n");
+    }
+
+    client_add_entities_to_sync(client, entities, 1, &error);
+
+    client_on_entity_state_update(client, entities, &on_entity_state_update, &error);
+    while (true)
+    {
+    }
+
     ty_free(ty);
-
-    // printf("Got entity\n");
-    // printf("Struct: %s\n", ty->ty_struct.name);
-    // printf("Fields: %s\n", ty->ty_struct.children.data[2].name);
-    // printf("Enum: %s\n", ty->ty_struct.children.data[2].ty->ty_enum.options.data[0].name);
-
-    // client_on_entity_state_update(client, &entity, &on_entity_state_update, &error);
-    // while (true)
-    // {
-    // }
 
     // Remember to free the client when you're done with it.
     client_free(client);
