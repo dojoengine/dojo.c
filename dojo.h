@@ -197,8 +197,7 @@ void client_add_entities_to_sync(struct ToriiClient *client,
 
 void client_on_entity_state_update(struct ToriiClient *client,
                                    const struct Keys *entity,
-                                   void (*callback)(void),
-                                   struct Error *error);
+                                   void (*callback)(void));
 
 void client_remove_entities_to_sync(struct ToriiClient *client,
                                     const struct KeysClause *entities,

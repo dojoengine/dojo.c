@@ -447,7 +447,11 @@ impl From<&KeysClause> for torii_grpc::types::KeysClause {
         let keys: Vec<FieldElement> = (&val.keys).into();
 
         torii_grpc::types::KeysClause {
-            model: unsafe { CString::from_raw(val.model as *mut c_char).into_string().unwrap() },
+            model: unsafe {
+                CString::from_raw(val.model as *mut c_char)
+                    .into_string()
+                    .unwrap()
+            },
             keys: keys.iter().map(|k| k.into()).collect(),
         }
     }
@@ -459,7 +463,8 @@ impl From<&torii_grpc::types::KeysClause> for KeysClause {
             .keys
             .iter()
             .map(|k| (&k.clone()).into())
-            .collect::<Vec<FieldElement>>().to_owned();
+            .collect::<Vec<FieldElement>>()
+            .to_owned();
 
         KeysClause {
             model: CString::new(val.model.clone()).unwrap().into_raw(),

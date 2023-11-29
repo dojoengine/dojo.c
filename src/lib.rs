@@ -6,7 +6,7 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::thread;
 use torii_client::client::Client as TClient;
-use types::{CArray, Error, KeysClause, ToriiClient, Ty, WorldMetadata, Keys};
+use types::{CArray, Error, Keys, KeysClause, ToriiClient, Ty, WorldMetadata};
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -21,7 +21,7 @@ pub unsafe extern "C" fn client_new(
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let world = unsafe { CStr::from_ptr(world).to_string_lossy().into_owned() };
-    let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };    
+    let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };
 
     let world = FieldElement::from_hex_be(world.as_str());
     if let Err(e) = world {
@@ -171,7 +171,6 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     client: *mut ToriiClient,
     entity: &Keys,
     callback: unsafe extern "C" fn(),
-    error: *mut Error,
 ) {
     let entity: torii_grpc::types::KeysClause = entity.into();
     let model = cairo_short_string_to_felt(&entity.model).unwrap();
