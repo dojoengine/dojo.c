@@ -192,7 +192,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_remove_entities_to_sync(
     client: *mut ToriiClient,
-    entities: *const KeysClause,
+    entities: *const Keys,
     entities_len: usize,
     error: *mut Error,
 ) {
