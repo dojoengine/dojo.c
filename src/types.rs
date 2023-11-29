@@ -87,7 +87,7 @@ pub struct KeysClause {
 #[repr(C)]
 pub struct Keys {
     pub model: *const c_char,
-    pub keys: CArray<FieldElement>,
+    pub keys: CArray<*const c_char>,
 }
 
 #[derive(Clone, Debug)]
@@ -432,12 +432,15 @@ impl From<&torii_grpc::types::Clause> for Clause {
 
 impl From<&Keys> for torii_grpc::types::KeysClause {
     fn from(val: &Keys) -> Self {
-        let keys: Vec<FieldElement> = (&val.keys).into();
+        let keys: Vec<*const i8> = (&val.keys).into();
         let keys = std::mem::ManuallyDrop::new(keys);
 
         torii_grpc::types::KeysClause {
             model: unsafe { CStr::from_ptr(val.model).to_string_lossy().to_string() },
-            keys: keys.iter().map(|k| k.into()).collect(),
+            keys: keys.iter().map(|k| {
+                let k = unsafe { CStr::from_ptr(*k).to_string_lossy().to_string() };
+                starknet::core::types::FieldElement::from_hex_be(k.as_str()).unwrap()
+            }).collect(),
         }
     }
 }

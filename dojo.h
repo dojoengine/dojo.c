@@ -5,23 +5,23 @@
 
 typedef struct ToriiClient ToriiClient;
 
-typedef struct FieldElement {
-  uint8_t data[32];
-} FieldElement;
-
-typedef struct CArray_FieldElement {
-  struct FieldElement *data;
+typedef struct CArray______c_char {
+  const char **data;
   uintptr_t data_len;
-} CArray_FieldElement;
+} CArray______c_char;
 
 typedef struct Keys {
   const char *model;
-  struct CArray_FieldElement keys;
+  struct CArray______c_char keys;
 } Keys;
 
 typedef struct Error {
   const char *message;
 } Error;
+
+typedef struct FieldElement {
+  uint8_t data[32];
+} FieldElement;
 
 typedef enum Primitive_Tag {
   U8,
@@ -137,6 +137,11 @@ typedef struct Ty {
     };
   };
 } Ty;
+
+typedef struct CArray_FieldElement {
+  struct FieldElement *data;
+  uintptr_t data_len;
+} CArray_FieldElement;
 
 typedef struct KeysClause {
   const char *model;
