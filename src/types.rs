@@ -1,7 +1,10 @@
 use std::ffi::{c_char, CStr, CString};
-use torii_client::client::Client as TClient;
+use torii_client::client::Client;
 
-pub struct ToriiClient(pub TClient);
+pub struct ToriiClient {
+    pub inner: Client,
+    pub runtime: tokio::runtime::Runtime,
+}
 
 #[derive(Clone, Debug)]
 #[repr(C)]
@@ -437,10 +440,13 @@ impl From<&Keys> for torii_grpc::types::KeysClause {
 
         torii_grpc::types::KeysClause {
             model: unsafe { CStr::from_ptr(val.model).to_string_lossy().to_string() },
-            keys: keys.iter().map(|k| {
-                let k = unsafe { CStr::from_ptr(*k).to_string_lossy().to_string() };
-                starknet::core::types::FieldElement::from_hex_be(k.as_str()).unwrap()
-            }).collect(),
+            keys: keys
+                .iter()
+                .map(|k| {
+                    let k = unsafe { CStr::from_ptr(*k).to_string_lossy().to_string() };
+                    starknet::core::types::FieldElement::from_hex_be(k.as_str()).unwrap()
+                })
+                .collect(),
         }
     }
 }

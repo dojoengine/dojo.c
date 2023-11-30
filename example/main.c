@@ -62,7 +62,15 @@ int main()
     printf("Fields: %s\n", ty->ty_struct.children.data[2].name);
     printf("Enum: %s\n", ty->ty_struct.children.data[2].ty->ty_enum.name);
 
-    CArray_KeysClause* subscribed_entities = client_subscribed_entities(client);
+    
+    ty_free(ty);
+    
+    client_start_subscription(client, &error);
+
+    client_add_entities_to_sync(client, entities, 1, &error);
+
+
+    const CArray_KeysClause* subscribed_entities = client_subscribed_entities(client);
     for (size_t i = 0; i < subscribed_entities->data_len; i++)
     {
         // print player key
@@ -74,14 +82,14 @@ int main()
         printf("\n");
     }
 
-    client_add_entities_to_sync(client, entities, 1, &error);
 
     client_on_entity_state_update(client, entities, &on_entity_state_update);
     while (true)
     {
     }
 
-    ty_free(ty);
+    client_remove_entities_to_sync(client, entities, 1, &error);
+ 
 
     // Remember to free the client when you're done with it.
     client_free(client);

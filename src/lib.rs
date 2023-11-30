@@ -41,12 +41,14 @@ pub unsafe extern "C" fn client_new(
         Some(entities.iter().map(|e| (&e.clone()).into()).collect()),
     );
 
-    let client = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(client_future);
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    let client = runtime.block_on(client_future);
 
     match client {
-        Ok(client) => Box::into_raw(Box::new(ToriiClient(client))),
+        Ok(client) => Box::into_raw(Box::new(ToriiClient {
+            inner: client,
+            runtime,
+        })),
         Err(e) => {
             unsafe {
                 *error = Error {
@@ -67,11 +69,9 @@ pub unsafe extern "C" fn client_entity(
 ) -> *mut Ty {
     println!("{:?}", *keys.keys.data);
     let keys = (&keys.clone()).into();
-    let entity_future = unsafe { (*client).0.entity(&keys) };
+    let entity_future = unsafe { (*client).inner.entity(&keys) };
 
-    let result = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(entity_future);
+    let result = (*client).runtime.block_on(entity_future);
 
     match result {
         Ok(ty) => {
@@ -98,7 +98,7 @@ pub unsafe extern "C" fn client_entity(
 pub unsafe extern "C" fn client_subscribed_entities(
     client: *mut ToriiClient,
 ) -> *const CArray<KeysClause> {
-    let entities = unsafe { (*client).0.subscribed_entities().clone() };
+    let entities = unsafe { (*client).inner.subscribed_entities().clone() };
     let entities = entities
         .into_iter()
         .map(|e| (&e).into())
@@ -110,10 +110,8 @@ pub unsafe extern "C" fn client_subscribed_entities(
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_start_subscription(client: *mut ToriiClient, error: *mut Error) {
-    let client_future = unsafe { (*client).0.start_subscription() };
-    let result = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(client_future);
+    let client_future = unsafe { (*client).inner.start_subscription() };
+    let result = (*client).runtime.block_on(client_future);
 
     if let Err(e) = result {
         unsafe {
@@ -125,15 +123,13 @@ pub unsafe extern "C" fn client_start_subscription(client: *mut ToriiClient, err
         return;
     }
 
-    tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(result.unwrap());
+    (*client).runtime.spawn(result.unwrap());
 }
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetadata {
-    unsafe { (&(*client).0.metadata().clone()).into() }
+    unsafe { (&(*client).inner.metadata().clone()).into() }
 }
 
 #[no_mangle]
@@ -148,13 +144,11 @@ pub unsafe extern "C" fn client_add_entities_to_sync(
 
     let client_future = unsafe {
         (*client)
-            .0
+            .inner
             .add_entities_to_sync(entities.iter().map(|e| e.into()).collect())
     };
 
-    let result = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(client_future);
+    let result = (*client).runtime.block_on(client_future);
 
     if let Err(e) = result {
         unsafe {
@@ -175,7 +169,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     let entity: torii_grpc::types::KeysClause = entity.into();
     let model = cairo_short_string_to_felt(&entity.model).unwrap();
     let mut rcv = (*client)
-        .0
+        .inner
         .storage()
         .add_listener(model, entity.keys.as_slice())
         .unwrap();
@@ -200,13 +194,11 @@ pub unsafe extern "C" fn client_remove_entities_to_sync(
 
     let client_future = unsafe {
         (*client)
-            .0
+            .inner
             .remove_entities_to_sync(entities.iter().map(|e| e.into()).collect())
     };
 
-    let result = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(client_future);
+    let result = (*client).runtime.block_on(client_future);
 
     if let Err(e) = result {
         unsafe {
