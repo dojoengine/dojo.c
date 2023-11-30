@@ -472,9 +472,7 @@ impl From<&torii_grpc::types::KeysClause> for KeysClause {
             .keys
             .iter()
             .map(|k| (&k.clone()).into())
-            .collect::<Vec<FieldElement>>()
-            .to_owned();
-
+            .collect::<Vec<FieldElement>>();
         KeysClause {
             model: CString::new(val.model.clone()).unwrap().into_raw(),
             keys: keys.into(),
