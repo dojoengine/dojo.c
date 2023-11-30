@@ -15,11 +15,13 @@ fn main() {
         .expect("Unable to generate bindings")
         .write_to_file("dojo.h");
 
-    csbindgen::Builder::default()
-        .input_extern_file("src/lib.rs")
-        .input_extern_file("src/types.rs")
-        .csharp_dll_name("nativelib")
-        .csharp_namespace("Dojo")
-        .generate_csharp_file("./Dojo.g.cs")
-        .unwrap();
+    // NOTE: disable for now. use c2cs to generate csharp bindings
+    // generics not supported
+    // csbindgen::Builder::default()
+    //     .input_extern_file("src/lib.rs")
+    //     .input_extern_file("src/types.rs")
+    //     .csharp_dll_name("libtorii_c.dylib")
+    //     .csharp_namespace("Dojo")
+    //     .generate_csharp_file("./Dojo.g.cs")
+    //     .unwrap();
 }

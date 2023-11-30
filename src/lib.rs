@@ -1,37 +1,54 @@
 mod types;
 
+use starknet::core::utils::cairo_short_string_to_felt;
+use starknet_crypto::FieldElement;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
+use std::thread;
 use torii_client::client::Client as TClient;
-use types::{CArray, EntityQuery, Error, FieldElement, ToriiClient, Ty, WorldMetadata};
+use types::{CArray, Error, Keys, KeysClause, ToriiClient, Ty, WorldMetadata};
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_new(
     torii_url: *const c_char,
     rpc_url: *const c_char,
-    world: &FieldElement,
-    entities: *const EntityQuery,
+    world: *const c_char,
+    entities: *const Keys,
     entities_len: usize,
     error: *mut Error,
 ) -> *mut ToriiClient {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
-    let entities = unsafe { std::slice::from_raw_parts(entities, entities_len).to_vec() };
+    let world = unsafe { CStr::from_ptr(world).to_string_lossy().into_owned() };
+    let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };
+
+    let world = FieldElement::from_hex_be(world.as_str());
+    if let Err(e) = world {
+        unsafe {
+            *error = Error {
+                message: CString::new(e.to_string()).unwrap().into_raw(),
+            };
+        }
+        return std::ptr::null_mut();
+    }
+    let world = world.unwrap();
 
     let client_future = TClient::new(
         torii_url,
         rpc_url,
-        world.into(),
-        Some(entities.iter().map(|e| e.into()).collect()),
+        world,
+        Some(entities.iter().map(|e| (&e.clone()).into()).collect()),
     );
 
-    let client = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(client_future);
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    let client = runtime.block_on(client_future);
 
     match client {
-        Ok(client) => Box::into_raw(Box::new(ToriiClient(client))),
+        Ok(client) => Box::into_raw(Box::new(ToriiClient {
+            inner: client,
+            runtime,
+        })),
         Err(e) => {
             unsafe {
                 *error = Error {
@@ -47,19 +64,19 @@ pub unsafe extern "C" fn client_new(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_entity(
     client: *mut ToriiClient,
-    entity: &EntityQuery,
+    keys: &Keys,
     error: *mut Error,
 ) -> *mut Ty {
-    let entity: dojo_types::schema::EntityQuery = (&entity.clone()).into();
-    let entity_future = unsafe { (*client).0.entity(&entity) };
+    println!("{:?}", *keys.keys.data);
+    let keys = (&keys.clone()).into();
+    let entity_future = unsafe { (*client).inner.entity(&keys) };
 
-    let result = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(entity_future);
+    let result = (*client).runtime.block_on(entity_future);
 
     match result {
         Ok(ty) => {
             if let Some(ty) = ty {
+                println!("{:?}", ty);
                 Box::into_raw(Box::new((&ty).into()))
             } else {
                 std::ptr::null_mut()
@@ -78,32 +95,23 @@ pub unsafe extern "C" fn client_entity(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetadata {
-    unsafe { (&(*client).0.metadata().clone()).into() }
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_subscribed_entities(
     client: *mut ToriiClient,
-) -> *const CArray<EntityQuery> {
-    let entities = unsafe { (*client).0.subscribed_entities().clone() };
-    let entities: Vec<EntityQuery> = entities.into_iter().map(|e| (&e).into()).collect();
+) -> *const CArray<KeysClause> {
+    let entities = unsafe { (*client).inner.subscribed_entities().clone() };
+    let entities = entities
+        .into_iter()
+        .map(|e| (&e).into())
+        .collect::<Vec<KeysClause>>();
 
-    &CArray {
-        data: entities.as_ptr(),
-        data_len: entities.len(),
-    }
+    Box::into_raw(Box::new(entities.into()))
 }
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_start_subscription(client: *mut ToriiClient, error: *mut Error) {
-    let client_future = unsafe { (*client).0.start_subscription() };
-
-    let result = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(client_future);
+    let client_future = unsafe { (*client).inner.start_subscription() };
+    let result = (*client).runtime.block_on(client_future);
 
     if let Err(e) = result {
         unsafe {
@@ -111,14 +119,24 @@ pub unsafe extern "C" fn client_start_subscription(client: *mut ToriiClient, err
                 message: CString::new(e.to_string()).unwrap().into_raw(),
             };
         }
+
+        return;
     }
+
+    (*client).runtime.spawn(result.unwrap());
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetadata {
+    unsafe { (&(*client).inner.metadata().clone()).into() }
 }
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_add_entities_to_sync(
     client: *mut ToriiClient,
-    entities: *const EntityQuery,
+    entities: *const Keys,
     entities_len: usize,
     error: *mut Error,
 ) {
@@ -126,13 +144,11 @@ pub unsafe extern "C" fn client_add_entities_to_sync(
 
     let client_future = unsafe {
         (*client)
-            .0
+            .inner
             .add_entities_to_sync(entities.iter().map(|e| e.into()).collect())
     };
 
-    let result = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(client_future);
+    let result = (*client).runtime.block_on(client_future);
 
     if let Err(e) = result {
         unsafe {
@@ -145,9 +161,32 @@ pub unsafe extern "C" fn client_add_entities_to_sync(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_on_entity_state_update(
+    client: *mut ToriiClient,
+    entity: &Keys,
+    callback: unsafe extern "C" fn(),
+) {
+    let entity: torii_grpc::types::KeysClause = entity.into();
+    let model = cairo_short_string_to_felt(&entity.model).unwrap();
+    let mut rcv = (*client)
+        .inner
+        .storage()
+        .add_listener(model, entity.keys.as_slice())
+        .unwrap();
+
+    thread::spawn(move || loop {
+        if let Ok(Some(_)) = rcv.try_next() {
+            callback();
+            println!("Received update");
+        }
+    });
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_remove_entities_to_sync(
     client: *mut ToriiClient,
-    entities: *const EntityQuery,
+    entities: *const Keys,
     entities_len: usize,
     error: *mut Error,
 ) {
@@ -155,13 +194,11 @@ pub unsafe extern "C" fn client_remove_entities_to_sync(
 
     let client_future = unsafe {
         (*client)
-            .0
+            .inner
             .remove_entities_to_sync(entities.iter().map(|e| e.into()).collect())
     };
 
-    let result = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(client_future);
+    let result = (*client).runtime.block_on(client_future);
 
     if let Err(e) = result {
         unsafe {
@@ -183,5 +220,21 @@ pub unsafe extern "C" fn client_free(client: *mut ToriiClient) {
         unsafe {
             let _ = Box::from_raw(client);
         }
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn keys_free(array: *const CArray<KeysClause>) {
+    if !array.is_null() {
+        let _ = Vec::from_raw_parts((*array).data, (*array).data_len, (*array).data_len);
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn ty_free(ty: *mut Ty) {
+    if !ty.is_null() {
+        let _: dojo_types::schema::Ty = (&*Box::<Ty>::from_raw(ty)).into();
     }
 }
