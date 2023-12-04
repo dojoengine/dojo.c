@@ -6,7 +6,7 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::thread;
 use torii_client::client::Client as TClient;
-use types::{CArray, Error, Keys, KeysClause, ToriiClient, Ty, WorldMetadata};
+use types::{CArray, Error, KeysClause, ToriiClient, Ty, WorldMetadata, Query, Entity};
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -14,7 +14,7 @@ pub unsafe extern "C" fn client_new(
     torii_url: *const c_char,
     rpc_url: *const c_char,
     world: *const c_char,
-    entities: *const Keys,
+    entities: *const KeysClause,
     entities_len: usize,
     error: *mut Error,
 ) -> *mut ToriiClient {
@@ -64,7 +64,7 @@ pub unsafe extern "C" fn client_new(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_entity(
     client: *mut ToriiClient,
-    keys: &Keys,
+    keys: &KeysClause,
     error: *mut Error,
 ) -> *mut Ty {
     println!("{:?}", *keys.keys.data);
@@ -81,6 +81,40 @@ pub unsafe extern "C" fn client_entity(
             } else {
                 std::ptr::null_mut()
             }
+        }
+        Err(e) => {
+            unsafe {
+                *error = Error {
+                    message: CString::new(e.to_string()).unwrap().into_raw(),
+                };
+            }
+            std::ptr::null_mut()
+        }
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_entities(
+    client: *mut ToriiClient,
+    query: &Query,
+    error: *mut Error,
+) -> *const CArray<Entity> {
+    let query = (&query.clone()).into();
+    println!("{:?}", query);
+
+    let entities_future = unsafe { (*client).inner.entities(query) };
+
+    let result = (*client).runtime.block_on(entities_future);
+
+    match result {
+        Ok(entities) => {
+            let entities: Vec<Entity> = entities
+                .into_iter()
+                .map(|e| (&e.clone()).into())
+                .collect();
+
+            Box::into_raw(Box::new(entities.into()))
         }
         Err(e) => {
             unsafe {
@@ -136,7 +170,7 @@ pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetad
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_add_entities_to_sync(
     client: *mut ToriiClient,
-    entities: *const Keys,
+    entities: *const KeysClause,
     entities_len: usize,
     error: *mut Error,
 ) {
@@ -163,7 +197,7 @@ pub unsafe extern "C" fn client_add_entities_to_sync(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_on_entity_state_update(
     client: *mut ToriiClient,
-    entity: &Keys,
+    entity: &KeysClause,
     callback: unsafe extern "C" fn(),
 ) {
     let entity: torii_grpc::types::KeysClause = entity.into();
@@ -186,7 +220,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_remove_entities_to_sync(
     client: *mut ToriiClient,
-    entities: *const Keys,
+    entities: *const KeysClause,
     entities_len: usize,
     error: *mut Error,
 ) {

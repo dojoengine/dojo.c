@@ -31,10 +31,10 @@ int main()
     const char *world = "0x05010c31f127114c6198df8a5239e2b7a5151e1156fb43791e37e7385faa8138";
     // Initialize world.data here...
 
-    Keys entities[1] = {};
+    KeysClause entities[1] = {};
     // Initialize entities[0].model, entities[0].keys, and entities[0].keys_len here...
     entities[0].model = "Moves";
-    entities[0].keys.data = malloc(sizeof(char*));
+    entities[0].keys.data = malloc(sizeof(char *));
     entities[0].keys.data_len = 1;
 
     entities[0].keys.data[0] = player;
@@ -62,26 +62,33 @@ int main()
     printf("Fields: %s\n", ty->ty_struct.children.data[2].name);
     printf("Enum: %s\n", ty->ty_struct.children.data[2].ty->ty_enum.name);
 
-    
     ty_free(ty);
-    
+
     client_start_subscription(client, &error);
 
     client_add_entities_to_sync(client, entities, 1, &error);
 
+    Query query = {
 
-    const CArray_KeysClause* subscribed_entities = client_subscribed_entities(client);
-    for (size_t i = 0; i < subscribed_entities->data_len; i++)
+    };
+
+    query.clause.keys.keys.data = malloc(sizeof(char*));
+    query.clause.keys.keys.data_len = 1;
+    query.clause.keys.keys.data[0] = player;
+    query.clause.keys.model = "";
+    query.limit = -1;
+
+    const CArray_Entity *retrieved_entities = client_entities(client, &query, &error);
+    for (size_t i = 0; i < retrieved_entities->data_len; i++)
     {
         // print player key
-        const char* hex;
-        printf("Subscribed entity: ");
-        for (size_t j = 0; j < 32; j++) {
-            printf("%02x", subscribed_entities->data[i].keys.data->data[j]);
+        printf("Retrieved entity: ");
+        for (size_t j = 0; j < 32; j++)
+        {
+            printf("%s", retrieved_entities->data[i].key.data[j]);
         }
         printf("\n");
     }
-
 
     client_on_entity_state_update(client, entities, &on_entity_state_update);
     while (true)
@@ -89,7 +96,6 @@ int main()
     }
 
     client_remove_entities_to_sync(client, entities, 1, &error);
- 
 
     // Remember to free the client when you're done with it.
     client_free(client);
