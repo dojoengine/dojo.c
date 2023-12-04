@@ -59,8 +59,10 @@ int main()
 
     printf("Got entity\n");
     printf("Struct: %s\n", ty->ty_struct.name);
-    printf("Fields: %s\n", ty->ty_struct.children.data[2].name);
-    printf("Enum: %s\n", ty->ty_struct.children.data[2].ty->ty_enum.name);
+    for (size_t i = 0; i < ty->ty_struct.children.data_len; i++)
+    {
+        printf("Field: %s\n", ty->ty_struct.children.data[i].name);
+    }
 
     ty_free(ty);
 
@@ -68,26 +70,38 @@ int main()
 
     client_add_entities_to_sync(client, entities, 1, &error);
 
-    Query query = {
+    // print subscribed entities
+    const CArray_KeysClause *subscribed_entities = client_subscribed_entities(client);
+    for (size_t i = 0; i < subscribed_entities->data_len; i++)
+    {
+        printf("Subscribed entity: %s", subscribed_entities->data[i].keys.data[0]);
+        printf("\n");
+    }
 
-    };
-
-    query.clause.keys.keys.data = malloc(sizeof(char*));
+    Query query = {};
+    query.clause.keys.keys.data = malloc(sizeof(char *));
     query.clause.keys.keys.data_len = 1;
     query.clause.keys.keys.data[0] = player;
-    query.clause.keys.model = "";
+    query.clause.keys.model = "Moves";
     query.limit = -1;
 
     const CArray_Entity *retrieved_entities = client_entities(client, &query, &error);
-    for (size_t i = 0; i < retrieved_entities->data_len; i++)
+    if (retrieved_entities == NULL)
     {
-        // print player key
-        printf("Retrieved entity: ");
-        for (size_t j = 0; j < 32; j++)
+        printf("Failed to retrieve entities: %s\n", error.message);
+    }
+    else
+    {
+        for (size_t i = 0; i < retrieved_entities->data_len; i++)
         {
-            printf("%s", retrieved_entities->data[i].key.data[j]);
+            // print player key
+            printf("Retrieved entity: ");
+            for (size_t j = 0; j < 32; j++)
+            {
+                printf("%s", retrieved_entities->data[i].key.data[j]);
+            }
+            printf("\n");
         }
-        printf("\n");
     }
 
     client_on_entity_state_update(client, entities, &on_entity_state_update);

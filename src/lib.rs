@@ -6,7 +6,7 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::thread;
 use torii_client::client::Client as TClient;
-use types::{CArray, Error, KeysClause, ToriiClient, Ty, WorldMetadata, Query, Entity};
+use types::{CArray, Entity, Error, KeysClause, Query, ToriiClient, Ty, WorldMetadata};
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -109,10 +109,7 @@ pub unsafe extern "C" fn client_entities(
 
     match result {
         Ok(entities) => {
-            let entities: Vec<Entity> = entities
-                .into_iter()
-                .map(|e| (&e.clone()).into())
-                .collect();
+            let entities: Vec<Entity> = entities.into_iter().map(|e| (&e.clone()).into()).collect();
 
             Box::into_raw(Box::new(entities.into()))
         }

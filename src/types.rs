@@ -1,4 +1,7 @@
-use std::ffi::{c_char, CStr, CString};
+use std::{
+    ffi::{c_char, CStr, CString},
+    fmt::Write,
+};
 use torii_client::client::Client;
 
 pub struct ToriiClient {
@@ -152,14 +155,18 @@ impl From<&Entity> for torii_grpc::types::Entity {
 
         torii_grpc::types::Entity {
             key: (&val.key.clone()).into(),
-            models: models,
+            models,
         }
     }
 }
 
 impl From<&torii_grpc::types::Entity> for Entity {
     fn from(val: &torii_grpc::types::Entity) -> Self {
-        let models = val.models.iter().map(|m| (&m.clone()).into()).collect::<Vec<Model>>();
+        let models = val
+            .models
+            .iter()
+            .map(|m| (&m.clone()).into())
+            .collect::<Vec<Model>>();
 
         Entity {
             key: (&val.key.clone()).into(),
@@ -180,7 +187,11 @@ impl From<&Model> for torii_grpc::types::Model {
         let members: Vec<Member> = (&val.members).into();
 
         torii_grpc::types::Model {
-            name: unsafe { CString::from_raw(val.name as *mut c_char).into_string().unwrap() },
+            name: unsafe {
+                CString::from_raw(val.name as *mut c_char)
+                    .into_string()
+                    .unwrap()
+            },
             members: members.iter().map(|m| m.into()).collect(),
         }
     }
@@ -258,7 +269,10 @@ impl From<&dojo_types::schema::Ty> for Ty {
             dojo_types::schema::Ty::Struct(struct_) => Ty::TyStruct((&struct_.clone()).into()),
             dojo_types::schema::Ty::Enum(enum_) => Ty::TyEnum((&enum_.clone()).into()),
             dojo_types::schema::Ty::Tuple(tuple) => {
-                let children = tuple.iter().map(|c| (&c.clone()).into()).collect::<Vec<_>>();
+                let children = tuple
+                    .iter()
+                    .map(|c| (&c.clone()).into())
+                    .collect::<Vec<_>>();
 
                 Ty::TyTuple(children.into())
             }
@@ -271,7 +285,9 @@ impl From<&dojo_types::schema::Ty> for Ty {
 impl From<&Ty> for dojo_types::schema::Ty {
     fn from(value: &Ty) -> Self {
         match value {
-            Ty::TyPrimitive(primitive) => dojo_types::schema::Ty::Primitive((&primitive.clone()).into()),
+            Ty::TyPrimitive(primitive) => {
+                dojo_types::schema::Ty::Primitive((&primitive.clone()).into())
+            }
             Ty::TyStruct(struct_) => dojo_types::schema::Ty::Struct((&struct_.clone()).into()),
             Ty::TyEnum(enum_) => dojo_types::schema::Ty::Enum((&enum_.clone()).into()),
             Ty::TyTuple(tuple) => {
@@ -302,7 +318,11 @@ impl From<&Enum> for dojo_types::schema::Enum {
         let options = options.iter().map(|o| (&o.clone()).into()).collect();
 
         dojo_types::schema::Enum {
-            name: unsafe { CString::from_raw(value.name as *mut c_char).into_string().unwrap() },
+            name: unsafe {
+                CString::from_raw(value.name as *mut c_char)
+                    .into_string()
+                    .unwrap()
+            },
             option: Some(value.option),
             options,
         }
@@ -335,8 +355,12 @@ pub struct EnumOption {
 impl From<&EnumOption> for dojo_types::schema::EnumOption {
     fn from(value: &EnumOption) -> Self {
         dojo_types::schema::EnumOption {
-            name: unsafe { CString::from_raw(value.name as *mut c_char).into_string().unwrap() },
-            ty: unsafe { (&* Box::<Ty>::from_raw(value.ty) ).into() },
+            name: unsafe {
+                CString::from_raw(value.name as *mut c_char)
+                    .into_string()
+                    .unwrap()
+            },
+            ty: unsafe { (&*Box::<Ty>::from_raw(value.ty)).into() },
         }
     }
 }
@@ -363,7 +387,11 @@ impl From<&Struct> for dojo_types::schema::Struct {
         let children = children.iter().map(|c| (&c.clone()).into()).collect();
 
         dojo_types::schema::Struct {
-            name: unsafe { CString::from_raw(value.name as *mut c_char).into_string().unwrap() },
+            name: unsafe {
+                CString::from_raw(value.name as *mut c_char)
+                    .into_string()
+                    .unwrap()
+            },
             children,
         }
     }
@@ -395,8 +423,12 @@ pub struct Member {
 impl From<&Member> for dojo_types::schema::Member {
     fn from(value: &Member) -> Self {
         dojo_types::schema::Member {
-            name: unsafe { CString::from_raw(value.name as *mut c_char).into_string().unwrap() },
-            ty: unsafe { (&* Box::<Ty>::from_raw(value.ty) ).into() },
+            name: unsafe {
+                CString::from_raw(value.name as *mut c_char)
+                    .into_string()
+                    .unwrap()
+            },
+            ty: unsafe { (&*Box::<Ty>::from_raw(value.ty)).into() },
             key: value.key,
         }
     }
@@ -436,9 +468,9 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
             Primitive::U16(v) => dojo_types::primitive::Primitive::U16(Some(*v)),
             Primitive::U32(v) => dojo_types::primitive::Primitive::U32(Some(*v)),
             Primitive::U64(v) => dojo_types::primitive::Primitive::U64(Some(*v)),
-            Primitive::U128(v) => dojo_types::primitive::Primitive::U128(Some(u128::from_be_bytes(
-                *v,
-            ))),
+            Primitive::U128(v) => {
+                dojo_types::primitive::Primitive::U128(Some(u128::from_be_bytes(*v)))
+            }
             Primitive::U256(v) => dojo_types::primitive::Primitive::U256(Some((*v).into())),
             Primitive::USize(v) => dojo_types::primitive::Primitive::USize(Some(*v)),
             Primitive::PBool(v) => dojo_types::primitive::Primitive::Bool(Some(*v)),
@@ -501,7 +533,7 @@ impl From<&dojo_types::primitive::Primitive> for Primitive {
             }
         }
     }
-} 
+}
 
 impl From<&Query> for torii_grpc::types::Query {
     fn from(val: &Query) -> Self {
@@ -572,13 +604,13 @@ impl From<&torii_grpc::types::KeysClause> for KeysClause {
             .iter()
             .map(|k| {
                 // convert bytes to hex string
-                let str = k.to_bytes_be()
-                    .iter()
-                    .map(|b| format!("{:02x}", b))
-                    .collect::<String>();
+                let str = k.to_bytes_be().iter().fold("0x".to_string(), |mut acc, b| {
+                    write!(acc, "{:02x}", b).unwrap();
+                    acc
+                });
                 CString::new(str).unwrap().into_raw() as *const c_char
             })
-            .collect::<Vec<* const c_char>>();
+            .collect::<Vec<*const c_char>>();
         KeysClause {
             model: CString::new(val.model.clone()).unwrap().into_raw(),
             keys: keys.into(),
@@ -707,7 +739,10 @@ impl From<&Value> for torii_grpc::types::Value {
 
 impl From<&torii_grpc::types::Value> for Value {
     fn from(val: &torii_grpc::types::Value) -> Self {
-        Value { primitive_type: (&val.primitive_type).into(), value_type: (&val.value_type).into() }
+        Value {
+            primitive_type: (&val.primitive_type).into(),
+            value_type: (&val.value_type).into(),
+        }
     }
 }
 
