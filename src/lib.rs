@@ -2,7 +2,7 @@ mod types;
 
 use starknet::core::utils::cairo_short_string_to_felt;
 use starknet_crypto::FieldElement;
-use std::ffi::{CStr, CString};
+use std::ffi::{CStr, CString, c_void};
 use std::os::raw::c_char;
 use std::thread;
 use torii_client::client::Client as TClient;
@@ -256,9 +256,9 @@ pub unsafe extern "C" fn client_free(client: *mut ToriiClient) {
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn keys_free(array: *const CArray<KeysClause>) {
+pub unsafe extern "C" fn carray_free(array: *mut c_void, len: usize) {
     if !array.is_null() {
-        let _ = Vec::from_raw_parts((*array).data, (*array).data_len, (*array).data_len);
+        let _ = Vec::from_raw_parts(array as *mut c_void, len, len);
     }
 }
 

@@ -330,6 +330,6 @@ void client_remove_entities_to_sync(struct ToriiClient *client,
 
 void client_free(struct ToriiClient *client);
 
-void keys_free(const struct CArray_KeysClause *array);
+void carray_free(void *array, uintptr_t len);
 
 void ty_free(struct Ty *ty);

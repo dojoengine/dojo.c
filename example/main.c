@@ -72,6 +72,7 @@ int main()
 
     // print subscribed entities
     const CArray_KeysClause *subscribed_entities = client_subscribed_entities(client);
+    carray_free((void *)subscribed_entities, subscribed_entities->data_len);
     for (size_t i = 0; i < subscribed_entities->data_len; i++)
     {
         printf("Subscribed entity: %s", subscribed_entities->data[i].keys.data[0]);
@@ -83,7 +84,7 @@ int main()
     query.clause.keys.keys.data_len = 1;
     query.clause.keys.keys.data[0] = player;
     query.clause.keys.model = "Moves";
-    query.limit = -1;
+    query.limit = 5;
 
     const CArray_Entity *retrieved_entities = client_entities(client, &query, &error);
     if (retrieved_entities == NULL)
@@ -95,10 +96,10 @@ int main()
         for (size_t i = 0; i < retrieved_entities->data_len; i++)
         {
             // print player key
-            printf("Retrieved entity: ");
+            printf("Retrieved entity: 0x");
             for (size_t j = 0; j < 32; j++)
             {
-                printf("%s", retrieved_entities->data[i].key.data[j]);
+                printf("%02x", retrieved_entities->data[i].key.data[j]);
             }
             printf("\n");
         }
