@@ -1,5 +1,5 @@
 #include "../dojo.h"
-#include<unistd.h>
+#include <unistd.h>
 #include <stdio.h>
 
 void on_entity_state_update()
@@ -124,9 +124,8 @@ int main()
     }
 
     client_on_entity_state_update(client, entities, &on_entity_state_update);
-    
-    
-    sleep(2); 
+
+    sleep(2);
 
     Call call = {
         .to = "0x031571485922572446df9e3198a891e10d3a48e544544317dbcbb667e15848cd",
@@ -139,7 +138,7 @@ int main()
         printf("Failed to execute call: %s\n", error.message);
         return 1;
     }
-    
+
     sleep(5);
 
     client_remove_entities_to_sync(client, entities, 1, &error);

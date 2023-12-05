@@ -1,8 +1,13 @@
+use starknet::{
+    accounts::SingleOwnerAccount,
+    core::utils::get_selector_from_name,
+    providers::{jsonrpc::HttpTransport, JsonRpcClient},
+    signers::LocalWallet,
+};
 use std::{
     ffi::{c_char, CStr, CString},
-    fmt::Write, collections::HashMap,
+    fmt::Write,
 };
-use starknet::{providers::{SequencerGatewayProvider, JsonRpcClient, jsonrpc::HttpTransport}, signers::LocalWallet, accounts::SingleOwnerAccount, core::utils::{cairo_short_string_to_felt, get_selector_from_name}, macros::selector};
 use torii_client::client::Client;
 
 pub struct Account(pub SingleOwnerAccount<JsonRpcClient<HttpTransport>, LocalWallet>);
@@ -20,14 +25,14 @@ impl From<&Call> for starknet::accounts::Call {
     fn from(val: &Call) -> Self {
         let to = unsafe { CStr::from_ptr(val.to).to_string_lossy().to_string() };
         let selector = unsafe { CStr::from_ptr(val.selector).to_string_lossy().to_string() };
-        
+
         let calldata: Vec<FieldElement> = (&val.calldata).into();
         let calldata = calldata.iter().map(|c| (&c.clone()).into()).collect();
 
         starknet::accounts::Call {
             to: starknet_crypto::FieldElement::from_hex_be(&to).unwrap(),
             selector: get_selector_from_name(&selector).unwrap(),
-            calldata: calldata,
+            calldata,
         }
     }
 }
@@ -849,7 +854,11 @@ impl From<&WorldMetadata> for dojo_types::WorldMetadata {
         let models = models
             .iter()
             .map(|m| {
-                let key = unsafe { CString::from_raw(m.key as *mut c_char).into_string().unwrap() };
+                let key = unsafe {
+                    CString::from_raw(m.key as *mut c_char)
+                        .into_string()
+                        .unwrap()
+                };
                 let value: dojo_types::schema::ModelMetadata = (&m.value).into();
 
                 (key, value)
@@ -898,18 +907,18 @@ impl From<&dojo_types::schema::ModelMetadata> for ModelMetadata {
 
 impl From<&ModelMetadata> for dojo_types::schema::ModelMetadata {
     fn from(value: &ModelMetadata) -> Self {
-        let layout: Vec<FieldElement> = (&value
-            .layout)
-            .into();
+        let layout: Vec<FieldElement> = (&value.layout).into();
 
-        let layout: Vec<starknet::core::types::FieldElement> = layout.iter().map(|v| (&v.clone()).into()).collect();
-
+        let layout: Vec<starknet::core::types::FieldElement> =
+            layout.iter().map(|v| (&v.clone()).into()).collect();
 
         dojo_types::schema::ModelMetadata {
             schema: (&value.schema).into(),
-            name: unsafe { CString::from_raw(value.name as *mut c_char)
-                .into_string()
-                .unwrap() },
+            name: unsafe {
+                CString::from_raw(value.name as *mut c_char)
+                    .into_string()
+                    .unwrap()
+            },
             packed_size: value.packed_size,
             unpacked_size: value.unpacked_size,
             class_hash: (&value.class_hash).into(),

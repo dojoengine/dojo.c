@@ -11,8 +11,7 @@ use std::os::raw::c_char;
 use std::thread;
 use torii_client::client::Client as TClient;
 use types::{
-    Account, CArray, Entity, Error, KeysClause, Query, ToriiClient,
-    Ty, Wallet, WorldMetadata, Call,
+    Account, CArray, Call, Entity, Error, KeysClause, Query, ToriiClient, Ty, Wallet, WorldMetadata,
 };
 
 #[no_mangle]
@@ -330,12 +329,17 @@ pub unsafe extern "C" fn account_execute_raw(
     error: *mut Error,
 ) {
     let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
-    let calldata = calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::accounts::Call>>();
+    let calldata = calldata
+        .into_iter()
+        .map(|c| (&c).into())
+        .collect::<Vec<starknet::accounts::Call>>();
 
     let call = (*account).0.execute(calldata);
     println!("{:?}", call);
 
-    let result = tokio::runtime::Runtime::new().unwrap().block_on(call.send());
+    let result = tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on(call.send());
 
     if let Err(e) = result {
         unsafe {
