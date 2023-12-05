@@ -304,11 +304,11 @@ struct Ty *client_entity(struct ToriiClient *client,
                          const struct KeysClause *keys,
                          struct Error *error);
 
-const struct CArray_Entity *client_entities(struct ToriiClient *client,
-                                            const struct Query *query,
-                                            struct Error *error);
+struct CArray_Entity client_entities(struct ToriiClient *client,
+                                     const struct Query *query,
+                                     struct Error *error);
 
-const struct CArray_KeysClause *client_subscribed_entities(struct ToriiClient *client);
+struct CArray_KeysClause client_subscribed_entities(struct ToriiClient *client);
 
 void client_start_subscription(struct ToriiClient *client, struct Error *error);
 
@@ -328,8 +328,16 @@ void client_remove_entities_to_sync(struct ToriiClient *client,
                                     uintptr_t entities_len,
                                     struct Error *error);
 
-void client_free(struct ToriiClient *client);
-
-void carray_free(void *array, uintptr_t len);
+void client_free(struct ToriiClient *t);
 
 void ty_free(struct Ty *ty);
+
+void entity_free(struct Entity *entity);
+
+void error_free(struct Error *error);
+
+void world_metadata_free(struct WorldMetadata *metadata);
+
+void carray_free(void *data, uintptr_t data_len);
+
+void string_free(char *string);

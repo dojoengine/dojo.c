@@ -71,11 +71,10 @@ int main()
     client_add_entities_to_sync(client, entities, 1, &error);
 
     // print subscribed entities
-    const CArray_KeysClause *subscribed_entities = client_subscribed_entities(client);
-    carray_free((void *)subscribed_entities, subscribed_entities->data_len);
-    for (size_t i = 0; i < subscribed_entities->data_len; i++)
+    const CArray_KeysClause subscribed_entities = client_subscribed_entities(client);
+    for (size_t i = 0; i < subscribed_entities.data_len; i++)
     {
-        printf("Subscribed entity: %s", subscribed_entities->data[i].keys.data[0]);
+        printf("Subscribed entity: %s", subscribed_entities.data[i].keys.data[0]);
         printf("\n");
     }
 
@@ -86,20 +85,20 @@ int main()
     query.clause.keys.model = "Moves";
     query.limit = 5;
 
-    const CArray_Entity *retrieved_entities = client_entities(client, &query, &error);
-    if (retrieved_entities == NULL)
+    const CArray_Entity retrieved_entities = client_entities(client, &query, &error);
+    if (retrieved_entities.data == NULL)
     {
         printf("Failed to retrieve entities: %s\n", error.message);
     }
     else
     {
-        for (size_t i = 0; i < retrieved_entities->data_len; i++)
+        for (size_t i = 0; i < retrieved_entities.data_len; i++)
         {
             // print player key
             printf("Retrieved entity: 0x");
             for (size_t j = 0; j < 32; j++)
             {
-                printf("%02x", retrieved_entities->data[i].key.data[j]);
+                printf("%02x", retrieved_entities.data[i].key.data[j]);
             }
             printf("\n");
         }

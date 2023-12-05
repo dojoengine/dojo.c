@@ -1,6 +1,6 @@
 use std::{
     ffi::{c_char, CStr, CString},
-    fmt::Write,
+    fmt::Write, collections::HashMap,
 };
 use torii_client::client::Client;
 
@@ -814,6 +814,29 @@ impl From<&dojo_types::WorldMetadata> for WorldMetadata {
     }
 }
 
+impl From<&WorldMetadata> for dojo_types::WorldMetadata {
+    fn from(value: &WorldMetadata) -> Self {
+        let models: Vec<CHashItem<*const c_char, ModelMetadata>> = (&value.models).into();
+        let models = models
+            .iter()
+            .map(|m| {
+                let key = unsafe { CString::from_raw(m.key as *mut c_char).into_string().unwrap() };
+                let value: dojo_types::schema::ModelMetadata = (&m.value).into();
+
+                (key, value)
+            })
+            .collect();
+
+        dojo_types::WorldMetadata {
+            world_address: (&value.world_address.clone()).into(),
+            world_class_hash: (&value.world_class_hash.clone()).into(),
+            executor_address: (&value.executor_address.clone()).into(),
+            executor_class_hash: (&value.executor_class_hash.clone()).into(),
+            models,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct ModelMetadata {
@@ -840,6 +863,28 @@ impl From<&dojo_types::schema::ModelMetadata> for ModelMetadata {
             unpacked_size: value.unpacked_size,
             class_hash: (&value.class_hash.clone()).into(),
             layout: layout.into(),
+        }
+    }
+}
+
+impl From<&ModelMetadata> for dojo_types::schema::ModelMetadata {
+    fn from(value: &ModelMetadata) -> Self {
+        let layout: Vec<FieldElement> = (&value
+            .layout)
+            .into();
+
+        let layout: Vec<starknet::core::types::FieldElement> = layout.iter().map(|v| (&v.clone()).into()).collect();
+
+
+        dojo_types::schema::ModelMetadata {
+            schema: (&value.schema).into(),
+            name: unsafe { CString::from_raw(value.name as *mut c_char)
+                .into_string()
+                .unwrap() },
+            packed_size: value.packed_size,
+            unpacked_size: value.unpacked_size,
+            class_hash: (&value.class_hash).into(),
+            layout,
         }
     }
 }

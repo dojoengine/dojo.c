@@ -99,7 +99,7 @@ pub unsafe extern "C" fn client_entities(
     client: *mut ToriiClient,
     query: &Query,
     error: *mut Error,
-) -> *const CArray<Entity> {
+) -> CArray<Entity> {
     let query = (&query.clone()).into();
     println!("{:?}", query);
 
@@ -111,7 +111,7 @@ pub unsafe extern "C" fn client_entities(
         Ok(entities) => {
             let entities: Vec<Entity> = entities.into_iter().map(|e| (&e.clone()).into()).collect();
 
-            Box::into_raw(Box::new(entities.into()))
+            entities.into()
         }
         Err(e) => {
             unsafe {
@@ -119,7 +119,11 @@ pub unsafe extern "C" fn client_entities(
                     message: CString::new(e.to_string()).unwrap().into_raw(),
                 };
             }
-            std::ptr::null_mut()
+
+            CArray{
+                data: std::ptr::null_mut(),
+                data_len: 0,
+            }
         }
     }
 }
@@ -128,14 +132,14 @@ pub unsafe extern "C" fn client_entities(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_subscribed_entities(
     client: *mut ToriiClient,
-) -> *const CArray<KeysClause> {
+) -> CArray<KeysClause> {
     let entities = unsafe { (*client).inner.subscribed_entities().clone() };
     let entities = entities
         .into_iter()
         .map(|e| (&e).into())
         .collect::<Vec<KeysClause>>();
 
-    Box::into_raw(Box::new(entities.into()))
+    entities.into()
 }
 
 #[no_mangle]
@@ -246,19 +250,11 @@ pub unsafe extern "C" fn client_remove_entities_to_sync(
 // deallocating the memory.
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_free(client: *mut ToriiClient) {
-    if !client.is_null() {
+pub unsafe extern "C" fn client_free(t: *mut ToriiClient) {
+    if !t.is_null() {
         unsafe {
-            let _ = Box::from_raw(client);
+            let _ = Box::from_raw(t);
         }
-    }
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn carray_free(array: *mut c_void, len: usize) {
-    if !array.is_null() {
-        let _ = Vec::from_raw_parts(array as *mut c_void, len, len);
     }
 }
 
@@ -269,3 +265,46 @@ pub unsafe extern "C" fn ty_free(ty: *mut Ty) {
         let _: dojo_types::schema::Ty = (&*Box::<Ty>::from_raw(ty)).into();
     }
 }
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn entity_free(entity: *mut Entity) {
+    if !entity.is_null() {
+        let _: torii_grpc::types::Entity = (&*Box::<Entity>::from_raw(entity)).into();
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn error_free(error: *mut Error) {
+    if !error.is_null() {
+        let _: String = CString::from_raw((*error).message as *mut i8).into_string().unwrap();
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn world_metadata_free(metadata: *mut WorldMetadata) {
+    if !metadata.is_null() {
+        let _: dojo_types::WorldMetadata =
+            (&*Box::<WorldMetadata>::from_raw(metadata)).into();
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn carray_free(data: *mut c_void, data_len: usize) {
+    if !data.is_null() {
+        let _: Vec<c_void> = Vec::from_raw_parts(data, data_len, data_len);
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn string_free(string: *mut c_char) {
+    if !string.is_null() {
+        let _: String = CString::from_raw(string).into_string().unwrap();
+    }
+}
+
+// TODO: free keys clause
