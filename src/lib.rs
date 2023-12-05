@@ -1,12 +1,19 @@
 mod types;
 
+use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::utils::cairo_short_string_to_felt;
+use starknet::providers::jsonrpc::HttpTransport;
+use starknet::providers::{JsonRpcClient, Provider};
+use starknet::signers::{LocalWallet, SigningKey};
 use starknet_crypto::FieldElement;
-use std::ffi::{CStr, CString, c_void};
+use std::ffi::{c_void, CStr, CString};
 use std::os::raw::c_char;
 use std::thread;
 use torii_client::client::Client as TClient;
-use types::{CArray, Entity, Error, KeysClause, Query, ToriiClient, Ty, WorldMetadata};
+use types::{
+    Account, CArray, Entity, Error, KeysClause, Query, ToriiClient,
+    Ty, Wallet, WorldMetadata, Call,
+};
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -36,7 +43,7 @@ pub unsafe extern "C" fn client_new(
 
     let client_future = TClient::new(
         torii_url,
-        rpc_url,
+        rpc_url.clone(),
         world,
         Some(entities.iter().map(|e| (&e.clone()).into()).collect()),
     );
@@ -47,6 +54,7 @@ pub unsafe extern "C" fn client_new(
     match client {
         Ok(client) => Box::into_raw(Box::new(ToriiClient {
             inner: client,
+            rpc_url: rpc_url.clone(),
             runtime,
         })),
         Err(e) => {
@@ -120,7 +128,7 @@ pub unsafe extern "C" fn client_entities(
                 };
             }
 
-            CArray{
+            CArray {
                 data: std::ptr::null_mut(),
                 data_len: 0,
             }
@@ -244,6 +252,100 @@ pub unsafe extern "C" fn client_remove_entities_to_sync(
     }
 }
 
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn signer_new(private_key: *const c_char, error: *mut Error) -> *mut Wallet {
+    let private_key = unsafe { CStr::from_ptr(private_key).to_string_lossy().into_owned() };
+    let private_key = FieldElement::from_hex_be(private_key.as_str());
+    if let Err(e) = private_key {
+        unsafe {
+            *error = Error {
+                message: CString::new(e.to_string()).unwrap().into_raw(),
+            };
+        }
+        return std::ptr::null_mut();
+    }
+    let private_key = private_key.unwrap();
+
+    let signer = LocalWallet::from(SigningKey::from_secret_scalar(private_key));
+
+    Box::into_raw(Box::new(Wallet(signer)))
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn account_new(
+    client: *mut ToriiClient,
+    signer: *mut Wallet,
+    address: *const c_char,
+    error: *mut Error,
+) -> *mut Account {
+    let address = unsafe { CStr::from_ptr(address).to_string_lossy().into_owned() };
+    let address = FieldElement::from_hex_be(address.as_str());
+    if let Err(e) = address {
+        unsafe {
+            *error = Error {
+                message: CString::new(e.to_string()).unwrap().into_raw(),
+            };
+        }
+        return std::ptr::null_mut();
+    }
+    let address = address.unwrap();
+
+    let rpc = JsonRpcClient::new(HttpTransport::new(
+        url::Url::parse(&unsafe { (*client).rpc_url.clone() }).unwrap(),
+    ));
+
+    let chain_id = (*client).runtime.block_on(rpc.chain_id()).unwrap();
+
+    let account = SingleOwnerAccount::new(
+        rpc,
+        (*signer).0.to_owned(),
+        address,
+        chain_id,
+        ExecutionEncoding::Legacy,
+    );
+
+    Box::into_raw(Box::new(Account(account)))
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn account_address(account: *mut Account) -> types::FieldElement {
+    (&(*account).0.address()).into()
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn account_chain_id(account: *mut Account) -> types::FieldElement {
+    (&(*account).0.chain_id()).into()
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn account_execute_raw(
+    account: *mut Account,
+    calldata: *const Call,
+    calldata_len: usize,
+    error: *mut Error,
+) {
+    let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
+    let calldata = calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::accounts::Call>>();
+
+    let call = (*account).0.execute(calldata);
+    println!("{:?}", call);
+
+    let result = tokio::runtime::Runtime::new().unwrap().block_on(call.send());
+
+    if let Err(e) = result {
+        unsafe {
+            *error = Error {
+                message: CString::new(e.to_string()).unwrap().into_raw(),
+            };
+        }
+    }
+}
+
 // This function takes a raw pointer to ToriiClient as an argument.
 // It checks if the pointer is not null. If it's not, it converts the raw pointer
 // back into a Box<ToriiClient>, which gets dropped at the end of the scope,
@@ -278,7 +380,9 @@ pub unsafe extern "C" fn entity_free(entity: *mut Entity) {
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn error_free(error: *mut Error) {
     if !error.is_null() {
-        let _: String = CString::from_raw((*error).message as *mut i8).into_string().unwrap();
+        let _: String = CString::from_raw((*error).message as *mut i8)
+            .into_string()
+            .unwrap();
     }
 }
 
@@ -286,8 +390,7 @@ pub unsafe extern "C" fn error_free(error: *mut Error) {
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn world_metadata_free(metadata: *mut WorldMetadata) {
     if !metadata.is_null() {
-        let _: dojo_types::WorldMetadata =
-            (&*Box::<WorldMetadata>::from_raw(metadata)).into();
+        let _: dojo_types::WorldMetadata = (&*Box::<WorldMetadata>::from_raw(metadata)).into();
     }
 }
 

@@ -1189,7 +1189,7 @@ dependencies = [
 [[package]]
 name = "dojo-types"
 version = "0.3.15"
-source = "git+https://github.com/dojoengine/dojo#cdbaca4121b1642e1a8ca40d6831bad73d28ed26"
+source = "git+https://github.com/dojoengine/dojo#c6d82975de97e1ae68526ad2ef0d8d37905927ba"
 dependencies = [
  "crypto-bigint",
  "hex",
@@ -1205,7 +1205,7 @@ dependencies = [
 [[package]]
 name = "dojo-world"
 version = "0.3.15"
-source = "git+https://github.com/dojoengine/dojo#cdbaca4121b1642e1a8ca40d6831bad73d28ed26"
+source = "git+https://github.com/dojoengine/dojo#c6d82975de97e1ae68526ad2ef0d8d37905927ba"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4126,12 +4126,13 @@ dependencies = [
  "tokio",
  "torii-client",
  "torii-grpc",
+ "url",
 ]
 
 [[package]]
 name = "torii-client"
 version = "0.3.15"
-source = "git+https://github.com/dojoengine/dojo#cdbaca4121b1642e1a8ca40d6831bad73d28ed26"
+source = "git+https://github.com/dojoengine/dojo#c6d82975de97e1ae68526ad2ef0d8d37905927ba"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -4157,7 +4158,7 @@ dependencies = [
 [[package]]
 name = "torii-grpc"
 version = "0.3.15"
-source = "git+https://github.com/dojoengine/dojo#cdbaca4121b1642e1a8ca40d6831bad73d28ed26"
+source = "git+https://github.com/dojoengine/dojo#c6d82975de97e1ae68526ad2ef0d8d37905927ba"
 dependencies = [
  "bytes",
  "crypto-bigint",
@@ -4712,9 +4713,9 @@ checksum = "dff9641d1cd4be8d1a070daf9e3773c5f67e78b4d9d42263020c057706765c04"
 
 [[package]]
 name = "winnow"
-version = "0.5.19"
+version = "0.5.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "829846f3e3db426d4cee4510841b71a8e58aa2a76b1132579487ae430ccd9c7b"
+checksum = "0383266b19108dfc6314a56047aa545a1b4d1be60e799b4dbdd407b56402704b"
 dependencies = [
  "memchr",
 ]
@@ -4755,18 +4756,18 @@ checksum = "7e2c411759b501fb9501aac2b1b2d287a6e93e5bdcf13c25306b23e1b716dd0e"
 
 [[package]]
 name = "zerocopy"
-version = "0.7.28"
+version = "0.7.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d6f15f7ade05d2a4935e34a457b936c23dc70a05cc1d97133dc99e7a3fe0f0e"
+checksum = "5d075cf85bbb114e933343e087b92f2146bac0d55b534cbb8188becf0039948e"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.7.28"
+version = "0.7.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbbad221e3f78500350ecbd7dfa4e63ef945c05f4c61cb7f4d3f84cd0bba649b"
+checksum = "86cd5ca076997b97ef09d3ad65efe811fa68c9e874cb636ccb211223a813b0c2"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -1,4 +1,5 @@
 #include "../dojo.h"
+#include<unistd.h>
 #include <stdio.h>
 
 void on_entity_state_update()
@@ -44,6 +45,24 @@ int main()
     if (client == NULL)
     {
         printf("Failed to create client: %s\n", error.message);
+        return 1;
+    }
+
+    // account signer
+    error = (Error){};
+    Wallet *wallet = signer_new("0x1800000000300000180000000000030000000000003006001800006600", &error);
+    if (wallet == NULL)
+    {
+        printf("Failed to create wallet: %s\n", error.message);
+        return 1;
+    }
+
+    // account
+    error = (Error){};
+    Account *account = account_new(client, wallet, player, &error);
+    if (account == NULL)
+    {
+        printf("Failed to create account: %s\n", error.message);
         return 1;
     }
 
@@ -105,9 +124,23 @@ int main()
     }
 
     client_on_entity_state_update(client, entities, &on_entity_state_update);
-    while (true)
+    
+    
+    sleep(2); 
+
+    Call call = {
+        .to = "0x031571485922572446df9e3198a891e10d3a48e544544317dbcbb667e15848cd",
+        .selector = "spawn",
+    };
+    error = (Error){};
+    account_execute_raw(account, &call, 1, &error);
+    if (error.message != NULL)
     {
+        printf("Failed to execute call: %s\n", error.message);
+        return 1;
     }
+    
+    sleep(5);
 
     client_remove_entities_to_sync(client, entities, 1, &error);
 

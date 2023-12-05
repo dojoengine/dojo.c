@@ -2,10 +2,39 @@ use std::{
     ffi::{c_char, CStr, CString},
     fmt::Write, collections::HashMap,
 };
+use starknet::{providers::{SequencerGatewayProvider, JsonRpcClient, jsonrpc::HttpTransport}, signers::LocalWallet, accounts::SingleOwnerAccount, core::utils::{cairo_short_string_to_felt, get_selector_from_name}, macros::selector};
 use torii_client::client::Client;
+
+pub struct Account(pub SingleOwnerAccount<JsonRpcClient<HttpTransport>, LocalWallet>);
+pub struct Wallet(pub LocalWallet);
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct Call {
+    pub to: *const c_char,
+    pub selector: *const c_char,
+    pub calldata: CArray<FieldElement>,
+}
+
+impl From<&Call> for starknet::accounts::Call {
+    fn from(val: &Call) -> Self {
+        let to = unsafe { CStr::from_ptr(val.to).to_string_lossy().to_string() };
+        let selector = unsafe { CStr::from_ptr(val.selector).to_string_lossy().to_string() };
+        
+        let calldata: Vec<FieldElement> = (&val.calldata).into();
+        let calldata = calldata.iter().map(|c| (&c.clone()).into()).collect();
+
+        starknet::accounts::Call {
+            to: starknet_crypto::FieldElement::from_hex_be(&to).unwrap(),
+            selector: get_selector_from_name(&selector).unwrap(),
+            calldata: calldata,
+        }
+    }
+}
 
 pub struct ToriiClient {
     pub inner: Client,
+    pub rpc_url: String,
     pub runtime: tokio::runtime::Runtime,
 }
 

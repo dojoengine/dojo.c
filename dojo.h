@@ -17,7 +17,11 @@ typedef enum LogicalOperator {
   Or,
 } LogicalOperator;
 
+typedef struct Account Account;
+
 typedef struct ToriiClient ToriiClient;
+
+typedef struct Wallet Wallet;
 
 typedef struct CArray______c_char {
   const char **data;
@@ -293,6 +297,12 @@ typedef struct WorldMetadata {
   struct CArray_CHashItem______c_char__ModelMetadata models;
 } WorldMetadata;
 
+typedef struct Call {
+  const char *to;
+  const char *selector;
+  struct CArray_FieldElement calldata;
+} Call;
+
 struct ToriiClient *client_new(const char *torii_url,
                                const char *rpc_url,
                                const char *world,
@@ -327,6 +337,22 @@ void client_remove_entities_to_sync(struct ToriiClient *client,
                                     const struct KeysClause *entities,
                                     uintptr_t entities_len,
                                     struct Error *error);
+
+struct Wallet *signer_new(const char *private_key, struct Error *error);
+
+struct Account *account_new(struct ToriiClient *client,
+                            struct Wallet *signer,
+                            const char *address,
+                            struct Error *error);
+
+struct FieldElement account_address(struct Account *account);
+
+struct FieldElement account_chain_id(struct Account *account);
+
+void account_execute_raw(struct Account *account,
+                         const struct Call *calldata,
+                         uintptr_t calldata_len,
+                         struct Error *error);
 
 void client_free(struct ToriiClient *t);
 
