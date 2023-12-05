@@ -53,7 +53,7 @@ pub unsafe extern "C" fn client_new(
     match client {
         Ok(client) => Box::into_raw(Box::new(ToriiClient {
             inner: client,
-            rpc_url: rpc_url.clone(),
+            rpc_url: rpc_url,
             runtime,
         })),
         Err(e) => {
@@ -116,7 +116,7 @@ pub unsafe extern "C" fn client_entities(
 
     match result {
         Ok(entities) => {
-            let entities: Vec<Entity> = entities.into_iter().map(|e| (&e.clone()).into()).collect();
+            let entities: Vec<Entity> = entities.into_iter().map(|e| (&e).into()).collect();
 
             entities.into()
         }
