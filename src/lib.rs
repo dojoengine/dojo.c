@@ -314,7 +314,7 @@ pub unsafe extern "C" fn account_chain_id(account: *mut Account) -> types::Field
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn set_block_id(account: *mut Account, block_id: BlockId) {
+pub unsafe extern "C" fn account_set_block_id(account: *mut Account, block_id: BlockId) {
     let block_id = (&block_id).into();
     (*account).0.set_block_id(block_id);
 }

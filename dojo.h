@@ -374,7 +374,7 @@ struct FieldElement account_address(struct Account *account);
 
 struct FieldElement account_chain_id(struct Account *account);
 
-void set_block_id(struct Account *account, struct BlockId block_id);
+void account_set_block_id(struct Account *account, struct BlockId block_id);
 
 void account_execute_raw(struct Account *account,
                          const struct Call *calldata,
