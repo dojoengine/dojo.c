@@ -306,7 +306,7 @@ typedef struct WorldMetadata {
 typedef enum BlockId_Tag {
   Hash,
   Number,
-  BlockTag,
+  BlockTag_,
 } BlockId_Tag;
 
 typedef struct BlockId {
