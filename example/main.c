@@ -48,18 +48,9 @@ int main()
         return 1;
     }
 
-    // account signer
-    error = (Error){};
-    Wallet *wallet = signer_new("0x1800000000300000180000000000030000000000003006001800006600", &error);
-    if (wallet == NULL)
-    {
-        printf("Failed to create wallet: %s\n", error.message);
-        return 1;
-    }
-
     // account
     error = (Error){};
-    Account *account = account_new(client, wallet, player, &error);
+    Account *account = account_new(client, "0x1800000000300000180000000000030000000000003006001800006600", player, &error);
     if (account == NULL)
     {
         printf("Failed to create account: %s\n", error.message);

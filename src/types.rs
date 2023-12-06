@@ -11,7 +11,6 @@ use std::{
 use torii_client::client::Client;
 
 pub struct Account(pub SingleOwnerAccount<JsonRpcClient<HttpTransport>, LocalWallet>);
-pub struct Wallet(pub LocalWallet);
 
 #[derive(Debug, Clone)]
 #[repr(C)]

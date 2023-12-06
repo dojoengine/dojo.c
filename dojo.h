@@ -21,8 +21,6 @@ typedef struct Account Account;
 
 typedef struct ToriiClient ToriiClient;
 
-typedef struct Wallet Wallet;
-
 typedef struct CArray______c_char {
   const char **data;
   uintptr_t data_len;
@@ -338,10 +336,8 @@ void client_remove_entities_to_sync(struct ToriiClient *client,
                                     uintptr_t entities_len,
                                     struct Error *error);
 
-struct Wallet *signer_new(const char *private_key, struct Error *error);
-
 struct Account *account_new(struct ToriiClient *client,
-                            struct Wallet *signer,
+                            const char *private_key,
                             const char *address,
                             struct Error *error);
 
@@ -355,6 +351,8 @@ void account_execute_raw(struct Account *account,
                          struct Error *error);
 
 void client_free(struct ToriiClient *t);
+
+void account_free(struct Account *account);
 
 void ty_free(struct Ty *ty);
 
