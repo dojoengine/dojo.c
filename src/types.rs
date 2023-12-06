@@ -20,6 +20,41 @@ pub struct Call {
     pub calldata: CArray<FieldElement>,
 }
 
+/// Block hash, number or tag
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub enum BlockId {
+    Hash(FieldElement),
+    Number(u64),
+    Tag(BlockTag),
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub enum BlockTag {
+    Latest,
+    Pending,
+}
+
+impl From<&BlockId> for starknet::core::types::BlockId {
+    fn from(val: &BlockId) -> Self {
+        match val {
+            BlockId::Hash(hash) => starknet::core::types::BlockId::Hash((&hash.clone()).into()),
+            BlockId::Number(number) => starknet::core::types::BlockId::Number(*number),
+            BlockId::Tag(tag) => starknet::core::types::BlockId::Tag((&tag.clone()).into()),
+        }
+    }
+}
+
+impl From<&BlockTag> for starknet::core::types::BlockTag {
+    fn from(val: &BlockTag) -> Self {
+        match val {
+            BlockTag::Latest => starknet::core::types::BlockTag::Latest,
+            BlockTag::Pending => starknet::core::types::BlockTag::Pending,
+        }
+    }
+}
+
 impl From<&Call> for starknet::accounts::Call {
     fn from(val: &Call) -> Self {
         let to = unsafe { CStr::from_ptr(val.to).to_string_lossy().to_string() };

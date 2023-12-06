@@ -7,11 +7,13 @@ use starknet::providers::{JsonRpcClient, Provider};
 use starknet::signers::{LocalWallet, SigningKey};
 use starknet_crypto::FieldElement;
 use std::ffi::{c_void, CStr, CString};
+use std::ops::Deref;
 use std::os::raw::c_char;
 use std::thread;
 use torii_client::client::Client as TClient;
 use types::{
-    Account, CArray, Call, Entity, Error, KeysClause, Query, ToriiClient, Ty, WorldMetadata,
+    Account, BlockId, CArray, Call, Entity, Error, KeysClause, Query, ToriiClient, Ty,
+    WorldMetadata,
 };
 
 #[no_mangle]
@@ -249,14 +251,19 @@ pub unsafe extern "C" fn client_remove_entities_to_sync(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+// Should we create a provider beforehand and provide it to the account?
+// passing the client to the account is quit eannoying as it ties
+// it to the client.
 pub unsafe extern "C" fn account_new(
-    client: *mut ToriiClient,
+    rpc_url: *const c_char,
     private_key: *const c_char,
     address: *const c_char,
     error: *mut Error,
 ) -> *mut Account {
-    let address = unsafe { CStr::from_ptr(address).to_string_lossy().into_owned() };
-    let address = FieldElement::from_hex_be(address.as_str());
+    let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy() };
+
+    let address = unsafe { CStr::from_ptr(address).to_string_lossy() };
+    let address = FieldElement::from_hex_be(address.deref());
     if let Err(e) = address {
         unsafe {
             *error = Error {
@@ -267,18 +274,26 @@ pub unsafe extern "C" fn account_new(
     }
     let address = address.unwrap();
 
-    let rpc = JsonRpcClient::new(HttpTransport::new(
-        url::Url::parse(&unsafe { (*client).rpc_url.clone() }).unwrap(),
-    ));
+    let private_key = unsafe { CStr::from_ptr(private_key).to_string_lossy() };
+    let private_key = FieldElement::from_hex_be(private_key.deref());
+    if let Err(e) = private_key {
+        unsafe {
+            *error = Error {
+                message: CString::new(e.to_string()).unwrap().into_raw(),
+            };
+        }
+        return std::ptr::null_mut();
+    }
+    let private_key = private_key.unwrap();
 
-    let chain_id = (*client).runtime.block_on(rpc.chain_id()).unwrap();
+    let rpc = JsonRpcClient::new(HttpTransport::new(url::Url::parse(&rpc_url).unwrap()));
 
-    let signer = LocalWallet::from_signing_key(SigningKey::from_secret_scalar(
-        FieldElement::from_hex_be(
-            unsafe { CStr::from_ptr(private_key).to_string_lossy().into_owned() }.as_str(),
-        )
-        .unwrap(),
-    ));
+    let chain_id = tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on(rpc.chain_id())
+        .unwrap();
+
+    let signer = LocalWallet::from_signing_key(SigningKey::from_secret_scalar(private_key));
     let account =
         SingleOwnerAccount::new(rpc, signer, address, chain_id, ExecutionEncoding::Legacy);
 
@@ -295,6 +310,13 @@ pub unsafe extern "C" fn account_address(account: *mut Account) -> types::FieldE
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn account_chain_id(account: *mut Account) -> types::FieldElement {
     (&(*account).0.chain_id()).into()
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn set_block_id(account: *mut Account, block_id: BlockId) {
+    let block_id = (&block_id).into();
+    (*account).0.set_block_id(block_id);
 }
 
 #[no_mangle]

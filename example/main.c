@@ -50,7 +50,7 @@ int main()
 
     // account
     error = (Error){};
-    Account *account = account_new(client, "0x1800000000300000180000000000030000000000003006001800006600", player, &error);
+    Account *account = account_new(rpc_url, "0x1800000000300000180000000000030000000000003006001800006600", player, &error);
     if (account == NULL)
     {
         printf("Failed to create account: %s\n", error.message);

@@ -3,6 +3,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+typedef enum BlockTag {
+  Latest,
+  Pending,
+} BlockTag;
+
 typedef enum ComparisonOperator {
   Eq,
   Neq,
@@ -295,6 +300,30 @@ typedef struct WorldMetadata {
   struct CArray_CHashItem______c_char__ModelMetadata models;
 } WorldMetadata;
 
+/**
+ * Block hash, number or tag
+ */
+typedef enum BlockId_Tag {
+  Hash,
+  Number,
+  Tag,
+} BlockId_Tag;
+
+typedef struct BlockId {
+  BlockId_Tag tag;
+  union {
+    struct {
+      struct FieldElement hash;
+    };
+    struct {
+      uint64_t number;
+    };
+    struct {
+      enum BlockTag tag;
+    };
+  };
+} BlockId;
+
 typedef struct Call {
   const char *to;
   const char *selector;
@@ -336,7 +365,7 @@ void client_remove_entities_to_sync(struct ToriiClient *client,
                                     uintptr_t entities_len,
                                     struct Error *error);
 
-struct Account *account_new(struct ToriiClient *client,
+struct Account *account_new(const char *rpc_url,
                             const char *private_key,
                             const char *address,
                             struct Error *error);
@@ -344,6 +373,8 @@ struct Account *account_new(struct ToriiClient *client,
 struct FieldElement account_address(struct Account *account);
 
 struct FieldElement account_chain_id(struct Account *account);
+
+void set_block_id(struct Account *account, struct BlockId block_id);
 
 void account_execute_raw(struct Account *account,
                          const struct Call *calldata,
