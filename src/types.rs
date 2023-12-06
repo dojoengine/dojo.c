@@ -26,7 +26,7 @@ pub struct Call {
 pub enum BlockId {
     Hash(FieldElement),
     Number(u64),
-    Tag(BlockTag),
+    BlockTag(BlockTag),
 }
 
 #[derive(Debug, Clone)]
@@ -41,7 +41,7 @@ impl From<&BlockId> for starknet::core::types::BlockId {
         match val {
             BlockId::Hash(hash) => starknet::core::types::BlockId::Hash((&hash.clone()).into()),
             BlockId::Number(number) => starknet::core::types::BlockId::Number(*number),
-            BlockId::Tag(tag) => starknet::core::types::BlockId::Tag((&tag.clone()).into()),
+            BlockId::BlockTag(tag) => starknet::core::types::BlockId::Tag((&tag.clone()).into()),
         }
     }
 }
