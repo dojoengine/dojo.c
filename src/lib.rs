@@ -53,7 +53,7 @@ pub unsafe extern "C" fn client_new(
     match client {
         Ok(client) => Box::into_raw(Box::new(ToriiClient {
             inner: client,
-            rpc_url: rpc_url,
+            rpc_url,
             runtime,
         })),
         Err(e) => {
