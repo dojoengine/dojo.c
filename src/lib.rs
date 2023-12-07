@@ -251,16 +251,56 @@ pub unsafe extern "C" fn client_remove_entities_to_sync(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn signing_key_new() -> types::FieldElement {
+    let private_key = SigningKey::from_random();
+    (&private_key.secret_scalar()).into()
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn felt_from_hex_be(
+    hex: *const c_char,
+    error: *mut Error,
+) -> types::FieldElement {
+    let hex = unsafe { CStr::from_ptr(hex).to_string_lossy() };
+    let hex = FieldElement::from_hex_be(hex.deref());
+    if let Err(e) = hex {
+        unsafe {
+            *error = Error {
+                message: CString::new(e.to_string()).unwrap().into_raw(),
+            };
+        }
+        return (&FieldElement::ZERO).into();
+    }
+    let hex = hex.unwrap();
+
+    (&hex).into()
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn verifying_key_new(
+    signing_key: types::FieldElement,
+) -> types::FieldElement {
+    let signing_key = (&signing_key).into();
+    let verifying_key = starknet_crypto::get_public_key(&signing_key);
+
+    (&verifying_key).into()
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 // Should we create a provider beforehand and provide it to the account?
 // passing the client to the account is quit eannoying as it ties
 // it to the client.
 pub unsafe extern "C" fn account_new(
     rpc_url: *const c_char,
-    private_key: *const c_char,
+    private_key: types::FieldElement,
     address: *const c_char,
     error: *mut Error,
 ) -> *mut Account {
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy() };
+    let rpc = JsonRpcClient::new(HttpTransport::new(url::Url::parse(&rpc_url).unwrap()));
 
     let address = unsafe { CStr::from_ptr(address).to_string_lossy() };
     let address = FieldElement::from_hex_be(address.deref());
@@ -274,26 +314,13 @@ pub unsafe extern "C" fn account_new(
     }
     let address = address.unwrap();
 
-    let private_key = unsafe { CStr::from_ptr(private_key).to_string_lossy() };
-    let private_key = FieldElement::from_hex_be(private_key.deref());
-    if let Err(e) = private_key {
-        unsafe {
-            *error = Error {
-                message: CString::new(e.to_string()).unwrap().into_raw(),
-            };
-        }
-        return std::ptr::null_mut();
-    }
-    let private_key = private_key.unwrap();
-
-    let rpc = JsonRpcClient::new(HttpTransport::new(url::Url::parse(&rpc_url).unwrap()));
-
     let chain_id = tokio::runtime::Runtime::new()
         .unwrap()
         .block_on(rpc.chain_id())
         .unwrap();
 
-    let signer = LocalWallet::from_signing_key(SigningKey::from_secret_scalar(private_key));
+    let signer =
+        LocalWallet::from_signing_key(SigningKey::from_secret_scalar((&private_key).into()));
     let account =
         SingleOwnerAccount::new(rpc, signer, address, chain_id, ExecutionEncoding::Legacy);
 

@@ -48,14 +48,25 @@ int main()
         return 1;
     }
 
+    // signing key
+    error = (Error){};
+    FieldElement signing_key = felt_from_hex_be("0x1800000000300000180000000000030000000000003006001800006600", &error);
+    if (error.message != NULL)
+    {
+        printf("Failed to create signing key: %s\n", error.message);
+        return 1;
+    }
+
     // account
     error = (Error){};
-    Account *account = account_new(rpc_url, "0x1800000000300000180000000000030000000000003006001800006600", player, &error);
+    Account *account = account_new(rpc_url, signing_key, player, &error);
     if (account == NULL)
     {
         printf("Failed to create account: %s\n", error.message);
         return 1;
     }
+
+    FieldElement address = account_address(account);
 
     error = (Error){};
     Ty *ty = client_entity(client, entities, &error);
