@@ -4,7 +4,7 @@ use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOw
 use starknet::core::utils::cairo_short_string_to_felt;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider};
-use starknet::signers::{LocalWallet, SigningKey};
+use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
 use starknet_crypto::FieldElement;
 use std::ffi::{c_void, CStr, CString};
 use std::ops::Deref;
@@ -12,7 +12,7 @@ use std::os::raw::c_char;
 use std::thread;
 use torii_client::client::Client as TClient;
 use types::{
-    Account, BlockId, CArray, Call, Entity, Error, KeysClause, Query, ToriiClient, Ty,
+    Account, BlockId, CArray, Call, Entity, Error, KeysClause, Query, Signature, ToriiClient, Ty,
     WorldMetadata,
 };
 
@@ -22,6 +22,7 @@ pub unsafe extern "C" fn client_new(
     torii_url: *const c_char,
     rpc_url: *const c_char,
     world: *const c_char,
+    // entities is optional
     entities: *const KeysClause,
     entities_len: usize,
     error: *mut Error,
@@ -29,7 +30,13 @@ pub unsafe extern "C" fn client_new(
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let world = unsafe { CStr::from_ptr(world).to_string_lossy().into_owned() };
-    let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };
+    let some_entities = if entities.is_null() {
+        None
+    } else {
+        let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };
+        let entities = entities.iter().map(|e| (&e.clone()).into()).collect();
+        Some(entities)
+    };
 
     let world = FieldElement::from_hex_be(world.as_str());
     if let Err(e) = world {
@@ -42,12 +49,7 @@ pub unsafe extern "C" fn client_new(
     }
     let world = world.unwrap();
 
-    let client_future = TClient::new(
-        torii_url,
-        rpc_url.clone(),
-        world,
-        Some(entities.iter().map(|e| (&e.clone()).into()).collect()),
-    );
+    let client_future = TClient::new(torii_url, rpc_url.clone(), world, some_entities);
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
     let client = runtime.block_on(client_future);
@@ -258,6 +260,23 @@ pub unsafe extern "C" fn signing_key_new() -> types::FieldElement {
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn signing_key_sign(
+    private_key: types::FieldElement,
+    hash: types::FieldElement,
+) -> types::Result<Signature> {
+    let private_key = SigningKey::from_secret_scalar((&private_key).into());
+    let sig = private_key.sign(&(&hash).into());
+
+    match sig {
+        Ok(sig) => types::Result::Ok((&sig).into()),
+        Err(e) => types::Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn felt_from_hex_be(
     hex: *const c_char,
     error: *mut Error,
@@ -286,6 +305,25 @@ pub unsafe extern "C" fn verifying_key_new(
     let verifying_key = starknet_crypto::get_public_key(&signing_key);
 
     (&verifying_key).into()
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn verifying_key_verify(
+    verifying_key: types::FieldElement,
+    hash: types::FieldElement,
+    signature: types::Signature,
+) -> types::Result<bool> {
+    let verifying_key = VerifyingKey::from_scalar((&verifying_key).into());
+    let signature = &(&signature).into();
+    let hash = &(&hash).into();
+
+    match verifying_key.verify(hash, signature) {
+        Ok(result) => types::Result::Ok(result),
+        Err(e) => types::Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
+    }
 }
 
 #[no_mangle]

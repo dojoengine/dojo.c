@@ -37,7 +37,6 @@ int main()
     entities[0].model = "Moves";
     entities[0].keys.data = malloc(sizeof(char *));
     entities[0].keys.data_len = 1;
-
     entities[0].keys.data[0] = player;
 
     Error error;
@@ -100,10 +99,7 @@ int main()
     }
 
     Query query = {};
-    query.clause.keys.keys.data = malloc(sizeof(char *));
-    query.clause.keys.keys.data_len = 1;
-    query.clause.keys.keys.data[0] = player;
-    query.clause.keys.model = "Moves";
+    query.clause.tag = None_Clause;
     query.limit = 5;
 
     const CArray_Entity retrieved_entities = client_entities(client, &query, &error);

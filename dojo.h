@@ -257,10 +257,24 @@ typedef struct Clause {
   };
 } Clause;
 
+typedef enum COption_Clause_Tag {
+  Some_Clause,
+  None_Clause,
+} COption_Clause_Tag;
+
+typedef struct COption_Clause {
+  COption_Clause_Tag tag;
+  union {
+    struct {
+      struct Clause some;
+    };
+  };
+} COption_Clause;
+
 typedef struct Query {
   uint32_t limit;
   uint32_t offset;
-  struct Clause clause;
+  struct COption_Clause clause;
 } Query;
 
 typedef struct CArray_KeysClause {
@@ -299,6 +313,51 @@ typedef struct WorldMetadata {
   struct FieldElement executor_class_hash;
   struct CArray_CHashItem______c_char__ModelMetadata models;
 } WorldMetadata;
+
+typedef struct Signature {
+  /**
+   * The `r` value of a signature
+   */
+  struct FieldElement r;
+  /**
+   * The `s` value of a signature
+   */
+  struct FieldElement s;
+} Signature;
+
+typedef enum Result_Signature_Tag {
+  Ok_Signature,
+  Err_Signature,
+} Result_Signature_Tag;
+
+typedef struct Result_Signature {
+  Result_Signature_Tag tag;
+  union {
+    struct {
+      struct Signature ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Result_Signature;
+
+typedef enum Result_bool_Tag {
+  Ok_bool,
+  Err_bool,
+} Result_bool_Tag;
+
+typedef struct Result_bool {
+  Result_bool_Tag tag;
+  union {
+    struct {
+      bool ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Result_bool;
 
 /**
  * Block hash, number or tag
@@ -367,9 +426,15 @@ void client_remove_entities_to_sync(struct ToriiClient *client,
 
 struct FieldElement signing_key_new(void);
 
+struct Result_Signature signing_key_sign(struct FieldElement private_key, struct FieldElement hash);
+
 struct FieldElement felt_from_hex_be(const char *hex, struct Error *error);
 
 struct FieldElement verifying_key_new(struct FieldElement signing_key);
+
+struct Result_bool verifying_key_verify(struct FieldElement verifying_key,
+                                        struct FieldElement hash,
+                                        struct Signature signature);
 
 struct Account *account_new(const char *rpc_url,
                             struct FieldElement private_key,

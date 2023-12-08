@@ -14,6 +14,65 @@ pub struct Account(pub SingleOwnerAccount<JsonRpcClient<HttpTransport>, LocalWal
 
 #[derive(Debug, Clone)]
 #[repr(C)]
+pub enum Result<T> {
+    Ok(T),
+    Err(Error),
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub enum COption<T> {
+    Some(T),
+    None,
+}
+
+impl<T> From<Option<T>> for COption<T> {
+    fn from(val: Option<T>) -> Self {
+        match val {
+            Some(v) => COption::Some(v),
+            None => COption::None,
+        }
+    }
+}
+
+impl<T> From<COption<T>> for Option<T> {
+    fn from(val: COption<T>) -> Self {
+        match val {
+            COption::Some(v) => Some(v),
+            COption::None => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct Signature {
+    /// The `r` value of a signature
+    pub r: FieldElement,
+    /// The `s` value of a signature
+    pub s: FieldElement,
+}
+
+impl From<&Signature> for starknet_crypto::Signature {
+    fn from(val: &Signature) -> Self {
+        starknet_crypto::Signature {
+            r: (&val.r).into(),
+            s: (&val.s).into(),
+        }
+    }
+}
+
+impl From<&starknet_crypto::Signature> for Signature {
+    fn from(val: &starknet_crypto::Signature) -> Self {
+        Signature {
+            r: (&val.r).into(),
+            s: (&val.s).into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
 pub struct Call {
     pub to: *const c_char,
     pub selector: *const c_char,
@@ -109,6 +168,7 @@ pub struct CHashItem<K, V> {
     pub value: V,
 }
 
+#[derive(Debug, Clone)]
 #[repr(C)]
 pub struct Error {
     pub message: *const c_char,
@@ -139,7 +199,7 @@ impl From<&starknet::core::types::FieldElement> for FieldElement {
 pub struct Query {
     pub limit: u32,
     pub offset: u32,
-    pub clause: Clause,
+    pub clause: COption<Clause>,
 }
 
 #[derive(Clone, Debug)]
@@ -605,20 +665,40 @@ impl From<&dojo_types::primitive::Primitive> for Primitive {
 
 impl From<&Query> for torii_grpc::types::Query {
     fn from(val: &Query) -> Self {
-        torii_grpc::types::Query {
-            limit: val.limit,
-            offset: val.offset,
-            clause: (&val.clause.clone()).into(),
+        match &val.clause {
+            COption::Some(clause) => {
+                let clause = (&clause.clone()).into();
+                torii_grpc::types::Query {
+                    limit: val.limit,
+                    offset: val.offset,
+                    clause: Option::Some(clause),
+                }
+            }
+            COption::None => torii_grpc::types::Query {
+                limit: val.limit,
+                offset: val.offset,
+                clause: Option::None,
+            },
         }
     }
 }
 
 impl From<&torii_grpc::types::Query> for Query {
     fn from(val: &torii_grpc::types::Query) -> Self {
-        Query {
-            limit: val.limit,
-            offset: val.offset,
-            clause: (&val.clause.clone()).into(),
+        match &val.clause {
+            Option::Some(clause) => {
+                let clause = (&clause.clone()).into();
+                Query {
+                    limit: val.limit,
+                    offset: val.offset,
+                    clause: COption::Some(clause),
+                }
+            }
+            Option::None => Query {
+                limit: val.limit,
+                offset: val.offset,
+                clause: COption::None,
+            },
         }
     }
 }
