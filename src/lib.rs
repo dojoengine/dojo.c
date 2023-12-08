@@ -12,8 +12,8 @@ use std::os::raw::c_char;
 use std::thread;
 use torii_client::client::Client as TClient;
 use types::{
-    Account, BlockId, CArray, Call, Entity, Error, KeysClause, Query, Signature, ToriiClient, Ty,
-    WorldMetadata,
+    Account, BlockId, CArray, CJsonRpcClient, COption, Call, Entity, Error, KeysClause, Query,
+    Result, Signature, ToriiClient, Ty, WorldMetadata,
 };
 
 #[no_mangle]
@@ -25,8 +25,7 @@ pub unsafe extern "C" fn client_new(
     // entities is optional
     entities: *const KeysClause,
     entities_len: usize,
-    error: *mut Error,
-) -> *mut ToriiClient {
+) -> Result<*mut ToriiClient> {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let world = unsafe { CStr::from_ptr(world).to_string_lossy().into_owned() };
@@ -40,12 +39,9 @@ pub unsafe extern "C" fn client_new(
 
     let world = FieldElement::from_hex_be(world.as_str());
     if let Err(e) = world {
-        unsafe {
-            *error = Error {
-                message: CString::new(e.to_string()).unwrap().into_raw(),
-            };
-        }
-        return std::ptr::null_mut();
+        return Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        });
     }
     let world = world.unwrap();
 
@@ -55,19 +51,13 @@ pub unsafe extern "C" fn client_new(
     let client = runtime.block_on(client_future);
 
     match client {
-        Ok(client) => Box::into_raw(Box::new(ToriiClient {
+        Ok(client) => Result::Ok(Box::into_raw(Box::new(ToriiClient {
             inner: client,
-            rpc_url,
             runtime,
-        })),
-        Err(e) => {
-            unsafe {
-                *error = Error {
-                    message: CString::new(e.to_string()).unwrap().into_raw(),
-                };
-            }
-            std::ptr::null_mut()
-        }
+        }))),
+        Err(e) => Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
     }
 }
 
@@ -76,8 +66,7 @@ pub unsafe extern "C" fn client_new(
 pub unsafe extern "C" fn client_entity(
     client: *mut ToriiClient,
     keys: &KeysClause,
-    error: *mut Error,
-) -> *mut Ty {
+) -> Result<COption<Ty>> {
     let keys = (&keys.clone()).into();
     let entity_future = unsafe { (*client).inner.entity(&keys) };
 
@@ -86,19 +75,14 @@ pub unsafe extern "C" fn client_entity(
     match result {
         Ok(ty) => {
             if let Some(ty) = ty {
-                Box::into_raw(Box::new((&ty).into()))
+                Result::Ok(COption::Some((&ty).into()))
             } else {
-                std::ptr::null_mut()
+                Result::Ok(COption::None)
             }
         }
-        Err(e) => {
-            unsafe {
-                *error = Error {
-                    message: CString::new(e.to_string()).unwrap().into_raw(),
-                };
-            }
-            std::ptr::null_mut()
-        }
+        Err(e) => Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
     }
 }
 
@@ -107,8 +91,7 @@ pub unsafe extern "C" fn client_entity(
 pub unsafe extern "C" fn client_entities(
     client: *mut ToriiClient,
     query: &Query,
-    error: *mut Error,
-) -> CArray<Entity> {
+) -> Result<CArray<Entity>> {
     let query = (&query.clone()).into();
 
     let entities_future = unsafe { (*client).inner.entities(query) };
@@ -119,20 +102,11 @@ pub unsafe extern "C" fn client_entities(
         Ok(entities) => {
             let entities: Vec<Entity> = entities.into_iter().map(|e| (&e).into()).collect();
 
-            entities.into()
+            Result::Ok(entities.into())
         }
-        Err(e) => {
-            unsafe {
-                *error = Error {
-                    message: CString::new(e.to_string()).unwrap().into_raw(),
-                };
-            }
-
-            CArray {
-                data: std::ptr::null_mut(),
-                data_len: 0,
-            }
-        }
+        Err(e) => Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
     }
 }
 
@@ -152,21 +126,19 @@ pub unsafe extern "C" fn client_subscribed_entities(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_start_subscription(client: *mut ToriiClient, error: *mut Error) {
+pub unsafe extern "C" fn client_start_subscription(client: *mut ToriiClient) -> Result<bool> {
     let client_future = unsafe { (*client).inner.start_subscription() };
     let result = (*client).runtime.block_on(client_future);
 
-    if let Err(e) = result {
-        unsafe {
-            *error = Error {
-                message: CString::new(e.to_string()).unwrap().into_raw(),
-            };
+    match result {
+        Ok(sub) => {
+            (*client).runtime.spawn(sub);
+            Result::Ok(true)
         }
-
-        return;
+        Err(e) => Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
     }
-
-    (*client).runtime.spawn(result.unwrap());
 }
 
 #[no_mangle]
@@ -181,8 +153,7 @@ pub unsafe extern "C" fn client_add_entities_to_sync(
     client: *mut ToriiClient,
     entities: *const KeysClause,
     entities_len: usize,
-    error: *mut Error,
-) {
+) -> Result<bool> {
     let entities = unsafe { std::slice::from_raw_parts(entities, entities_len).to_vec() };
 
     let client_future = unsafe {
@@ -193,12 +164,11 @@ pub unsafe extern "C" fn client_add_entities_to_sync(
 
     let result = (*client).runtime.block_on(client_future);
 
-    if let Err(e) = result {
-        unsafe {
-            *error = Error {
-                message: CString::new(e.to_string()).unwrap().into_raw(),
-            };
-        }
+    match result {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
     }
 }
 
@@ -230,8 +200,7 @@ pub unsafe extern "C" fn client_remove_entities_to_sync(
     client: *mut ToriiClient,
     entities: *const KeysClause,
     entities_len: usize,
-    error: *mut Error,
-) {
+) -> Result<bool> {
     let entities = unsafe { std::slice::from_raw_parts(entities, entities_len).to_vec() };
 
     let client_future = unsafe {
@@ -242,12 +211,11 @@ pub unsafe extern "C" fn client_remove_entities_to_sync(
 
     let result = (*client).runtime.block_on(client_future);
 
-    if let Err(e) = result {
-        unsafe {
-            *error = Error {
-                message: CString::new(e.to_string()).unwrap().into_raw(),
-            };
-        }
+    match result {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
     }
 }
 
@@ -263,13 +231,13 @@ pub unsafe extern "C" fn signing_key_new() -> types::FieldElement {
 pub unsafe extern "C" fn signing_key_sign(
     private_key: types::FieldElement,
     hash: types::FieldElement,
-) -> types::Result<Signature> {
+) -> Result<Signature> {
     let private_key = SigningKey::from_secret_scalar((&private_key).into());
     let sig = private_key.sign(&(&hash).into());
 
     match sig {
-        Ok(sig) => types::Result::Ok((&sig).into()),
-        Err(e) => types::Result::Err(Error {
+        Ok(sig) => Result::Ok((&sig).into()),
+        Err(e) => Result::Err(Error {
             message: CString::new(e.to_string()).unwrap().into_raw(),
         }),
     }
@@ -277,23 +245,16 @@ pub unsafe extern "C" fn signing_key_sign(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn felt_from_hex_be(
-    hex: *const c_char,
-    error: *mut Error,
-) -> types::FieldElement {
+pub unsafe extern "C" fn felt_from_hex_be(hex: *const c_char) -> Result<types::FieldElement> {
     let hex = unsafe { CStr::from_ptr(hex).to_string_lossy() };
     let hex = FieldElement::from_hex_be(hex.deref());
-    if let Err(e) = hex {
-        unsafe {
-            *error = Error {
-                message: CString::new(e.to_string()).unwrap().into_raw(),
-            };
-        }
-        return (&FieldElement::ZERO).into();
-    }
-    let hex = hex.unwrap();
 
-    (&hex).into()
+    match hex {
+        Ok(hex) => Result::Ok((&hex).into()),
+        Err(e) => Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
+    }
 }
 
 #[no_mangle]
@@ -313,14 +274,14 @@ pub unsafe extern "C" fn verifying_key_verify(
     verifying_key: types::FieldElement,
     hash: types::FieldElement,
     signature: types::Signature,
-) -> types::Result<bool> {
+) -> Result<bool> {
     let verifying_key = VerifyingKey::from_scalar((&verifying_key).into());
     let signature = &(&signature).into();
     let hash = &(&hash).into();
 
     match verifying_key.verify(hash, signature) {
-        Ok(result) => types::Result::Ok(result),
-        Err(e) => types::Result::Err(Error {
+        Ok(result) => Result::Ok(result),
+        Err(e) => Result::Err(Error {
             message: CString::new(e.to_string()).unwrap().into_raw(),
         }),
     }
@@ -328,58 +289,71 @@ pub unsafe extern "C" fn verifying_key_verify(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-// Should we create a provider beforehand and provide it to the account?
-// passing the client to the account is quit eannoying as it ties
-// it to the client.
-pub unsafe extern "C" fn account_new(
-    rpc_url: *const c_char,
-    private_key: types::FieldElement,
-    address: *const c_char,
-    error: *mut Error,
-) -> *mut Account {
+pub unsafe extern "C" fn jsonrpc_client_new(rpc_url: *const c_char) -> Result<*mut CJsonRpcClient> {
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy() };
-    let rpc = JsonRpcClient::new(HttpTransport::new(url::Url::parse(&rpc_url).unwrap()));
-
-    let address = unsafe { CStr::from_ptr(address).to_string_lossy() };
-    let address = FieldElement::from_hex_be(address.deref());
-    if let Err(e) = address {
-        unsafe {
-            *error = Error {
-                message: CString::new(e.to_string()).unwrap().into_raw(),
-            };
-        }
-        return std::ptr::null_mut();
+    let rpc_url = url::Url::parse(rpc_url.deref());
+    if let Err(e) = rpc_url {
+        return Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        });
     }
-    let address = address.unwrap();
+    let rpc_url = rpc_url.unwrap();
 
-    let chain_id = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(rpc.chain_id())
-        .unwrap();
+    let rpc = JsonRpcClient::new(HttpTransport::new(rpc_url));
 
-    let signer =
-        LocalWallet::from_signing_key(SigningKey::from_secret_scalar((&private_key).into()));
-    let account =
-        SingleOwnerAccount::new(rpc, signer, address, chain_id, ExecutionEncoding::Legacy);
-
-    Box::into_raw(Box::new(Account(account)))
+    Result::Ok(Box::into_raw(Box::new(CJsonRpcClient(rpc))))
 }
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn account_address(account: *mut Account) -> types::FieldElement {
+pub unsafe extern "C" fn account_new(
+    rpc: *mut CJsonRpcClient,
+    private_key: types::FieldElement,
+    address: *const c_char,
+) -> Result<*mut Account<'static>> {
+    let address = unsafe { CStr::from_ptr(address).to_string_lossy() };
+    let address = FieldElement::from_hex_be(address.deref());
+    if let Err(e) = address {
+        return Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        });
+    }
+
+    let address = address.unwrap();
+
+    let chain_id = tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on((*rpc).0.chain_id())
+        .unwrap();
+
+    let signer =
+        LocalWallet::from_signing_key(SigningKey::from_secret_scalar((&private_key).into()));
+    let account = SingleOwnerAccount::new(
+        &(*rpc).0,
+        signer,
+        address,
+        chain_id,
+        ExecutionEncoding::Legacy,
+    );
+
+    Result::Ok(Box::into_raw(Box::new(Account(account))))
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn account_address(account: *mut Account<'static>) -> types::FieldElement {
     (&(*account).0.address()).into()
 }
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn account_chain_id(account: *mut Account) -> types::FieldElement {
+pub unsafe extern "C" fn account_chain_id(account: *mut Account<'static>) -> types::FieldElement {
     (&(*account).0.chain_id()).into()
 }
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn account_set_block_id(account: *mut Account, block_id: BlockId) {
+pub unsafe extern "C" fn account_set_block_id(account: *mut Account<'static>, block_id: BlockId) {
     let block_id = (&block_id).into();
     (*account).0.set_block_id(block_id);
 }
@@ -387,11 +361,10 @@ pub unsafe extern "C" fn account_set_block_id(account: *mut Account, block_id: B
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn account_execute_raw(
-    account: *mut Account,
+    account: *mut Account<'static>,
     calldata: *const Call,
     calldata_len: usize,
-    error: *mut Error,
-) {
+) -> Result<bool> {
     let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
     let calldata = calldata
         .into_iter()
@@ -404,12 +377,11 @@ pub unsafe extern "C" fn account_execute_raw(
         .unwrap()
         .block_on(call.send());
 
-    if let Err(e) = result {
-        unsafe {
-            *error = Error {
-                message: CString::new(e.to_string()).unwrap().into_raw(),
-            };
-        }
+    match result {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
     }
 }
 
@@ -429,7 +401,7 @@ pub unsafe extern "C" fn client_free(t: *mut ToriiClient) {
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn account_free(account: *mut Account) {
+pub unsafe extern "C" fn account_free(account: *mut Account<'static>) {
     if !account.is_null() {
         unsafe {
             let _ = Box::from_raw(account);

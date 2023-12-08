@@ -10,7 +10,8 @@ use std::{
 };
 use torii_client::client::Client;
 
-pub struct Account(pub SingleOwnerAccount<JsonRpcClient<HttpTransport>, LocalWallet>);
+pub struct CJsonRpcClient(pub JsonRpcClient<HttpTransport>);
+pub struct Account<'a>(pub SingleOwnerAccount<&'a JsonRpcClient<HttpTransport>, LocalWallet>);
 
 #[derive(Debug, Clone)]
 #[repr(C)]
@@ -132,7 +133,6 @@ impl From<&Call> for starknet::accounts::Call {
 
 pub struct ToriiClient {
     pub inner: Client,
-    pub rpc_url: String,
     pub runtime: tokio::runtime::Runtime,
 }
 

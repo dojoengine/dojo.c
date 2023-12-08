@@ -39,56 +39,80 @@ int main()
     entities[0].keys.data_len = 1;
     entities[0].keys.data[0] = player;
 
-    Error error;
-    ToriiClient *client = client_new(torii_url, rpc_url, world, entities, 1, &error);
-    if (client == NULL)
+    Result_____ToriiClient resClient = client_new(torii_url, rpc_url, world, entities, 1);
+    if (resClient.tag == Err_____Account)
     {
-        printf("Failed to create client: %s\n", error.message);
+        printf("Failed to create client: %s\n", resClient.err.message);
         return 1;
     }
+    ToriiClient *client = resClient.ok;
 
     // signing key
-    error = (Error){};
-    FieldElement signing_key = felt_from_hex_be("0x1800000000300000180000000000030000000000003006001800006600", &error);
-    if (error.message != NULL)
+    Result_FieldElement resSigningKey = felt_from_hex_be("0x1800000000300000180000000000030000000000003006001800006600");
+    if (resSigningKey.tag == Err_FieldElement)
     {
-        printf("Failed to create signing key: %s\n", error.message);
+        printf("Failed to create signing key: %s\n", resSigningKey.err.message);
         return 1;
     }
+    FieldElement signing_key = resSigningKey.ok;
+
+    // provider
+    Result_____CJsonRpcClient resProvider = jsonrpc_client_new(rpc_url);
+    if (resProvider.tag == Err_____CJsonRpcClient)
+    {
+        printf("Failed to create provider: %s\n", resProvider.err.message);
+        return 1;
+    }
+    CJsonRpcClient *provider = resProvider.ok;
 
     // account
-    error = (Error){};
-    Account *account = account_new(rpc_url, signing_key, player, &error);
-    if (account == NULL)
+    Result_____Account resAccount = account_new(provider, signing_key, player);
+    if (resAccount.tag == Err_____Account)
     {
-        printf("Failed to create account: %s\n", error.message);
+        printf("Failed to create account: %s\n", resAccount.err.message);
         return 1;
     }
+    Account *account = resAccount.ok;
 
     FieldElement address = account_address(account);
-
-    error = (Error){};
-    Ty *ty = client_entity(client, entities, &error);
-    if (ty == NULL)
+    printf("New account: 0x");
+    for (size_t i = 0; i < 32; i++)
     {
-        printf("Failed to get entity: %s\n", error.message);
+        printf("%02x", address.data[i]);
+    }
+    printf("\n");
+
+    Result_COption_Ty resTy = client_entity(client, entities);
+    if (resTy.tag == Err_COption_Ty)
+    {
+        printf("Failed to get entity: %s\n", resTy.err.message);
+        return 1;
+    }
+    COption_Ty ty = resTy.ok;
+
+    if (ty.tag == Some_Ty)
+    {
+        printf("Got entity\n");
+        printf("Struct: %s\n", ty.some.ty_struct.name);
+        for (size_t i = 0; i < ty.some.ty_struct.children.data_len; i++)
+        {
+            printf("Field: %s\n", ty.some.ty_struct.children.data[i].name);
+        }
+    }
+
+    Result_bool resStartSub = client_start_subscription(client);
+    if (resStartSub.tag == Err_bool)
+    {
+        printf("Failed to start subscription: %s\n", resStartSub.err.message);
         return 1;
     }
 
-    // printf("model: %s\n", entities[0].model);
-
-    printf("Got entity\n");
-    printf("Struct: %s\n", ty->ty_struct.name);
-    for (size_t i = 0; i < ty->ty_struct.children.data_len; i++)
+    Result_bool resAddEntities = client_add_entities_to_sync(client, entities, 1);
+    if (resAddEntities.tag == Err_bool)
     {
-        printf("Field: %s\n", ty->ty_struct.children.data[i].name);
+        printf("Failed to add entities to sync: %s\n", resAddEntities.err.message);
+        return 1;
     }
-
-    ty_free(ty);
-
-    client_start_subscription(client, &error);
-
-    client_add_entities_to_sync(client, entities, 1, &error);
 
     // print subscribed entities
     const CArray_KeysClause subscribed_entities = client_subscribed_entities(client);
@@ -96,29 +120,6 @@ int main()
     {
         printf("Subscribed entity: %s", subscribed_entities.data[i].keys.data[0]);
         printf("\n");
-    }
-
-    Query query = {};
-    query.clause.tag = None_Clause;
-    query.limit = 5;
-
-    const CArray_Entity retrieved_entities = client_entities(client, &query, &error);
-    if (retrieved_entities.data == NULL)
-    {
-        printf("Failed to retrieve entities: %s\n", error.message);
-    }
-    else
-    {
-        for (size_t i = 0; i < retrieved_entities.data_len; i++)
-        {
-            // print player key
-            printf("Retrieved entity: 0x");
-            for (size_t j = 0; j < 32; j++)
-            {
-                printf("%02x", retrieved_entities.data[i].key.data[j]);
-            }
-            printf("\n");
-        }
     }
 
     client_on_entity_state_update(client, entities, &on_entity_state_update);
@@ -129,17 +130,22 @@ int main()
         .to = "0x031571485922572446df9e3198a891e10d3a48e544544317dbcbb667e15848cd",
         .selector = "spawn",
     };
-    error = (Error){};
-    account_execute_raw(account, &call, 1, &error);
-    if (error.message != NULL)
+
+    Result_bool resExecute = account_execute_raw(account, &call, 1);
+    if (resExecute.tag == Err_bool)
     {
-        printf("Failed to execute call: %s\n", error.message);
+        printf("Failed to execute call: %s\n", resExecute.err.message);
         return 1;
     }
 
     sleep(5);
 
-    client_remove_entities_to_sync(client, entities, 1, &error);
+    Result_bool resRemoveEntities = client_remove_entities_to_sync(client, entities, 1);
+    if (resRemoveEntities.tag == Err_bool)
+    {
+        printf("Failed to remove entities to sync: %s\n", resRemoveEntities.err.message);
+        return 1;
+    }
 
     // Remember to free the client when you're done with it.
     client_free(client);
