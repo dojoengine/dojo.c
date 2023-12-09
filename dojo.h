@@ -178,36 +178,36 @@ typedef struct Ty {
   };
 } Ty;
 
-typedef enum COption_Ty_Tag {
-  Some_Ty,
-  None_Ty,
-} COption_Ty_Tag;
+typedef enum COption_____Ty_Tag {
+  Some_____Ty,
+  None_____Ty,
+} COption_____Ty_Tag;
 
-typedef struct COption_Ty {
-  COption_Ty_Tag tag;
+typedef struct COption_____Ty {
+  COption_____Ty_Tag tag;
   union {
     struct {
-      struct Ty some;
+      struct Ty *some;
     };
   };
-} COption_Ty;
+} COption_____Ty;
 
-typedef enum Result_COption_Ty_Tag {
-  Ok_COption_Ty,
-  Err_COption_Ty,
-} Result_COption_Ty_Tag;
+typedef enum Result_COption_____Ty_Tag {
+  Ok_COption_____Ty,
+  Err_COption_____Ty,
+} Result_COption_____Ty_Tag;
 
-typedef struct Result_COption_Ty {
-  Result_COption_Ty_Tag tag;
+typedef struct Result_COption_____Ty {
+  Result_COption_____Ty_Tag tag;
   union {
     struct {
-      struct COption_Ty ok;
+      struct COption_____Ty ok;
     };
     struct {
       struct Error err;
     };
   };
-} Result_COption_Ty;
+} Result_COption_____Ty;
 
 typedef struct Model {
   const char *name;
@@ -513,7 +513,8 @@ struct Result_____ToriiClient client_new(const char *torii_url,
                                          const struct KeysClause *entities,
                                          uintptr_t entities_len);
 
-struct Result_COption_Ty client_entity(struct ToriiClient *client, const struct KeysClause *keys);
+struct Result_COption_____Ty client_entity(struct ToriiClient *client,
+                                           const struct KeysClause *keys);
 
 struct Result_CArray_Entity client_entities(struct ToriiClient *client, const struct Query *query);
 

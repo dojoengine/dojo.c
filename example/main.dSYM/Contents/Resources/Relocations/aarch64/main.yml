@@ -2,8 +2,8 @@
 triple:          'arm64-apple-darwin'
 binary-path:     '/Users/nasr/Documents/development.nosync/dojo.c/example/main'
 relocations:
-  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _on_entity_state_update, symObjAddr: 0x0, symBinAddr: 0x100003598, symSize: 0x1C }
-  - { offsetInCU: 0x150, offset: 0x150, size: 0x8, addend: 0x0, symName: _on_entity_state_update, symObjAddr: 0x0, symBinAddr: 0x100003598, symSize: 0x1C }
-  - { offsetInCU: 0x165, offset: 0x165, size: 0x8, addend: 0x0, symName: _hex_to_bytes, symObjAddr: 0x1C, symBinAddr: 0x1000035B4, symSize: 0xC8 }
-  - { offsetInCU: 0x1B7, offset: 0x1B7, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0xE4, symBinAddr: 0x10000367C, symSize: 0x5C0 }
+  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _on_entity_state_update, symObjAddr: 0x0, symBinAddr: 0x100003544, symSize: 0x1C }
+  - { offsetInCU: 0x16F, offset: 0x16F, size: 0x8, addend: 0x0, symName: _on_entity_state_update, symObjAddr: 0x0, symBinAddr: 0x100003544, symSize: 0x1C }
+  - { offsetInCU: 0x184, offset: 0x184, size: 0x8, addend: 0x0, symName: _hex_to_bytes, symObjAddr: 0x1C, symBinAddr: 0x100003560, symSize: 0xC8 }
+  - { offsetInCU: 0x1D6, offset: 0x1D6, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0xE4, symBinAddr: 0x100003628, symSize: 0x5BC }
 ...

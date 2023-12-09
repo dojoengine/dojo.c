@@ -32,14 +32,14 @@ int main()
     const char *world = "0x05010c31f127114c6198df8a5239e2b7a5151e1156fb43791e37e7385faa8138";
     // Initialize world.data here...
 
-    KeysClause entities[1] = {};
+    KeysClause entities[0] = {};
     // Initialize entities[0].model, entities[0].keys, and entities[0].keys_len here...
-    entities[0].model = "Moves";
-    entities[0].keys.data = malloc(sizeof(char *));
-    entities[0].keys.data_len = 1;
-    entities[0].keys.data[0] = player;
+    // entities[0].model = "Moves";
+    // entities[0].keys.data = malloc(sizeof(char *));
+    // entities[0].keys.data_len = 1;
+    // entities[0].keys.data[0] = player;
 
-    Result_____ToriiClient resClient = client_new(torii_url, rpc_url, world, entities, 1);
+    Result_____ToriiClient resClient = client_new(torii_url, rpc_url, world, entities, 0);
     if (resClient.tag == Err_____Account)
     {
         printf("Failed to create client: %s\n", resClient.err.message);
@@ -82,22 +82,24 @@ int main()
     }
     printf("\n");
 
-    Result_COption_Ty resTy = client_entity(client, entities);
-    if (resTy.tag == Err_COption_Ty)
+    Result_COption_____Ty resTy = client_entity(client, entities);
+    if (resTy.tag == Err_COption_____Ty)
     {
         printf("Failed to get entity: %s\n", resTy.err.message);
         return 1;
     }
-    COption_Ty ty = resTy.ok;
+    COption_____Ty ty = resTy.ok;
 
-    if (ty.tag == Some_Ty)
+    if (ty.tag == Some_____Ty)
     {
         printf("Got entity\n");
-        printf("Struct: %s\n", ty.some.ty_struct.name);
-        for (size_t i = 0; i < ty.some.ty_struct.children.data_len; i++)
+        printf("Struct: %s\n", ty.some->ty_struct.name);
+        for (size_t i = 0; i < ty.some->ty_struct.children.data_len; i++)
         {
-            printf("Field: %s\n", ty.some.ty_struct.children.data[i].name);
+            printf("Field: %s\n", ty.some->ty_struct.children.data[i].name);
         }
+
+        ty_free(ty.some);
     }
 
     Result_bool resStartSub = client_start_subscription(client);

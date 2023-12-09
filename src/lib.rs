@@ -29,7 +29,7 @@ pub unsafe extern "C" fn client_new(
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let world = unsafe { CStr::from_ptr(world).to_string_lossy().into_owned() };
-    let some_entities = if entities.is_null() {
+    let some_entities = if entities.is_null() || entities_len == 0 {
         None
     } else {
         let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };
@@ -38,6 +38,7 @@ pub unsafe extern "C" fn client_new(
     };
 
     let world = FieldElement::from_hex_be(world.as_str());
+
     if let Err(e) = world {
         return Result::Err(Error {
             message: CString::new(e.to_string()).unwrap().into_raw(),
@@ -45,7 +46,7 @@ pub unsafe extern "C" fn client_new(
     }
     let world = world.unwrap();
 
-    let client_future = TClient::new(torii_url, rpc_url.clone(), world, some_entities);
+    let client_future = TClient::new(torii_url, rpc_url, world, some_entities);
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
     let client = runtime.block_on(client_future);
@@ -66,7 +67,7 @@ pub unsafe extern "C" fn client_new(
 pub unsafe extern "C" fn client_entity(
     client: *mut ToriiClient,
     keys: &KeysClause,
-) -> Result<COption<Ty>> {
+) -> Result<COption<*mut Ty>> {
     let keys = (&keys.clone()).into();
     let entity_future = unsafe { (*client).inner.entity(&keys) };
 
@@ -75,7 +76,7 @@ pub unsafe extern "C" fn client_entity(
     match result {
         Ok(ty) => {
             if let Some(ty) = ty {
-                Result::Ok(COption::Some((&ty).into()))
+                Result::Ok(COption::Some(Box::into_raw(Box::new((&ty).into()))))
             } else {
                 Result::Ok(COption::None)
             }
