@@ -276,20 +276,20 @@ pub struct Entity {
     pub models: CArray<Model>,
 }
 
-impl From<&Entity> for torii_grpc::types::Entity {
+impl From<&Entity> for torii_grpc::types::schema::Entity {
     fn from(val: &Entity) -> Self {
         let models: Vec<Model> = (&val.models).into();
         let models = models.iter().map(|m| (&m.clone()).into()).collect();
 
-        torii_grpc::types::Entity {
+        torii_grpc::types::schema::Entity {
             key: (&val.key.clone()).into(),
             models,
         }
     }
 }
 
-impl From<&torii_grpc::types::Entity> for Entity {
-    fn from(val: &torii_grpc::types::Entity) -> Self {
+impl From<&torii_grpc::types::schema::Entity> for Entity {
+    fn from(val: &torii_grpc::types::schema::Entity) -> Self {
         let models = val
             .models
             .iter()
@@ -310,11 +310,11 @@ pub struct Model {
     pub members: CArray<Member>,
 }
 
-impl From<&Model> for torii_grpc::types::Model {
+impl From<&Model> for torii_grpc::types::schema::Model {
     fn from(val: &Model) -> Self {
         let members: Vec<Member> = (&val.members).into();
 
-        torii_grpc::types::Model {
+        torii_grpc::types::schema::Model {
             name: unsafe {
                 CString::from_raw(val.name as *mut c_char)
                     .into_string()
@@ -325,8 +325,8 @@ impl From<&Model> for torii_grpc::types::Model {
     }
 }
 
-impl From<&torii_grpc::types::Model> for Model {
-    fn from(val: &torii_grpc::types::Model) -> Self {
+impl From<&torii_grpc::types::schema::Model> for Model {
+    fn from(val: &torii_grpc::types::schema::Model) -> Self {
         let members = val
             .members
             .iter()

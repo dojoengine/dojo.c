@@ -422,7 +422,7 @@ pub unsafe extern "C" fn ty_free(ty: *mut Ty) {
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn entity_free(entity: *mut Entity) {
     if !entity.is_null() {
-        let _: torii_grpc::types::Entity = (&*Box::<Entity>::from_raw(entity)).into();
+        let _: torii_grpc::types::schema::Entity = (&*Box::<Entity>::from_raw(entity)).into();
     }
 }
 
