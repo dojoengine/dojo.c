@@ -213,11 +213,11 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     entities_len: usize,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Model>),
 ) -> Result<bool> {
-    // let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };
+    let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };
     // to vec of fieldleemnt
-    // let entities = entities.iter().map(|e| (&e.clone()).into()).collect();
+    let entities = entities.iter().map(|e| (&e.clone()).into()).collect();
 
-    let entity_stream = unsafe { (*client).inner.on_entity_updated(vec![]) };
+    let entity_stream = unsafe { (*client).inner.on_entity_updated(entities) };
     let result = (*client).runtime.block_on(entity_stream);
     if let Err(e) = result {
         return Result::Err(Error {
@@ -230,7 +230,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         let runtime = tokio::runtime::Runtime::new().unwrap();
 
         runtime.spawn(async move {
-            while let Ok(Some(entity)) = rcv.try_next().await {
+            while let Some(Ok(entity)) = rcv.next().await {
                 let key: types::FieldElement = (&entity.key).into();
                 let models: Vec<Model> = entity.models.into_iter().map(|e| (&e).into()).collect();
                 callback(key, models.into());
