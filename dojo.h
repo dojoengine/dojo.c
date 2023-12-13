@@ -572,6 +572,10 @@ struct Result_bool account_execute_raw(struct Account *account,
 
 void client_free(struct ToriiClient *t);
 
+void jsonrpc_client_free(struct CJsonRpcClient *rpc);
+
+void model_free(struct Model *model);
+
 void account_free(struct Account *account);
 
 void ty_free(struct Ty *ty);

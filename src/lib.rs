@@ -444,6 +444,24 @@ pub unsafe extern "C" fn client_free(t: *mut ToriiClient) {
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn jsonrpc_client_free(rpc: *mut CJsonRpcClient) {
+    if !rpc.is_null() {
+        unsafe {
+            let _ = Box::from_raw(rpc);
+        }
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn model_free(model: *mut Model) {
+    if !model.is_null() {
+        let _: torii_grpc::types::schema::Model = (&*Box::<Model>::from_raw(model)).into();
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn account_free(account: *mut Account<'static>) {
     if !account.is_null() {
         unsafe {
