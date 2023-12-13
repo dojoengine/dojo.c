@@ -1395,7 +1395,7 @@ dependencies = [
 [[package]]
 name = "dojo-types"
 version = "0.4.0-rc1"
-source = "git+https://github.com/dojoengine/dojo#a05af9e86e6dba0a01eeb487503e0eb9ddd681db"
+source = "git+https://github.com/dojoengine/dojo#072a26b188a35801eebb7855028c9891fadf40f9"
 dependencies = [
  "crypto-bigint",
  "hex",
@@ -1411,7 +1411,7 @@ dependencies = [
 [[package]]
 name = "dojo-world"
 version = "0.4.0-rc1"
-source = "git+https://github.com/dojoengine/dojo#a05af9e86e6dba0a01eeb487503e0eb9ddd681db"
+source = "git+https://github.com/dojoengine/dojo#072a26b188a35801eebb7855028c9891fadf40f9"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4748,10 +4748,13 @@ dependencies = [
  "cbindgen",
  "csbindgen",
  "dojo-types",
+ "futures-channel",
+ "futures-util",
  "parking_lot 0.12.1",
  "starknet 0.6.0",
  "starknet-crypto",
  "tokio",
+ "tonic 0.10.2",
  "torii-client",
  "torii-grpc",
  "url",
@@ -4760,7 +4763,7 @@ dependencies = [
 [[package]]
 name = "torii-client"
 version = "0.4.0-rc1"
-source = "git+https://github.com/dojoengine/dojo#a05af9e86e6dba0a01eeb487503e0eb9ddd681db"
+source = "git+https://github.com/dojoengine/dojo#072a26b188a35801eebb7855028c9891fadf40f9"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -4786,7 +4789,7 @@ dependencies = [
 [[package]]
 name = "torii-grpc"
 version = "0.4.0-rc1"
-source = "git+https://github.com/dojoengine/dojo#a05af9e86e6dba0a01eeb487503e0eb9ddd681db"
+source = "git+https://github.com/dojoengine/dojo#072a26b188a35801eebb7855028c9891fadf40f9"
 dependencies = [
  "bytes",
  "crypto-bigint",

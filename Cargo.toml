@@ -18,6 +18,9 @@ starknet = "0.6.0"
 starknet-crypto = "0.6.0"
 tokio = { version = "1.32.0", features = [ "full" ] }
 url = "2.5.0"
+tonic = "0.10.2"
+futures-util = "0.3.29"
+futures-channel = "0.3.29"
 
 [build-dependencies]
 cbindgen = "0.24.0"

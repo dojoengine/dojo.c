@@ -1,5 +1,6 @@
 mod types;
 
+use futures_util::{StreamExt, TryStreamExt};
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::utils::cairo_short_string_to_felt;
 use starknet::providers::jsonrpc::HttpTransport;
@@ -10,10 +11,11 @@ use std::ffi::{c_void, CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
 use std::thread;
+use tokio::runtime::Handle;
 use torii_client::client::Client as TClient;
 use types::{
-    Account, BlockId, CArray, CJsonRpcClient, COption, Call, Entity, Error, KeysClause, Query,
-    Result, Signature, ToriiClient, Ty, WorldMetadata,
+    Account, BlockId, CArray, CJsonRpcClient, COption, Call, Entity, Error, KeysClause, Model,
+    Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
 };
 
 #[no_mangle]
@@ -64,12 +66,12 @@ pub unsafe extern "C" fn client_new(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_entity(
+pub unsafe extern "C" fn client_model(
     client: *mut ToriiClient,
     keys: &KeysClause,
 ) -> Result<COption<*mut Ty>> {
     let keys = (&keys.clone()).into();
-    let entity_future = unsafe { (*client).inner.entity(&keys) };
+    let entity_future = unsafe { (*client).inner.model(&keys) };
 
     let result = (*client).runtime.block_on(entity_future);
 
@@ -113,10 +115,8 @@ pub unsafe extern "C" fn client_entities(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_subscribed_entities(
-    client: *mut ToriiClient,
-) -> CArray<KeysClause> {
-    let entities = unsafe { (*client).inner.subscribed_entities().clone() };
+pub unsafe extern "C" fn client_subscribed_models(client: *mut ToriiClient) -> CArray<KeysClause> {
+    let entities = unsafe { (*client).inner.subscribed_models().clone() };
     let entities = entities
         .into_iter()
         .map(|e| (&e).into())
@@ -150,17 +150,17 @@ pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetad
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_add_entities_to_sync(
+pub unsafe extern "C" fn client_add_models_to_sync(
     client: *mut ToriiClient,
-    entities: *const KeysClause,
-    entities_len: usize,
+    models: *const KeysClause,
+    models_len: usize,
 ) -> Result<bool> {
-    let entities = unsafe { std::slice::from_raw_parts(entities, entities_len).to_vec() };
+    let models = unsafe { std::slice::from_raw_parts(models, models_len).to_vec() };
 
     let client_future = unsafe {
         (*client)
             .inner
-            .add_entities_to_sync(entities.iter().map(|e| e.into()).collect())
+            .add_models_to_sync(models.iter().map(|e| e.into()).collect())
     };
 
     let result = (*client).runtime.block_on(client_future);
@@ -175,39 +175,85 @@ pub unsafe extern "C" fn client_add_entities_to_sync(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_on_entity_state_update(
+pub unsafe extern "C" fn client_on_sync_model_update(
     client: *mut ToriiClient,
-    entity: &KeysClause,
+    model: KeysClause,
     callback: unsafe extern "C" fn(),
-) {
-    let entity: torii_grpc::types::KeysClause = entity.into();
-    let model = cairo_short_string_to_felt(&entity.model).unwrap();
-    let mut rcv = (*client)
-        .inner
-        .storage()
-        .add_listener(model, entity.keys.as_slice())
-        .unwrap();
+) -> Result<bool> {
+    let model: torii_grpc::types::KeysClause = (&model).into();
+    let storage = (*client).inner.storage();
+
+    println!("model: {:?}", model);
+
+    let rcv = storage.add_listener(
+        cairo_short_string_to_felt(model.model.as_str()).unwrap(),
+        model.keys.as_slice(),
+    );
+    if let Err(e) = rcv {
+        return Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        });
+    }
+    let mut rcv = rcv.unwrap();
 
     thread::spawn(move || loop {
         if let Ok(Some(_)) = rcv.try_next() {
             callback();
         }
     });
+
+    Result::Ok(true)
 }
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_remove_entities_to_sync(
+pub unsafe extern "C" fn client_on_entity_state_update(
     client: *mut ToriiClient,
-    entities: *const KeysClause,
+    entities: *mut types::FieldElement,
     entities_len: usize,
+    callback: unsafe extern "C" fn(types::FieldElement, CArray<Model>),
 ) -> Result<bool> {
-    let entities = unsafe { std::slice::from_raw_parts(entities, entities_len).to_vec() };
+    // let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };
+    // to vec of fieldleemnt
+    // let entities = entities.iter().map(|e| (&e.clone()).into()).collect();
+
+    let entity_stream = unsafe { (*client).inner.on_entity_updated(vec![]) };
+    let result = (*client).runtime.block_on(entity_stream);
+    if let Err(e) = result {
+        return Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        });
+    }
+    let mut rcv = result.unwrap();
+
+    thread::spawn(move || {
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+
+        runtime.spawn(async move {
+            while let Ok(Some(entity)) = rcv.try_next().await {
+                let key: types::FieldElement = (&entity.key).into();
+                let models: Vec<Model> = entity.models.into_iter().map(|e| (&e).into()).collect();
+                callback(key, models.into());
+            }
+        });
+    });
+
+    Result::Ok(true)
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_remove_models_to_sync(
+    client: *mut ToriiClient,
+    models: *const KeysClause,
+    models_len: usize,
+) -> Result<bool> {
+    let models = unsafe { std::slice::from_raw_parts(models, models_len).to_vec() };
 
     let client_future = unsafe {
         (*client)
             .inner
-            .remove_entities_to_sync(entities.iter().map(|e| e.into()).collect())
+            .remove_models_to_sync(models.iter().map(|e| e.into()).collect())
     };
 
     let result = (*client).runtime.block_on(client_future);

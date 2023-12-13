@@ -2,9 +2,25 @@
 #include <unistd.h>
 #include <stdio.h>
 
-void on_entity_state_update()
+void on_entity_state_update(FieldElement key, CArray_Model models)
 {
     printf("on_entity_state_update\n");
+    printf("Key: 0x");
+    for (size_t i = 0; i < 32; i++)
+    {
+        printf("%02x", key.data[i]);
+    }
+    printf("\n");
+
+    for (size_t i = 0; i < models.data_len; i++)
+    {
+        printf("Model: %s\n", models.data[i].name);
+        // for (size_t j = 0; j < models.data[i].children.data_len; j++)
+        // {
+        //     printf("Field: %s\n", models.data[i].children.data[j].name);
+        //     printf("Value: %s\n", models.data[i].children.data[j].value);
+        // }
+    }
 }
 
 int hex_to_bytes(const char *hex, unsigned char *bytes)
@@ -28,18 +44,19 @@ int main()
     const char *torii_url = "http://localhost:8080";
     const char *rpc_url = "http://localhost:5050";
 
-    const char *player = "0x0517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973";
+    const char *playerKey = "0x028cd7ee02d7f6ec9810e75b930e8e607793b302445abbdee0ac88143f18da20";
+    const char *playerAddress = "0x0517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973";
     const char *world = "0x05010c31f127114c6198df8a5239e2b7a5151e1156fb43791e37e7385faa8138";
     // Initialize world.data here...
 
-    KeysClause entities[0] = {};
+    KeysClause entities[1] = {};
     // Initialize entities[0].model, entities[0].keys, and entities[0].keys_len here...
-    // entities[0].model = "Moves";
-    // entities[0].keys.data = malloc(sizeof(char *));
-    // entities[0].keys.data_len = 1;
-    // entities[0].keys.data[0] = player;
+    entities[0].model = "Position";
+    entities[0].keys.data = malloc(sizeof(char *));
+    entities[0].keys.data_len = 1;
+    entities[0].keys.data[0] = playerKey;
 
-    Result_____ToriiClient resClient = client_new(torii_url, rpc_url, world, entities, 0);
+    Result_____ToriiClient resClient = client_new(torii_url, rpc_url, world, entities, 1);
     if (resClient.tag == Err_____Account)
     {
         printf("Failed to create client: %s\n", resClient.err.message);
@@ -66,7 +83,7 @@ int main()
     CJsonRpcClient *provider = resProvider.ok;
 
     // account
-    Result_____Account resAccount = account_new(provider, signing_key, player);
+    Result_____Account resAccount = account_new(provider, signing_key, playerAddress);
     if (resAccount.tag == Err_____Account)
     {
         printf("Failed to create account: %s\n", resAccount.err.message);
@@ -82,7 +99,7 @@ int main()
     }
     printf("\n");
 
-    Result_COption_____Ty resTy = client_entity(client, entities);
+    Result_COption_____Ty resTy = client_model(client, entities);
     if (resTy.tag == Err_COption_____Ty)
     {
         printf("Failed to get entity: %s\n", resTy.err.message);
@@ -102,29 +119,60 @@ int main()
         ty_free(ty.some);
     }
 
-    Result_bool resStartSub = client_start_subscription(client);
-    if (resStartSub.tag == Err_bool)
+    Query query = {};
+    query.limit = 100;
+    query.clause.tag = None_Clause;
+    Result_CArray_Entity resEntities = client_entities(client, &query);
+    if (resEntities.tag == Err_CArray_Entity)
     {
-        printf("Failed to start subscription: %s\n", resStartSub.err.message);
+        printf("Failed to get entities: %s\n", resEntities.err.message);
         return 1;
     }
 
-    Result_bool resAddEntities = client_add_entities_to_sync(client, entities, 1);
-    if (resAddEntities.tag == Err_bool)
+    CArray_Entity fetchedEntities = resEntities.ok;
+    printf("Fetched %zu entities\n", fetchedEntities.data_len);
+    for (size_t i = 0; i < fetchedEntities.data_len; i++)
     {
-        printf("Failed to add entities to sync: %s\n", resAddEntities.err.message);
-        return 1;
-    }
-
-    // print subscribed entities
-    const CArray_KeysClause subscribed_entities = client_subscribed_entities(client);
-    for (size_t i = 0; i < subscribed_entities.data_len; i++)
-    {
-        printf("Subscribed entity: %s", subscribed_entities.data[i].keys.data[0]);
+        // pritn hex of key
+        printf("Key: 0x");
+        for (size_t j = 0; j < 32; j++)
+        {
+            printf("%02x", fetchedEntities.data[i].key.data[j]);
+        }
         printf("\n");
     }
 
-    client_on_entity_state_update(client, entities, &on_entity_state_update);
+
+    // Result_bool resStartSub = client_start_subscription(client);
+    // if (resStartSub.tag == Err_bool)
+    // {
+    //     printf("Failed to start subscription: %s\n", resStartSub.err.message);
+    //     return 1;
+    // }
+
+    // Result_bool resAddEntities = client_add_models_to_sync(client, entities, 1);
+    // if (resAddEntities.tag == Err_bool)
+    // {
+    //     printf("Failed to add entities to sync: %s\n", resAddEntities.err.message);
+    //     return 1;
+    // }
+
+    // // print subscribed entities
+    const CArray_KeysClause subscribed_models = client_subscribed_models(client);
+    for (size_t i = 0; i < subscribed_models.data_len; i++)
+    {
+        printf("Subscribed entity: %s", subscribed_models.data[i].keys.data[0]);
+        printf("\n");
+    }
+
+    FieldElement keys[1] = {};
+    keys[0] = felt_from_hex_be(playerKey).ok;
+    Result_bool resEntityUpdate = client_on_entity_state_update(client, keys, 1, &on_entity_state_update);
+    if (resEntityUpdate.tag == Err_bool)
+    {
+        printf("Failed to set entity update callback: %s\n", resEntityUpdate.err.message);
+        return 1;
+    }
 
     sleep(2);
 
@@ -140,14 +188,17 @@ int main()
         return 1;
     }
 
-    sleep(5);
-
-    Result_bool resRemoveEntities = client_remove_entities_to_sync(client, entities, 1);
-    if (resRemoveEntities.tag == Err_bool)
+    while (1)
     {
-        printf("Failed to remove entities to sync: %s\n", resRemoveEntities.err.message);
-        return 1;
+        
     }
+
+    // Result_bool resRemoveEntities = client_remove_models_to_sync(client, entities, 1);
+    // if (resRemoveEntities.tag == Err_bool)
+    // {
+    //     printf("Failed to remove entities to sync: %s\n", resRemoveEntities.err.message);
+    //     return 1;
+    // }
 
     // Remember to free the client when you're done with it.
     client_free(client);
