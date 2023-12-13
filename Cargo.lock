@@ -4743,7 +4743,7 @@ dependencies = [
 
 [[package]]
 name = "torii-c"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "cbindgen",
  "csbindgen",

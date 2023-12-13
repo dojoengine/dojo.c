@@ -225,16 +225,12 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     }
     let mut rcv = result.unwrap();
 
-    thread::spawn(move || {
-        let runtime = tokio::runtime::Runtime::new().unwrap();
-
-        runtime.spawn(async move {
-            while let Some(Ok(entity)) = rcv.next().await {
-                let key: types::FieldElement = (&entity.key).into();
-                let models: Vec<Model> = entity.models.into_iter().map(|e| (&e).into()).collect();
-                callback(key, models.into());
-            }
-        });
+    (*client).runtime.spawn(async move {
+        while let Some(Ok(entity)) = rcv.next().await {
+            let key: types::FieldElement = (&entity.key).into();
+            let models: Vec<Model> = entity.models.into_iter().map(|e| (&e).into()).collect();
+            callback(key, models.into());
+        }
     });
 
     Result::Ok(true)

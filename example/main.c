@@ -167,14 +167,12 @@ int main()
 
     FieldElement keys[1] = {};
     keys[0] = felt_from_hex_be(playerKey).ok;
-    Result_bool resEntityUpdate = client_on_entity_state_update(client, keys, 1, &on_entity_state_update);
+    Result_bool resEntityUpdate = client_on_entity_state_update(client, keys, 0, &on_entity_state_update);
     if (resEntityUpdate.tag == Err_bool)
     {
         printf("Failed to set entity update callback: %s\n", resEntityUpdate.err.message);
         return 1;
     }
-
-    sleep(2);
 
     Call call = {
         .to = "0x031571485922572446df9e3198a891e10d3a48e544544317dbcbb667e15848cd",
@@ -188,10 +186,12 @@ int main()
         return 1;
     }
 
-    while (1)
-    {
+    sleep(5);
+
+    // while (1)
+    // {
         
-    }
+    // }
 
     // Result_bool resRemoveEntities = client_remove_models_to_sync(client, entities, 1);
     // if (resRemoveEntities.tag == Err_bool)
