@@ -436,7 +436,8 @@ pub unsafe extern "C" fn account_execute_raw(
 pub unsafe extern "C" fn client_free(t: *mut ToriiClient) {
     if !t.is_null() {
         unsafe {
-            let _ = Box::from_raw(t);
+            let client = Box::from_raw(t);
+            client.runtime.shutdown_background();
         }
     }
 }
