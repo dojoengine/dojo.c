@@ -171,7 +171,7 @@ pub struct CHashItem<K, V> {
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub struct Error {
-    pub message: *const c_char,
+    pub message: *mut c_char,
 }
 
 #[derive(Clone, Debug)]

@@ -29,7 +29,7 @@ typedef struct CJsonRpcClient CJsonRpcClient;
 typedef struct ToriiClient ToriiClient;
 
 typedef struct Error {
-  const char *message;
+  char *message;
 } Error;
 
 typedef enum Result_____ToriiClient_Tag {

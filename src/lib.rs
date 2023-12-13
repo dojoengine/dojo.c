@@ -490,7 +490,7 @@ pub unsafe extern "C" fn entity_free(entity: *mut Entity) {
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn error_free(error: *mut Error) {
     if !error.is_null() {
-        let _: String = CString::from_raw((*error).message as *mut i8)
+        let _: String = CString::from_raw((*error).message)
             .into_string()
             .unwrap();
     }
