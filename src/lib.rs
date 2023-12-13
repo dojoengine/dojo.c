@@ -1,6 +1,6 @@
 mod types;
 
-use futures_util::{StreamExt, TryStreamExt};
+use futures_util::StreamExt;
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::utils::cairo_short_string_to_felt;
 use starknet::providers::jsonrpc::HttpTransport;
@@ -11,7 +11,6 @@ use std::ffi::{c_void, CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
 use std::thread;
-use tokio::runtime::Handle;
 use torii_client::client::Client as TClient;
 use types::{
     Account, BlockId, CArray, CJsonRpcClient, COption, Call, Entity, Error, KeysClause, Model,
