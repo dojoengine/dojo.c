@@ -3,21 +3,61 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+typedef enum BlockTag {
+  Latest,
+  Pending,
+} BlockTag;
+
+typedef enum ComparisonOperator {
+  Eq,
+  Neq,
+  Gt,
+  Gte,
+  Lt,
+  Lte,
+} ComparisonOperator;
+
+typedef enum LogicalOperator {
+  And,
+  Or,
+} LogicalOperator;
+
+typedef struct Account Account;
+
+typedef struct CJsonRpcClient CJsonRpcClient;
+
 typedef struct ToriiClient ToriiClient;
+
+typedef struct Error {
+  const char *message;
+} Error;
+
+typedef enum Result_____ToriiClient_Tag {
+  Ok_____ToriiClient,
+  Err_____ToriiClient,
+} Result_____ToriiClient_Tag;
+
+typedef struct Result_____ToriiClient {
+  Result_____ToriiClient_Tag tag;
+  union {
+    struct {
+      struct ToriiClient *ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Result_____ToriiClient;
 
 typedef struct CArray______c_char {
   const char **data;
   uintptr_t data_len;
 } CArray______c_char;
 
-typedef struct Keys {
+typedef struct KeysClause {
   const char *model;
   struct CArray______c_char keys;
-} Keys;
-
-typedef struct Error {
-  const char *message;
-} Error;
+} KeysClause;
 
 typedef struct FieldElement {
   uint8_t data[32];
@@ -138,20 +178,198 @@ typedef struct Ty {
   };
 } Ty;
 
-typedef struct CArray_FieldElement {
-  struct FieldElement *data;
-  uintptr_t data_len;
-} CArray_FieldElement;
+typedef enum COption_____Ty_Tag {
+  Some_____Ty,
+  None_____Ty,
+} COption_____Ty_Tag;
 
-typedef struct KeysClause {
+typedef struct COption_____Ty {
+  COption_____Ty_Tag tag;
+  union {
+    struct {
+      struct Ty *some;
+    };
+  };
+} COption_____Ty;
+
+typedef enum Result_COption_____Ty_Tag {
+  Ok_COption_____Ty,
+  Err_COption_____Ty,
+} Result_COption_____Ty_Tag;
+
+typedef struct Result_COption_____Ty {
+  Result_COption_____Ty_Tag tag;
+  union {
+    struct {
+      struct COption_____Ty ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Result_COption_____Ty;
+
+typedef struct Model {
+  const char *name;
+  struct CArray_Member members;
+} Model;
+
+typedef struct CArray_Model {
+  struct Model *data;
+  uintptr_t data_len;
+} CArray_Model;
+
+typedef struct Entity {
+  struct FieldElement key;
+  struct CArray_Model models;
+} Entity;
+
+typedef struct CArray_Entity {
+  struct Entity *data;
+  uintptr_t data_len;
+} CArray_Entity;
+
+typedef enum Result_CArray_Entity_Tag {
+  Ok_CArray_Entity,
+  Err_CArray_Entity,
+} Result_CArray_Entity_Tag;
+
+typedef struct Result_CArray_Entity {
+  Result_CArray_Entity_Tag tag;
+  union {
+    struct {
+      struct CArray_Entity ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Result_CArray_Entity;
+
+typedef struct CArray_u8 {
+  uint8_t *data;
+  uintptr_t data_len;
+} CArray_u8;
+
+typedef enum ValueType_Tag {
+  VString,
+  Int,
+  UInt,
+  VBool,
+  Bytes,
+} ValueType_Tag;
+
+typedef struct ValueType {
+  ValueType_Tag tag;
+  union {
+    struct {
+      const char *v_string;
+    };
+    struct {
+      int64_t int_;
+    };
+    struct {
+      uint64_t u_int;
+    };
+    struct {
+      bool v_bool;
+    };
+    struct {
+      struct CArray_u8 bytes;
+    };
+  };
+} ValueType;
+
+typedef struct Value {
+  struct Primitive primitive_type;
+  struct ValueType value_type;
+} Value;
+
+typedef struct MemberClause {
   const char *model;
-  struct CArray_FieldElement keys;
-} KeysClause;
+  const char *member;
+  enum ComparisonOperator operator_;
+  struct Value value;
+} MemberClause;
+
+typedef struct CArray_Clause {
+  struct Clause *data;
+  uintptr_t data_len;
+} CArray_Clause;
+
+typedef struct CompositeClause {
+  const char *model;
+  enum LogicalOperator operator_;
+  struct CArray_Clause clauses;
+} CompositeClause;
+
+typedef enum Clause_Tag {
+  Keys,
+  CMember,
+  Composite,
+} Clause_Tag;
+
+typedef struct Clause {
+  Clause_Tag tag;
+  union {
+    struct {
+      struct KeysClause keys;
+    };
+    struct {
+      struct MemberClause c_member;
+    };
+    struct {
+      struct CompositeClause composite;
+    };
+  };
+} Clause;
+
+typedef enum COption_Clause_Tag {
+  Some_Clause,
+  None_Clause,
+} COption_Clause_Tag;
+
+typedef struct COption_Clause {
+  COption_Clause_Tag tag;
+  union {
+    struct {
+      struct Clause some;
+    };
+  };
+} COption_Clause;
+
+typedef struct Query {
+  uint32_t limit;
+  uint32_t offset;
+  struct COption_Clause clause;
+} Query;
 
 typedef struct CArray_KeysClause {
   struct KeysClause *data;
   uintptr_t data_len;
 } CArray_KeysClause;
+
+typedef enum Result_bool_Tag {
+  Ok_bool,
+  Err_bool,
+} Result_bool_Tag;
+
+typedef struct Result_bool {
+  Result_bool_Tag tag;
+  union {
+    struct {
+      bool ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Result_bool;
+
+typedef struct CArray_FieldElement {
+  struct FieldElement *data;
+  uintptr_t data_len;
+} CArray_FieldElement;
 
 typedef struct ModelMetadata {
   struct Ty schema;
@@ -180,37 +398,190 @@ typedef struct WorldMetadata {
   struct CArray_CHashItem______c_char__ModelMetadata models;
 } WorldMetadata;
 
-struct ToriiClient *client_new(const char *torii_url,
-                               const char *rpc_url,
-                               const char *world,
-                               const struct Keys *entities,
-                               uintptr_t entities_len,
-                               struct Error *error);
+typedef struct Signature {
+  /**
+   * The `r` value of a signature
+   */
+  struct FieldElement r;
+  /**
+   * The `s` value of a signature
+   */
+  struct FieldElement s;
+} Signature;
 
-struct Ty *client_entity(struct ToriiClient *client, const struct Keys *keys, struct Error *error);
+typedef enum Result_Signature_Tag {
+  Ok_Signature,
+  Err_Signature,
+} Result_Signature_Tag;
 
-const struct CArray_KeysClause *client_subscribed_entities(struct ToriiClient *client);
+typedef struct Result_Signature {
+  Result_Signature_Tag tag;
+  union {
+    struct {
+      struct Signature ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Result_Signature;
 
-void client_start_subscription(struct ToriiClient *client, struct Error *error);
+typedef enum Result_FieldElement_Tag {
+  Ok_FieldElement,
+  Err_FieldElement,
+} Result_FieldElement_Tag;
+
+typedef struct Result_FieldElement {
+  Result_FieldElement_Tag tag;
+  union {
+    struct {
+      struct FieldElement ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Result_FieldElement;
+
+typedef enum Result_____CJsonRpcClient_Tag {
+  Ok_____CJsonRpcClient,
+  Err_____CJsonRpcClient,
+} Result_____CJsonRpcClient_Tag;
+
+typedef struct Result_____CJsonRpcClient {
+  Result_____CJsonRpcClient_Tag tag;
+  union {
+    struct {
+      struct CJsonRpcClient *ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Result_____CJsonRpcClient;
+
+typedef enum Result_____Account_Tag {
+  Ok_____Account,
+  Err_____Account,
+} Result_____Account_Tag;
+
+typedef struct Result_____Account {
+  Result_____Account_Tag tag;
+  union {
+    struct {
+      struct Account *ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Result_____Account;
+
+/**
+ * Block hash, number or tag
+ */
+typedef enum BlockId_Tag {
+  Hash,
+  Number,
+  BlockTag_,
+} BlockId_Tag;
+
+typedef struct BlockId {
+  BlockId_Tag tag;
+  union {
+    struct {
+      struct FieldElement hash;
+    };
+    struct {
+      uint64_t number;
+    };
+    struct {
+      enum BlockTag block_tag;
+    };
+  };
+} BlockId;
+
+typedef struct Call {
+  const char *to;
+  const char *selector;
+  struct CArray_FieldElement calldata;
+} Call;
+
+struct Result_____ToriiClient client_new(const char *torii_url,
+                                         const char *rpc_url,
+                                         const char *world,
+                                         const struct KeysClause *entities,
+                                         uintptr_t entities_len);
+
+struct Result_COption_____Ty client_model(struct ToriiClient *client,
+                                          const struct KeysClause *keys);
+
+struct Result_CArray_Entity client_entities(struct ToriiClient *client, const struct Query *query);
+
+struct CArray_KeysClause client_subscribed_models(struct ToriiClient *client);
+
+struct Result_bool client_start_subscription(struct ToriiClient *client);
 
 struct WorldMetadata client_metadata(struct ToriiClient *client);
 
-void client_add_entities_to_sync(struct ToriiClient *client,
-                                 const struct Keys *entities,
-                                 uintptr_t entities_len,
-                                 struct Error *error);
+struct Result_bool client_add_models_to_sync(struct ToriiClient *client,
+                                             const struct KeysClause *models,
+                                             uintptr_t models_len);
 
-void client_on_entity_state_update(struct ToriiClient *client,
-                                   const struct Keys *entity,
-                                   void (*callback)(void));
+struct Result_bool client_on_sync_model_update(struct ToriiClient *client,
+                                               struct KeysClause model,
+                                               void (*callback)(void));
 
-void client_remove_entities_to_sync(struct ToriiClient *client,
-                                    const struct Keys *entities,
-                                    uintptr_t entities_len,
-                                    struct Error *error);
+struct Result_bool client_on_entity_state_update(struct ToriiClient *client,
+                                                 struct FieldElement *entities,
+                                                 uintptr_t entities_len,
+                                                 void (*callback)(struct FieldElement,
+                                                                  struct CArray_Model));
 
-void client_free(struct ToriiClient *client);
+struct Result_bool client_remove_models_to_sync(struct ToriiClient *client,
+                                                const struct KeysClause *models,
+                                                uintptr_t models_len);
 
-void keys_free(const struct CArray_KeysClause *array);
+struct FieldElement signing_key_new(void);
+
+struct Result_Signature signing_key_sign(struct FieldElement private_key, struct FieldElement hash);
+
+struct Result_FieldElement felt_from_hex_be(const char *hex);
+
+struct FieldElement verifying_key_new(struct FieldElement signing_key);
+
+struct Result_bool verifying_key_verify(struct FieldElement verifying_key,
+                                        struct FieldElement hash,
+                                        struct Signature signature);
+
+struct Result_____CJsonRpcClient jsonrpc_client_new(const char *rpc_url);
+
+struct Result_____Account account_new(struct CJsonRpcClient *rpc,
+                                      struct FieldElement private_key,
+                                      const char *address);
+
+struct FieldElement account_address(struct Account *account);
+
+struct FieldElement account_chain_id(struct Account *account);
+
+void account_set_block_id(struct Account *account, struct BlockId block_id);
+
+struct Result_bool account_execute_raw(struct Account *account,
+                                       const struct Call *calldata,
+                                       uintptr_t calldata_len);
+
+void client_free(struct ToriiClient *t);
+
+void account_free(struct Account *account);
 
 void ty_free(struct Ty *ty);
+
+void entity_free(struct Entity *entity);
+
+void error_free(struct Error *error);
+
+void world_metadata_free(struct WorldMetadata *metadata);
+
+void carray_free(void *data, uintptr_t data_len);
+
+void string_free(char *string);
