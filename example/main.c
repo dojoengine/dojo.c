@@ -133,11 +133,11 @@ int main()
     printf("Fetched %zu entities\n", fetchedEntities.data_len);
     for (size_t i = 0; i < fetchedEntities.data_len; i++)
     {
-        // pritn hex of key
-        printf("Key: 0x");
+        // pritn hex of id
+        printf("entity id: 0x");
         for (size_t j = 0; j < 32; j++)
         {
-            printf("%02x", fetchedEntities.data[i].key.data[j]);
+            printf("%02x", fetchedEntities.data[i].id.data[j]);
         }
         printf("\n");
     }
