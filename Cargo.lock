@@ -1197,9 +1197,9 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-deque"
-version = "0.8.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce6fd6f855243022dcecf8702fef0c297d4338e226845fe067f6341ad9fa0cef"
+checksum = "fca89a0e215bab21874660c67903c5f143333cab1da83d041c7ded6053774751"
 dependencies = [
  "cfg-if",
  "crossbeam-epoch",
@@ -1208,22 +1208,21 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-epoch"
-version = "0.9.15"
+version = "0.9.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae211234986c545741a7dc064309f67ee1e5ad243d0e48335adc0484d960bcc7"
+checksum = "2d2fe95351b870527a5d09bf563ed3c97c0cffb87cf1c78a591bf48bb218d9aa"
 dependencies = [
  "autocfg",
  "cfg-if",
  "crossbeam-utils",
  "memoffset",
- "scopeguard",
 ]
 
 [[package]]
 name = "crossbeam-queue"
-version = "0.3.8"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1cfb3ea8a53f37c40dea2c7bedcbd88bdfae54f5e2175d6ecaff1c988353add"
+checksum = "b9bcf5bdbfdd6030fb4a1c497b5d5fc5921aa2f60d359a17e249c0e6df3de153"
 dependencies = [
  "cfg-if",
  "crossbeam-utils",
@@ -1231,9 +1230,9 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-utils"
-version = "0.8.16"
+version = "0.8.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a22b2d63d4d1dc0b7f1b6b2747dd0088008a9be28b6ddf0b1e7d335e3037294"
+checksum = "c06d96137f14f244c37f989d9fff8f95e6c18b918e71f36638f8c49112e4c78f"
 dependencies = [
  "cfg-if",
 ]
@@ -1394,15 +1393,15 @@ dependencies = [
 
 [[package]]
 name = "dojo-types"
-version = "0.4.0-rc1"
-source = "git+https://github.com/dojoengine/dojo#072a26b188a35801eebb7855028c9891fadf40f9"
+version = "0.4.1"
+source = "git+https://github.com/dojoengine/dojo#e0a16635d1b833e0f5b89a9bdf358d784751c1b4"
 dependencies = [
  "crypto-bigint",
  "hex",
  "itertools 0.10.5",
  "serde",
  "serde_json",
- "starknet 0.7.0",
+ "starknet 0.8.0",
  "strum",
  "strum_macros",
  "thiserror",
@@ -1410,8 +1409,8 @@ dependencies = [
 
 [[package]]
 name = "dojo-world"
-version = "0.4.0-rc1"
-source = "git+https://github.com/dojoengine/dojo#072a26b188a35801eebb7855028c9891fadf40f9"
+version = "0.4.1"
+source = "git+https://github.com/dojoengine/dojo#e0a16635d1b833e0f5b89a9bdf358d784751c1b4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1427,7 +1426,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "smol_str",
- "starknet 0.7.0",
+ "starknet 0.8.0",
  "starknet-crypto",
  "thiserror",
  "tracing",
@@ -1942,9 +1941,9 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hkdf"
-version = "0.12.3"
+version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "791a029f6b9fc27657f6f188ec6e5e43f6911f6f878e0dc5501396e09809d437"
+checksum = "7b5f8eb2ad728638ea2c7d47a21db23b7b58a72ed6a38256b8a1849f15fbbdf7"
 dependencies = [
  "hmac",
 ]
@@ -3988,18 +3987,18 @@ dependencies = [
 
 [[package]]
 name = "starknet"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "351ffff1bcf6a1dc569a1b330dfd85779e16506e7d4a87baa8be3744cb5415a6"
+checksum = "5eb139c5e6f6c6da627080e33cc00b3fc1c9733403034ca1ee9c42a95c337c7f"
 dependencies = [
- "starknet-accounts 0.6.1",
- "starknet-contract 0.6.0",
- "starknet-core 0.7.2",
+ "starknet-accounts 0.7.0",
+ "starknet-contract 0.7.0",
+ "starknet-core 0.8.0",
  "starknet-crypto",
  "starknet-ff",
  "starknet-macros",
- "starknet-providers 0.7.0",
- "starknet-signers 0.5.0",
+ "starknet-providers 0.8.0",
+ "starknet-signers 0.6.0",
 ]
 
 [[package]]
@@ -4018,15 +4017,15 @@ dependencies = [
 
 [[package]]
 name = "starknet-accounts"
-version = "0.6.1"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7062b020f65d9da7f9dd9f1d97bfb644e881cda8ddb999799a799e6f2e408dd"
+checksum = "3743932c80ad2a5868c2dd4ef729de4e12060c88e73e4bb678a5f8e51b105e53"
 dependencies = [
  "async-trait",
  "auto_impl",
- "starknet-core 0.7.2",
- "starknet-providers 0.7.0",
- "starknet-signers 0.5.0",
+ "starknet-core 0.8.0",
+ "starknet-providers 0.8.0",
+ "starknet-signers 0.6.0",
  "thiserror",
 ]
 
@@ -4047,16 +4046,16 @@ dependencies = [
 
 [[package]]
 name = "starknet-contract"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d858efc93d85de95065a5732cb3e94d0c746674964c0859aab442ffbb9de76b4"
+checksum = "4e55aac528c5376e1626d5a8d4daaf280bfd08f909dadc729e5b009203d6ec21"
 dependencies = [
  "serde",
  "serde_json",
  "serde_with",
- "starknet-accounts 0.6.1",
- "starknet-core 0.7.2",
- "starknet-providers 0.7.0",
+ "starknet-accounts 0.7.0",
+ "starknet-core 0.8.0",
+ "starknet-providers 0.8.0",
  "thiserror",
 ]
 
@@ -4065,24 +4064,6 @@ name = "starknet-core"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14139b1c39bdc2f1e663c12090ff5108fe50ebe62c09e15e32988dfaf445a7e4"
-dependencies = [
- "base64 0.21.5",
- "flate2",
- "hex",
- "serde",
- "serde_json",
- "serde_json_pythonic",
- "serde_with",
- "sha3",
- "starknet-crypto",
- "starknet-ff",
-]
-
-[[package]]
-name = "starknet-core"
-version = "0.7.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f1683ca7c63f0642310eddedb7d35056d8306084dff323d440711065c63ed87"
 dependencies = [
  "base64 0.21.5",
  "flate2",
@@ -4156,9 +4137,9 @@ dependencies = [
 
 [[package]]
 name = "starknet-ff"
-version = "0.3.5"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7584bc732e4d2a8ccebdd1dda8236f7940a79a339e30ebf338d45c329659e36c"
+checksum = "067419451efdea1ee968df8438369960c167e0e905c05b84afd074f50e1d6f3d"
 dependencies = [
  "ark-ff",
  "bigdecimal",
@@ -4201,9 +4182,9 @@ dependencies = [
 
 [[package]]
 name = "starknet-providers"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52072c2d258bf692affeccd602613d5f6c61a6ffc84da8f191ab4a1b0a5e24d1"
+checksum = "5b08084f36ff7f11743ec71f33f0b11d439cbe0524058def299eb47de1ef1c28"
 dependencies = [
  "async-trait",
  "auto_impl",
@@ -4214,7 +4195,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
- "starknet-core 0.7.2",
+ "starknet-core 0.8.0",
  "thiserror",
  "url",
 ]
@@ -4237,16 +4218,16 @@ dependencies = [
 
 [[package]]
 name = "starknet-signers"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "347b1bfc09846aafe16d2b3a5bc2d8a2f845e2958602442182d265fbd6011c2e"
+checksum = "91919d8f318f0b5bcc4ff5849fbd3fb46adaaa72e0bf204742bab7c822425ff4"
 dependencies = [
  "async-trait",
  "auto_impl",
  "crypto-bigint",
  "eth-keystore",
  "rand",
- "starknet-core 0.7.2",
+ "starknet-core 0.8.0",
  "starknet-crypto",
  "thiserror",
 ]
@@ -4743,7 +4724,7 @@ dependencies = [
 
 [[package]]
 name = "torii-c"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
  "cbindgen",
  "csbindgen",
@@ -4762,8 +4743,8 @@ dependencies = [
 
 [[package]]
 name = "torii-client"
-version = "0.4.0-rc1"
-source = "git+https://github.com/dojoengine/dojo#072a26b188a35801eebb7855028c9891fadf40f9"
+version = "0.4.1"
+source = "git+https://github.com/dojoengine/dojo#e0a16635d1b833e0f5b89a9bdf358d784751c1b4"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -4776,7 +4757,7 @@ dependencies = [
  "prost 0.12.3",
  "serde",
  "serde_json",
- "starknet 0.7.0",
+ "starknet 0.8.0",
  "starknet-crypto",
  "thiserror",
  "tokio",
@@ -4788,8 +4769,8 @@ dependencies = [
 
 [[package]]
 name = "torii-grpc"
-version = "0.4.0-rc1"
-source = "git+https://github.com/dojoengine/dojo#072a26b188a35801eebb7855028c9891fadf40f9"
+version = "0.4.1"
+source = "git+https://github.com/dojoengine/dojo#e0a16635d1b833e0f5b89a9bdf358d784751c1b4"
 dependencies = [
  "bytes",
  "crypto-bigint",
@@ -4806,7 +4787,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
- "starknet 0.7.0",
+ "starknet 0.8.0",
  "starknet-crypto",
  "strum_macros",
  "thiserror",
@@ -5386,18 +5367,18 @@ checksum = "7e2c411759b501fb9501aac2b1b2d287a6e93e5bdcf13c25306b23e1b716dd0e"
 
 [[package]]
 name = "zerocopy"
-version = "0.7.30"
+version = "0.7.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "306dca4455518f1f31635ec308b6b3e4eb1b11758cefafc782827d0aa7acb5c7"
+checksum = "1c4061bedbb353041c12f413700357bec76df2c7e2ca8e4df8bac24c6bf68e3d"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.7.30"
+version = "0.7.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be912bf68235a88fbefd1b73415cb218405958d1655b2ece9035a19920bdf6ba"
+checksum = "b3c129550b3e6de3fd0ba67ba5c81818f9805e58b8d7fee80a3a59d2c9fc601a"
 dependencies = [
  "proc-macro2",
  "quote",
