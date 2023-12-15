@@ -46,7 +46,7 @@ int main()
 
     const char *playerKey = "0x028cd7ee02d7f6ec9810e75b930e8e607793b302445abbdee0ac88143f18da20";
     const char *playerAddress = "0x0517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973";
-    const char *world = "0x05010c31f127114c6198df8a5239e2b7a5151e1156fb43791e37e7385faa8138";
+    const char *world = "0x033ac2f528bb97cc7b79148fd1756dc368be0e95d391d8c6d6473ecb60b4560e";
     // Initialize world.data here...
 
     KeysClause entities[1] = {};
@@ -122,6 +122,11 @@ int main()
     Query query = {};
     query.limit = 100;
     query.clause.tag = None_Clause;
+    query.clause.some.tag = Keys;
+    query.clause.some.keys.keys.data = malloc(sizeof(char *));
+    query.clause.some.keys.keys.data_len = 1;
+    query.clause.some.keys.keys.data[0] = playerAddress;
+    query.clause.some.keys.model = "Moves";
     Result_CArray_Entity resEntities = client_entities(client, &query);
     if (resEntities.tag == Err_CArray_Entity)
     {
@@ -137,9 +142,15 @@ int main()
         printf("Key: 0x");
         for (size_t j = 0; j < 32; j++)
         {
-            printf("%02x", fetchedEntities.data[i].key.data[j]);
+            printf("%02x", fetchedEntities.data[i].id.data[j]);
         }
         printf("\n");
+
+        // print models name
+        for (size_t j = 0; j < fetchedEntities.data[i].models.data_len; j++)
+        {
+            printf("Model: %s\n", fetchedEntities.data[i].models.data[j].name);
+        }
     }
 
 
@@ -175,7 +186,7 @@ int main()
     }
 
     Call call = {
-        .to = "0x031571485922572446df9e3198a891e10d3a48e544544317dbcbb667e15848cd",
+        .to = "0x0152dcff993befafe5001975149d2c50bd9621da7cbaed74f68e7d5e54e65abc",
         .selector = "spawn",
     };
 

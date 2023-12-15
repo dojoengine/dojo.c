@@ -272,7 +272,7 @@ pub enum ValueType {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Entity {
-    pub key: FieldElement,
+    pub id: FieldElement,
     pub models: CArray<Model>,
 }
 
@@ -282,7 +282,7 @@ impl From<&Entity> for torii_grpc::types::schema::Entity {
         let models = models.iter().map(|m| (&m.clone()).into()).collect();
 
         torii_grpc::types::schema::Entity {
-            key: (&val.key.clone()).into(),
+            id: (&val.id.clone()).into(),
             models,
         }
     }
@@ -297,7 +297,7 @@ impl From<&torii_grpc::types::schema::Entity> for Entity {
             .collect::<Vec<Model>>();
 
         Entity {
-            key: (&val.key.clone()).into(),
+            id: (&val.id.clone()).into(),
             models: models.into(),
         }
     }

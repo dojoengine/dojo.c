@@ -182,8 +182,6 @@ pub unsafe extern "C" fn client_on_sync_model_update(
     let model: torii_grpc::types::KeysClause = (&model).into();
     let storage = (*client).inner.storage();
 
-    println!("model: {:?}", model);
-
     let rcv = storage.add_listener(
         cairo_short_string_to_felt(model.model.as_str()).unwrap(),
         model.keys.as_slice(),
@@ -227,7 +225,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 
     (*client).runtime.spawn(async move {
         while let Some(Ok(entity)) = rcv.next().await {
-            let key: types::FieldElement = (&entity.key).into();
+            let key: types::FieldElement = (&entity.id).into();
             let models: Vec<Model> = entity.models.into_iter().map(|e| (&e).into()).collect();
             callback(key, models.into());
         }
@@ -412,7 +410,6 @@ pub unsafe extern "C" fn account_execute_raw(
         .into_iter()
         .map(|c| (&c).into())
         .collect::<Vec<starknet::accounts::Call>>();
-
     let call = (*account).0.execute(calldata);
 
     let result = tokio::runtime::Runtime::new()
