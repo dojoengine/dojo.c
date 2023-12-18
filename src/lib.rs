@@ -225,7 +225,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 
     (*client).runtime.spawn(async move {
         while let Some(Ok(entity)) = rcv.next().await {
-            let key: types::FieldElement = (&entity.id).into();
+            let key: types::FieldElement = (&entity.hashed_keys).into();
             let models: Vec<Model> = entity.models.into_iter().map(|e| (&e).into()).collect();
             callback(key, models.into());
         }

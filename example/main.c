@@ -142,7 +142,7 @@ int main()
         printf("Key: 0x");
         for (size_t j = 0; j < 32; j++)
         {
-            printf("%02x", fetchedEntities.data[i].id.data[j]);
+            printf("%02x", fetchedEntities.data[i].hashed_keys.data[j]);
         }
         printf("\n");
 
