@@ -121,6 +121,7 @@ impl From<&Call> for starknet::accounts::Call {
         let selector = unsafe { CStr::from_ptr(val.selector).to_string_lossy().to_string() };
 
         let calldata: Vec<FieldElement> = (&val.calldata).into();
+        let calldata = std::mem::ManuallyDrop::new(calldata);
         let calldata = calldata.iter().map(|c| (&c.clone()).into()).collect();
 
         starknet::accounts::Call {

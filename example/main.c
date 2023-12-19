@@ -185,19 +185,44 @@ int main()
         return 1;
     }
 
-    Call call = {
+    Call spawn = {
         .to = "0x0152dcff993befafe5001975149d2c50bd9621da7cbaed74f68e7d5e54e65abc",
         .selector = "spawn",
     };
 
-    Result_bool resExecute = account_execute_raw(account, &call, 1);
-    if (resExecute.tag == Err_bool)
+    Call move = {
+        .to = "0x0152dcff993befafe5001975149d2c50bd9621da7cbaed74f68e7d5e54e65abc",
+        .selector = "move",
+        .calldata = {
+            .data = malloc(sizeof(FieldElement)),
+            .data_len = 1,
+        }
+    };
+
+    Result_FieldElement moveLeft = felt_from_hex_be("0x01");
+    if (moveLeft.tag == Err_FieldElement)
     {
-        printf("Failed to execute call: %s\n", resExecute.err.message);
+        printf("Failed to create moveLeft: %s\n", moveLeft.err.message);
+        return 1;
+    }
+
+    move.calldata.data[0] = moveLeft.ok;
+
+    Result_bool resSpawn = account_execute_raw(account, &spawn, 1);
+    if (resSpawn.tag == Err_bool)
+    {
+        printf("Failed to execute call: %s\n", resSpawn.err.message);
         return 1;
     }
 
     sleep(5);
+
+    Result_bool resMove = account_execute_raw(account, &move, 1);
+    if (resMove.tag == Err_bool)
+    {
+        printf("Failed to execute call: %s\n", resMove.err.message);
+        return 1;
+    }
 
     // while (1)
     // {
