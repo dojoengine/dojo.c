@@ -1,8 +1,12 @@
+mod constants;
 mod types;
+mod utils;
 
 use futures_util::StreamExt;
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
-use starknet::core::utils::cairo_short_string_to_felt;
+use starknet::core::utils::{
+    cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
+};
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
@@ -16,6 +20,7 @@ use types::{
     Account, BlockId, CArray, CJsonRpcClient, COption, Call, Entity, Error, KeysClause, Model,
     Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
 };
+use utils::watch_tx;
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -381,6 +386,65 @@ pub unsafe extern "C" fn account_new(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn account_deploy_burner(
+    rpc: *mut CJsonRpcClient,
+    master_account: *mut Account<'static>,
+) -> Result<*mut Account<'static>> {
+    let signing_key = SigningKey::from_random();
+    let verifying_key = signing_key.verifying_key();
+    let address = get_contract_address(
+        verifying_key.scalar(),
+        constants::KATANA_ACCOUNT_CLASS_HASH,
+        &[verifying_key.scalar()],
+        FieldElement::ZERO,
+    );
+    let signer = LocalWallet::from_signing_key(signing_key);
+
+    let chain_id = (*master_account).0.chain_id();
+
+    let account = SingleOwnerAccount::new(
+        &(*rpc).0,
+        signer,
+        address,
+        chain_id,
+        ExecutionEncoding::Legacy,
+    );
+
+    // deploy the burner
+    let exec = (*master_account).0.execute(vec![starknet::accounts::Call {
+        to: constants::UDC_ADDRESS,
+        calldata: vec![
+            constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
+            verifying_key.scalar(),               // salt
+            FieldElement::ZERO,                   // deployer_address
+            FieldElement::ONE,                    // constructor calldata length (1)
+            verifying_key.scalar(),               // constructor calldata
+        ],
+        selector: get_selector_from_name("deployContract").unwrap(),
+    }]);
+
+    let result = tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on(exec.send());
+
+    if let Err(e) = result {
+        return Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        });
+    }
+
+    let result = result.unwrap();
+
+    tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on(watch_tx(&(*rpc).0, result.transaction_hash))
+        .unwrap();
+
+    Result::Ok(Box::into_raw(Box::new(Account(account))))
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn account_address(account: *mut Account<'static>) -> types::FieldElement {
     (&(*account).0.address()).into()
 }
@@ -422,6 +486,27 @@ pub unsafe extern "C" fn account_execute_raw(
             message: CString::new(e.to_string()).unwrap().into_raw(),
         }),
     }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn hash_get_contract_address(
+    class_hash: types::FieldElement,
+    salt: types::FieldElement,
+    constructor_calldata: *const FieldElement,
+    constructor_calldata_len: usize,
+    deployer_address: types::FieldElement,
+) -> types::FieldElement {
+    let class_hash = (&class_hash).into();
+    let salt = (&salt).into();
+    let constructor_calldata = unsafe {
+        std::slice::from_raw_parts(constructor_calldata, constructor_calldata_len).to_vec()
+    };
+    let deployer_address = (&deployer_address).into();
+
+    let address = get_contract_address(salt, class_hash, &constructor_calldata, deployer_address);
+
+    (&address).into()
 }
 
 // This function takes a raw pointer to ToriiClient as an argument.
