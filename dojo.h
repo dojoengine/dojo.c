@@ -560,12 +560,6 @@ struct Result_____Account account_new(struct CJsonRpcClient *rpc,
                                       struct FieldElement private_key,
                                       const char *address);
 
-struct Result_bool account_deploy(struct Account *account,
-                                  struct FieldElement class_hash,
-                                  const struct FieldElement *constructor_calldata,
-                                  uintptr_t constructor_calldata_len,
-                                  struct FieldElement salt);
-
 struct Result_____Account account_deploy_burner(struct CJsonRpcClient *rpc,
                                                 struct Account *master_account);
 

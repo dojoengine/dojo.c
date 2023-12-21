@@ -387,32 +387,6 @@ pub unsafe extern "C" fn account_new(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn account_deploy(
-    account: *mut Account<'static>,
-    class_hash: types::FieldElement,
-    constructor_calldata: *const FieldElement,
-    constructor_calldata_len: usize,
-    salt: types::FieldElement,
-) -> Result<bool> {
-    let class_hash = (&class_hash).into();
-    let constructor_calldata = unsafe {
-        std::slice::from_raw_parts(constructor_calldata, constructor_calldata_len).to_vec()
-    };
-    let salt = (&salt).into();
-    let factory = ContractFactory::new(class_hash, &(*account).0);
-
-    let deployment = factory.deploy(constructor_calldata, salt, false);
-
-    tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(deployment.send())
-        .unwrap();
-
-    Result::Ok(true)
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn account_deploy_burner(
     rpc: *mut CJsonRpcClient,
     master_account: *mut Account<'static>,
