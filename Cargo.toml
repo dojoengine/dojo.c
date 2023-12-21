@@ -21,6 +21,7 @@ url = "2.5.0"
 tonic = "0.10.2"
 futures-util = "0.3.29"
 futures-channel = "0.3.29"
+anyhow = "1.0.76"
 
 [build-dependencies]
 cbindgen = "0.24.0"

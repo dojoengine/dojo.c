@@ -1,13 +1,13 @@
-mod types;
 mod constants;
+mod types;
+mod utils;
 
 use futures_util::StreamExt;
-use starknet::accounts::{
-    Account as StarknetAccount, AccountDeployment, AccountFactory, ExecutionEncoding,
-    SingleOwnerAccount,
-};
+use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::contract::ContractFactory;
-use starknet::core::utils::{cairo_short_string_to_felt, get_contract_address};
+use starknet::core::utils::{
+    cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
+};
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
@@ -21,6 +21,7 @@ use types::{
     Account, BlockId, CArray, CJsonRpcClient, COption, Call, Entity, Error, KeysClause, Model,
     Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
 };
+use utils::watch_tx;
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -400,7 +401,6 @@ pub unsafe extern "C" fn account_deploy(
     let salt = (&salt).into();
     let factory = ContractFactory::new(class_hash, &(*account).0);
 
-
     let deployment = factory.deploy(constructor_calldata, salt, false);
 
     tokio::runtime::Runtime::new()
@@ -420,15 +420,15 @@ pub unsafe extern "C" fn account_deploy_burner(
     let signing_key = SigningKey::from_random();
     let verifying_key = signing_key.verifying_key();
     let address = get_contract_address(
-        signing_key.verifying_key().scalar(), 
-        constants::KATANA_ACCOUNT_CLASS_HASH, 
+        verifying_key.scalar(),
+        constants::KATANA_ACCOUNT_CLASS_HASH,
         &[verifying_key.scalar()],
         FieldElement::ZERO,
     );
     let signer = LocalWallet::from_signing_key(signing_key);
-    
+
     let chain_id = (*master_account).0.chain_id();
-    
+
     let account = SingleOwnerAccount::new(
         &(*rpc).0,
         signer,
@@ -437,11 +437,17 @@ pub unsafe extern "C" fn account_deploy_burner(
         ExecutionEncoding::Legacy,
     );
 
-    // prefund the account
-    let exec = account.execute(vec![starknet::accounts::Call{
-        to: constants::KATANA_ETH_CONTRACT_ADDRESS,
-        calldata: vec![address, constants::PREFUND_AMOUNT, FieldElement::ZERO],
-        selector: cairo_short_string_to_felt("transfer").unwrap(),
+    // deploy the burner
+    let exec = (*master_account).0.execute(vec![starknet::accounts::Call {
+        to: constants::UDC_ADDRESS,
+        calldata: vec![
+            constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
+            verifying_key.scalar(),               // salt
+            FieldElement::ZERO,                   // deployer_address
+            FieldElement::ONE,                    // constructor calldata length (1)
+            verifying_key.scalar(),               // constructor calldata
+        ],
+        selector: get_selector_from_name("deployContract").unwrap(),
     }]);
 
     let result = tokio::runtime::Runtime::new()
@@ -450,28 +456,18 @@ pub unsafe extern "C" fn account_deploy_burner(
 
     if let Err(e) = result {
         return Result::Err(Error {
-            message: CString::new(
-                format!("Failed to prefund the account: {}", e.to_string()),
-            ).unwrap().into_raw(),
+            message: CString::new(e.to_string()).unwrap().into_raw(),
         });
     }
 
-    // deploy the burner
-    let factory = ContractFactory::new(constants::KATANA_ACCOUNT_CLASS_HASH, account.clone());
-    let deployment = factory.deploy(vec![verifying_key.scalar()], verifying_key.scalar(), false);
+    let result = result.unwrap();
 
-    let result = tokio::runtime::Runtime::new()
+    tokio::runtime::Runtime::new()
         .unwrap()
-        .block_on(deployment.send());
+        .block_on(watch_tx(&(*rpc).0, result.transaction_hash))
+        .unwrap();
 
-    match result {
-        Ok(_) => Result::Ok(Box::into_raw(Box::new(Account(account)))),
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
-    }
-
-    
+    Result::Ok(Box::into_raw(Box::new(Account(account))))
 }
 
 #[no_mangle]

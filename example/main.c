@@ -89,9 +89,18 @@ int main()
         printf("Failed to create account: %s\n", resAccount.err.message);
         return 1;
     }
-    Account *account = resAccount.ok;
+    Account *master_account = resAccount.ok;
 
-    FieldElement address = account_address(account);
+    Result_____Account resBurner = account_deploy_burner(provider, master_account);
+    if (resBurner.tag == Err_____Account)
+    {
+        printf("Failed to create burner: %s\n", resBurner.err.message);
+        return 1;
+    }
+
+    Account *burner = resBurner.ok;
+
+    FieldElement address = account_address(burner);
     printf("New account: 0x");
     for (size_t i = 0; i < 32; i++)
     {
@@ -208,7 +217,7 @@ int main()
 
     move.calldata.data[0] = moveLeft.ok;
 
-    Result_bool resSpawn = account_execute_raw(account, &spawn, 1);
+    Result_bool resSpawn = account_execute_raw(burner, &spawn, 1);
     if (resSpawn.tag == Err_bool)
     {
         printf("Failed to execute call: %s\n", resSpawn.err.message);
@@ -217,7 +226,7 @@ int main()
 
     sleep(5);
 
-    Result_bool resMove = account_execute_raw(account, &move, 1);
+    Result_bool resMove = account_execute_raw(burner, &move, 1);
     if (resMove.tag == Err_bool)
     {
         printf("Failed to execute call: %s\n", resMove.err.message);
