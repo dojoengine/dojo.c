@@ -560,6 +560,15 @@ struct Result_____Account account_new(struct CJsonRpcClient *rpc,
                                       struct FieldElement private_key,
                                       const char *address);
 
+struct Result_bool account_deploy(struct Account *account,
+                                  struct FieldElement class_hash,
+                                  const struct FieldElement *constructor_calldata,
+                                  uintptr_t constructor_calldata_len,
+                                  struct FieldElement salt);
+
+struct Result_____Account account_deploy_burner(struct CJsonRpcClient *rpc,
+                                                struct Account *master_account);
+
 struct FieldElement account_address(struct Account *account);
 
 struct FieldElement account_chain_id(struct Account *account);
@@ -569,6 +578,12 @@ void account_set_block_id(struct Account *account, struct BlockId block_id);
 struct Result_bool account_execute_raw(struct Account *account,
                                        const struct Call *calldata,
                                        uintptr_t calldata_len);
+
+struct FieldElement hash_get_contract_address(struct FieldElement class_hash,
+                                              struct FieldElement salt,
+                                              const struct FieldElement *constructor_calldata,
+                                              uintptr_t constructor_calldata_len,
+                                              struct FieldElement deployer_address);
 
 void client_free(struct ToriiClient *t);
 
