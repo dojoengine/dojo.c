@@ -569,9 +569,11 @@ struct FieldElement account_chain_id(struct Account *account);
 
 void account_set_block_id(struct Account *account, struct BlockId block_id);
 
-struct Result_bool account_execute_raw(struct Account *account,
-                                       const struct Call *calldata,
-                                       uintptr_t calldata_len);
+struct Result_FieldElement account_execute_raw(struct Account *account,
+                                               const struct Call *calldata,
+                                               uintptr_t calldata_len);
+
+struct Result_bool wait_for_transaction(struct CJsonRpcClient *rpc, struct FieldElement txn_hash);
 
 struct FieldElement hash_get_contract_address(struct FieldElement class_hash,
                                               struct FieldElement salt,

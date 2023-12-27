@@ -468,7 +468,7 @@ pub unsafe extern "C" fn account_execute_raw(
     account: *mut Account<'static>,
     calldata: *const Call,
     calldata_len: usize,
-) -> Result<bool> {
+) -> Result<types::FieldElement> {
     let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
     let calldata = calldata
         .into_iter()
@@ -479,6 +479,25 @@ pub unsafe extern "C" fn account_execute_raw(
     let result = tokio::runtime::Runtime::new()
         .unwrap()
         .block_on(call.send());
+
+    match result {
+        Ok(res) => Result::Ok((&res.transaction_hash).into()),
+        Err(e) => Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn wait_for_transaction(
+    rpc: *mut CJsonRpcClient,
+    txn_hash: types::FieldElement,
+) -> Result<bool> {
+    let txn_hash = (&txn_hash).into();
+    let result = tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on(watch_tx(&(*rpc).0, txn_hash));
 
     match result {
         Ok(_) => Result::Ok(true),
