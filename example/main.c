@@ -162,7 +162,6 @@ int main()
         }
     }
 
-
     // Result_bool resStartSub = client_start_subscription(client);
     // if (resStartSub.tag == Err_bool)
     // {
@@ -205,8 +204,7 @@ int main()
         .calldata = {
             .data = malloc(sizeof(FieldElement)),
             .data_len = 1,
-        }
-    };
+        }};
 
     Result_FieldElement moveLeft = felt_from_hex_be("0x01");
     if (moveLeft.tag == Err_FieldElement)
@@ -217,25 +215,25 @@ int main()
 
     move.calldata.data[0] = moveLeft.ok;
 
-    Result_bool resSpawn = account_execute_raw(burner, &spawn, 1);
+    Result_FieldElement resSpawn = account_execute_raw(master_account, &spawn, 1);
     if (resSpawn.tag == Err_bool)
     {
         printf("Failed to execute call: %s\n", resSpawn.err.message);
         return 1;
     }
+    wait_for_transaction(provider, resSpawn.ok);
 
-    sleep(5);
-
-    Result_bool resMove = account_execute_raw(burner, &move, 1);
+    Result_FieldElement resMove = account_execute_raw(master_account, &move, 1);
     if (resMove.tag == Err_bool)
     {
         printf("Failed to execute call: %s\n", resMove.err.message);
         return 1;
     }
+    wait_for_transaction(provider, resMove.ok);
 
     // while (1)
     // {
-        
+
     // }
 
     // Result_bool resRemoveEntities = client_remove_models_to_sync(client, entities, 1);
