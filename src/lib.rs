@@ -2,7 +2,6 @@ mod constants;
 mod types;
 mod utils;
 
-use tokio_stream::StreamExt;
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::utils::{
     cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
@@ -15,6 +14,7 @@ use std::ffi::{c_void, CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
 use std::thread;
+use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use types::{
     Account, BlockId, CArray, CJsonRpcClient, COption, Call, Entity, Error, KeysClause, Model,

@@ -162,7 +162,6 @@ int main()
         }
     }
 
-
     // Result_bool resStartSub = client_start_subscription(client);
     // if (resStartSub.tag == Err_bool)
     // {
@@ -205,8 +204,7 @@ int main()
         .calldata = {
             .data = malloc(sizeof(FieldElement)),
             .data_len = 1,
-        }
-    };
+        }};
 
     Result_FieldElement moveLeft = felt_from_hex_be("0x01");
     if (moveLeft.tag == Err_FieldElement)
@@ -235,7 +233,7 @@ int main()
 
     // while (1)
     // {
-        
+
     // }
 
     // Result_bool resRemoveEntities = client_remove_models_to_sync(client, entities, 1);
