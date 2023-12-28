@@ -217,21 +217,21 @@ int main()
 
     move.calldata.data[0] = moveLeft.ok;
 
-    Result_bool resSpawn = account_execute_raw(burner, &spawn, 1);
+    Result_FieldElement resSpawn = account_execute_raw(master_account, &spawn, 1);
     if (resSpawn.tag == Err_bool)
     {
         printf("Failed to execute call: %s\n", resSpawn.err.message);
         return 1;
     }
+    wait_for_transaction(provider, resSpawn.ok);
 
-    sleep(5);
-
-    Result_bool resMove = account_execute_raw(burner, &move, 1);
+    Result_FieldElement resMove = account_execute_raw(master_account, &move, 1);
     if (resMove.tag == Err_bool)
     {
         printf("Failed to execute call: %s\n", resMove.err.message);
         return 1;
     }
+    wait_for_transaction(provider, resMove.ok);
 
     // while (1)
     // {

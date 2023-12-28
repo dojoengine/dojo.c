@@ -2,7 +2,7 @@ mod constants;
 mod types;
 mod utils;
 
-use futures_util::StreamExt;
+use tokio_stream::StreamExt;
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::utils::{
     cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
