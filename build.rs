@@ -19,6 +19,13 @@ fn main() {
                 prefix_with_name: true,
                 ..Default::default()
             };
+            config.export = cbindgen::ExportConfig{
+                mangle: cbindgen::MangleConfig{
+                    remove_underscores: true,
+                    ..Default::default()
+                },
+                ..Default::default()
+            };
 
             config
         })
