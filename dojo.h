@@ -70,6 +70,7 @@ typedef enum Primitive_Tag {
   PrimitiveU64,
   PrimitiveU128,
   PrimitiveU256,
+  PrimitiveU256,
   PrimitiveUSize,
   PrimitiveBool,
   PrimitiveFelt252,
@@ -97,6 +98,9 @@ typedef struct Primitive {
     };
     struct {
       uint64_t u256[4];
+    };
+    struct {
+      uint32_t u256[8];
     };
     struct {
       uint32_t u_size;
@@ -603,6 +607,10 @@ void world_metadata_free(struct WorldMetadata *metadata);
 void carray_free(void *data, uintptr_t data_len);
 
 void string_free(char *string);
+
+extern void log(const str *s);
+
+extern void error(const str *s);
 
 #ifdef __cplusplus
 } // extern "C"

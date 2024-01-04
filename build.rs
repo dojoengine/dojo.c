@@ -6,21 +6,21 @@ fn main() {
     cbindgen::Builder::new()
         .with_config({
             let mut config = cbindgen::Config::default();
-            
+
             config.language = cbindgen::Language::C;
             config.braces = cbindgen::Braces::SameLine;
             config.cpp_compat = true;
             config.style = cbindgen::Style::Both;
-            config.layout = cbindgen::LayoutConfig{
+            config.layout = cbindgen::LayoutConfig {
                 ..Default::default()
             };
-            config.enumeration = cbindgen::EnumConfig{
+            config.enumeration = cbindgen::EnumConfig {
                 derive_helper_methods: true,
                 prefix_with_name: true,
                 ..Default::default()
             };
-            config.export = cbindgen::ExportConfig{
-                mangle: cbindgen::MangleConfig{
+            config.export = cbindgen::ExportConfig {
+                mangle: cbindgen::MangleConfig {
                     remove_underscores: true,
                     ..Default::default()
                 },
