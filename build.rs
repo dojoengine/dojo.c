@@ -3,13 +3,25 @@ use std::env;
 fn main() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
-    let config = cbindgen::Config {
-        language: cbindgen::Language::C,
-        ..Default::default()
-    };
-
     cbindgen::Builder::new()
-        .with_config(config)
+        .with_config({
+            let mut config = cbindgen::Config::default();
+            
+            config.language = cbindgen::Language::C;
+            config.braces = cbindgen::Braces::SameLine;
+            config.cpp_compat = true;
+            config.style = cbindgen::Style::Both;
+            config.layout = cbindgen::LayoutConfig{
+                ..Default::default()
+            };
+            config.enumeration = cbindgen::EnumConfig{
+                derive_helper_methods: true,
+                prefix_with_name: true,
+                ..Default::default()
+            };
+
+            config
+        })
         .with_crate(crate_dir)
         .generate()
         .expect("Unable to generate bindings")

@@ -27,5 +27,4 @@ wasm-bindgen = "=0.2.89"
 wasm-bindgen-futures = "0.4.37"
 
 [build-dependencies]
-cbindgen = "0.24.0"
-csbindgen = "1.8.3"
+cbindgen = "0.26.0"

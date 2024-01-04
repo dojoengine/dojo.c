@@ -4,22 +4,22 @@
 #include <stdlib.h>
 
 typedef enum BlockTag {
-  Latest,
-  Pending,
+  BlockTag_Latest,
+  BlockTag_Pending,
 } BlockTag;
 
 typedef enum ComparisonOperator {
-  Eq,
-  Neq,
-  Gt,
-  Gte,
-  Lt,
-  Lte,
+  ComparisonOperator_Eq,
+  ComparisonOperator_Neq,
+  ComparisonOperator_Gt,
+  ComparisonOperator_Gte,
+  ComparisonOperator_Lt,
+  ComparisonOperator_Lte,
 } ComparisonOperator;
 
 typedef enum LogicalOperator {
-  And,
-  Or,
+  LogicalOperator_And,
+  LogicalOperator_Or,
 } LogicalOperator;
 
 typedef struct Account Account;
@@ -33,8 +33,8 @@ typedef struct Error {
 } Error;
 
 typedef enum Result_____ToriiClient_Tag {
-  Ok_____ToriiClient,
-  Err_____ToriiClient,
+  Result_____ToriiClient_Ok_____ToriiClient,
+  Result_____ToriiClient_Err_____ToriiClient,
 } Result_____ToriiClient_Tag;
 
 typedef struct Result_____ToriiClient {
@@ -64,17 +64,17 @@ typedef struct FieldElement {
 } FieldElement;
 
 typedef enum Primitive_Tag {
-  U8,
-  U16,
-  U32,
-  U64,
-  U128,
-  U256,
-  USize,
-  PBool,
-  Felt252,
-  ClassHash,
-  ContractAddress,
+  Primitive_U8,
+  Primitive_U16,
+  Primitive_U32,
+  Primitive_U64,
+  Primitive_U128,
+  Primitive_U256,
+  Primitive_USize,
+  Primitive_Bool,
+  Primitive_Felt252,
+  Primitive_ClassHash,
+  Primitive_ContractAddress,
 } Primitive_Tag;
 
 typedef struct Primitive {
@@ -102,7 +102,7 @@ typedef struct Primitive {
       uint32_t u_size;
     };
     struct {
-      bool p_bool;
+      bool bool_;
     };
     struct {
       struct FieldElement felt252;
@@ -154,33 +154,33 @@ typedef struct CArray_Ty {
 } CArray_Ty;
 
 typedef enum Ty_Tag {
-  TyPrimitive,
-  TyStruct,
-  TyEnum,
-  TyTuple,
+  Ty_Primitive,
+  Ty_Struct,
+  Ty_Enum,
+  Ty_Tuple,
 } Ty_Tag;
 
 typedef struct Ty {
   Ty_Tag tag;
   union {
     struct {
-      struct Primitive ty_primitive;
+      struct Primitive primitive;
     };
     struct {
-      struct Struct ty_struct;
+      struct Struct struct_;
     };
     struct {
-      struct Enum ty_enum;
+      struct Enum enum_;
     };
     struct {
-      struct CArray_Ty ty_tuple;
+      struct CArray_Ty tuple;
     };
   };
 } Ty;
 
 typedef enum COption_____Ty_Tag {
-  Some_____Ty,
-  None_____Ty,
+  COption_____Ty_Some_____Ty,
+  COption_____Ty_None_____Ty,
 } COption_____Ty_Tag;
 
 typedef struct COption_____Ty {
@@ -193,8 +193,8 @@ typedef struct COption_____Ty {
 } COption_____Ty;
 
 typedef enum Result_COption_____Ty_Tag {
-  Ok_COption_____Ty,
-  Err_COption_____Ty,
+  Result_COption_____Ty_Ok_COption_____Ty,
+  Result_COption_____Ty_Err_COption_____Ty,
 } Result_COption_____Ty_Tag;
 
 typedef struct Result_COption_____Ty {
@@ -230,8 +230,8 @@ typedef struct CArray_Entity {
 } CArray_Entity;
 
 typedef enum Result_CArray_Entity_Tag {
-  Ok_CArray_Entity,
-  Err_CArray_Entity,
+  Result_CArray_Entity_Ok_CArray_Entity,
+  Result_CArray_Entity_Err_CArray_Entity,
 } Result_CArray_Entity_Tag;
 
 typedef struct Result_CArray_Entity {
@@ -252,18 +252,18 @@ typedef struct CArray_u8 {
 } CArray_u8;
 
 typedef enum ValueType_Tag {
-  VString,
-  Int,
-  UInt,
-  VBool,
-  Bytes,
+  ValueType_String,
+  ValueType_Int,
+  ValueType_UInt,
+  ValueType_Bool,
+  ValueType_Bytes,
 } ValueType_Tag;
 
 typedef struct ValueType {
   ValueType_Tag tag;
   union {
     struct {
-      const char *v_string;
+      const char *string;
     };
     struct {
       int64_t int_;
@@ -272,7 +272,7 @@ typedef struct ValueType {
       uint64_t u_int;
     };
     struct {
-      bool v_bool;
+      bool bool_;
     };
     struct {
       struct CArray_u8 bytes;
@@ -304,9 +304,9 @@ typedef struct CompositeClause {
 } CompositeClause;
 
 typedef enum Clause_Tag {
-  Keys,
-  CMember,
-  Composite,
+  Clause_Keys,
+  Clause_Member,
+  Clause_Composite,
 } Clause_Tag;
 
 typedef struct Clause {
@@ -316,7 +316,7 @@ typedef struct Clause {
       struct KeysClause keys;
     };
     struct {
-      struct MemberClause c_member;
+      struct MemberClause member;
     };
     struct {
       struct CompositeClause composite;
@@ -325,8 +325,8 @@ typedef struct Clause {
 } Clause;
 
 typedef enum COption_Clause_Tag {
-  Some_Clause,
-  None_Clause,
+  COption_Clause_Some_Clause,
+  COption_Clause_None_Clause,
 } COption_Clause_Tag;
 
 typedef struct COption_Clause {
@@ -350,8 +350,8 @@ typedef struct CArray_KeysClause {
 } CArray_KeysClause;
 
 typedef enum Result_bool_Tag {
-  Ok_bool,
-  Err_bool,
+  Result_bool_Ok_bool,
+  Result_bool_Err_bool,
 } Result_bool_Tag;
 
 typedef struct Result_bool {
@@ -410,8 +410,8 @@ typedef struct Signature {
 } Signature;
 
 typedef enum Result_Signature_Tag {
-  Ok_Signature,
-  Err_Signature,
+  Result_Signature_Ok_Signature,
+  Result_Signature_Err_Signature,
 } Result_Signature_Tag;
 
 typedef struct Result_Signature {
@@ -427,8 +427,8 @@ typedef struct Result_Signature {
 } Result_Signature;
 
 typedef enum Result_FieldElement_Tag {
-  Ok_FieldElement,
-  Err_FieldElement,
+  Result_FieldElement_Ok_FieldElement,
+  Result_FieldElement_Err_FieldElement,
 } Result_FieldElement_Tag;
 
 typedef struct Result_FieldElement {
@@ -444,8 +444,8 @@ typedef struct Result_FieldElement {
 } Result_FieldElement;
 
 typedef enum Result_____CJsonRpcClient_Tag {
-  Ok_____CJsonRpcClient,
-  Err_____CJsonRpcClient,
+  Result_____CJsonRpcClient_Ok_____CJsonRpcClient,
+  Result_____CJsonRpcClient_Err_____CJsonRpcClient,
 } Result_____CJsonRpcClient_Tag;
 
 typedef struct Result_____CJsonRpcClient {
@@ -461,8 +461,8 @@ typedef struct Result_____CJsonRpcClient {
 } Result_____CJsonRpcClient;
 
 typedef enum Result_____Account_Tag {
-  Ok_____Account,
-  Err_____Account,
+  Result_____Account_Ok_____Account,
+  Result_____Account_Err_____Account,
 } Result_____Account_Tag;
 
 typedef struct Result_____Account {
@@ -481,9 +481,9 @@ typedef struct Result_____Account {
  * Block hash, number or tag
  */
 typedef enum BlockId_Tag {
-  Hash,
-  Number,
-  BlockTag_,
+  BlockId_Hash,
+  BlockId_Number,
+  BlockId_BlockTag,
 } BlockId_Tag;
 
 typedef struct BlockId {
@@ -506,6 +506,10 @@ typedef struct Call {
   const char *selector;
   struct CArray_FieldElement calldata;
 } Call;
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
 struct Result_____ToriiClient client_new(const char *torii_url,
                                          const char *rpc_url,
@@ -600,3 +604,7 @@ void world_metadata_free(struct WorldMetadata *metadata);
 void carray_free(void *data, uintptr_t data_len);
 
 void string_free(char *string);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus
