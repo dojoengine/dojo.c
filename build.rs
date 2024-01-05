@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, collections::HashMap};
 
 fn main() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
@@ -26,6 +26,10 @@ fn main() {
                 },
                 ..Default::default()
             };
+
+            config.defines = HashMap::new();
+            // config.defines.insert("target_arch = wasm32".to_string(), "TARGET_WASM32".to_string());
+            config.defines.insert("target_pointer_width = 64".to_string(), "TARGET_POINTER_WIDTH_64".to_string());
 
             config
         })
