@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-void on_entity_state_update(FieldElement key, CArray_Model models)
+void on_entity_state_update(FieldElement key, CArrayModel models)
 {
     printf("on_entity_state_update\n");
     printf("Key: 0x");
@@ -56,8 +56,8 @@ int main()
     entities[0].keys.data_len = 1;
     entities[0].keys.data[0] = playerKey;
 
-    Result_____ToriiClient resClient = client_new(torii_url, rpc_url, world, entities, 1);
-    if (resClient.tag == Err_____Account)
+    ResultToriiClient resClient = client_new(torii_url, rpc_url, world, entities, 1);
+    if (resClient.tag == ResultAccountErrAccount)
     {
         printf("Failed to create client: %s\n", resClient.err.message);
         return 1;
@@ -65,8 +65,8 @@ int main()
     ToriiClient *client = resClient.ok;
 
     // signing key
-    Result_FieldElement resSigningKey = felt_from_hex_be("0x1800000000300000180000000000030000000000003006001800006600");
-    if (resSigningKey.tag == Err_FieldElement)
+    ResultFieldElement resSigningKey = felt_from_hex_be("0x1800000000300000180000000000030000000000003006001800006600");
+    if (resSigningKey.tag == ResultFieldElementErrFieldElement)
     {
         printf("Failed to create signing key: %s\n", resSigningKey.err.message);
         return 1;
@@ -74,8 +74,8 @@ int main()
     FieldElement signing_key = resSigningKey.ok;
 
     // provider
-    Result_____CJsonRpcClient resProvider = jsonrpc_client_new(rpc_url);
-    if (resProvider.tag == Err_____CJsonRpcClient)
+    ResultCJsonRpcClient resProvider = jsonrpc_client_new(rpc_url);
+    if (resProvider.tag == ResultCJsonRpcClientErrCJsonRpcClient)
     {
         printf("Failed to create provider: %s\n", resProvider.err.message);
         return 1;
@@ -83,16 +83,16 @@ int main()
     CJsonRpcClient *provider = resProvider.ok;
 
     // account
-    Result_____Account resAccount = account_new(provider, signing_key, playerAddress);
-    if (resAccount.tag == Err_____Account)
+    ResultAccount resAccount = account_new(provider, signing_key, playerAddress);
+    if (resAccount.tag == ResultAccountErrAccount)
     {
         printf("Failed to create account: %s\n", resAccount.err.message);
         return 1;
     }
     Account *master_account = resAccount.ok;
 
-    Result_____Account resBurner = account_deploy_burner(provider, master_account);
-    if (resBurner.tag == Err_____Account)
+    ResultAccount resBurner = account_deploy_burner(provider, master_account);
+    if (resBurner.tag == ResultAccountErrAccount)
     {
         printf("Failed to create burner: %s\n", resBurner.err.message);
         return 1;
@@ -108,21 +108,21 @@ int main()
     }
     printf("\n");
 
-    Result_COption_____Ty resTy = client_model(client, entities);
-    if (resTy.tag == Err_COption_____Ty)
+    ResultCOptionTy resTy = client_model(client, entities);
+    if (resTy.tag == ResultCOptionTyErrCOptionTy)
     {
         printf("Failed to get entity: %s\n", resTy.err.message);
         return 1;
     }
-    COption_____Ty ty = resTy.ok;
+    COptionTy ty = resTy.ok;
 
-    if (ty.tag == Some_____Ty)
+    if (ty.tag == COptionTySomeTy)
     {
         printf("Got entity\n");
-        printf("Struct: %s\n", ty.some->ty_struct.name);
-        for (size_t i = 0; i < ty.some->ty_struct.children.data_len; i++)
+        printf("Struct: %s\n", ty.some->struct_.name);
+        for (size_t i = 0; i < ty.some->struct_.children.data_len; i++)
         {
-            printf("Field: %s\n", ty.some->ty_struct.children.data[i].name);
+            printf("Field: %s\n", ty.some->struct_.children.data[i].name);
         }
 
         ty_free(ty.some);
@@ -130,20 +130,20 @@ int main()
 
     Query query = {};
     query.limit = 100;
-    query.clause.tag = None_Clause;
-    query.clause.some.tag = Keys;
+    query.clause.tag = COptionClauseNoneClause;
+    query.clause.some.tag = ClauseKeys;
     query.clause.some.keys.keys.data = malloc(sizeof(char *));
     query.clause.some.keys.keys.data_len = 1;
     query.clause.some.keys.keys.data[0] = playerAddress;
     query.clause.some.keys.model = "Moves";
-    Result_CArray_Entity resEntities = client_entities(client, &query);
-    if (resEntities.tag == Err_CArray_Entity)
+    ResultCArrayEntity resEntities = client_entities(client, &query);
+    if (resEntities.tag == ResultCArrayEntityErrCArrayEntity)
     {
         printf("Failed to get entities: %s\n", resEntities.err.message);
         return 1;
     }
 
-    CArray_Entity fetchedEntities = resEntities.ok;
+    CArrayEntity fetchedEntities = resEntities.ok;
     printf("Fetched %zu entities\n", fetchedEntities.data_len);
     for (size_t i = 0; i < fetchedEntities.data_len; i++)
     {
@@ -177,7 +177,7 @@ int main()
     // }
 
     // // print subscribed entities
-    const CArray_KeysClause subscribed_models = client_subscribed_models(client);
+    const CArrayKeysClause subscribed_models = client_subscribed_models(client);
     for (size_t i = 0; i < subscribed_models.data_len; i++)
     {
         printf("Subscribed entity: %s", subscribed_models.data[i].keys.data[0]);
@@ -186,8 +186,8 @@ int main()
 
     FieldElement keys[1] = {};
     keys[0] = felt_from_hex_be(playerKey).ok;
-    Result_bool resEntityUpdate = client_on_entity_state_update(client, keys, 0, &on_entity_state_update);
-    if (resEntityUpdate.tag == Err_bool)
+    Resultbool resEntityUpdate = client_on_entity_state_update(client, keys, 0, &on_entity_state_update);
+    if (resEntityUpdate.tag == ResultboolErrbool)
     {
         printf("Failed to set entity update callback: %s\n", resEntityUpdate.err.message);
         return 1;
@@ -206,8 +206,8 @@ int main()
             .data_len = 1,
         }};
 
-    Result_FieldElement moveLeft = felt_from_hex_be("0x01");
-    if (moveLeft.tag == Err_FieldElement)
+    ResultFieldElement moveLeft = felt_from_hex_be("0x01");
+    if (moveLeft.tag == ResultFieldElementErrFieldElement)
     {
         printf("Failed to create moveLeft: %s\n", moveLeft.err.message);
         return 1;
@@ -215,16 +215,16 @@ int main()
 
     move.calldata.data[0] = moveLeft.ok;
 
-    Result_FieldElement resSpawn = account_execute_raw(master_account, &spawn, 1);
-    if (resSpawn.tag == Err_bool)
+    ResultFieldElement resSpawn = account_execute_raw(master_account, &spawn, 1);
+    if (resSpawn.tag == ResultboolErrbool)
     {
         printf("Failed to execute call: %s\n", resSpawn.err.message);
         return 1;
     }
     wait_for_transaction(provider, resSpawn.ok);
 
-    Result_FieldElement resMove = account_execute_raw(master_account, &move, 1);
-    if (resMove.tag == Err_bool)
+    ResultFieldElement resMove = account_execute_raw(master_account, &move, 1);
+    if (resMove.tag == ResultboolErrbool)
     {
         printf("Failed to execute call: %s\n", resMove.err.message);
         return 1;

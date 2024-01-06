@@ -4,22 +4,22 @@
 #include <stdlib.h>
 
 typedef enum BlockTag {
-  Latest,
-  Pending,
+  BlockTagLatest,
+  BlockTagPending,
 } BlockTag;
 
 typedef enum ComparisonOperator {
-  Eq,
-  Neq,
-  Gt,
-  Gte,
-  Lt,
-  Lte,
+  ComparisonOperatorEq,
+  ComparisonOperatorNeq,
+  ComparisonOperatorGt,
+  ComparisonOperatorGte,
+  ComparisonOperatorLt,
+  ComparisonOperatorLte,
 } ComparisonOperator;
 
 typedef enum LogicalOperator {
-  And,
-  Or,
+  LogicalOperatorAnd,
+  LogicalOperatorOr,
 } LogicalOperator;
 
 typedef struct Account Account;
@@ -32,13 +32,13 @@ typedef struct Error {
   char *message;
 } Error;
 
-typedef enum Result_____ToriiClient_Tag {
-  Ok_____ToriiClient,
-  Err_____ToriiClient,
-} Result_____ToriiClient_Tag;
+typedef enum ResultToriiClient_Tag {
+  ResultToriiClientOkToriiClient,
+  ResultToriiClientErrToriiClient,
+} ResultToriiClient_Tag;
 
-typedef struct Result_____ToriiClient {
-  Result_____ToriiClient_Tag tag;
+typedef struct ResultToriiClient {
+  ResultToriiClient_Tag tag;
   union {
     struct {
       struct ToriiClient *ok;
@@ -47,16 +47,16 @@ typedef struct Result_____ToriiClient {
       struct Error err;
     };
   };
-} Result_____ToriiClient;
+} ResultToriiClient;
 
-typedef struct CArray______c_char {
+typedef struct CArrayc_char {
   const char **data;
   uintptr_t data_len;
-} CArray______c_char;
+} CArrayc_char;
 
 typedef struct KeysClause {
   const char *model;
-  struct CArray______c_char keys;
+  struct CArrayc_char keys;
 } KeysClause;
 
 typedef struct FieldElement {
@@ -64,17 +64,22 @@ typedef struct FieldElement {
 } FieldElement;
 
 typedef enum Primitive_Tag {
-  U8,
-  U16,
-  U32,
-  U64,
-  U128,
-  U256,
-  USize,
-  PBool,
-  Felt252,
-  ClassHash,
-  ContractAddress,
+  PrimitiveU8,
+  PrimitiveU16,
+  PrimitiveU32,
+  PrimitiveU64,
+  PrimitiveU128,
+#if !defined(TARGET_POINTER_WIDTH_32)
+  PrimitiveU256,
+#endif
+#if defined(TARGET_POINTER_WIDTH_32)
+  PrimitiveU256,
+#endif
+  PrimitiveUSize,
+  PrimitiveBool,
+  PrimitiveFelt252,
+  PrimitiveClassHash,
+  PrimitiveContractAddress,
 } Primitive_Tag;
 
 typedef struct Primitive {
@@ -95,14 +100,21 @@ typedef struct Primitive {
     struct {
       uint8_t u128[16];
     };
+#if !defined(TARGET_POINTER_WIDTH_32)
     struct {
       uint64_t u256[4];
     };
+#endif
+#if defined(TARGET_POINTER_WIDTH_32)
+    struct {
+      uint32_t u256[8];
+    };
+#endif
     struct {
       uint32_t u_size;
     };
     struct {
-      bool p_bool;
+      bool bool_;
     };
     struct {
       struct FieldElement felt252;
@@ -122,14 +134,14 @@ typedef struct Member {
   bool key;
 } Member;
 
-typedef struct CArray_Member {
+typedef struct CArrayMember {
   struct Member *data;
   uintptr_t data_len;
-} CArray_Member;
+} CArrayMember;
 
 typedef struct Struct {
   const char *name;
-  struct CArray_Member children;
+  struct CArrayMember children;
 } Struct;
 
 typedef struct EnumOption {
@@ -137,21 +149,21 @@ typedef struct EnumOption {
   struct Ty *ty;
 } EnumOption;
 
-typedef struct CArray_EnumOption {
+typedef struct CArrayEnumOption {
   struct EnumOption *data;
   uintptr_t data_len;
-} CArray_EnumOption;
+} CArrayEnumOption;
 
 typedef struct Enum {
   const char *name;
   uint8_t option;
-  struct CArray_EnumOption options;
+  struct CArrayEnumOption options;
 } Enum;
 
-typedef struct CArray_Ty {
+typedef struct CArrayTy {
   struct Ty *data;
   uintptr_t data_len;
-} CArray_Ty;
+} CArrayTy;
 
 typedef enum Ty_Tag {
   TyPrimitive,
@@ -164,106 +176,106 @@ typedef struct Ty {
   Ty_Tag tag;
   union {
     struct {
-      struct Primitive ty_primitive;
+      struct Primitive primitive;
     };
     struct {
-      struct Struct ty_struct;
+      struct Struct struct_;
     };
     struct {
-      struct Enum ty_enum;
+      struct Enum enum_;
     };
     struct {
-      struct CArray_Ty ty_tuple;
+      struct CArrayTy tuple;
     };
   };
 } Ty;
 
-typedef enum COption_____Ty_Tag {
-  Some_____Ty,
-  None_____Ty,
-} COption_____Ty_Tag;
+typedef enum COptionTy_Tag {
+  COptionTySomeTy,
+  COptionTyNoneTy,
+} COptionTy_Tag;
 
-typedef struct COption_____Ty {
-  COption_____Ty_Tag tag;
+typedef struct COptionTy {
+  COptionTy_Tag tag;
   union {
     struct {
       struct Ty *some;
     };
   };
-} COption_____Ty;
+} COptionTy;
 
-typedef enum Result_COption_____Ty_Tag {
-  Ok_COption_____Ty,
-  Err_COption_____Ty,
-} Result_COption_____Ty_Tag;
+typedef enum ResultCOptionTy_Tag {
+  ResultCOptionTyOkCOptionTy,
+  ResultCOptionTyErrCOptionTy,
+} ResultCOptionTy_Tag;
 
-typedef struct Result_COption_____Ty {
-  Result_COption_____Ty_Tag tag;
+typedef struct ResultCOptionTy {
+  ResultCOptionTy_Tag tag;
   union {
     struct {
-      struct COption_____Ty ok;
+      struct COptionTy ok;
     };
     struct {
       struct Error err;
     };
   };
-} Result_COption_____Ty;
+} ResultCOptionTy;
 
 typedef struct Model {
   const char *name;
-  struct CArray_Member members;
+  struct CArrayMember members;
 } Model;
 
-typedef struct CArray_Model {
+typedef struct CArrayModel {
   struct Model *data;
   uintptr_t data_len;
-} CArray_Model;
+} CArrayModel;
 
 typedef struct Entity {
   struct FieldElement hashed_keys;
-  struct CArray_Model models;
+  struct CArrayModel models;
 } Entity;
 
-typedef struct CArray_Entity {
+typedef struct CArrayEntity {
   struct Entity *data;
   uintptr_t data_len;
-} CArray_Entity;
+} CArrayEntity;
 
-typedef enum Result_CArray_Entity_Tag {
-  Ok_CArray_Entity,
-  Err_CArray_Entity,
-} Result_CArray_Entity_Tag;
+typedef enum ResultCArrayEntity_Tag {
+  ResultCArrayEntityOkCArrayEntity,
+  ResultCArrayEntityErrCArrayEntity,
+} ResultCArrayEntity_Tag;
 
-typedef struct Result_CArray_Entity {
-  Result_CArray_Entity_Tag tag;
+typedef struct ResultCArrayEntity {
+  ResultCArrayEntity_Tag tag;
   union {
     struct {
-      struct CArray_Entity ok;
+      struct CArrayEntity ok;
     };
     struct {
       struct Error err;
     };
   };
-} Result_CArray_Entity;
+} ResultCArrayEntity;
 
-typedef struct CArray_u8 {
+typedef struct CArrayu8 {
   uint8_t *data;
   uintptr_t data_len;
-} CArray_u8;
+} CArrayu8;
 
 typedef enum ValueType_Tag {
-  VString,
-  Int,
-  UInt,
-  VBool,
-  Bytes,
+  ValueTypeString,
+  ValueTypeInt,
+  ValueTypeUInt,
+  ValueTypeBool,
+  ValueTypeBytes,
 } ValueType_Tag;
 
 typedef struct ValueType {
   ValueType_Tag tag;
   union {
     struct {
-      const char *v_string;
+      const char *string;
     };
     struct {
       int64_t int_;
@@ -272,10 +284,10 @@ typedef struct ValueType {
       uint64_t u_int;
     };
     struct {
-      bool v_bool;
+      bool bool_;
     };
     struct {
-      struct CArray_u8 bytes;
+      struct CArrayu8 bytes;
     };
   };
 } ValueType;
@@ -292,21 +304,21 @@ typedef struct MemberClause {
   struct Value value;
 } MemberClause;
 
-typedef struct CArray_Clause {
+typedef struct CArrayClause {
   struct Clause *data;
   uintptr_t data_len;
-} CArray_Clause;
+} CArrayClause;
 
 typedef struct CompositeClause {
   const char *model;
   enum LogicalOperator operator_;
-  struct CArray_Clause clauses;
+  struct CArrayClause clauses;
 } CompositeClause;
 
 typedef enum Clause_Tag {
-  Keys,
-  CMember,
-  Composite,
+  ClauseKeys,
+  ClauseMember,
+  ClauseComposite,
 } Clause_Tag;
 
 typedef struct Clause {
@@ -316,7 +328,7 @@ typedef struct Clause {
       struct KeysClause keys;
     };
     struct {
-      struct MemberClause c_member;
+      struct MemberClause member;
     };
     struct {
       struct CompositeClause composite;
@@ -324,38 +336,38 @@ typedef struct Clause {
   };
 } Clause;
 
-typedef enum COption_Clause_Tag {
-  Some_Clause,
-  None_Clause,
-} COption_Clause_Tag;
+typedef enum COptionClause_Tag {
+  COptionClauseSomeClause,
+  COptionClauseNoneClause,
+} COptionClause_Tag;
 
-typedef struct COption_Clause {
-  COption_Clause_Tag tag;
+typedef struct COptionClause {
+  COptionClause_Tag tag;
   union {
     struct {
       struct Clause some;
     };
   };
-} COption_Clause;
+} COptionClause;
 
 typedef struct Query {
   uint32_t limit;
   uint32_t offset;
-  struct COption_Clause clause;
+  struct COptionClause clause;
 } Query;
 
-typedef struct CArray_KeysClause {
+typedef struct CArrayKeysClause {
   struct KeysClause *data;
   uintptr_t data_len;
-} CArray_KeysClause;
+} CArrayKeysClause;
 
-typedef enum Result_bool_Tag {
-  Ok_bool,
-  Err_bool,
-} Result_bool_Tag;
+typedef enum Resultbool_Tag {
+  ResultboolOkbool,
+  ResultboolErrbool,
+} Resultbool_Tag;
 
-typedef struct Result_bool {
-  Result_bool_Tag tag;
+typedef struct Resultbool {
+  Resultbool_Tag tag;
   union {
     struct {
       bool ok;
@@ -364,12 +376,12 @@ typedef struct Result_bool {
       struct Error err;
     };
   };
-} Result_bool;
+} Resultbool;
 
-typedef struct CArray_FieldElement {
+typedef struct CArrayFieldElement {
   struct FieldElement *data;
   uintptr_t data_len;
-} CArray_FieldElement;
+} CArrayFieldElement;
 
 typedef struct ModelMetadata {
   struct Ty schema;
@@ -377,25 +389,25 @@ typedef struct ModelMetadata {
   uint32_t packed_size;
   uint32_t unpacked_size;
   struct FieldElement class_hash;
-  struct CArray_FieldElement layout;
+  struct CArrayFieldElement layout;
 } ModelMetadata;
 
-typedef struct CHashItem______c_char__ModelMetadata {
+typedef struct CHashItemc_charModelMetadata {
   const char *key;
   struct ModelMetadata value;
-} CHashItem______c_char__ModelMetadata;
+} CHashItemc_charModelMetadata;
 
-typedef struct CArray_CHashItem______c_char__ModelMetadata {
-  struct CHashItem______c_char__ModelMetadata *data;
+typedef struct CArrayCHashItemc_charModelMetadata {
+  struct CHashItemc_charModelMetadata *data;
   uintptr_t data_len;
-} CArray_CHashItem______c_char__ModelMetadata;
+} CArrayCHashItemc_charModelMetadata;
 
 typedef struct WorldMetadata {
   struct FieldElement world_address;
   struct FieldElement world_class_hash;
   struct FieldElement executor_address;
   struct FieldElement executor_class_hash;
-  struct CArray_CHashItem______c_char__ModelMetadata models;
+  struct CArrayCHashItemc_charModelMetadata models;
 } WorldMetadata;
 
 typedef struct Signature {
@@ -409,13 +421,13 @@ typedef struct Signature {
   struct FieldElement s;
 } Signature;
 
-typedef enum Result_Signature_Tag {
-  Ok_Signature,
-  Err_Signature,
-} Result_Signature_Tag;
+typedef enum ResultSignature_Tag {
+  ResultSignatureOkSignature,
+  ResultSignatureErrSignature,
+} ResultSignature_Tag;
 
-typedef struct Result_Signature {
-  Result_Signature_Tag tag;
+typedef struct ResultSignature {
+  ResultSignature_Tag tag;
   union {
     struct {
       struct Signature ok;
@@ -424,15 +436,15 @@ typedef struct Result_Signature {
       struct Error err;
     };
   };
-} Result_Signature;
+} ResultSignature;
 
-typedef enum Result_FieldElement_Tag {
-  Ok_FieldElement,
-  Err_FieldElement,
-} Result_FieldElement_Tag;
+typedef enum ResultFieldElement_Tag {
+  ResultFieldElementOkFieldElement,
+  ResultFieldElementErrFieldElement,
+} ResultFieldElement_Tag;
 
-typedef struct Result_FieldElement {
-  Result_FieldElement_Tag tag;
+typedef struct ResultFieldElement {
+  ResultFieldElement_Tag tag;
   union {
     struct {
       struct FieldElement ok;
@@ -441,15 +453,15 @@ typedef struct Result_FieldElement {
       struct Error err;
     };
   };
-} Result_FieldElement;
+} ResultFieldElement;
 
-typedef enum Result_____CJsonRpcClient_Tag {
-  Ok_____CJsonRpcClient,
-  Err_____CJsonRpcClient,
-} Result_____CJsonRpcClient_Tag;
+typedef enum ResultCJsonRpcClient_Tag {
+  ResultCJsonRpcClientOkCJsonRpcClient,
+  ResultCJsonRpcClientErrCJsonRpcClient,
+} ResultCJsonRpcClient_Tag;
 
-typedef struct Result_____CJsonRpcClient {
-  Result_____CJsonRpcClient_Tag tag;
+typedef struct ResultCJsonRpcClient {
+  ResultCJsonRpcClient_Tag tag;
   union {
     struct {
       struct CJsonRpcClient *ok;
@@ -458,15 +470,15 @@ typedef struct Result_____CJsonRpcClient {
       struct Error err;
     };
   };
-} Result_____CJsonRpcClient;
+} ResultCJsonRpcClient;
 
-typedef enum Result_____Account_Tag {
-  Ok_____Account,
-  Err_____Account,
-} Result_____Account_Tag;
+typedef enum ResultAccount_Tag {
+  ResultAccountOkAccount,
+  ResultAccountErrAccount,
+} ResultAccount_Tag;
 
-typedef struct Result_____Account {
-  Result_____Account_Tag tag;
+typedef struct ResultAccount {
+  ResultAccount_Tag tag;
   union {
     struct {
       struct Account *ok;
@@ -475,15 +487,15 @@ typedef struct Result_____Account {
       struct Error err;
     };
   };
-} Result_____Account;
+} ResultAccount;
 
 /**
  * Block hash, number or tag
  */
 typedef enum BlockId_Tag {
-  Hash,
-  Number,
-  BlockTag_,
+  BlockIdHash,
+  BlockIdNumber,
+  BlockIdBlockTag,
 } BlockId_Tag;
 
 typedef struct BlockId {
@@ -504,64 +516,67 @@ typedef struct BlockId {
 typedef struct Call {
   const char *to;
   const char *selector;
-  struct CArray_FieldElement calldata;
+  struct CArrayFieldElement calldata;
 } Call;
 
-struct Result_____ToriiClient client_new(const char *torii_url,
-                                         const char *rpc_url,
-                                         const char *world,
-                                         const struct KeysClause *entities,
-                                         uintptr_t entities_len);
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
-struct Result_COption_____Ty client_model(struct ToriiClient *client,
-                                          const struct KeysClause *keys);
+struct ResultToriiClient client_new(const char *torii_url,
+                                    const char *rpc_url,
+                                    const char *world,
+                                    const struct KeysClause *entities,
+                                    uintptr_t entities_len);
 
-struct Result_CArray_Entity client_entities(struct ToriiClient *client, const struct Query *query);
+struct ResultCOptionTy client_model(struct ToriiClient *client, const struct KeysClause *keys);
 
-struct CArray_KeysClause client_subscribed_models(struct ToriiClient *client);
+struct ResultCArrayEntity client_entities(struct ToriiClient *client, const struct Query *query);
 
-struct Result_bool client_start_subscription(struct ToriiClient *client);
+struct CArrayKeysClause client_subscribed_models(struct ToriiClient *client);
+
+struct Resultbool client_start_subscription(struct ToriiClient *client);
 
 struct WorldMetadata client_metadata(struct ToriiClient *client);
 
-struct Result_bool client_add_models_to_sync(struct ToriiClient *client,
-                                             const struct KeysClause *models,
-                                             uintptr_t models_len);
+struct Resultbool client_add_models_to_sync(struct ToriiClient *client,
+                                            const struct KeysClause *models,
+                                            uintptr_t models_len);
 
-struct Result_bool client_on_sync_model_update(struct ToriiClient *client,
-                                               struct KeysClause model,
-                                               void (*callback)(void));
+struct Resultbool client_on_sync_model_update(struct ToriiClient *client,
+                                              struct KeysClause model,
+                                              void (*callback)(void));
 
-struct Result_bool client_on_entity_state_update(struct ToriiClient *client,
-                                                 struct FieldElement *entities,
-                                                 uintptr_t entities_len,
-                                                 void (*callback)(struct FieldElement,
-                                                                  struct CArray_Model));
+struct Resultbool client_on_entity_state_update(struct ToriiClient *client,
+                                                struct FieldElement *entities,
+                                                uintptr_t entities_len,
+                                                void (*callback)(struct FieldElement,
+                                                                 struct CArrayModel));
 
-struct Result_bool client_remove_models_to_sync(struct ToriiClient *client,
-                                                const struct KeysClause *models,
-                                                uintptr_t models_len);
+struct Resultbool client_remove_models_to_sync(struct ToriiClient *client,
+                                               const struct KeysClause *models,
+                                               uintptr_t models_len);
 
 struct FieldElement signing_key_new(void);
 
-struct Result_Signature signing_key_sign(struct FieldElement private_key, struct FieldElement hash);
+struct ResultSignature signing_key_sign(struct FieldElement private_key, struct FieldElement hash);
 
-struct Result_FieldElement felt_from_hex_be(const char *hex);
+struct ResultFieldElement felt_from_hex_be(const char *hex);
 
 struct FieldElement verifying_key_new(struct FieldElement signing_key);
 
-struct Result_bool verifying_key_verify(struct FieldElement verifying_key,
-                                        struct FieldElement hash,
-                                        struct Signature signature);
+struct Resultbool verifying_key_verify(struct FieldElement verifying_key,
+                                       struct FieldElement hash,
+                                       struct Signature signature);
 
-struct Result_____CJsonRpcClient jsonrpc_client_new(const char *rpc_url);
+struct ResultCJsonRpcClient jsonrpc_client_new(const char *rpc_url);
 
-struct Result_____Account account_new(struct CJsonRpcClient *rpc,
-                                      struct FieldElement private_key,
-                                      const char *address);
+struct ResultAccount account_new(struct CJsonRpcClient *rpc,
+                                 struct FieldElement private_key,
+                                 const char *address);
 
-struct Result_____Account account_deploy_burner(struct CJsonRpcClient *rpc,
-                                                struct Account *master_account);
+struct ResultAccount account_deploy_burner(struct CJsonRpcClient *rpc,
+                                           struct Account *master_account);
 
 struct FieldElement account_address(struct Account *account);
 
@@ -569,11 +584,11 @@ struct FieldElement account_chain_id(struct Account *account);
 
 void account_set_block_id(struct Account *account, struct BlockId block_id);
 
-struct Result_FieldElement account_execute_raw(struct Account *account,
-                                               const struct Call *calldata,
-                                               uintptr_t calldata_len);
+struct ResultFieldElement account_execute_raw(struct Account *account,
+                                              const struct Call *calldata,
+                                              uintptr_t calldata_len);
 
-struct Result_bool wait_for_transaction(struct CJsonRpcClient *rpc, struct FieldElement txn_hash);
+struct Resultbool wait_for_transaction(struct CJsonRpcClient *rpc, struct FieldElement txn_hash);
 
 struct FieldElement hash_get_contract_address(struct FieldElement class_hash,
                                               struct FieldElement salt,
@@ -600,3 +615,7 @@ void world_metadata_free(struct WorldMetadata *metadata);
 void carray_free(void *data, uintptr_t data_len);
 
 void string_free(char *string);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus

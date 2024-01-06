@@ -86,7 +86,7 @@ pub struct Call {
 pub enum BlockId {
     Hash(FieldElement),
     Number(u64),
-    BlockTag_(BlockTag),
+    BlockTag(BlockTag),
 }
 
 #[derive(Debug, Clone)]
@@ -101,7 +101,7 @@ impl From<&BlockId> for starknet::core::types::BlockId {
         match val {
             BlockId::Hash(hash) => starknet::core::types::BlockId::Hash((&hash.clone()).into()),
             BlockId::Number(number) => starknet::core::types::BlockId::Number(*number),
-            BlockId::BlockTag_(tag) => starknet::core::types::BlockId::Tag((&tag.clone()).into()),
+            BlockId::BlockTag(tag) => starknet::core::types::BlockId::Tag((&tag.clone()).into()),
         }
     }
 }
@@ -207,7 +207,7 @@ pub struct Query {
 #[repr(C)]
 pub enum Clause {
     Keys(KeysClause),
-    CMember(MemberClause),
+    Member(MemberClause),
     Composite(CompositeClause),
 }
 
@@ -263,10 +263,10 @@ pub struct Value {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub enum ValueType {
-    VString(*const c_char),
+    String(*const c_char),
     Int(i64),
     UInt(u64),
-    VBool(bool),
+    Bool(bool),
     Bytes(CArray<u8>),
 }
 
@@ -344,13 +344,13 @@ impl From<&torii_grpc::types::schema::Model> for Model {
 impl From<&ValueType> for torii_grpc::types::ValueType {
     fn from(value: &ValueType) -> Self {
         match value {
-            ValueType::VString(v) => {
+            ValueType::String(v) => {
                 let v = unsafe { CStr::from_ptr(*v).to_string_lossy().into_owned() };
                 torii_grpc::types::ValueType::String(v)
             }
             ValueType::Int(v) => torii_grpc::types::ValueType::Int(*v),
             ValueType::UInt(v) => torii_grpc::types::ValueType::UInt(*v),
-            ValueType::VBool(v) => torii_grpc::types::ValueType::Bool(*v),
+            ValueType::Bool(v) => torii_grpc::types::ValueType::Bool(*v),
             ValueType::Bytes(v) => {
                 let v = v.into();
                 torii_grpc::types::ValueType::Bytes(v)
@@ -364,11 +364,11 @@ impl From<&torii_grpc::types::ValueType> for ValueType {
         match value {
             torii_grpc::types::ValueType::String(v) => {
                 let v = CString::new(v.clone()).unwrap().into_raw();
-                ValueType::VString(v)
+                ValueType::String(v)
             }
             torii_grpc::types::ValueType::Int(v) => ValueType::Int(*v),
             torii_grpc::types::ValueType::UInt(v) => ValueType::UInt(*v),
-            torii_grpc::types::ValueType::Bool(v) => ValueType::VBool(*v),
+            torii_grpc::types::ValueType::Bool(v) => ValueType::Bool(*v),
             torii_grpc::types::ValueType::Bytes(v) => {
                 let v = v.clone().into();
                 ValueType::Bytes(v)
@@ -381,10 +381,10 @@ impl From<&torii_grpc::types::ValueType> for ValueType {
 #[repr(C)]
 #[allow(clippy::enum_variant_names)]
 pub enum Ty {
-    TyPrimitive(Primitive),
-    TyStruct(Struct),
-    TyEnum(Enum),
-    TyTuple(CArray<Ty>),
+    Primitive(Primitive),
+    Struct(Struct),
+    Enum(Enum),
+    Tuple(CArray<Ty>),
 }
 
 impl From<&dojo_types::schema::Ty> for Ty {
@@ -393,17 +393,17 @@ impl From<&dojo_types::schema::Ty> for Ty {
             dojo_types::schema::Ty::Primitive(primitive) => {
                 let primitive = primitive.into();
 
-                Ty::TyPrimitive(primitive)
+                Ty::Primitive(primitive)
             }
-            dojo_types::schema::Ty::Struct(struct_) => Ty::TyStruct((&struct_.clone()).into()),
-            dojo_types::schema::Ty::Enum(enum_) => Ty::TyEnum((&enum_.clone()).into()),
+            dojo_types::schema::Ty::Struct(struct_) => Ty::Struct((&struct_.clone()).into()),
+            dojo_types::schema::Ty::Enum(enum_) => Ty::Enum((&enum_.clone()).into()),
             dojo_types::schema::Ty::Tuple(tuple) => {
                 let children = tuple
                     .iter()
                     .map(|c| (&c.clone()).into())
                     .collect::<Vec<_>>();
 
-                Ty::TyTuple(children.into())
+                Ty::Tuple(children.into())
             }
         }
     }
@@ -414,12 +414,12 @@ impl From<&dojo_types::schema::Ty> for Ty {
 impl From<&Ty> for dojo_types::schema::Ty {
     fn from(value: &Ty) -> Self {
         match value {
-            Ty::TyPrimitive(primitive) => {
+            Ty::Primitive(primitive) => {
                 dojo_types::schema::Ty::Primitive((&primitive.clone()).into())
             }
-            Ty::TyStruct(struct_) => dojo_types::schema::Ty::Struct((&struct_.clone()).into()),
-            Ty::TyEnum(enum_) => dojo_types::schema::Ty::Enum((&enum_.clone()).into()),
-            Ty::TyTuple(tuple) => {
+            Ty::Struct(struct_) => dojo_types::schema::Ty::Struct((&struct_.clone()).into()),
+            Ty::Enum(enum_) => dojo_types::schema::Ty::Enum((&enum_.clone()).into()),
+            Ty::Tuple(tuple) => {
                 let children = unsafe {
                     Vec::from_raw_parts(tuple.data, tuple.data_len, tuple.data_len)
                         .iter()
@@ -582,9 +582,12 @@ pub enum Primitive {
     U64(u64),
     // TODO: better way?
     U128([u8; 16]),
+    #[cfg(not(target_pointer_width = "32"))]
     U256([u64; 4]),
+    #[cfg(target_pointer_width = "32")]
+    U256([u32; 8]),
     USize(u32),
-    PBool(bool),
+    Bool(bool),
     Felt252(FieldElement),
     ClassHash(FieldElement),
     ContractAddress(FieldElement),
@@ -602,7 +605,7 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
             }
             Primitive::U256(v) => dojo_types::primitive::Primitive::U256(Some((*v).into())),
             Primitive::USize(v) => dojo_types::primitive::Primitive::USize(Some(*v)),
-            Primitive::PBool(v) => dojo_types::primitive::Primitive::Bool(Some(*v)),
+            Primitive::Bool(v) => dojo_types::primitive::Primitive::Bool(Some(*v)),
             Primitive::Felt252(v) => {
                 dojo_types::primitive::Primitive::Felt252(Some((&v.clone()).into()))
             }
@@ -634,11 +637,14 @@ impl From<&dojo_types::primitive::Primitive> for Primitive {
                 if let Some(v) = v {
                     Primitive::U256(v.to_words())
                 } else {
-                    Primitive::U256([0; 4])
+                    #[cfg(not(target_pointer_width = "32"))]
+                    return Primitive::U256([0; 4]);
+                    #[cfg(target_pointer_width = "32")]
+                    return Primitive::U256([0; 8]);
                 }
             }
             dojo_types::primitive::Primitive::USize(v) => Primitive::USize(v.unwrap_or(0)),
-            dojo_types::primitive::Primitive::Bool(v) => Primitive::PBool(v.unwrap_or(false)),
+            dojo_types::primitive::Primitive::Bool(v) => Primitive::Bool(v.unwrap_or(false)),
             dojo_types::primitive::Primitive::Felt252(v) => {
                 if let Some(v) = v {
                     Primitive::Felt252((&v.clone()).into())
@@ -708,7 +714,7 @@ impl From<&Clause> for torii_grpc::types::Clause {
     fn from(val: &Clause) -> Self {
         match val {
             Clause::Keys(keys) => torii_grpc::types::Clause::Keys((&keys.clone()).into()),
-            Clause::CMember(member) => torii_grpc::types::Clause::Member((&member.clone()).into()),
+            Clause::Member(member) => torii_grpc::types::Clause::Member((&member.clone()).into()),
             Clause::Composite(composite) => {
                 torii_grpc::types::Clause::Composite((&composite.clone()).into())
             }
@@ -720,7 +726,7 @@ impl From<&torii_grpc::types::Clause> for Clause {
     fn from(val: &torii_grpc::types::Clause) -> Self {
         match val {
             torii_grpc::types::Clause::Keys(keys) => Clause::Keys((&keys.clone()).into()),
-            torii_grpc::types::Clause::Member(member) => Clause::CMember((&member.clone()).into()),
+            torii_grpc::types::Clause::Member(member) => Clause::Member((&member.clone()).into()),
             torii_grpc::types::Clause::Composite(composite) => {
                 Clause::Composite((&composite.clone()).into())
             }
