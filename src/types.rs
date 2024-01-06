@@ -381,10 +381,10 @@ impl From<&torii_grpc::types::ValueType> for ValueType {
 #[repr(C)]
 #[allow(clippy::enum_variant_names)]
 pub enum Ty {
-    Primitive(Primitive),
-    Struct(Struct),
-    Enum(Enum),
-    Tuple(CArray<Ty>),
+    Primitive_(Primitive),
+    Struct_(Struct),
+    Enum_(Enum),
+    Tuple_(CArray<Ty>),
 }
 
 impl From<&dojo_types::schema::Ty> for Ty {
@@ -393,17 +393,17 @@ impl From<&dojo_types::schema::Ty> for Ty {
             dojo_types::schema::Ty::Primitive(primitive) => {
                 let primitive = primitive.into();
 
-                Ty::Primitive(primitive)
+                Ty::Primitive_(primitive)
             }
-            dojo_types::schema::Ty::Struct(struct_) => Ty::Struct((&struct_.clone()).into()),
-            dojo_types::schema::Ty::Enum(enum_) => Ty::Enum((&enum_.clone()).into()),
+            dojo_types::schema::Ty::Struct(struct_) => Ty::Struct_((&struct_.clone()).into()),
+            dojo_types::schema::Ty::Enum(enum_) => Ty::Enum_((&enum_.clone()).into()),
             dojo_types::schema::Ty::Tuple(tuple) => {
                 let children = tuple
                     .iter()
                     .map(|c| (&c.clone()).into())
                     .collect::<Vec<_>>();
 
-                Ty::Tuple(children.into())
+                Ty::Tuple_(children.into())
             }
         }
     }
@@ -414,12 +414,12 @@ impl From<&dojo_types::schema::Ty> for Ty {
 impl From<&Ty> for dojo_types::schema::Ty {
     fn from(value: &Ty) -> Self {
         match value {
-            Ty::Primitive(primitive) => {
+            Ty::Primitive_(primitive) => {
                 dojo_types::schema::Ty::Primitive((&primitive.clone()).into())
             }
-            Ty::Struct(struct_) => dojo_types::schema::Ty::Struct((&struct_.clone()).into()),
-            Ty::Enum(enum_) => dojo_types::schema::Ty::Enum((&enum_.clone()).into()),
-            Ty::Tuple(tuple) => {
+            Ty::Struct_(struct_) => dojo_types::schema::Ty::Struct((&struct_.clone()).into()),
+            Ty::Enum_(enum_) => dojo_types::schema::Ty::Enum((&enum_.clone()).into()),
+            Ty::Tuple_(tuple) => {
                 let children = unsafe {
                     Vec::from_raw_parts(tuple.data, tuple.data_len, tuple.data_len)
                         .iter()

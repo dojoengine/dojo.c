@@ -16,7 +16,7 @@ fn main() {
             };
             config.enumeration = cbindgen::EnumConfig {
                 derive_helper_methods: true,
-                prefix_with_name: true,
+                // prefix_with_name: true,
                 ..Default::default()
             };
             config.export = cbindgen::ExportConfig {
