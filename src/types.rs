@@ -207,7 +207,7 @@ pub struct Query {
 #[repr(C)]
 pub enum Clause {
     Keys(KeysClause),
-    Member(MemberClause),
+    CMember(MemberClause),
     Composite(CompositeClause),
 }
 
@@ -266,7 +266,7 @@ pub enum ValueType {
     String(*const c_char),
     Int(i64),
     UInt(u64),
-    Bool(bool),
+    VBool(bool),
     Bytes(CArray<u8>),
 }
 
@@ -350,7 +350,7 @@ impl From<&ValueType> for torii_grpc::types::ValueType {
             }
             ValueType::Int(v) => torii_grpc::types::ValueType::Int(*v),
             ValueType::UInt(v) => torii_grpc::types::ValueType::UInt(*v),
-            ValueType::Bool(v) => torii_grpc::types::ValueType::Bool(*v),
+            ValueType::VBool(v) => torii_grpc::types::ValueType::Bool(*v),
             ValueType::Bytes(v) => {
                 let v = v.into();
                 torii_grpc::types::ValueType::Bytes(v)
@@ -368,7 +368,7 @@ impl From<&torii_grpc::types::ValueType> for ValueType {
             }
             torii_grpc::types::ValueType::Int(v) => ValueType::Int(*v),
             torii_grpc::types::ValueType::UInt(v) => ValueType::UInt(*v),
-            torii_grpc::types::ValueType::Bool(v) => ValueType::Bool(*v),
+            torii_grpc::types::ValueType::Bool(v) => ValueType::VBool(*v),
             torii_grpc::types::ValueType::Bytes(v) => {
                 let v = v.clone().into();
                 ValueType::Bytes(v)
@@ -714,7 +714,7 @@ impl From<&Clause> for torii_grpc::types::Clause {
     fn from(val: &Clause) -> Self {
         match val {
             Clause::Keys(keys) => torii_grpc::types::Clause::Keys((&keys.clone()).into()),
-            Clause::Member(member) => torii_grpc::types::Clause::Member((&member.clone()).into()),
+            Clause::CMember(member) => torii_grpc::types::Clause::Member((&member.clone()).into()),
             Clause::Composite(composite) => {
                 torii_grpc::types::Clause::Composite((&composite.clone()).into())
             }
@@ -726,7 +726,7 @@ impl From<&torii_grpc::types::Clause> for Clause {
     fn from(val: &torii_grpc::types::Clause) -> Self {
         match val {
             torii_grpc::types::Clause::Keys(keys) => Clause::Keys((&keys.clone()).into()),
-            torii_grpc::types::Clause::Member(member) => Clause::Member((&member.clone()).into()),
+            torii_grpc::types::Clause::Member(member) => Clause::CMember((&member.clone()).into()),
             torii_grpc::types::Clause::Composite(composite) => {
                 Clause::Composite((&composite.clone()).into())
             }

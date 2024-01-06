@@ -267,7 +267,7 @@ typedef enum ValueType_Tag {
   String,
   Int,
   UInt,
-  Bool,
+  VBool,
   Bytes,
 } ValueType_Tag;
 
@@ -284,7 +284,7 @@ typedef struct ValueType {
       uint64_t u_int;
     };
     struct {
-      bool bool_;
+      bool v_bool;
     };
     struct {
       struct CArrayu8 bytes;
@@ -317,7 +317,7 @@ typedef struct CompositeClause {
 
 typedef enum Clause_Tag {
   Keys,
-  Member,
+  CMember,
   Composite,
 } Clause_Tag;
 
@@ -328,7 +328,7 @@ typedef struct Clause {
       struct KeysClause keys;
     };
     struct {
-      struct MemberClause member;
+      struct MemberClause c_member;
     };
     struct {
       struct CompositeClause composite;
