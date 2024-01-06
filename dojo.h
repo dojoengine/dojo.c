@@ -69,7 +69,12 @@ typedef enum Primitive_Tag {
   PrimitiveU32,
   PrimitiveU64,
   PrimitiveU128,
+#if !defined(TARGET_POINTER_WIDTH_32)
   PrimitiveU256,
+#endif
+#if defined(TARGET_POINTER_WIDTH_32)
+  PrimitiveU256,
+#endif
   PrimitiveUSize,
   PrimitiveBool,
   PrimitiveFelt252,
@@ -95,9 +100,16 @@ typedef struct Primitive {
     struct {
       uint8_t u128[16];
     };
+#if !defined(TARGET_POINTER_WIDTH_32)
     struct {
       uint64_t u256[4];
     };
+#endif
+#if defined(TARGET_POINTER_WIDTH_32)
+    struct {
+      uint32_t u256[8];
+    };
+#endif
     struct {
       uint32_t u_size;
     };

@@ -29,7 +29,7 @@ fn main() {
 
             config.defines = HashMap::new();
             // config.defines.insert("target_arch = wasm32".to_string(), "TARGET_WASM32".to_string());
-            config.defines.insert("target_pointer_width = 64".to_string(), "TARGET_POINTER_WIDTH_64".to_string());
+            config.defines.insert("target_pointer_width = 32".to_string(), "TARGET_POINTER_WIDTH_32".to_string());
 
             config
         })
