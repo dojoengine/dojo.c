@@ -4,22 +4,22 @@
 #include <stdlib.h>
 
 typedef enum BlockTag {
-  BlockTagLatest,
-  BlockTagPending,
+  Latest,
+  Pending,
 } BlockTag;
 
 typedef enum ComparisonOperator {
-  ComparisonOperatorEq,
-  ComparisonOperatorNeq,
-  ComparisonOperatorGt,
-  ComparisonOperatorGte,
-  ComparisonOperatorLt,
-  ComparisonOperatorLte,
+  Eq,
+  Neq,
+  Gt,
+  Gte,
+  Lt,
+  Lte,
 } ComparisonOperator;
 
 typedef enum LogicalOperator {
-  LogicalOperatorAnd,
-  LogicalOperatorOr,
+  And,
+  Or,
 } LogicalOperator;
 
 typedef struct Account Account;
@@ -33,8 +33,8 @@ typedef struct Error {
 } Error;
 
 typedef enum ResultToriiClient_Tag {
-  ResultToriiClientOkToriiClient,
-  ResultToriiClientErrToriiClient,
+  OkToriiClient,
+  ErrToriiClient,
 } ResultToriiClient_Tag;
 
 typedef struct ResultToriiClient {
@@ -64,22 +64,22 @@ typedef struct FieldElement {
 } FieldElement;
 
 typedef enum Primitive_Tag {
-  PrimitiveU8,
-  PrimitiveU16,
-  PrimitiveU32,
-  PrimitiveU64,
-  PrimitiveU128,
+  U8,
+  U16,
+  U32,
+  U64,
+  U128,
 #if !defined(TARGET_POINTER_WIDTH_32)
-  PrimitiveU256,
+  U256,
 #endif
 #if defined(TARGET_POINTER_WIDTH_32)
-  PrimitiveU256,
+  U256,
 #endif
-  PrimitiveUSize,
-  PrimitiveBool,
-  PrimitiveFelt252,
-  PrimitiveClassHash,
-  PrimitiveContractAddress,
+  USize,
+  Bool,
+  Felt252,
+  ClassHash,
+  ContractAddress,
 } Primitive_Tag;
 
 typedef struct Primitive {
@@ -166,10 +166,10 @@ typedef struct CArrayTy {
 } CArrayTy;
 
 typedef enum Ty_Tag {
-  TyPrimitive,
-  TyStruct,
-  TyEnum,
-  TyTuple,
+  Primitive_,
+  Struct_,
+  Enum_,
+  Tuple_,
 } Ty_Tag;
 
 typedef struct Ty {
@@ -191,8 +191,8 @@ typedef struct Ty {
 } Ty;
 
 typedef enum COptionTy_Tag {
-  COptionTySomeTy,
-  COptionTyNoneTy,
+  SomeTy,
+  NoneTy,
 } COptionTy_Tag;
 
 typedef struct COptionTy {
@@ -205,8 +205,8 @@ typedef struct COptionTy {
 } COptionTy;
 
 typedef enum ResultCOptionTy_Tag {
-  ResultCOptionTyOkCOptionTy,
-  ResultCOptionTyErrCOptionTy,
+  OkCOptionTy,
+  ErrCOptionTy,
 } ResultCOptionTy_Tag;
 
 typedef struct ResultCOptionTy {
@@ -242,8 +242,8 @@ typedef struct CArrayEntity {
 } CArrayEntity;
 
 typedef enum ResultCArrayEntity_Tag {
-  ResultCArrayEntityOkCArrayEntity,
-  ResultCArrayEntityErrCArrayEntity,
+  OkCArrayEntity,
+  ErrCArrayEntity,
 } ResultCArrayEntity_Tag;
 
 typedef struct ResultCArrayEntity {
@@ -264,11 +264,11 @@ typedef struct CArrayu8 {
 } CArrayu8;
 
 typedef enum ValueType_Tag {
-  ValueTypeString,
-  ValueTypeInt,
-  ValueTypeUInt,
-  ValueTypeBool,
-  ValueTypeBytes,
+  String,
+  Int,
+  UInt,
+  Bool,
+  Bytes,
 } ValueType_Tag;
 
 typedef struct ValueType {
@@ -316,9 +316,9 @@ typedef struct CompositeClause {
 } CompositeClause;
 
 typedef enum Clause_Tag {
-  ClauseKeys,
-  ClauseMember,
-  ClauseComposite,
+  Keys,
+  Member,
+  Composite,
 } Clause_Tag;
 
 typedef struct Clause {
@@ -337,8 +337,8 @@ typedef struct Clause {
 } Clause;
 
 typedef enum COptionClause_Tag {
-  COptionClauseSomeClause,
-  COptionClauseNoneClause,
+  SomeClause,
+  NoneClause,
 } COptionClause_Tag;
 
 typedef struct COptionClause {
@@ -362,8 +362,8 @@ typedef struct CArrayKeysClause {
 } CArrayKeysClause;
 
 typedef enum Resultbool_Tag {
-  ResultboolOkbool,
-  ResultboolErrbool,
+  Okbool,
+  Errbool,
 } Resultbool_Tag;
 
 typedef struct Resultbool {
@@ -422,8 +422,8 @@ typedef struct Signature {
 } Signature;
 
 typedef enum ResultSignature_Tag {
-  ResultSignatureOkSignature,
-  ResultSignatureErrSignature,
+  OkSignature,
+  ErrSignature,
 } ResultSignature_Tag;
 
 typedef struct ResultSignature {
@@ -439,8 +439,8 @@ typedef struct ResultSignature {
 } ResultSignature;
 
 typedef enum ResultFieldElement_Tag {
-  ResultFieldElementOkFieldElement,
-  ResultFieldElementErrFieldElement,
+  OkFieldElement,
+  ErrFieldElement,
 } ResultFieldElement_Tag;
 
 typedef struct ResultFieldElement {
@@ -456,8 +456,8 @@ typedef struct ResultFieldElement {
 } ResultFieldElement;
 
 typedef enum ResultCJsonRpcClient_Tag {
-  ResultCJsonRpcClientOkCJsonRpcClient,
-  ResultCJsonRpcClientErrCJsonRpcClient,
+  OkCJsonRpcClient,
+  ErrCJsonRpcClient,
 } ResultCJsonRpcClient_Tag;
 
 typedef struct ResultCJsonRpcClient {
@@ -473,8 +473,8 @@ typedef struct ResultCJsonRpcClient {
 } ResultCJsonRpcClient;
 
 typedef enum ResultAccount_Tag {
-  ResultAccountOkAccount,
-  ResultAccountErrAccount,
+  OkAccount,
+  ErrAccount,
 } ResultAccount_Tag;
 
 typedef struct ResultAccount {
@@ -493,9 +493,9 @@ typedef struct ResultAccount {
  * Block hash, number or tag
  */
 typedef enum BlockId_Tag {
-  BlockIdHash,
-  BlockIdNumber,
-  BlockIdBlockTag,
+  Hash,
+  Number,
+  BlockTag,
 } BlockId_Tag;
 
 typedef struct BlockId {
