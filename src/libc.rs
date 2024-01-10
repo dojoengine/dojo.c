@@ -5,6 +5,7 @@ use crate::types::{
     Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
 };
 use crate::utils::watch_tx;
+use starknet::accounts::ConnectedAccount;
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::utils::{
     cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
@@ -385,7 +386,6 @@ pub unsafe extern "C" fn account_new(
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn account_deploy_burner(
-    rpc: *mut CJsonRpcClient,
     master_account: *mut Account<'static>,
 ) -> Result<*mut Account<'static>> {
     let signing_key = SigningKey::from_random();
@@ -401,7 +401,7 @@ pub unsafe extern "C" fn account_deploy_burner(
     let chain_id = (*master_account).0.chain_id();
 
     let account = SingleOwnerAccount::new(
-        &(*rpc).0,
+        *(*master_account).0.provider(),
         signer,
         address,
         chain_id,
@@ -435,7 +435,10 @@ pub unsafe extern "C" fn account_deploy_burner(
 
     tokio::runtime::Runtime::new()
         .unwrap()
-        .block_on(watch_tx(&(*rpc).0, result.transaction_hash))
+        .block_on(watch_tx(
+            (*master_account).0.provider(),
+            result.transaction_hash,
+        ))
         .unwrap();
 
     Result::Ok(Box::into_raw(Box::new(Account(account))))

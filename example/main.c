@@ -46,7 +46,8 @@ int main()
 
     const char *playerKey = "0x028cd7ee02d7f6ec9810e75b930e8e607793b302445abbdee0ac88143f18da20";
     const char *playerAddress = "0x0517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973";
-    const char *world = "0x033ac2f528bb97cc7b79148fd1756dc368be0e95d391d8c6d6473ecb60b4560e";
+    const char *world = "0x028f5999ae62fec17c09c52a800e244961dba05251f5aaf923afabd9c9804d1a";
+    const char *actions = "0x03e274b7d85fd0415bec56a5d831c3854f7308bbb26d486993cfc49e5a5fb788";
     // Initialize world.data here...
 
     KeysClause entities[1] = {};
@@ -91,7 +92,7 @@ int main()
     }
     Account *master_account = resAccount.ok;
 
-    ResultAccount resBurner = account_deploy_burner(provider, master_account);
+    ResultAccount resBurner = account_deploy_burner(master_account);
     if (resBurner.tag == ErrAccount)
     {
         printf("Failed to create burner: %s\n", resBurner.err.message);
@@ -194,12 +195,12 @@ int main()
     }
 
     Call spawn = {
-        .to = "0x0152dcff993befafe5001975149d2c50bd9621da7cbaed74f68e7d5e54e65abc",
+        .to = actions,
         .selector = "spawn",
     };
 
     Call move = {
-        .to = "0x0152dcff993befafe5001975149d2c50bd9621da7cbaed74f68e7d5e54e65abc",
+        .to = actions,
         .selector = "move",
         .calldata = {
             .data = malloc(sizeof(FieldElement)),
