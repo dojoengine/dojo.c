@@ -1428,6 +1428,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "dojo-c"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cbindgen",
+ "dojo-types",
+ "futures",
+ "js-sys",
+ "parking_lot 0.12.1",
+ "serde",
+ "serde-wasm-bindgen",
+ "serde_json",
+ "starknet",
+ "starknet-crypto",
+ "tokio",
+ "tokio-stream",
+ "torii-client",
+ "torii-grpc",
+ "tsify",
+ "url",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
 name = "dojo-types"
 version = "0.4.4"
 source = "git+https://github.com/dojoengine/dojo#74c12c05b8da22ebf45984dd5fc5448998abb5bf"
@@ -4683,32 +4709,6 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-streams",
- "web-sys",
-]
-
-[[package]]
-name = "torii-c"
-version = "0.0.9"
-dependencies = [
- "anyhow",
- "cbindgen",
- "dojo-types",
- "futures",
- "js-sys",
- "parking_lot 0.12.1",
- "serde",
- "serde-wasm-bindgen",
- "serde_json",
- "starknet",
- "starknet-crypto",
- "tokio",
- "tokio-stream",
- "torii-client",
- "torii-grpc",
- "tsify",
- "url",
- "wasm-bindgen",
- "wasm-bindgen-futures",
  "web-sys",
 ]
 
