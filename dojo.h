@@ -573,7 +573,8 @@ struct ResultAccount account_new(struct CJsonRpcClient *rpc,
                                  struct FieldElement private_key,
                                  const char *address);
 
-struct ResultAccount account_deploy_burner(struct Account *master_account);
+struct ResultAccount account_deploy_burner(struct CJsonRpcClient *provider,
+                                           struct Account *master_account);
 
 struct FieldElement account_address(struct Account *account);
 

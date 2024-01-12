@@ -372,6 +372,7 @@ pub unsafe extern "C" fn account_new(
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn account_deploy_burner(
+    provider: *mut CJsonRpcClient,
     master_account: *mut Account,
 ) -> Result<*mut Account> {
     let signing_key = SigningKey::from_random();
@@ -387,7 +388,7 @@ pub unsafe extern "C" fn account_deploy_burner(
     let chain_id = (*master_account).0.chain_id();
 
     let account = SingleOwnerAccount::new(
-        *(*master_account).0.provider(),
+        &(*provider).0,
         signer,
         address,
         chain_id,
@@ -422,7 +423,7 @@ pub unsafe extern "C" fn account_deploy_burner(
     tokio::runtime::Runtime::new()
         .unwrap()
         .block_on(watch_tx(
-            (*master_account).0.provider(),
+            &(*provider).0,
             result.transaction_hash,
         ))
         .unwrap();
