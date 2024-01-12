@@ -5,7 +5,6 @@ use crate::types::{
     Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
 };
 use crate::utils::watch_tx;
-use starknet::accounts::ConnectedAccount;
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::utils::{
     cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
@@ -422,10 +421,7 @@ pub unsafe extern "C" fn account_deploy_burner(
 
     tokio::runtime::Runtime::new()
         .unwrap()
-        .block_on(watch_tx(
-            &(*provider).0,
-            result.transaction_hash,
-        ))
+        .block_on(watch_tx(&(*provider).0, result.transaction_hash))
         .unwrap();
 
     Result::Ok(Box::into_raw(Box::new(Account(account))))
