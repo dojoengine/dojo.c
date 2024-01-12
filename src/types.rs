@@ -1,3 +1,5 @@
+use wasm_bindgen::prelude::wasm_bindgen;
+use js_sys::wasm_bindgen;
 use starknet::{
     accounts::SingleOwnerAccount,
     core::utils::get_selector_from_name,
@@ -11,7 +13,7 @@ use std::{
 use torii_client::client::Client;
 
 pub struct CJsonRpcClient(pub JsonRpcClient<HttpTransport>);
-pub struct Account<'a>(pub SingleOwnerAccount<&'a JsonRpcClient<HttpTransport>, LocalWallet>);
+pub struct Account(pub SingleOwnerAccount<&'static JsonRpcClient<HttpTransport>, LocalWallet>);
 
 #[derive(Debug, Clone)]
 #[repr(C)]

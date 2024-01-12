@@ -4,8 +4,10 @@ use std::str::FromStr;
 
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
+use starknet::accounts::{SingleOwnerAccount, ExecutionEncoding, Account as _, ConnectedAccount as _};
 use starknet::core::types::FieldElement;
-use starknet::core::utils::cairo_short_string_to_felt;
+use starknet::core::utils::{cairo_short_string_to_felt, get_contract_address, get_selector_from_name};
+use starknet::signers::{LocalWallet, SigningKey};
 use torii_grpc::types::{Clause, KeysClause, Query};
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
@@ -14,6 +16,10 @@ use dojo_types::primitive::Primitive;
 use dojo_types::schema::Ty;
 use serde_json::Value;
 use torii_grpc::types::schema::Entity;
+
+use crate::constants;
+use crate::types::Account;
+use crate::utils::watch_tx;
 
 pub fn parse_entities_as_json_str(entities: Vec<Entity>) -> Value {
     entities
@@ -148,6 +154,59 @@ extern "C" {
 #[wasm_bindgen]
 pub struct Client {
     inner: torii_client::client::Client,
+}
+
+#[wasm_bindgen]
+pub async unsafe fn account_deploy_burner(master_account: *mut Account) -> Result<*mut Account, JsValue> {
+    let signing_key = SigningKey::from_random();
+    let verifying_key = signing_key.verifying_key();
+    let address = get_contract_address(
+        verifying_key.scalar(),
+        constants::KATANA_ACCOUNT_CLASS_HASH,
+        &[verifying_key.scalar()],
+        FieldElement::ZERO,
+    );
+    let signer = LocalWallet::from_signing_key(signing_key);
+
+    let chain_id = (*master_account).0.chain_id();
+
+    let account = SingleOwnerAccount::new(
+        *(*master_account).0.provider(),
+        signer,
+        address,
+        chain_id,
+        ExecutionEncoding::Legacy,
+    );
+
+    // deploy the burner
+    let exec = (*master_account).0.execute(vec![starknet::accounts::Call {
+        to: constants::UDC_ADDRESS,
+        calldata: vec![
+            constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
+            verifying_key.scalar(),               // salt
+            FieldElement::ZERO,                   // deployer_address
+            FieldElement::ONE,                    // constructor calldata length (1)
+            verifying_key.scalar(),               // constructor calldata
+        ],
+        selector: get_selector_from_name("deployContract").unwrap(),
+    }]);
+
+    let result = exec.send().await;
+
+    if let Err(e) = result {
+        return Err(JsValue::from(format!(
+            "failed to start torii client subscription service: {e}"
+        )));
+    }
+
+    let result = result.unwrap();
+
+    let _ = watch_tx(
+        (*master_account).0.provider(),
+        result.transaction_hash,
+    ).await;
+
+    Result::Ok(Box::into_raw(Box::new(Account(account))))
 }
 
 #[wasm_bindgen]

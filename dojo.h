@@ -438,23 +438,6 @@ typedef struct ResultSignature {
   };
 } ResultSignature;
 
-typedef enum ResultFieldElement_Tag {
-  OkFieldElement,
-  ErrFieldElement,
-} ResultFieldElement_Tag;
-
-typedef struct ResultFieldElement {
-  ResultFieldElement_Tag tag;
-  union {
-    struct {
-      struct FieldElement ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultFieldElement;
-
 typedef enum ResultCJsonRpcClient_Tag {
   OkCJsonRpcClient,
   ErrCJsonRpcClient,
@@ -513,6 +496,23 @@ typedef struct BlockId {
   };
 } BlockId;
 
+typedef enum ResultFieldElement_Tag {
+  OkFieldElement,
+  ErrFieldElement,
+} ResultFieldElement_Tag;
+
+typedef struct ResultFieldElement {
+  ResultFieldElement_Tag tag;
+  union {
+    struct {
+      struct FieldElement ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultFieldElement;
+
 typedef struct Call {
   const char *to;
   const char *selector;
@@ -560,8 +560,6 @@ struct Resultbool client_remove_models_to_sync(struct ToriiClient *client,
 struct FieldElement signing_key_new(void);
 
 struct ResultSignature signing_key_sign(struct FieldElement private_key, struct FieldElement hash);
-
-struct ResultFieldElement felt_from_hex_be(const char *hex);
 
 struct FieldElement verifying_key_new(struct FieldElement signing_key);
 

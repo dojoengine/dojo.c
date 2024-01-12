@@ -289,20 +289,6 @@ pub unsafe extern "C" fn signing_key_sign(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn felt_from_hex_be(hex: *const c_char) -> Result<types::FieldElement> {
-    let hex = unsafe { CStr::from_ptr(hex).to_string_lossy() };
-    let hex = FieldElement::from_hex_be(hex.deref());
-
-    match hex {
-        Ok(hex) => Result::Ok((&hex).into()),
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
-    }
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn verifying_key_new(
     signing_key: types::FieldElement,
 ) -> types::FieldElement {
@@ -354,7 +340,7 @@ pub unsafe extern "C" fn account_new(
     rpc: *mut CJsonRpcClient,
     private_key: types::FieldElement,
     address: *const c_char,
-) -> Result<*mut Account<'static>> {
+) -> Result<*mut Account> {
     let address = unsafe { CStr::from_ptr(address).to_string_lossy() };
     let address = FieldElement::from_hex_be(address.deref());
     if let Err(e) = address {
@@ -386,8 +372,8 @@ pub unsafe extern "C" fn account_new(
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn account_deploy_burner(
-    master_account: *mut Account<'static>,
-) -> Result<*mut Account<'static>> {
+    master_account: *mut Account,
+) -> Result<*mut Account> {
     let signing_key = SigningKey::from_random();
     let verifying_key = signing_key.verifying_key();
     let address = get_contract_address(
@@ -446,19 +432,19 @@ pub unsafe extern "C" fn account_deploy_burner(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn account_address(account: *mut Account<'static>) -> types::FieldElement {
+pub unsafe extern "C" fn account_address(account: *mut Account) -> types::FieldElement {
     (&(*account).0.address()).into()
 }
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn account_chain_id(account: *mut Account<'static>) -> types::FieldElement {
+pub unsafe extern "C" fn account_chain_id(account: *mut Account) -> types::FieldElement {
     (&(*account).0.chain_id()).into()
 }
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn account_set_block_id(account: *mut Account<'static>, block_id: BlockId) {
+pub unsafe extern "C" fn account_set_block_id(account: *mut Account, block_id: BlockId) {
     let block_id = (&block_id).into();
     (*account).0.set_block_id(block_id);
 }
@@ -466,7 +452,7 @@ pub unsafe extern "C" fn account_set_block_id(account: *mut Account<'static>, bl
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn account_execute_raw(
-    account: *mut Account<'static>,
+    account: *mut Account,
     calldata: *const Call,
     calldata_len: usize,
 ) -> Result<types::FieldElement> {
@@ -564,7 +550,7 @@ pub unsafe extern "C" fn model_free(model: *mut Model) {
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn account_free(account: *mut Account<'static>) {
+pub unsafe extern "C" fn account_free(account: *mut Account) {
     if !account.is_null() {
         unsafe {
             let _ = Box::from_raw(account);
