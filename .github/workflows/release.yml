@@ -92,11 +92,11 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.job.os }}" == "macos-latest" ]]; then
-            tar -czvf torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz dojo.h target/${{ matrix.job.target }}/release/libtorii_c.dylib
+            tar -czvf torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz dojo.h target/${{ matrix.job.target }}/release/libdojo_c.dylib
           elif [[ "${{ matrix.job.os }}" == "windows-latest" ]]; then
-            tar -czvf torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz dojo.h target/${{ matrix.job.target }}/release/torii_c.dll
+            tar -czvf torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz dojo.h target/${{ matrix.job.target }}/release/dojo_c.dll
           else
-            tar -czvf torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz dojo.h target/${{ matrix.job.target }}/release/libtorii_c.so
+            tar -czvf torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz dojo.h target/${{ matrix.job.target }}/release/libdojo_c.so
           fi
           echo "file_name=torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz" >> $GITHUB_OUTPUT
 
