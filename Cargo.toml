@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "dojo.c"
+name = "dojo-c"
 version = "0.1.0"
 
 [lib]
@@ -23,7 +23,7 @@ serde = { version = "1.0.193", features = ["derive"] }
 tokio-stream = "0.1.14"
 
 # WASM
-# [target.'cfg(target_arch = "wasm32")'.dependencies]
+[target.'cfg(target_arch = "wasm32")'.dependencies]
 serde-wasm-bindgen = "0.6.3"
 wasm-bindgen = "=0.2.89"
 wasm-bindgen-futures = "0.4.39"

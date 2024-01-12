@@ -1,5 +1,3 @@
-use wasm_bindgen::prelude::wasm_bindgen;
-use js_sys::wasm_bindgen;
 use starknet::{
     accounts::SingleOwnerAccount,
     core::utils::get_selector_from_name,

@@ -4,13 +4,16 @@ use std::str::FromStr;
 
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
-use starknet::accounts::{SingleOwnerAccount, ExecutionEncoding, Account as _, ConnectedAccount as _};
-use starknet::core::types::FieldElement;
+use starknet::accounts::{SingleOwnerAccount, ExecutionEncoding, Account as _, ConnectedAccount as _, Call};
+use starknet::core::types::{FieldElement, BlockId};
 use starknet::core::utils::{cairo_short_string_to_felt, get_contract_address, get_selector_from_name};
-use starknet::signers::{LocalWallet, SigningKey};
+use starknet::providers::{JsonRpcClient, Provider as _};
+use starknet::providers::jsonrpc::HttpTransport;
+use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
+use starknet_crypto::Signature;
 use torii_grpc::types::{Clause, KeysClause, Query};
 use tsify::Tsify;
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{prelude::*, JsObject};
 
 use dojo_types::primitive::Primitive;
 use dojo_types::schema::Ty;
@@ -18,7 +21,7 @@ use serde_json::Value;
 use torii_grpc::types::schema::Entity;
 
 use crate::constants;
-use crate::types::Account;
+use crate::types::{Account, CJsonRpcClient};
 use crate::utils::watch_tx;
 
 pub fn parse_entities_as_json_str(entities: Vec<Entity>) -> Value {
@@ -156,7 +159,257 @@ pub struct Client {
     inner: torii_client::client::Client,
 }
 
-#[wasm_bindgen]
+#[derive(Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct JsSignature {
+    pub r: String,
+    pub s: String,
+}
+
+impl From<&Signature> for JsSignature {
+    fn from(value: &Signature) -> Self {
+        Self {
+            r: format!("{:#x}", value.r),
+            s: format!("{:#x}", value.s)
+        }
+    }
+}
+
+impl From<&JsSignature> for Signature {
+    fn from(value: &JsSignature) -> Self {
+        Self {
+            r: FieldElement::from_str(value.r.as_str()).unwrap(),
+            s: FieldElement::from_str(value.s.as_str()).unwrap(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct JsCalls {
+    pub calls: Vec<JsCall>,
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct JsCall {
+    pub to: String,
+    pub selector: String,
+    pub calldata: Vec<String>,
+}
+
+impl From<&JsCall> for starknet::accounts::Call {
+    fn from(value: &JsCall) -> Self {
+        Self {
+            to: FieldElement::from_str(value.to.as_str()).unwrap(),
+            selector: get_selector_from_name(value.selector.as_str()).unwrap(),
+            calldata: value.calldata.iter().map(|c| FieldElement::from_str(c.as_str()).unwrap()).collect(),
+        }
+    }
+}
+
+#[wasm_bindgen(js_name = signingKeyNew)]
+pub fn signing_key_new() -> String {
+    let private_key: SigningKey = SigningKey::from_random();
+
+    format!("{:#x}", private_key.secret_scalar())
+}
+
+#[wasm_bindgen(js_name = signingKeySign)]
+pub fn signing_key_sign(
+    private_key: &str,
+    hash: &str,
+) -> Result<JsSignature, JsValue> {
+    let private_key = FieldElement::from_hex_be(private_key);
+    if let Err(e) = private_key {
+        return Err(JsValue::from(format!("failed to parse private key: {e}")));
+    }
+
+    let hash = FieldElement::from_hex_be(hash);
+    if let Err(e) = hash {
+        return Err(JsValue::from(format!("failed to parse hash: {e}")));
+    }
+    
+    let private_key = SigningKey::from_secret_scalar(private_key.unwrap());
+    let sig = private_key.sign(&hash.unwrap());
+
+    match sig {
+        Ok(sig) => Result::Ok(JsSignature::from(&sig)),
+        Err(e) => Err(JsValue::from(format!("failed to sign: {e}"))),
+    }
+}
+
+#[wasm_bindgen(js_name = verifyingKeyNew)]
+pub fn verifying_key_new(
+    signing_key: &str,
+) -> Result<String, JsValue> {
+    let signing_key = FieldElement::from_hex_be(signing_key);
+    if let Err(e) = signing_key {
+        return Err(JsValue::from(format!("failed to parse signing key: {e}")));
+    }
+
+    let verifying_key = starknet_crypto::get_public_key(&signing_key.unwrap());
+
+    Ok(format!("{:#x}", verifying_key))
+}
+
+#[wasm_bindgen(js_name = verifyingKeyVerify)]
+pub fn verifying_key_verify(
+    verifying_key: &str,
+    hash: &str,
+    signature: JsSignature,
+) -> Result<bool, JsValue> {
+    let verifying_key = FieldElement::from_hex_be(verifying_key);
+    if let Err(e) = verifying_key {
+        return Err(JsValue::from(format!("failed to parse verifying key: {e}")));
+    }
+
+    let verifying_key = VerifyingKey::from_scalar(verifying_key.unwrap());
+    
+    let hash = FieldElement::from_hex_be(hash);
+    if let Err(e) = hash {
+        return Err(JsValue::from(format!("failed to parse hash: {e}")));
+    }
+
+    let hash = &hash.unwrap();
+
+    let signature = &Signature::from(&signature);
+    
+
+    match verifying_key.verify(hash, signature) {
+        Ok(result) => Result::Ok(result),
+        Err(e) => Err(JsValue::from(format!("failed to verify: {e}"))),
+    }
+}
+
+#[wasm_bindgen(js_name = jsonrpcClientNew)]
+pub unsafe fn jsonrpc_client_new(rpc_url: &str) -> Result<*mut CJsonRpcClient, JsValue> {
+    let rpc_url = url::Url::parse(rpc_url);
+    if let Err(e) = rpc_url {
+        return Err(JsValue::from(format!("failed to parse rpc url: {e}")));
+    }
+    let rpc_url = rpc_url.unwrap();
+
+    let rpc = JsonRpcClient::new(HttpTransport::new(rpc_url));
+
+    Result::Ok(Box::into_raw(Box::new(CJsonRpcClient(rpc))))
+}
+
+#[wasm_bindgen(js_name = accountNew)]
+pub async unsafe fn account_new(
+    rpc: *mut CJsonRpcClient,
+    private_key: &str,
+    address: &str,
+) -> Result<*mut Account, JsValue> {
+    let private_key = FieldElement::from_hex_be(private_key);
+    if let Err(e) = private_key {
+        return Err(JsValue::from(format!("failed to parse private key: {e}")));
+    }
+
+    let private_key = private_key.unwrap();
+
+    let address = FieldElement::from_hex_be(address);
+    if let Err(e) = address {
+        return Err(JsValue::from(format!("failed to parse address: {e}")));
+    }
+
+    let address = address.unwrap();
+
+    let chain_id = (*rpc).0.chain_id().await;
+    if let Err(e) = chain_id {
+        return Err(JsValue::from(format!("failed to get chain id: {e}")));
+    }
+
+    let chain_id = chain_id.unwrap();
+
+    let signer =
+        LocalWallet::from_signing_key(SigningKey::from_secret_scalar(private_key));
+    let account = SingleOwnerAccount::new(
+        &(*rpc).0,
+        signer,
+        address,
+        chain_id,
+        ExecutionEncoding::Legacy,
+    );
+
+    Result::Ok(Box::into_raw(Box::new(Account(account))))
+}
+
+#[wasm_bindgen(js_name = accountAddress)]
+pub unsafe fn account_address(account: *mut Account) -> Result<String, JsValue> {
+    let address = (*account).0.address();
+    Ok(format!("{:#x}", address))
+}
+
+#[wasm_bindgen(js_name = accountChainId)]
+pub unsafe fn account_chain_id(account: *mut Account) -> Result<String, JsValue> {
+    let chain_id = (*account).0.chain_id();
+    Ok(format!("{:#x}", chain_id))
+}
+
+#[wasm_bindgen(js_name = accountSetBlockId)]
+pub unsafe fn account_set_block_id(account: *mut Account, block_id: String) -> Result<(), JsValue> {
+    let block_id = FieldElement::from_hex_be(&block_id).map_err(|err| JsValue::from(format!("failed to parse block id: {err}")))?;
+    (*account).0.set_block_id(BlockId::Hash(block_id));
+    Ok(())
+}
+
+#[wasm_bindgen(js_name = accountExecuteRaw)]
+pub async unsafe fn account_execute_raw(
+    account: *mut Account,
+    calldata: JsCalls,
+) -> Result<String, JsValue> {
+    let calldata = calldata.calls
+        .iter()
+        .map(|c| c.into())
+        .collect::<Vec<Call>>();
+
+    let call = (*account).0.execute(calldata);
+
+    let result = call.send().await;
+
+    match result {
+        Ok(res) => Ok(format!("{:#x}", res.transaction_hash)),
+        Err(e) => Err(JsValue::from_str(&e.to_string())),
+    }
+}
+
+#[wasm_bindgen(js_name = waitForTransaction)]
+pub async unsafe fn wait_for_transaction(
+    rpc: *mut CJsonRpcClient,
+    txn_hash: &str,
+) -> Result<bool, JsValue> {
+    let txn_hash = FieldElement::from_hex_be(txn_hash).map_err(|err| JsValue::from(format!("failed to parse transaction hash: {err}")))?;
+    let result: Result<(), anyhow::Error> = watch_tx(&(*rpc).0, txn_hash).await;
+
+    match result {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Err(JsValue::from_str(&e.to_string())),
+    }
+}
+
+#[wasm_bindgen(js_name = hashGetContractAddress)]
+pub fn hash_get_contract_address(
+    class_hash: &str,
+    salt: &str,
+    constructor_calldata: Vec<String>,
+    deployer_address: &str,
+) -> Result<String, JsValue> {
+    let class_hash = FieldElement::from_hex_be(class_hash).map_err(|err| JsValue::from(format!("failed to parse class hash: {err}")))?;
+    let salt = FieldElement::from_hex_be(salt).map_err(|err| JsValue::from(format!("failed to parse salt: {err}")))?;
+    let deployer_address = FieldElement::from_hex_be(deployer_address).map_err(|err| JsValue::from(format!("failed to parse deployer address: {err}")))?;
+
+    let constructor_calldata = constructor_calldata
+        .into_iter()
+        .map(|c| FieldElement::from_hex_be(c.as_str()).map_err(|err| JsValue::from(format!("failed to parse constructor calldata: {err}"))))
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let address = get_contract_address(salt, class_hash, &constructor_calldata, deployer_address);
+
+    Ok(format!("{:#x}", address))
+}
+
+#[wasm_bindgen(js_name = accountDeployBurner)]
 pub async unsafe fn account_deploy_burner(master_account: *mut Account) -> Result<*mut Account, JsValue> {
     let signing_key = SigningKey::from_random();
     let verifying_key = signing_key.verifying_key();
