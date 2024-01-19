@@ -5,6 +5,7 @@ use crate::types::{
     Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
 };
 use crate::utils::watch_tx;
+use futures::channel::mpsc::UnboundedSender;
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::utils::{
     cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
@@ -25,6 +26,7 @@ use torii_client::client::Client as TClient;
 pub unsafe extern "C" fn client_new(
     torii_url: *const c_char,
     rpc_url: *const c_char,
+    libp2p_relay_url: *const c_char,
     world: *const c_char,
     // entities is optional
     entities: *const KeysClause,
@@ -32,6 +34,11 @@ pub unsafe extern "C" fn client_new(
 ) -> Result<*mut ToriiClient> {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
+    let libp2p_relay_url = unsafe {
+        CStr::from_ptr(libp2p_relay_url)
+            .to_string_lossy()
+            .into_owned()
+    };
     let world = unsafe { CStr::from_ptr(world).to_string_lossy().into_owned() };
     let some_entities = if entities.is_null() || entities_len == 0 {
         None
@@ -50,20 +57,40 @@ pub unsafe extern "C" fn client_new(
     }
     let world = world.unwrap();
 
-    let client_future = TClient::new(torii_url, rpc_url, world, some_entities);
+    let client_future = TClient::new(torii_url, rpc_url, libp2p_relay_url, world, some_entities);
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
-    let client = runtime.block_on(client_future);
+    let client = runtime.block_on(client_future).map_err(|e| Error {
+        message: CString::new(e.to_string()).unwrap().into_raw(),
+    });
 
-    match client {
-        Ok(client) => Result::Ok(Box::into_raw(Box::new(ToriiClient {
+    if let Err(e) = client {
+        return Result::Err(e);
+    }
+
+    let client = client.unwrap();
+
+    Result::Ok(Box::into_raw(Box::new(ToriiClient {
             inner: client,
             runtime,
-        }))),
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
-    }
+        })))
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_on_message(client: *mut ToriiClient, callback: unsafe extern "C" fn()) -> Result<bool> {
+    let (sender, receiver) = futures::channel::mpsc::unbounded();
+    
+    (*client)
+    .runtime
+    .spawn((*client).inner.run_libp2p(&sender));
+    
+
+    (*client).runtime.spawn(async move {
+        while let Some(_) = receiver.next().await {
+            callback();
+        }
+    });
 }
 
 #[no_mangle]
@@ -102,6 +129,8 @@ pub unsafe extern "C" fn client_entities(
     let entities_future = unsafe { (*client).inner.entities(query) };
 
     let result = (*client).runtime.block_on(entities_future);
+
+    println!("result: {:?}", result);
 
     match result {
         Ok(entities) => {
@@ -407,9 +436,14 @@ pub unsafe extern "C" fn account_deploy_burner(
         selector: get_selector_from_name("deployContract").unwrap(),
     }]);
 
-    let result = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(exec.send());
+    let result = tokio::runtime::Runtime::new().map_err(|e| Error {
+        message: CString::new(e.to_string()).unwrap().into_raw(),
+    });
+    if let Err(e) = result {
+        return Result::Err(e);
+    }
+
+    let result = result.unwrap().block_on(exec.send());
 
     if let Err(e) = result {
         return Result::Err(Error {
@@ -419,10 +453,15 @@ pub unsafe extern "C" fn account_deploy_burner(
 
     let result = result.unwrap();
 
-    tokio::runtime::Runtime::new()
+    if let Err(e) = tokio::runtime::Runtime::new()
         .unwrap()
         .block_on(watch_tx(&(*provider).0, result.transaction_hash))
-        .unwrap();
+        .map_err(|e| Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        })
+    {
+        return Result::Err(e);
+    }
 
     Result::Ok(Box::into_raw(Box::new(Account(account))))
 }

@@ -23,7 +23,7 @@ void on_entity_state_update(FieldElement key, CArrayModel models)
     }
 }
 
-int hex_to_bytes(const char *hex, unsigned char *bytes)
+void hex_to_bytes(const char *hex, FieldElement* felt)
 {
 
     if (hex[0] == '0' && hex[1] == 'x')
@@ -33,10 +33,8 @@ int hex_to_bytes(const char *hex, unsigned char *bytes)
 
     for (size_t i = 0; i < 32; i++)
     {
-        sscanf(hex + 2 * i, "%2hhx", &bytes[i]);
+        sscanf(hex + 2 * i, "%2hhx", &(*felt).data[i]);
     }
-
-    return 0;
 }
 
 int main()
@@ -47,7 +45,7 @@ int main()
     const char *playerKey = "0x028cd7ee02d7f6ec9810e75b930e8e607793b302445abbdee0ac88143f18da20";
     const char *playerAddress = "0x0517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973";
     const char *world = "0x028f5999ae62fec17c09c52a800e244961dba05251f5aaf923afabd9c9804d1a";
-    const char *actions = "0x03e274b7d85fd0415bec56a5d831c3854f7308bbb26d486993cfc49e5a5fb788";
+    const char *actions = "0x0297bde19ca499fd8a39dd9bedbcd881a47f7b8f66c19478ce97d7de89e6112e";
     // Initialize world.data here...
 
     KeysClause entities[1] = {};
@@ -66,13 +64,8 @@ int main()
     ToriiClient *client = resClient.ok;
 
     // signing key
-    ResultFieldElement resSigningKey = felt_from_hex_be("0x1800000000300000180000000000030000000000003006001800006600");
-    if (resSigningKey.tag == ErrFieldElement)
-    {
-        printf("Failed to create signing key: %s\n", resSigningKey.err.message);
-        return 1;
-    }
-    FieldElement signing_key = resSigningKey.ok;
+    FieldElement signing_key = {};
+    hex_to_bytes(playerKey, &signing_key);
 
     // provider
     ResultCJsonRpcClient resProvider = jsonrpc_client_new(rpc_url);
@@ -83,6 +76,7 @@ int main()
     }
     CJsonRpcClient *provider = resProvider.ok;
 
+
     // account
     ResultAccount resAccount = account_new(provider, signing_key, playerAddress);
     if (resAccount.tag == ErrAccount)
@@ -92,16 +86,24 @@ int main()
     }
     Account *master_account = resAccount.ok;
 
-    ResultAccount resBurner = account_deploy_burner(master_account);
-    if (resBurner.tag == ErrAccount)
+    FieldElement master_address = account_address(master_account);
+    printf("Master account: 0x");
+    for (size_t i = 0; i < 32; i++)
     {
-        printf("Failed to create burner: %s\n", resBurner.err.message);
-        return 1;
+        printf("%02x", master_address.data[i]);
     }
+    printf("\n");
 
-    Account *burner = resBurner.ok;
+    // ResultAccount resBurner = account_deploy_burner(provider, master_account);
+    // if (resBurner.tag == ErrAccount)
+    // {
+    //     printf("Failed to create burner: %s\n", resBurner.err.message);
+    //     return 1;
+    // }
 
-    FieldElement address = account_address(burner);
+    // Account *burner = resBurner.ok;
+
+    FieldElement address = account_address(master_account);
     printf("New account: 0x");
     for (size_t i = 0; i < 32; i++)
     {
@@ -128,6 +130,7 @@ int main()
 
         ty_free(ty.some);
     }
+
 
     Query query = {};
     query.limit = 100;
@@ -186,7 +189,7 @@ int main()
     }
 
     FieldElement keys[1] = {};
-    keys[0] = felt_from_hex_be(playerKey).ok;
+    hex_to_bytes(playerKey, &keys[0]);
     Resultbool resEntityUpdate = client_on_entity_state_update(client, keys, 0, &on_entity_state_update);
     if (resEntityUpdate.tag == Errbool)
     {
@@ -207,14 +210,8 @@ int main()
             .data_len = 1,
         }};
 
-    ResultFieldElement moveLeft = felt_from_hex_be("0x01");
-    if (moveLeft.tag == ErrFieldElement)
-    {
-        printf("Failed to create moveLeft: %s\n", moveLeft.err.message);
-        return 1;
-    }
-
-    move.calldata.data[0] = moveLeft.ok;
+    // move left felt(0x01)
+    hex_to_bytes("0x01", &move.calldata.data[0]);
 
     ResultFieldElement resSpawn = account_execute_raw(master_account, &spawn, 1);
     if (resSpawn.tag == Errbool)

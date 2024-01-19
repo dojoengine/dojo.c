@@ -59,6 +59,23 @@ typedef struct KeysClause {
   struct CArrayc_char keys;
 } KeysClause;
 
+typedef enum Resultbool_Tag {
+  Okbool,
+  Errbool,
+} Resultbool_Tag;
+
+typedef struct Resultbool {
+  Resultbool_Tag tag;
+  union {
+    struct {
+      bool ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Resultbool;
+
 typedef struct FieldElement {
   uint8_t data[32];
 } FieldElement;
@@ -361,23 +378,6 @@ typedef struct CArrayKeysClause {
   uintptr_t data_len;
 } CArrayKeysClause;
 
-typedef enum Resultbool_Tag {
-  Okbool,
-  Errbool,
-} Resultbool_Tag;
-
-typedef struct Resultbool {
-  Resultbool_Tag tag;
-  union {
-    struct {
-      bool ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} Resultbool;
-
 typedef struct CArrayFieldElement {
   struct FieldElement *data;
   uintptr_t data_len;
@@ -525,9 +525,12 @@ extern "C" {
 
 struct ResultToriiClient client_new(const char *torii_url,
                                     const char *rpc_url,
+                                    const char *libp2p_relay_url,
                                     const char *world,
                                     const struct KeysClause *entities,
                                     uintptr_t entities_len);
+
+struct Resultbool client_on_message(struct ToriiClient *client, void (*callback)(void));
 
 struct ResultCOptionTy client_model(struct ToriiClient *client, const struct KeysClause *keys);
 
