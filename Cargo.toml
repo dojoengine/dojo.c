@@ -25,7 +25,7 @@ futures = "0.3.30"
 futures-channel = "0.3.30"
 
 # WASM
-# [target.'cfg(target_arch = "wasm32")'.dependencies]
+[target.'cfg(target_arch = "wasm32")'.dependencies]
 serde-wasm-bindgen = "0.6.3"
 wasm-bindgen = "0.2.89"
 wasm-bindgen-futures = "0.4.39"
