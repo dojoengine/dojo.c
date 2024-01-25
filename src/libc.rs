@@ -5,7 +5,6 @@ use crate::types::{
     Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
 };
 use crate::utils::watch_tx;
-use futures::channel::mpsc::UnboundedSender;
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::utils::{
     cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
@@ -71,26 +70,110 @@ pub unsafe extern "C" fn client_new(
     let client = client.unwrap();
 
     Result::Ok(Box::into_raw(Box::new(ToriiClient {
-            inner: client,
-            runtime,
-        })))
+        inner: client,
+        runtime,
+    })))
 }
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_on_message(client: *mut ToriiClient, callback: unsafe extern "C" fn()) -> Result<bool> {
-    let (sender, receiver) = futures::channel::mpsc::unbounded();
-    
-    (*client)
-    .runtime
-    .spawn((*client).inner.run_libp2p(&sender));
-    
+pub unsafe extern "C" fn client_run_libp2p(client: *mut ToriiClient) {
+    let libp2p_runner = (*client).inner.run_libp2p();
 
     (*client).runtime.spawn(async move {
-        while let Some(_) = receiver.next().await {
-            callback();
+        libp2p_runner.await;
+    });
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_on_message(
+    client: *mut ToriiClient,
+    callback: unsafe extern "C" fn(
+        propagation_source: *const c_char,
+        source: *const c_char,
+        message_id: *const c_char,
+        topic: *const c_char,
+        data: CArray<u8>,
+    ),
+) -> Result<bool> {
+    let stream = (*client).inner.libp2p_message_stream();
+
+    (*client).runtime.spawn(async move {
+        while let Some(msg) = stream.lock().await.next().await {
+            let propagation_source = CString::new(msg.propagation_source).unwrap().into_raw();
+            let source = CString::new(msg.source).unwrap().into_raw();
+            let message_id = CString::new(msg.message_id.0).unwrap().into_raw();
+            let topic = CString::new(msg.topic.as_str()).unwrap().into_raw();
+            let data = msg.data.into();
+
+            callback(propagation_source, source, message_id, topic, data);
         }
     });
+
+    Result::Ok(true)
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_subscribe_topic(
+    client: *mut ToriiClient,
+    topic: *const c_char,
+) -> Result<bool> {
+    let topic = unsafe { CStr::from_ptr(topic).to_string_lossy().into_owned() };
+
+    let client_future = unsafe { (*client).inner.subscribe_topic(topic) };
+
+    let result = (*client).runtime.block_on(client_future);
+
+    match result {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_unsubscribe_topic(
+    client: *mut ToriiClient,
+    topic: *const c_char,
+) -> Result<bool> {
+    let topic = unsafe { CStr::from_ptr(topic).to_string_lossy().into_owned() };
+
+    let client_future = unsafe { (*client).inner.unsubscribe_topic(topic) };
+
+    let result = (*client).runtime.block_on(client_future);
+
+    match result {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_publish_message(
+    client: *mut ToriiClient,
+    topic: *const c_char,
+    data: CArray<u8>,
+) -> Result<bool> {
+    let topic = unsafe { CStr::from_ptr(topic).to_string_lossy().to_string() };
+    let data = unsafe { std::slice::from_raw_parts(data.data, data.data_len) };
+
+    let client_future = unsafe { (*client).inner.publish_message(topic.as_str(), data) };
+
+    let result = (*client).runtime.block_on(client_future);
+
+    match result {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(Error {
+            message: CString::new(e.to_string()).unwrap().into_raw(),
+        }),
+    }
 }
 
 #[no_mangle]
@@ -129,8 +212,6 @@ pub unsafe extern "C" fn client_entities(
     let entities_future = unsafe { (*client).inner.entities(query) };
 
     let result = (*client).runtime.block_on(entities_future);
-
-    println!("result: {:?}", result);
 
     match result {
         Ok(entities) => {

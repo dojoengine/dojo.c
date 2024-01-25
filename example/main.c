@@ -55,7 +55,7 @@ int main()
     entities[0].keys.data_len = 1;
     entities[0].keys.data[0] = playerKey;
 
-    ResultToriiClient resClient = client_new(torii_url, rpc_url, world, entities, 1);
+    ResultToriiClient resClient = client_new(torii_url, rpc_url, "/ip4/127.0.0.1/tcp/1010", world, entities, 1);
     if (resClient.tag == ErrAccount)
     {
         printf("Failed to create client: %s\n", resClient.err.message);
@@ -75,6 +75,9 @@ int main()
         return 1;
     }
     CJsonRpcClient *provider = resProvider.ok;
+
+    // publish message
+    
 
 
     // account

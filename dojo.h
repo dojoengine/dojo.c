@@ -76,6 +76,11 @@ typedef struct Resultbool {
   };
 } Resultbool;
 
+typedef struct CArrayu8 {
+  uint8_t *data;
+  uintptr_t data_len;
+} CArrayu8;
+
 typedef struct FieldElement {
   uint8_t data[32];
 } FieldElement;
@@ -274,11 +279,6 @@ typedef struct ResultCArrayEntity {
     };
   };
 } ResultCArrayEntity;
-
-typedef struct CArrayu8 {
-  uint8_t *data;
-  uintptr_t data_len;
-} CArrayu8;
 
 typedef enum ValueType_Tag {
   String,
@@ -530,7 +530,22 @@ struct ResultToriiClient client_new(const char *torii_url,
                                     const struct KeysClause *entities,
                                     uintptr_t entities_len);
 
-struct Resultbool client_on_message(struct ToriiClient *client, void (*callback)(void));
+void client_run_libp2p(struct ToriiClient *client);
+
+struct Resultbool client_on_message(struct ToriiClient *client,
+                                    void (*callback)(const char *propagation_source,
+                                                     const char *source,
+                                                     const char *message_id,
+                                                     const char *topic,
+                                                     struct CArrayu8 data));
+
+struct Resultbool client_subscribe_topic(struct ToriiClient *client, const char *topic);
+
+struct Resultbool client_unsubscribe_topic(struct ToriiClient *client, const char *topic);
+
+struct Resultbool client_publish_message(struct ToriiClient *client,
+                                         const char *topic,
+                                         struct CArrayu8 data);
 
 struct ResultCOptionTy client_model(struct ToriiClient *client, const struct KeysClause *keys);
 
