@@ -748,10 +748,7 @@ impl Client {
     }
 
     #[wasm_bindgen(js_name = onMessage)]
-    pub async fn on_message(
-        &self,
-        callback: js_sys::Function,
-    ) -> Result<(), JsValue> {
+    pub async fn on_message(&self, callback: js_sys::Function) -> Result<(), JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
@@ -759,17 +756,20 @@ impl Client {
 
         wasm_bindgen_futures::spawn_local(async move {
             while let Some(message) = stream.lock().await.next().await {
-                let array = &js_sys::Array::new();
-                array.push(&JsValue::from_str(message.propagation_source.to_string().as_str()));
-                array.push(&JsValue::from_str(message.source.to_string().as_str()));
-                array.push(&JsValue::from_str(message.message_id.to_string().as_str()));
-                array.push(&JsValue::from_str(message.topic.as_str()));
-                array.push(&js_sys::Uint8Array::from(message.data.as_slice()));
-
-                let _ = callback.apply(
-                    &JsValue::null(),
-                    array
+                let array = &js_sys::Array::new_with_length(5);
+                array.set(
+                    0,
+                    JsValue::from_str(message.propagation_source.to_string().as_str()),
                 );
+                array.set(1, JsValue::from_str(message.source.to_string().as_str()));
+                array.set(
+                    2,
+                    JsValue::from_str(message.message_id.to_string().as_str()),
+                );
+                array.set(3, JsValue::from_str(message.topic.as_str()));
+                array.set(4, js_sys::Uint8Array::from(message.data.as_slice()).into());
+
+                let _ = callback.apply(&JsValue::null(), array);
             }
         });
 
