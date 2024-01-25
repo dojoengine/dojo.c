@@ -101,9 +101,9 @@ pub unsafe extern "C" fn client_on_message(
 
     (*client).runtime.spawn(async move {
         while let Some(msg) = stream.lock().await.next().await {
-            let propagation_source = CString::new(msg.propagation_source).unwrap().into_raw();
-            let source = CString::new(msg.source).unwrap().into_raw();
-            let message_id = CString::new(msg.message_id.0).unwrap().into_raw();
+            let propagation_source = CString::new(msg.propagation_source.to_string()).unwrap().into_raw();
+            let source = CString::new(msg.source.to_string()).unwrap().into_raw();
+            let message_id = CString::new(msg.message_id.to_string()).unwrap().into_raw();
             let topic = CString::new(msg.topic.as_str()).unwrap().into_raw();
             let data = msg.data.into();
 

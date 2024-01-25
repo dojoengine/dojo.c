@@ -23,6 +23,21 @@ void on_entity_state_update(FieldElement key, CArrayModel models)
     }
 }
 
+void on_message(const char *propagation_source, const char *source, const char *message_id, const char *topic, CArrayu8 data)
+{
+    printf("on_message\n");
+    printf("Propagation source: %s\n", propagation_source);
+    printf("Source: %s\n", source);
+    printf("Message id: %s\n", message_id);
+    printf("Topic: %s\n", topic);
+    printf("Data: ");
+    for (size_t i = 0; i < data.data_len; i++)
+    {
+        printf("%02x", data.data[i]);
+    }
+    printf("\n");
+}
+
 void hex_to_bytes(const char *hex, FieldElement* felt)
 {
 
@@ -55,7 +70,7 @@ int main()
     entities[0].keys.data_len = 1;
     entities[0].keys.data[0] = playerKey;
 
-    ResultToriiClient resClient = client_new(torii_url, rpc_url, "/ip4/127.0.0.1/tcp/1010", world, entities, 1);
+    ResultToriiClient resClient = client_new(torii_url, rpc_url, "/ip4/127.0.0.1/tcp/9090", world, entities, 1);
     if (resClient.tag == ErrAccount)
     {
         printf("Failed to create client: %s\n", resClient.err.message);
@@ -76,8 +91,44 @@ int main()
     }
     CJsonRpcClient *provider = resProvider.ok;
 
+    // run libp2p
+    client_run_libp2p(client);
+
+    // subscribe to topic
+    Resultbool resSub = client_subscribe_topic(client, "mimi");
+    if (resSub.tag == Errbool)
+    {
+        printf("Failed to subscribe to topic: %s\n", resSub.err.message);
+        return 1;
+    }
+
+    sleep(1);
+
+    // handle message
+    Resultbool resHandle = client_on_message(client, &on_message);
+    if (resHandle.tag == Errbool)
+    {
+        printf("Failed to set message handler: %s\n", resHandle.err.message);
+        return 1;
+    }
+
     // publish message
-    
+    CArrayu8 message_data = {
+        .data = malloc(sizeof(uint8_t)*4),
+        .data_len = 4,
+    };
+
+    message_data.data[0] = 0x01;
+    message_data.data[1] = 0x02;
+    message_data.data[2] = 0x03;
+    message_data.data[3] = 0x04;
+
+    Resultbool resPub = client_publish_message(client, "mimi", message_data);
+    if (resPub.tag == Errbool)
+    {
+        printf("Failed to publish message: %s\n", resPub.err.message);
+        return 1;
+    }
 
 
     // account
