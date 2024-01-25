@@ -23,7 +23,22 @@ void on_entity_state_update(FieldElement key, CArrayModel models)
     }
 }
 
-int hex_to_bytes(const char *hex, unsigned char *bytes)
+void on_message(const char *propagation_source, const char *source, const char *message_id, const char *topic, CArrayu8 data)
+{
+    printf("on_message\n");
+    printf("Propagation source: %s\n", propagation_source);
+    printf("Source: %s\n", source);
+    printf("Message id: %s\n", message_id);
+    printf("Topic: %s\n", topic);
+    printf("Data: ");
+    for (size_t i = 0; i < data.data_len; i++)
+    {
+        printf("%02x", data.data[i]);
+    }
+    printf("\n");
+}
+
+void hex_to_bytes(const char *hex, FieldElement* felt)
 {
 
     if (hex[0] == '0' && hex[1] == 'x')
@@ -33,10 +48,8 @@ int hex_to_bytes(const char *hex, unsigned char *bytes)
 
     for (size_t i = 0; i < 32; i++)
     {
-        sscanf(hex + 2 * i, "%2hhx", &bytes[i]);
+        sscanf(hex + 2 * i, "%2hhx", &(*felt).data[i]);
     }
-
-    return 0;
 }
 
 int main()
@@ -47,7 +60,7 @@ int main()
     const char *playerKey = "0x028cd7ee02d7f6ec9810e75b930e8e607793b302445abbdee0ac88143f18da20";
     const char *playerAddress = "0x0517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973";
     const char *world = "0x028f5999ae62fec17c09c52a800e244961dba05251f5aaf923afabd9c9804d1a";
-    const char *actions = "0x03e274b7d85fd0415bec56a5d831c3854f7308bbb26d486993cfc49e5a5fb788";
+    const char *actions = "0x0297bde19ca499fd8a39dd9bedbcd881a47f7b8f66c19478ce97d7de89e6112e";
     // Initialize world.data here...
 
     KeysClause entities[1] = {};
@@ -57,7 +70,7 @@ int main()
     entities[0].keys.data_len = 1;
     entities[0].keys.data[0] = playerKey;
 
-    ResultToriiClient resClient = client_new(torii_url, rpc_url, world, entities, 1);
+    ResultToriiClient resClient = client_new(torii_url, rpc_url, "/ip4/127.0.0.1/tcp/9090", world, entities, 1);
     if (resClient.tag == ErrAccount)
     {
         printf("Failed to create client: %s\n", resClient.err.message);
@@ -66,13 +79,8 @@ int main()
     ToriiClient *client = resClient.ok;
 
     // signing key
-    ResultFieldElement resSigningKey = felt_from_hex_be("0x1800000000300000180000000000030000000000003006001800006600");
-    if (resSigningKey.tag == ErrFieldElement)
-    {
-        printf("Failed to create signing key: %s\n", resSigningKey.err.message);
-        return 1;
-    }
-    FieldElement signing_key = resSigningKey.ok;
+    FieldElement signing_key = {};
+    hex_to_bytes(playerKey, &signing_key);
 
     // provider
     ResultCJsonRpcClient resProvider = jsonrpc_client_new(rpc_url);
@@ -83,6 +91,46 @@ int main()
     }
     CJsonRpcClient *provider = resProvider.ok;
 
+    // run libp2p
+    client_run_libp2p(client);
+
+    // subscribe to topic
+    Resultbool resSub = client_subscribe_topic(client, "mimi");
+    if (resSub.tag == Errbool)
+    {
+        printf("Failed to subscribe to topic: %s\n", resSub.err.message);
+        return 1;
+    }
+
+    sleep(1);
+
+    // handle message
+    Resultbool resHandle = client_on_message(client, &on_message);
+    if (resHandle.tag == Errbool)
+    {
+        printf("Failed to set message handler: %s\n", resHandle.err.message);
+        return 1;
+    }
+
+    // publish message
+    CArrayu8 message_data = {
+        .data = malloc(sizeof(uint8_t)*4),
+        .data_len = 4,
+    };
+
+    message_data.data[0] = 0x01;
+    message_data.data[1] = 0x02;
+    message_data.data[2] = 0x03;
+    message_data.data[3] = 0x04;
+
+    Resultbool resPub = client_publish_message(client, "mimi", message_data);
+    if (resPub.tag == Errbool)
+    {
+        printf("Failed to publish message: %s\n", resPub.err.message);
+        return 1;
+    }
+
+
     // account
     ResultAccount resAccount = account_new(provider, signing_key, playerAddress);
     if (resAccount.tag == ErrAccount)
@@ -92,16 +140,24 @@ int main()
     }
     Account *master_account = resAccount.ok;
 
-    ResultAccount resBurner = account_deploy_burner(master_account);
-    if (resBurner.tag == ErrAccount)
+    FieldElement master_address = account_address(master_account);
+    printf("Master account: 0x");
+    for (size_t i = 0; i < 32; i++)
     {
-        printf("Failed to create burner: %s\n", resBurner.err.message);
-        return 1;
+        printf("%02x", master_address.data[i]);
     }
+    printf("\n");
 
-    Account *burner = resBurner.ok;
+    // ResultAccount resBurner = account_deploy_burner(provider, master_account);
+    // if (resBurner.tag == ErrAccount)
+    // {
+    //     printf("Failed to create burner: %s\n", resBurner.err.message);
+    //     return 1;
+    // }
 
-    FieldElement address = account_address(burner);
+    // Account *burner = resBurner.ok;
+
+    FieldElement address = account_address(master_account);
     printf("New account: 0x");
     for (size_t i = 0; i < 32; i++)
     {
@@ -128,6 +184,7 @@ int main()
 
         ty_free(ty.some);
     }
+
 
     Query query = {};
     query.limit = 100;
@@ -186,7 +243,7 @@ int main()
     }
 
     FieldElement keys[1] = {};
-    keys[0] = felt_from_hex_be(playerKey).ok;
+    hex_to_bytes(playerKey, &keys[0]);
     Resultbool resEntityUpdate = client_on_entity_state_update(client, keys, 0, &on_entity_state_update);
     if (resEntityUpdate.tag == Errbool)
     {
@@ -207,14 +264,8 @@ int main()
             .data_len = 1,
         }};
 
-    ResultFieldElement moveLeft = felt_from_hex_be("0x01");
-    if (moveLeft.tag == ErrFieldElement)
-    {
-        printf("Failed to create moveLeft: %s\n", moveLeft.err.message);
-        return 1;
-    }
-
-    move.calldata.data[0] = moveLeft.ok;
+    // move left felt(0x01)
+    hex_to_bytes("0x01", &move.calldata.data[0]);
 
     ResultFieldElement resSpawn = account_execute_raw(master_account, &spawn, 1);
     if (resSpawn.tag == Errbool)
