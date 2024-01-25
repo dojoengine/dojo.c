@@ -19,7 +19,6 @@ pub enum Result<T> {
     Ok(T),
     Err(Error),
 }
-
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub enum COption<T> {

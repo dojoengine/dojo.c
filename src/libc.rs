@@ -68,7 +68,6 @@ pub unsafe extern "C" fn client_new(
     }
 
     let client = client.unwrap();
-
     Result::Ok(Box::into_raw(Box::new(ToriiClient {
         inner: client,
         runtime,
