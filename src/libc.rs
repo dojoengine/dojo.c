@@ -161,7 +161,7 @@ pub unsafe extern "C" fn client_publish_message(
     client: *mut ToriiClient,
     topic: *const c_char,
     data: CArray<u8>,
-) -> Result<bool> {
+) -> Result<CArray<u8>> {
     let topic = unsafe { CStr::from_ptr(topic).to_string_lossy().to_string() };
     let data = unsafe { std::slice::from_raw_parts(data.data, data.data_len) };
 
@@ -170,7 +170,7 @@ pub unsafe extern "C" fn client_publish_message(
     let result = (*client).runtime.block_on(client_future);
 
     match result {
-        Ok(_) => Result::Ok(true),
+        Ok(_) => Result::Ok(result.unwrap().into()),
         Err(e) => Result::Err(Error {
             message: CString::new(e.to_string()).unwrap().into_raw(),
         }),

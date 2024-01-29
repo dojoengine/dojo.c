@@ -4,7 +4,7 @@ name = "dojo-c"
 version = "0.1.1"
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
 dojo-types = { git = "https://github.com/dojoengine/dojo" }

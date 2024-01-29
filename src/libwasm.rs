@@ -1,5 +1,6 @@
 //! Minimal JS bindings for the torii client.
 
+use std::cell::RefCell;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -164,7 +165,7 @@ extern "C" {
 
 #[wasm_bindgen]
 pub struct Client {
-    inner: Arc<Mutex<torii_client::client::Client>>,
+    inner: Arc<RefCell<torii_client::client::Client>>,
 }
 
 #[derive(Tsify, Serialize, Deserialize)]
@@ -485,8 +486,7 @@ impl Client {
 
         let results = self
             .inner
-            .lock()
-            .await
+            .borrow_mut()
             .entities(Query {
                 clause: None,
                 limit,
@@ -521,8 +521,7 @@ impl Client {
 
         let results = self
             .inner
-            .lock()
-            .await
+            .borrow_mut()
             .entities(Query {
                 clause: Some(Clause::Keys(KeysClause {
                     model: model.to_string(),
@@ -559,8 +558,7 @@ impl Client {
 
         match self
             .inner
-            .lock()
-            .await
+            .borrow_mut()
             .model(&KeysClause {
                 model: model.to_string(),
                 keys,
@@ -591,8 +589,7 @@ impl Client {
             .collect::<Result<Vec<_>, _>>()?;
 
         self.inner
-            .lock()
-            .await
+            .borrow_mut()
             .add_models_to_sync(models)
             .await
             .map_err(|err| JsValue::from(err.to_string()))
@@ -615,8 +612,7 @@ impl Client {
             .collect::<Result<Vec<_>, _>>()?;
 
         self.inner
-            .lock()
-            .await
+            .borrow_mut()
             .remove_models_to_sync(models)
             .await
             .map_err(|err| JsValue::from(err.to_string()))
@@ -636,8 +632,7 @@ impl Client {
         let name = cairo_short_string_to_felt(&model.model).expect("invalid model name");
         let mut rcv = self
             .inner
-            .lock()
-            .await
+            .borrow_mut()
             .storage()
             .add_listener(name, &model.keys)
             .unwrap();
@@ -671,8 +666,7 @@ impl Client {
 
         let mut stream = self
             .inner
-            .lock()
-            .await
+            .borrow_mut()
             .on_entity_updated(ids)
             .await
             .unwrap();
@@ -702,8 +696,7 @@ impl Client {
 
         let sub = self
             .inner
-            .lock()
-            .await
+            .borrow_mut()
             .subscribe_topic(topic)
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
@@ -718,8 +711,7 @@ impl Client {
 
         let sub = self
             .inner
-            .lock()
-            .await
+            .borrow_mut()
             .unsubscribe_topic(topic)
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
@@ -738,8 +730,7 @@ impl Client {
 
         let message_id = self
             .inner
-            .lock()
-            .await
+            .borrow_mut()
             .publish_message(topic, message)
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
@@ -752,7 +743,7 @@ impl Client {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let stream = self.inner.lock().await.libp2p_message_stream();
+        let stream = self.inner.borrow_mut().libp2p_message_stream();
 
         wasm_bindgen_futures::spawn_local(async move {
             while let Some(message) = stream.lock().await.next().await {
@@ -802,7 +793,7 @@ pub async fn create_client(
     let world_address = FieldElement::from_str(&world_address)
         .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
 
-    let client = Arc::new(Mutex::new(
+    let client = Arc::new(RefCell::new(
         torii_client::client::Client::new(
             torii_url,
             rpc_url,
@@ -815,23 +806,18 @@ pub async fn create_client(
     ));
 
     let client_subscription = client.clone();
-    wasm_bindgen_futures::spawn_local(
-        client_subscription
-            .lock()
-            .await
-            .start_subscription()
-            .await
-            .map_err(|err| {
-                JsValue::from(format!(
-                    "failed to start torii client subscription service: {err}"
-                ))
-            })?,
-    );
+    wasm_bindgen_futures::spawn_local(client_subscription.borrow_mut().start_subscription().await.map_err(
+        |err| {
+            JsValue::from(format!(
+                "failed to start torii client subscription service: {err}"
+            ))
+        },
+    )?);
 
-    let client_libp2p = client.clone();
-    wasm_bindgen_futures::spawn_local(async move {
-        client_libp2p.lock().await.run_libp2p().await;
-    });
+    // let client_relay = client.clone();
+    // wasm_bindgen_futures::spawn_local(async move {
+    //     client_relay.borrow_mut().run_libp2p().await;
+    // });
 
     Ok(Client { inner: client })
 }
