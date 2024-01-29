@@ -76,7 +76,7 @@ pub unsafe extern "C" fn client_new(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_run_libp2p(client: *mut ToriiClient) {
+pub unsafe extern "C" fn client_run_relay(client: *mut ToriiClient) {
     let libp2p_runner = (*client).inner.run_libp2p();
 
     (*client).runtime.spawn(async move {
