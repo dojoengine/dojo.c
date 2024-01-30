@@ -77,10 +77,10 @@ pub unsafe extern "C" fn client_new(
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_run_relay(client: *mut ToriiClient) {
-    let libp2p_runner = (*client).inner.run_libp2p();
+    let relay_runner = (*client).inner.relay_client_runner();
 
     (*client).runtime.spawn(async move {
-        libp2p_runner.await;
+        relay_runner.lock().await.run().await;
     });
 }
 
@@ -96,7 +96,7 @@ pub unsafe extern "C" fn client_on_message(
         data: CArray<u8>,
     ),
 ) -> Result<bool> {
-    let stream = (*client).inner.libp2p_message_stream();
+    let stream = (*client).inner.relay_client_stream();
 
     (*client).runtime.spawn(async move {
         while let Some(msg) = stream.lock().await.next().await {

@@ -3,5 +3,8 @@
         "__locale": "c",
         "__config": "c",
         "unistd.h": "c"
-    }
+    },
+    "rust-analyzer.linkedProjects": [
+        "./Cargo.toml"
+    ]
 }

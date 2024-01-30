@@ -7,9 +7,9 @@ version = "0.1.1"
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
-dojo-types = { git = "https://github.com/dojoengine/dojo" }
-torii-client = { git = "https://github.com/dojoengine/dojo" }
-torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
+dojo-types = { git = "https://github.com/Larkooo/dojo", branch = "fix-borrow" }
+torii-client = { git = "https://github.com/Larkooo/dojo", branch = "fix-borrow" }
+torii-grpc = { git = "https://github.com/Larkooo/dojo", branch = "fix-borrow", features = [
     "client",
 ] }
 

@@ -547,7 +547,7 @@ struct ResultToriiClient client_new(const char *torii_url,
                                     const struct KeysClause *entities,
                                     uintptr_t entities_len);
 
-void client_run_libp2p(struct ToriiClient *client);
+void client_run_relay(struct ToriiClient *client);
 
 struct Resultbool client_on_message(struct ToriiClient *client,
                                     void (*callback)(const char *propagation_source,
