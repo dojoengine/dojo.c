@@ -658,11 +658,7 @@ impl Client {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let mut stream = self
-            .inner
-            .on_entity_updated(ids)
-            .await
-            .unwrap();
+        let mut stream = self.inner.on_entity_updated(ids).await.unwrap();
 
         wasm_bindgen_futures::spawn_local(async move {
             while let Some(update) = stream.next().await {
@@ -780,7 +776,7 @@ pub async fn create_client(
         .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
 
     let client = torii_client::client::Client::new(
-    torii_url,
+        torii_url,
         rpc_url,
         relay_url,
         world_address,
