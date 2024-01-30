@@ -81,6 +81,23 @@ typedef struct CArrayu8 {
   uintptr_t data_len;
 } CArrayu8;
 
+typedef enum ResultCArrayu8_Tag {
+  OkCArrayu8,
+  ErrCArrayu8,
+} ResultCArrayu8_Tag;
+
+typedef struct ResultCArrayu8 {
+  ResultCArrayu8_Tag tag;
+  union {
+    struct {
+      struct CArrayu8 ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultCArrayu8;
+
 typedef struct FieldElement {
   uint8_t data[32];
 } FieldElement;
@@ -530,7 +547,7 @@ struct ResultToriiClient client_new(const char *torii_url,
                                     const struct KeysClause *entities,
                                     uintptr_t entities_len);
 
-void client_run_libp2p(struct ToriiClient *client);
+void client_run_relay(struct ToriiClient *client);
 
 struct Resultbool client_on_message(struct ToriiClient *client,
                                     void (*callback)(const char *propagation_source,
@@ -543,9 +560,9 @@ struct Resultbool client_subscribe_topic(struct ToriiClient *client, const char 
 
 struct Resultbool client_unsubscribe_topic(struct ToriiClient *client, const char *topic);
 
-struct Resultbool client_publish_message(struct ToriiClient *client,
-                                         const char *topic,
-                                         struct CArrayu8 data);
+struct ResultCArrayu8 client_publish_message(struct ToriiClient *client,
+                                             const char *topic,
+                                             struct CArrayu8 data);
 
 struct ResultCOptionTy client_model(struct ToriiClient *client, const struct KeysClause *keys);
 

@@ -1,5 +1,6 @@
 //! Minimal JS bindings for the torii client.
 
+use std::cell::{OnceCell, RefCell};
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -164,7 +165,7 @@ extern "C" {
 
 #[wasm_bindgen]
 pub struct Client {
-    inner: Arc<Mutex<torii_client::client::Client>>,
+    inner: torii_client::client::Client,
 }
 
 #[derive(Tsify, Serialize, Deserialize)]
@@ -485,8 +486,6 @@ impl Client {
 
         let results = self
             .inner
-            .lock()
-            .await
             .entities(Query {
                 clause: None,
                 limit,
@@ -521,8 +520,6 @@ impl Client {
 
         let results = self
             .inner
-            .lock()
-            .await
             .entities(Query {
                 clause: Some(Clause::Keys(KeysClause {
                     model: model.to_string(),
@@ -559,8 +556,6 @@ impl Client {
 
         match self
             .inner
-            .lock()
-            .await
             .model(&KeysClause {
                 model: model.to_string(),
                 keys,
@@ -591,8 +586,6 @@ impl Client {
             .collect::<Result<Vec<_>, _>>()?;
 
         self.inner
-            .lock()
-            .await
             .add_models_to_sync(models)
             .await
             .map_err(|err| JsValue::from(err.to_string()))
@@ -615,8 +608,6 @@ impl Client {
             .collect::<Result<Vec<_>, _>>()?;
 
         self.inner
-            .lock()
-            .await
             .remove_models_to_sync(models)
             .await
             .map_err(|err| JsValue::from(err.to_string()))
@@ -636,8 +627,6 @@ impl Client {
         let name = cairo_short_string_to_felt(&model.model).expect("invalid model name");
         let mut rcv = self
             .inner
-            .lock()
-            .await
             .storage()
             .add_listener(name, &model.keys)
             .unwrap();
@@ -669,13 +658,7 @@ impl Client {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let mut stream = self
-            .inner
-            .lock()
-            .await
-            .on_entity_updated(ids)
-            .await
-            .unwrap();
+        let mut stream = self.inner.on_entity_updated(ids).await.unwrap();
 
         wasm_bindgen_futures::spawn_local(async move {
             while let Some(update) = stream.next().await {
@@ -692,18 +675,12 @@ impl Client {
     }
 
     #[wasm_bindgen(js_name = subscribeTopic)]
-    pub async fn subscribe_topic(
-        &self,
-        topic: String,
-        callback: js_sys::Function,
-    ) -> Result<bool, JsValue> {
+    pub async fn subscribe_topic(&mut self, topic: String) -> Result<bool, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let sub = self
             .inner
-            .lock()
-            .await
             .subscribe_topic(topic)
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
@@ -712,14 +689,12 @@ impl Client {
     }
 
     #[wasm_bindgen(js_name = unsubscribeTopic)]
-    pub async fn unsubscribe_topic(&self, topic: String) -> Result<bool, JsValue> {
+    pub async fn unsubscribe_topic(&mut self, topic: String) -> Result<bool, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let sub = self
             .inner
-            .lock()
-            .await
             .unsubscribe_topic(topic)
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
@@ -729,7 +704,7 @@ impl Client {
 
     #[wasm_bindgen(js_name = publishMessage)]
     pub async fn publish_message(
-        &self,
+        &mut self,
         topic: &str,
         message: &[u8],
     ) -> Result<js_sys::Uint8Array, JsValue> {
@@ -738,8 +713,6 @@ impl Client {
 
         let message_id = self
             .inner
-            .lock()
-            .await
             .publish_message(topic, message)
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
@@ -752,7 +725,7 @@ impl Client {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let stream = self.inner.lock().await.libp2p_message_stream();
+        let stream = self.inner.relay_client_stream();
 
         wasm_bindgen_futures::spawn_local(async move {
             while let Some(message) = stream.lock().await.next().await {
@@ -802,35 +775,25 @@ pub async fn create_client(
     let world_address = FieldElement::from_str(&world_address)
         .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
 
-    let client = Arc::new(Mutex::new(
-        torii_client::client::Client::new(
-            torii_url,
-            rpc_url,
-            relay_url,
-            world_address,
-            Some(models),
-        )
-        .await
-        .map_err(|err| JsValue::from(format!("failed to build client: {err}")))?,
-    ));
+    let client = torii_client::client::Client::new(
+        torii_url,
+        rpc_url,
+        relay_url,
+        world_address,
+        Some(models),
+    )
+    .await
+    .map_err(|err| JsValue::from(format!("failed to build client: {err}")))?;
 
-    let client_subscription = client.clone();
-    wasm_bindgen_futures::spawn_local(
-        client_subscription
-            .lock()
-            .await
-            .start_subscription()
-            .await
-            .map_err(|err| {
-                JsValue::from(format!(
-                    "failed to start torii client subscription service: {err}"
-                ))
-            })?,
-    );
+    wasm_bindgen_futures::spawn_local(client.start_subscription().await.map_err(|err| {
+        JsValue::from(format!(
+            "failed to start torii client subscription service: {err}"
+        ))
+    })?);
 
-    let client_libp2p = client.clone();
+    let relay_client_runner = client.relay_client_runner();
     wasm_bindgen_futures::spawn_local(async move {
-        client_libp2p.lock().await.run_libp2p().await;
+        relay_client_runner.lock().await.run().await;
     });
 
     Ok(Client { inner: client })

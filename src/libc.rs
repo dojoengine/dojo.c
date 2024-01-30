@@ -76,11 +76,11 @@ pub unsafe extern "C" fn client_new(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_run_libp2p(client: *mut ToriiClient) {
-    let libp2p_runner = (*client).inner.run_libp2p();
+pub unsafe extern "C" fn client_run_relay(client: *mut ToriiClient) {
+    let relay_runner = (*client).inner.relay_client_runner();
 
     (*client).runtime.spawn(async move {
-        libp2p_runner.await;
+        relay_runner.lock().await.run().await;
     });
 }
 
@@ -96,7 +96,7 @@ pub unsafe extern "C" fn client_on_message(
         data: CArray<u8>,
     ),
 ) -> Result<bool> {
-    let stream = (*client).inner.libp2p_message_stream();
+    let stream = (*client).inner.relay_client_stream();
 
     (*client).runtime.spawn(async move {
         while let Some(msg) = stream.lock().await.next().await {
@@ -161,7 +161,7 @@ pub unsafe extern "C" fn client_publish_message(
     client: *mut ToriiClient,
     topic: *const c_char,
     data: CArray<u8>,
-) -> Result<bool> {
+) -> Result<CArray<u8>> {
     let topic = unsafe { CStr::from_ptr(topic).to_string_lossy().to_string() };
     let data = unsafe { std::slice::from_raw_parts(data.data, data.data_len) };
 
@@ -170,7 +170,7 @@ pub unsafe extern "C" fn client_publish_message(
     let result = (*client).runtime.block_on(client_future);
 
     match result {
-        Ok(_) => Result::Ok(true),
+        Ok(_) => Result::Ok(result.unwrap().into()),
         Err(e) => Result::Err(Error {
             message: CString::new(e.to_string()).unwrap().into_raw(),
         }),
