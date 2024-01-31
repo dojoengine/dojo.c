@@ -335,7 +335,7 @@ pub async unsafe fn account_new(
         signer,
         address,
         chain_id,
-        ExecutionEncoding::Legacy,
+        ExecutionEncoding::New,
     );
 
     Result::Ok(Box::into_raw(Box::new(Account(account))))
@@ -446,7 +446,7 @@ pub async unsafe fn account_deploy_burner(
         signer,
         address,
         chain_id,
-        ExecutionEncoding::Legacy,
+        ExecutionEncoding::New,
     );
 
     // deploy the burner
