@@ -57,8 +57,9 @@ int main()
     const char *torii_url = "http://localhost:8080";
     const char *rpc_url = "http://localhost:5050";
 
-    const char *playerKey = "0x028cd7ee02d7f6ec9810e75b930e8e607793b302445abbdee0ac88143f18da20";
-    const char *playerAddress = "0x0517ececd29116499f4a1b64b094da79ba08dfd54a3edaa316134c41f8160973";
+    const char *player_key = "0x028cd7ee02d7f6ec9810e75b930e8e607793b302445abbdee0ac88143f18da20";
+    const char *player_address = "0x06162896d1d7ab204c7ccac6dd5f8e9e7c25ecd5ae4fcb4ad32e57786bb46e03";
+    const char *player_signing_key = "0x01800000000300000180000000000030000000000003006001800006600";
     const char *world = "0x028f5999ae62fec17c09c52a800e244961dba05251f5aaf923afabd9c9804d1a";
     const char *actions = "0x0297bde19ca499fd8a39dd9bedbcd881a47f7b8f66c19478ce97d7de89e6112e";
     // Initialize world.data here...
@@ -68,7 +69,7 @@ int main()
     entities[0].model = "Position";
     entities[0].keys.data = malloc(sizeof(char *));
     entities[0].keys.data_len = 1;
-    entities[0].keys.data[0] = playerKey;
+    entities[0].keys.data[0] = player_key;
 
     ResultToriiClient resClient = client_new(torii_url, rpc_url, "/ip4/127.0.0.1/tcp/9090", world, entities, 1);
     if (resClient.tag == ErrAccount)
@@ -80,7 +81,7 @@ int main()
 
     // signing key
     FieldElement signing_key = {};
-    hex_to_bytes(playerKey, &signing_key);
+    hex_to_bytes(player_signing_key, &signing_key);
 
     // provider
     ResultCJsonRpcClient resProvider = jsonrpc_client_new(rpc_url);
@@ -92,7 +93,7 @@ int main()
     CJsonRpcClient *provider = resProvider.ok;
 
     // run libp2p
-    client_run_libp2p(client);
+    client_run_relay(client);
 
     // subscribe to topic
     Resultbool resSub = client_subscribe_topic(client, "mimi");
@@ -123,8 +124,8 @@ int main()
     message_data.data[2] = 0x03;
     message_data.data[3] = 0x04;
 
-    Resultbool resPub = client_publish_message(client, "mimi", message_data);
-    if (resPub.tag == Errbool)
+    ResultCArrayu8 resPub = client_publish_message(client, "mimi", message_data);
+    if (resPub.tag == ErrCArrayu8)
     {
         printf("Failed to publish message: %s\n", resPub.err.message);
         return 1;
@@ -132,7 +133,7 @@ int main()
 
 
     // account
-    ResultAccount resAccount = account_new(provider, signing_key, playerAddress);
+    ResultAccount resAccount = account_new(provider, signing_key, player_address);
     if (resAccount.tag == ErrAccount)
     {
         printf("Failed to create account: %s\n", resAccount.err.message);
@@ -192,7 +193,7 @@ int main()
     query.clause.some.tag = Keys;
     query.clause.some.keys.keys.data = malloc(sizeof(char *));
     query.clause.some.keys.keys.data_len = 1;
-    query.clause.some.keys.keys.data[0] = playerAddress;
+    query.clause.some.keys.keys.data[0] = player_address;
     query.clause.some.keys.model = "Moves";
     ResultCArrayEntity resEntities = client_entities(client, &query);
     if (resEntities.tag == ErrCArrayEntity)
@@ -243,7 +244,7 @@ int main()
     }
 
     FieldElement keys[1] = {};
-    hex_to_bytes(playerKey, &keys[0]);
+    hex_to_bytes(player_key, &keys[0]);
     Resultbool resEntityUpdate = client_on_entity_state_update(client, keys, 0, &on_entity_state_update);
     if (resEntityUpdate.tag == Errbool)
     {
