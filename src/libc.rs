@@ -468,13 +468,8 @@ pub unsafe extern "C" fn account_new(
 
     let signer =
         LocalWallet::from_signing_key(SigningKey::from_secret_scalar((&private_key).into()));
-    let account = SingleOwnerAccount::new(
-        &(*rpc).0,
-        signer,
-        address,
-        chain_id,
-        ExecutionEncoding::New,
-    );
+    let account =
+        SingleOwnerAccount::new(&(*rpc).0, signer, address, chain_id, ExecutionEncoding::New);
 
     // account.set_block_id(starknet::core::types::BlockId::Tag(starknet::core::types::BlockTag::Pending));
 
