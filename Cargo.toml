@@ -7,15 +7,15 @@ version = "0.1.1"
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
-dojo-types = { git = "https://github.com/Larkooo/dojo", branch = "fix-borrow" }
-torii-client = { git = "https://github.com/Larkooo/dojo", branch = "fix-borrow" }
-torii-grpc = { git = "https://github.com/Larkooo/dojo", branch = "fix-borrow", features = [
+dojo-types = { git = "https://github.com/dojoengine/dojo" }
+torii-client = { git = "https://github.com/dojoengine/dojo" }
+torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
     "client",
 ] }
 
 parking_lot = "0.12.1"
 starknet = "0.8.0"
-starknet-crypto = "0.6.0"
+starknet-crypto = "0.6.1"
 tokio = { version = "1.32.0", default-features = false, features = ["rt"] }
 url = "2.5.0"
 anyhow = "1.0.76"

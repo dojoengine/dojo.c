@@ -476,6 +476,8 @@ pub unsafe extern "C" fn account_new(
         ExecutionEncoding::New,
     );
 
+    // account.set_block_id(starknet::core::types::BlockId::Tag(starknet::core::types::BlockTag::Pending));
+
     Result::Ok(Box::into_raw(Box::new(Account(account))))
 }
 
