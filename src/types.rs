@@ -174,6 +174,18 @@ pub struct Error {
     pub message: *mut c_char,
 }
 
+// Implement conversion from std::error::Error to Error
+impl<T> From<T> for Error
+where
+    T: std::error::Error,
+{
+    fn from(val: T) -> Self {
+        Error {
+            message: CString::new(val.to_string()).unwrap().into_raw(),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct FieldElement {

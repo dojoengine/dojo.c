@@ -547,8 +547,6 @@ struct ResultToriiClient client_new(const char *torii_url,
                                     const struct KeysClause *entities,
                                     uintptr_t entities_len);
 
-void client_run_relay(struct ToriiClient *client);
-
 struct Resultbool client_on_message(struct ToriiClient *client,
                                     void (*callback)(const char *propagation_source,
                                                      const char *source,
@@ -569,8 +567,6 @@ struct ResultCOptionTy client_model(struct ToriiClient *client, const struct Key
 struct ResultCArrayEntity client_entities(struct ToriiClient *client, const struct Query *query);
 
 struct CArrayKeysClause client_subscribed_models(struct ToriiClient *client);
-
-struct Resultbool client_start_subscription(struct ToriiClient *client);
 
 struct WorldMetadata client_metadata(struct ToriiClient *client);
 

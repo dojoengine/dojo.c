@@ -330,13 +330,8 @@ pub async unsafe fn account_new(
     let chain_id = chain_id.unwrap();
 
     let signer = LocalWallet::from_signing_key(SigningKey::from_secret_scalar(private_key));
-    let account = SingleOwnerAccount::new(
-        &(*rpc).0,
-        signer,
-        address,
-        chain_id,
-        ExecutionEncoding::New,
-    );
+    let account =
+        SingleOwnerAccount::new(&(*rpc).0, signer, address, chain_id, ExecutionEncoding::New);
 
     Result::Ok(Box::into_raw(Box::new(Account(account))))
 }
