@@ -60,8 +60,6 @@ pub unsafe extern "C" fn client_new(
         Err(e) => return Result::Err(e.into()),
     };
 
-    
-
     // Run relay
     let relay_runner = client.relay_client_runner();
     runtime.spawn(async move {
@@ -74,9 +72,7 @@ pub unsafe extern "C" fn client_new(
         Ok(sub) => {
             runtime.spawn(sub);
         }
-        Err(e) => {
-            return Result::Err(e.into())
-        }
+        Err(e) => return Result::Err(e.into()),
     }
 
     Result::Ok(Box::into_raw(Box::new(ToriiClient {
@@ -377,13 +373,10 @@ pub unsafe extern "C" fn verifying_key_verify(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn jsonrpc_client_new(rpc_url: *const c_char) -> Result<*mut CJsonRpcClient> {
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy() };
-    let rpc_url = url::Url::parse(rpc_url.deref());
-    if let Err(e) = rpc_url {
-        return Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        });
-    }
-    let rpc_url = rpc_url.unwrap();
+    let rpc_url = match url::Url::parse(rpc_url.deref()) {
+        Ok(url) => url,
+        Err(e) => return Result::Err(e.into()),
+    };
 
     let rpc = JsonRpcClient::new(HttpTransport::new(rpc_url));
 
@@ -398,26 +391,23 @@ pub unsafe extern "C" fn account_new(
     address: *const c_char,
 ) -> Result<*mut Account> {
     let address = unsafe { CStr::from_ptr(address).to_string_lossy() };
-    let address = FieldElement::from_hex_be(address.deref());
-    if let Err(e) = address {
-        return Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        });
-    }
+    let address = match FieldElement::from_hex_be(address.deref()) {
+        Ok(address) => address,
+        Err(e) => return Result::Err(e.into()),
+    };
 
-    let address = address.unwrap();
-
-    let chain_id = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on((*rpc).0.chain_id())
-        .unwrap();
+    let chain_id = match tokio::runtime::Runtime::new() {
+        Ok(runtime) => match runtime.block_on((*rpc).0.chain_id()) {
+            Ok(chain_id) => chain_id,
+            Err(e) => return Result::Err(e.into()),
+        },
+        Err(e) => return Result::Err(e.into()),
+    };
 
     let signer =
         LocalWallet::from_signing_key(SigningKey::from_secret_scalar((&private_key).into()));
     let account =
         SingleOwnerAccount::new(&(*rpc).0, signer, address, chain_id, ExecutionEncoding::New);
-
-    // account.set_block_id(starknet::core::types::BlockId::Tag(starknet::core::types::BlockTag::Pending));
 
     Result::Ok(Box::into_raw(Box::new(Account(account))))
 }
@@ -461,34 +451,22 @@ pub unsafe extern "C" fn account_deploy_burner(
         selector: get_selector_from_name("deployContract").unwrap(),
     }]);
 
-    let result = tokio::runtime::Runtime::new().map_err(|e| Error {
-        message: CString::new(e.to_string()).unwrap().into_raw(),
-    });
-    if let Err(e) = result {
-        return Result::Err(e);
-    }
+    let runtime = match tokio::runtime::Runtime::new() {
+        Ok(runtime) => runtime,
+        Err(e) => return Result::Err(e.into()),
+    };
 
-    let result = result.unwrap().block_on(exec.send());
+    let result = match runtime.block_on(exec.send()) {
+        Ok(result) => result,
+        Err(e) => return Result::Err(e.into()),
+    };
 
-    if let Err(e) = result {
-        return Result::Err(Error {
+    match runtime.block_on(watch_tx(&(*provider).0, result.transaction_hash)) {
+        Ok(_) => Result::Ok(Box::into_raw(Box::new(Account(account)))),
+        Err(e) => Result::Err(Error {
             message: CString::new(e.to_string()).unwrap().into_raw(),
-        });
+        }),
     }
-
-    let result = result.unwrap();
-
-    if let Err(e) = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(watch_tx(&(*provider).0, result.transaction_hash))
-        .map_err(|e| Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        })
-    {
-        return Result::Err(e);
-    }
-
-    Result::Ok(Box::into_raw(Box::new(Account(account))))
 }
 
 #[no_mangle]
@@ -524,15 +502,12 @@ pub unsafe extern "C" fn account_execute_raw(
         .collect::<Vec<starknet::accounts::Call>>();
     let call = (*account).0.execute(calldata);
 
-    let result = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(call.send());
-
-    match result {
-        Ok(res) => Result::Ok((&res.transaction_hash).into()),
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
+    match tokio::runtime::Runtime::new() {
+        Ok(runtime) => match runtime.block_on(call.send()) {
+            Ok(result) => Result::Ok((&result.transaction_hash).into()),
+            Err(e) => Result::Err(e.into()),
+        },
+        Err(e) => Result::Err(e.into()),
     }
 }
 
@@ -543,15 +518,14 @@ pub unsafe extern "C" fn wait_for_transaction(
     txn_hash: types::FieldElement,
 ) -> Result<bool> {
     let txn_hash = (&txn_hash).into();
-    let result = tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(watch_tx(&(*rpc).0, txn_hash));
-
-    match result {
-        Ok(_) => Result::Ok(true),
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
+    match tokio::runtime::Runtime::new() {
+        Ok(runtime) => match runtime.block_on(watch_tx(&(*rpc).0, txn_hash)) {
+            Ok(_) => Result::Ok(true),
+            Err(e) => Result::Err(Error {
+                message: CString::new(e.to_string()).unwrap().into_raw(),
+            }),
+        },
+        Err(e) => Result::Err(e.into()),
     }
 }
 
