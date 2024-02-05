@@ -1,6 +1,6 @@
 use starknet::{
     accounts::SingleOwnerAccount,
-    core::{types::FromStrError, utils::get_selector_from_name},
+    core::utils::get_selector_from_name,
     providers::{jsonrpc::HttpTransport, JsonRpcClient},
     signers::LocalWallet,
 };
@@ -175,7 +175,10 @@ pub struct Error {
 }
 
 // Implement conversion from std::error::Error to Error
-impl<T> From<T> for Error where T: std::error::Error {
+impl<T> From<T> for Error
+where
+    T: std::error::Error,
+{
     fn from(val: T) -> Self {
         Error {
             message: CString::new(val.to_string()).unwrap().into_raw(),

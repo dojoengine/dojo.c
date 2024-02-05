@@ -16,7 +16,6 @@ use starknet_crypto::FieldElement;
 use std::ffi::{c_void, CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
-use std::thread;
 use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 
