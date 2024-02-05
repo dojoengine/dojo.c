@@ -47,41 +47,42 @@ pub unsafe extern "C" fn client_new(
         Some(entities)
     };
 
-    let world = FieldElement::from_hex_be(world.as_str());
-
-    if let Err(e) = world {
-        return Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        });
-    }
-    let world = world.unwrap();
+    let world = match FieldElement::from_hex_be(world.as_str()) {
+        Ok(world) => world,
+        Err(e) => return Result::Err(e.into()),
+    };
 
     let client_future = TClient::new(torii_url, rpc_url, libp2p_relay_url, world, some_entities);
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
-    let client = runtime.block_on(client_future).map_err(|e| Error {
-        message: CString::new(e.to_string()).unwrap().into_raw(),
+    let client = match runtime.block_on(client_future) {
+        Ok(client) => client,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    
+
+    // Run relay
+    let relay_runner = client.relay_client_runner();
+    runtime.spawn(async move {
+        relay_runner.lock().await.run().await;
     });
 
-    if let Err(e) = client {
-        return Result::Err(e);
+    // Start subscription
+    let result = runtime.block_on(client.start_subscription());
+    match result {
+        Ok(sub) => {
+            runtime.spawn(sub);
+        }
+        Err(e) => {
+            return Result::Err(e.into())
+        }
     }
 
-    let client = client.unwrap();
     Result::Ok(Box::into_raw(Box::new(ToriiClient {
         inner: client,
         runtime,
     })))
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_run_relay(client: *mut ToriiClient) {
-    let relay_runner = (*client).inner.relay_client_runner();
-
-    (*client).runtime.spawn(async move {
-        relay_runner.lock().await.run().await;
-    });
 }
 
 #[no_mangle]
@@ -125,13 +126,9 @@ pub unsafe extern "C" fn client_subscribe_topic(
 
     let client_future = unsafe { (*client).inner.subscribe_topic(topic) };
 
-    let result = (*client).runtime.block_on(client_future);
-
-    match result {
+    match (*client).runtime.block_on(client_future) {
         Ok(_) => Result::Ok(true),
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
+        Err(e) => Result::Err(e.into()),
     }
 }
 
@@ -145,13 +142,9 @@ pub unsafe extern "C" fn client_unsubscribe_topic(
 
     let client_future = unsafe { (*client).inner.unsubscribe_topic(topic) };
 
-    let result = (*client).runtime.block_on(client_future);
-
-    match result {
+    match (*client).runtime.block_on(client_future) {
         Ok(_) => Result::Ok(true),
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
+        Err(e) => Result::Err(e.into()),
     }
 }
 
@@ -167,13 +160,9 @@ pub unsafe extern "C" fn client_publish_message(
 
     let client_future = unsafe { (*client).inner.publish_message(topic.as_str(), data) };
 
-    let result = (*client).runtime.block_on(client_future);
-
-    match result {
-        Ok(_) => Result::Ok(result.unwrap().into()),
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
+    match (*client).runtime.block_on(client_future) {
+        Ok(data) => Result::Ok(data.into()),
+        Err(e) => Result::Err(e.into()),
     }
 }
 
@@ -186,9 +175,7 @@ pub unsafe extern "C" fn client_model(
     let keys = (&keys.clone()).into();
     let entity_future = unsafe { (*client).inner.model(&keys) };
 
-    let result = (*client).runtime.block_on(entity_future);
-
-    match result {
+    match (*client).runtime.block_on(entity_future) {
         Ok(ty) => {
             if let Some(ty) = ty {
                 Result::Ok(COption::Some(Box::into_raw(Box::new((&ty).into()))))
@@ -196,9 +183,7 @@ pub unsafe extern "C" fn client_model(
                 Result::Ok(COption::None)
             }
         }
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
+        Err(e) => Result::Err(e.into()),
     }
 }
 
@@ -212,17 +197,13 @@ pub unsafe extern "C" fn client_entities(
 
     let entities_future = unsafe { (*client).inner.entities(query) };
 
-    let result = (*client).runtime.block_on(entities_future);
-
-    match result {
+    match (*client).runtime.block_on(entities_future) {
         Ok(entities) => {
             let entities: Vec<Entity> = entities.into_iter().map(|e| (&e).into()).collect();
 
             Result::Ok(entities.into())
         }
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
+        Err(e) => Result::Err(e.into()),
     }
 }
 
@@ -236,23 +217,6 @@ pub unsafe extern "C" fn client_subscribed_models(client: *mut ToriiClient) -> C
         .collect::<Vec<KeysClause>>();
 
     entities.into()
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_start_subscription(client: *mut ToriiClient) -> Result<bool> {
-    let client_future = unsafe { (*client).inner.start_subscription() };
-    let result = (*client).runtime.block_on(client_future);
-
-    match result {
-        Ok(sub) => {
-            (*client).runtime.spawn(sub);
-            Result::Ok(true)
-        }
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
-    }
 }
 
 #[no_mangle]
