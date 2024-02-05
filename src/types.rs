@@ -174,16 +174,9 @@ pub struct Error {
     pub message: *mut c_char,
 }
 
-impl From<torii_client::client::error::Error> for Error {
-    fn from(val: torii_client::client::error::Error) -> Self {
-        Error {
-            message: CString::new(val.to_string()).unwrap().into_raw(),
-        }
-    }
-}
-
-impl From<FromStrError> for Error {
-    fn from(val: FromStrError) -> Self {
+// Implement conversion from std::error::Error to Error
+impl<T> From<T> for Error where T: std::error::Error {
+    fn from(val: T) -> Self {
         Error {
             message: CString::new(val.to_string()).unwrap().into_raw(),
         }

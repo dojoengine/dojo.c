@@ -240,13 +240,9 @@ pub unsafe extern "C" fn client_add_models_to_sync(
             .add_models_to_sync(models.iter().map(|e| e.into()).collect())
     };
 
-    let result = (*client).runtime.block_on(client_future);
-
-    match result {
+    match (*client).runtime.block_on(client_future) {
         Ok(_) => Result::Ok(true),
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
+        Err(e) => Result::Err(e.into()),
     }
 }
 
@@ -260,18 +256,15 @@ pub unsafe extern "C" fn client_on_sync_model_update(
     let model: torii_grpc::types::KeysClause = (&model).into();
     let storage = (*client).inner.storage();
 
-    let rcv = storage.add_listener(
+    let mut rcv = match storage.add_listener(
         cairo_short_string_to_felt(model.model.as_str()).unwrap(),
         model.keys.as_slice(),
-    );
-    if let Err(e) = rcv {
-        return Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        });
-    }
-    let mut rcv = rcv.unwrap();
+    ) {
+        Ok(rcv) => rcv,
+        Err(e) => return Result::Err(e.into()),
+    };
 
-    thread::spawn(move || loop {
+    (*client).runtime.spawn(async move {
         if let Ok(Some(_)) = rcv.try_next() {
             callback();
         }
@@ -293,13 +286,10 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     let entities = entities.iter().map(|e| (&e.clone()).into()).collect();
 
     let entity_stream = unsafe { (*client).inner.on_entity_updated(entities) };
-    let result = (*client).runtime.block_on(entity_stream);
-    if let Err(e) = result {
-        return Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        });
-    }
-    let mut rcv = result.unwrap();
+    let mut rcv = match (*client).runtime.block_on(entity_stream) {
+        Ok(rcv) => rcv,
+        Err(e) => return Result::Err(e.into()),
+    };
 
     (*client).runtime.spawn(async move {
         while let Some(Ok(entity)) = rcv.next().await {
@@ -327,13 +317,9 @@ pub unsafe extern "C" fn client_remove_models_to_sync(
             .remove_models_to_sync(models.iter().map(|e| e.into()).collect())
     };
 
-    let result = (*client).runtime.block_on(client_future);
-
-    match result {
+    match (*client).runtime.block_on(client_future) {
         Ok(_) => Result::Ok(true),
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
+        Err(e) => Result::Err(e.into()),
     }
 }
 
@@ -355,9 +341,7 @@ pub unsafe extern "C" fn signing_key_sign(
 
     match sig {
         Ok(sig) => Result::Ok((&sig).into()),
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
+        Err(e) => Result::Err(e.into()),
     }
 }
 
@@ -385,9 +369,7 @@ pub unsafe extern "C" fn verifying_key_verify(
 
     match verifying_key.verify(hash, signature) {
         Ok(result) => Result::Ok(result),
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
+        Err(e) => Result::Err(e.into()),
     }
 }
 
