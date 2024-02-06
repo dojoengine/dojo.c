@@ -641,3 +641,11 @@ pub unsafe extern "C" fn string_free(string: *mut c_char) {
 }
 
 // TODO: free keys clause
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn keys_clause_free(keys: *mut KeysClause) {
+    if !keys.is_null() {
+        let _: torii_grpc::types::KeysClause = (&*Box::<KeysClause>::from_raw(keys)).into();
+    }
+}
+
