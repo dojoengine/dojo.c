@@ -645,6 +645,8 @@ void carray_free(void *data, uintptr_t data_len);
 
 void string_free(char *string);
 
+void keys_clause_free(struct KeysClause *keys);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus
