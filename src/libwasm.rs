@@ -104,15 +104,14 @@ fn primitive_value_json(primitive: Primitive) -> Value {
 
 type JsFieldElement = JsValue;
 
-// TODO: remove this in favour of the new EntityQuery
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub struct EntityModel {
+pub struct EntityQuery {
     pub model: String,
     pub keys: Vec<FieldElement>,
 }
 
-impl From<EntityModel> for KeysClause {
-    fn from(value: EntityModel) -> Self {
+impl From<EntityQuery> for KeysClause {
+    fn from(value: EntityQuery) -> Self {
         Self {
             model: value.model,
             keys: value.keys,
@@ -121,8 +120,8 @@ impl From<EntityModel> for KeysClause {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-pub const ENTITY_MODEL_STR: &'static str = r#"
-export interface EntityModel {
+pub const ENTITY_QUERY_TS: &'static str = r#"
+export interface EntityQuery {
     model: string;
     keys: string[];
 }
@@ -130,14 +129,15 @@ export interface EntityModel {
 
 #[wasm_bindgen]
 extern "C" {
-    #[wasm_bindgen(typescript_type = "EntityModel")]
-    pub type IEntityModel;
+    #[wasm_bindgen(typescript_type = "EntityQuery")]
+    pub type IEntityQuery;
 }
 
-impl TryFrom<IEntityModel> for KeysClause {
+impl TryFrom<IEntityQuery> for EntityQuery {
     type Error = serde_wasm_bindgen::Error;
-    fn try_from(value: IEntityModel) -> Result<Self, Self::Error> {
-        serde_wasm_bindgen::from_value::<EntityModel>(value.into()).map(|e| e.into())
+
+    fn try_from(value: IEntityQuery) -> Result<Self, Self::Error> {
+        serde_wasm_bindgen::from_value(value.into())
     }
 }
 
@@ -568,7 +568,7 @@ impl Client {
     #[wasm_bindgen(js_name = addModelsToSync)]
     pub async unsafe fn add_models_to_sync(
         &self,
-        models: Vec<IEntityModel>,
+        models: Vec<IEntityQuery>,
     ) -> Result<(), JsValue> {
         log("adding models to sync...");
 
@@ -590,7 +590,7 @@ impl Client {
     #[wasm_bindgen(js_name = removeModelsToSync)]
     pub async unsafe fn remove_models_to_sync(
         &self,
-        models: Vec<IEntityModel>,
+        models: Vec<IEntityQuery>,
     ) -> Result<(), JsValue> {
         log("removing models to sync...");
 
@@ -612,13 +612,13 @@ impl Client {
     #[wasm_bindgen(js_name = onSyncModelChange)]
     pub async fn on_sync_model_change(
         &self,
-        model: IEntityModel,
+        model: IEntityQuery,
         callback: js_sys::Function,
     ) -> Result<(), JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let model = serde_wasm_bindgen::from_value::<EntityModel>(model.into())?;
+        let model = serde_wasm_bindgen::from_value::<EntityQuery>(model.into())?;
         let name = cairo_short_string_to_felt(&model.model).expect("invalid model name");
         let mut rcv = self
             .inner
@@ -749,7 +749,7 @@ impl Client {
 #[wasm_bindgen(js_name = createClient)]
 #[allow(non_snake_case)]
 pub async fn create_client(
-    initialModelsToSync: Vec<IEntityModel>,
+    initialModelsToSync: Vec<IEntityQuery>,
     config: ClientConfig,
 ) -> Result<Client, JsValue> {
     #[cfg(feature = "console-error-panic")]
