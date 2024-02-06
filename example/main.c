@@ -103,10 +103,7 @@ int main()
         return 1;
     }
     CJsonRpcClient *provider = resProvider.ok;
-
-    // run libp2p
-    client_run_relay(client);
-
+    
     // subscribe to topic
     Resultbool resSub = client_subscribe_topic(client, "mimi");
     if (resSub.tag == Errbool)
