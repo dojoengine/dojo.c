@@ -591,17 +591,48 @@ pub enum Primitive {
     U16(u16),
     U32(u32),
     U64(u64),
-    // TODO: better way?
-    U128([u8; 16]),
-    #[cfg(not(target_pointer_width = "32"))]
-    U256([u64; 4]),
-    #[cfg(target_pointer_width = "32")]
+    U128(u128),
+    U256(U256), // Using a custom struct for U256
     U256([u32; 8]),
     USize(u32),
     Bool(bool),
     Felt252(FieldElement),
     ClassHash(FieldElement),
     ContractAddress(FieldElement),
+}
+#[derive(Clone, Copy, Debug)]
+pub struct U256([u64; 4]); // Simple representation, adjust as needed
+
+impl U256 {
+    // Constructor from a byte array
+    pub fn from_bytes(bytes: [u8; 32]) -> Self {
+        let mut parts = [0u64; 4];
+        for i in 0..4 {
+            parts[i] = u64::from_be_bytes([
+                bytes[8 * i],
+                bytes[8 * i + 1],
+                bytes[8 * i + 2],
+                bytes[8 * i + 3],
+                bytes[8 * i + 4],
+                bytes[8 * i + 5],
+                bytes[8 * i + 6],
+                bytes[8 * i + 7],
+            ]);
+        }
+        U256(parts)
+    }
+
+    // Convert to a byte array
+    pub fn to_bytes(&self) -> [u8; 32] {
+        let mut bytes = [0u8; 32];
+        for i in 0..4 {
+            let part_bytes = self.0[i].to_be_bytes();
+            for j in 0..8 {
+                bytes[8 * i + j] = part_bytes[j];
+            }
+        }
+        bytes
+    }
 }
 
 impl From<&Primitive> for dojo_types::primitive::Primitive {
@@ -611,10 +642,12 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
             Primitive::U16(v) => dojo_types::primitive::Primitive::U16(Some(*v)),
             Primitive::U32(v) => dojo_types::primitive::Primitive::U32(Some(*v)),
             Primitive::U64(v) => dojo_types::primitive::Primitive::U64(Some(*v)),
-            Primitive::U128(v) => {
-                dojo_types::primitive::Primitive::U128(Some(u128::from_be_bytes(*v)))
-            }
-            Primitive::U256(v) => dojo_types::primitive::Primitive::U256(Some((*v).into())),
+            Primitive::U128(v) => dojo_types::primitive::Primitive::U128(Some(*v)),
+            Primitive::U256(v) => {
+                let bytes = v.to_bytes();
+                // Assuming dojo_types::primitive::Primitive::U256 expects a byte array or similar
+                dojo_types::primitive::Primitive::U256(Some(bytes.into()))
+            },
             Primitive::USize(v) => dojo_types::primitive::Primitive::USize(Some(*v)),
             Primitive::Bool(v) => dojo_types::primitive::Primitive::Bool(Some(*v)),
             Primitive::Felt252(v) => {
@@ -638,22 +671,13 @@ impl From<&dojo_types::primitive::Primitive> for Primitive {
             dojo_types::primitive::Primitive::U32(v) => Primitive::U32(v.unwrap_or(0)),
             dojo_types::primitive::Primitive::U64(v) => Primitive::U64(v.unwrap_or(0)),
             dojo_types::primitive::Primitive::U128(v) => {
-                if let Some(v) = v {
-                    Primitive::U128(v.to_be_bytes())
-                } else {
-                    Primitive::U128([0; 16])
-                }
-            }
+                Primitive::U128(*v.unwrap_or_default())
+            },
             dojo_types::primitive::Primitive::U256(v) => {
-                if let Some(v) = v {
-                    Primitive::U256(v.to_words())
-                } else {
-                    #[cfg(not(target_pointer_width = "32"))]
-                    return Primitive::U256([0; 4]);
-                    #[cfg(target_pointer_width = "32")]
-                    return Primitive::U256([0; 8]);
-                }
-            }
+                // Assuming `v` is a byte array or similar; adjust as needed
+                let bytes = v.unwrap_or_else(|| [0u8; 32]);
+                Primitive::U256(U256::from_bytes(bytes))
+            },
             dojo_types::primitive::Primitive::USize(v) => Primitive::USize(v.unwrap_or(0)),
             dojo_types::primitive::Primitive::Bool(v) => Primitive::Bool(v.unwrap_or(false)),
             dojo_types::primitive::Primitive::Felt252(v) => {
