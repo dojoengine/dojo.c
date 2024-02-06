@@ -593,7 +593,6 @@ pub enum Primitive {
     U64(u64),
     U128(u128),
     U256(U256), // Using a custom struct for U256
-    U256([u32; 8]),
     USize(u32),
     Bool(bool),
     Felt252(FieldElement),
