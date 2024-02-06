@@ -647,7 +647,7 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
                 let bytes = v.to_bytes();
                 // Assuming dojo_types::primitive::Primitive::U256 expects a byte array or similar
                 dojo_types::primitive::Primitive::U256(Some(bytes.into()))
-            },
+            }
             Primitive::USize(v) => dojo_types::primitive::Primitive::USize(Some(*v)),
             Primitive::Bool(v) => dojo_types::primitive::Primitive::Bool(Some(*v)),
             Primitive::Felt252(v) => {
@@ -670,14 +670,12 @@ impl From<&dojo_types::primitive::Primitive> for Primitive {
             dojo_types::primitive::Primitive::U16(v) => Primitive::U16(v.unwrap_or(0)),
             dojo_types::primitive::Primitive::U32(v) => Primitive::U32(v.unwrap_or(0)),
             dojo_types::primitive::Primitive::U64(v) => Primitive::U64(v.unwrap_or(0)),
-            dojo_types::primitive::Primitive::U128(v) => {
-                Primitive::U128(*v.unwrap_or_default())
-            },
+            dojo_types::primitive::Primitive::U128(v) => Primitive::U128(*v.unwrap_or_default()),
             dojo_types::primitive::Primitive::U256(v) => {
                 // Assuming `v` is a byte array or similar; adjust as needed
                 let bytes = v.unwrap_or_else(|| [0u8; 32]);
                 Primitive::U256(U256::from_bytes(bytes))
-            },
+            }
             dojo_types::primitive::Primitive::USize(v) => Primitive::USize(v.unwrap_or(0)),
             dojo_types::primitive::Primitive::Bool(v) => Primitive::Bool(v.unwrap_or(false)),
             dojo_types::primitive::Primitive::Felt252(v) => {
