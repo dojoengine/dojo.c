@@ -28,6 +28,8 @@ typedef struct CJsonRpcClient CJsonRpcClient;
 
 typedef struct ToriiClient ToriiClient;
 
+typedef struct U256 U256;
+
 typedef struct Error {
   char *message;
 } Error;
@@ -108,12 +110,7 @@ typedef enum Primitive_Tag {
   U32,
   U64,
   U128,
-#if !defined(TARGET_POINTER_WIDTH_32)
   U256,
-#endif
-#if defined(TARGET_POINTER_WIDTH_32)
-  U256,
-#endif
   USize,
   Bool,
   Felt252,
@@ -137,18 +134,11 @@ typedef struct Primitive {
       uint64_t u64;
     };
     struct {
-      uint8_t u128[16];
+      u128 u128;
     };
-#if !defined(TARGET_POINTER_WIDTH_32)
     struct {
-      uint64_t u256[4];
+      struct U256 u256;
     };
-#endif
-#if defined(TARGET_POINTER_WIDTH_32)
-    struct {
-      uint32_t u256[8];
-    };
-#endif
     struct {
       uint32_t u_size;
     };
