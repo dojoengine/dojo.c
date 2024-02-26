@@ -5,7 +5,6 @@ use crate::types::{
     Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
 };
 use crate::utils::watch_tx;
-use starknet::accounts::ExecutionEncoder;
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::types::FunctionCall;
 use starknet::core::utils::{
