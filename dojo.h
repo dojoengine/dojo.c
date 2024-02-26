@@ -489,6 +489,29 @@ typedef struct ResultAccount {
   };
 } ResultAccount;
 
+typedef enum ResultCArrayFieldElement_Tag {
+  OkCArrayFieldElement,
+  ErrCArrayFieldElement,
+} ResultCArrayFieldElement_Tag;
+
+typedef struct ResultCArrayFieldElement {
+  ResultCArrayFieldElement_Tag tag;
+  union {
+    struct {
+      struct CArrayFieldElement ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultCArrayFieldElement;
+
+typedef struct Call {
+  const char *to;
+  const char *selector;
+  struct CArrayFieldElement calldata;
+} Call;
+
 /**
  * Block hash, number or tag
  */
@@ -529,12 +552,6 @@ typedef struct ResultFieldElement {
     };
   };
 } ResultFieldElement;
-
-typedef struct Call {
-  const char *to;
-  const char *selector;
-  struct CArrayFieldElement calldata;
-} Call;
 
 #ifdef __cplusplus
 extern "C" {
@@ -603,6 +620,10 @@ struct ResultCJsonRpcClient jsonrpc_client_new(const char *rpc_url);
 struct ResultAccount account_new(struct CJsonRpcClient *rpc,
                                  struct FieldElement private_key,
                                  const char *address);
+
+struct ResultCArrayFieldElement starknet_call(struct CJsonRpcClient *provider,
+                                              struct Call call,
+                                              struct BlockId block_id);
 
 struct ResultAccount account_deploy_burner(struct CJsonRpcClient *provider,
                                            struct Account *master_account);

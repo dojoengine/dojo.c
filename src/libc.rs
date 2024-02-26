@@ -5,7 +5,9 @@ use crate::types::{
     Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
 };
 use crate::utils::watch_tx;
+use starknet::accounts::ExecutionEncoder;
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
+use starknet::core::types::FunctionCall;
 use starknet::core::utils::{
     cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
 };
@@ -409,6 +411,32 @@ pub unsafe extern "C" fn account_new(
         SingleOwnerAccount::new(&(*rpc).0, signer, address, chain_id, ExecutionEncoding::New);
 
     Result::Ok(Box::into_raw(Box::new(Account(account))))
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn starknet_call(
+    provider: *mut CJsonRpcClient,
+    call: Call,
+    block_id: BlockId,
+) -> Result<CArray<types::FieldElement>> {
+    let res = match tokio::runtime::Runtime::new() {
+        Ok(runtime) => match runtime.block_on(
+            (*provider)
+                .0
+                .call::<FunctionCall, starknet::core::types::BlockId>(
+                    (&call).into(),
+                    (&block_id).into(),
+                ),
+        ) {
+            Ok(res) => res,
+            Err(e) => return Result::Err(e.into()),
+        },
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    let res: Vec<_> = res.iter().map(|f| f.into()).collect::<Vec<_>>();
+    Result::Ok(res.into())
 }
 
 #[no_mangle]

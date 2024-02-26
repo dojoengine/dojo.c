@@ -131,6 +131,23 @@ impl From<&Call> for starknet::accounts::Call {
     }
 }
 
+impl From<&Call> for starknet::core::types::FunctionCall {
+    fn from(val: &Call) -> Self {
+        let to = unsafe { CStr::from_ptr(val.to).to_string_lossy().to_string() };
+        let selector = unsafe { CStr::from_ptr(val.selector).to_string_lossy().to_string() };
+
+        let calldata: Vec<FieldElement> = (&val.calldata).into();
+        let calldata = std::mem::ManuallyDrop::new(calldata);
+        let calldata = calldata.iter().map(|c| (&c.clone()).into()).collect();
+
+        starknet::core::types::FunctionCall {
+            contract_address: starknet_crypto::FieldElement::from_hex_be(&to).unwrap(),
+            entry_point_selector: get_selector_from_name(&selector).unwrap(),
+            calldata,
+        }
+    }
+}
+
 pub struct ToriiClient {
     pub inner: Client,
     pub runtime: tokio::runtime::Runtime,
