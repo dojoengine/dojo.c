@@ -8,9 +8,9 @@ use futures::lock::Mutex;
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use starknet::accounts::{
-    Account as _, Call, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount,
+    Account as _, Call, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount
 };
-use starknet::core::types::{BlockId, FieldElement};
+use starknet::core::types::{BlockId, BlockTag, FieldElement, FunctionCall};
 use starknet::core::utils::{
     cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
 };
@@ -195,9 +195,11 @@ impl From<&JsSignature> for Signature {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct JsCalls {
-    pub calls: Vec<JsCall>,
-}
+pub struct Strings(Vec<String>);
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct JsCalls(Vec<JsCall>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -217,6 +219,38 @@ impl From<&JsCall> for starknet::accounts::Call {
                 .iter()
                 .map(|c| FieldElement::from_str(c.as_str()).unwrap())
                 .collect(),
+        }
+    }
+}
+
+impl From<&JsCall> for FunctionCall {
+    fn from(value: &JsCall) -> Self {
+        Self {
+            contract_address: FieldElement::from_str(value.to.as_str()).unwrap(),
+            entry_point_selector: get_selector_from_name(value.selector.as_str()).unwrap(),
+            calldata: value
+                .calldata
+                .iter()
+                .map(|c| FieldElement::from_str(c.as_str()).unwrap())
+                .collect(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum JsBlockId {
+    Hash(FieldElement),
+    Number(u64),
+    BlockTag(BlockTag),
+}
+
+impl From<&JsBlockId> for BlockId {
+    fn from(value: &JsBlockId) -> Self {
+        match value {
+            JsBlockId::Hash(hash) => BlockId::Hash(*hash),
+            JsBlockId::Number(number) => BlockId::Number(*number),
+            JsBlockId::BlockTag(tag) => BlockId::Tag(*tag),
         }
     }
 }
@@ -373,6 +407,23 @@ pub async unsafe fn account_execute_raw(
 
     match result {
         Ok(res) => Ok(format!("{:#x}", res.transaction_hash)),
+        Err(e) => Err(JsValue::from_str(&e.to_string())),
+    }
+}
+
+#[wasm_bindgen(js_name = starknetCall)]
+pub async unsafe fn starknet_call(
+    provider: *mut CJsonRpcClient,
+    call: JsCall,
+    block_id: JsBlockId,
+) -> Result<Strings, JsValue> {
+    let result = (*provider)
+        .0
+        .call::<FunctionCall, starknet::core::types::BlockId>((&call).into(), (&block_id).into())
+        .await;
+
+    match result {
+        Ok(res) => Ok(res.iter().map(|f| format!("{:#x}", f))),
         Err(e) => Err(JsValue::from_str(&e.to_string())),
     }
 }
