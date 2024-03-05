@@ -1,14 +1,13 @@
-//! Minimal JS bindings for the torii client.
+mod utils;
 
-use std::cell::{OnceCell, RefCell};
 use std::str::FromStr;
 use std::sync::Arc;
 
-use futures::lock::Mutex;
 use futures::StreamExt;
+use js_sys::Array;
 use serde::{Deserialize, Serialize};
 use starknet::accounts::{
-    Account as _, Call, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount
+    Account as _, Call, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount,
 };
 use starknet::core::types::{BlockId, BlockTag, FieldElement, FunctionCall};
 use starknet::core::utils::{
@@ -20,87 +19,12 @@ use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
 use starknet_crypto::Signature;
 use torii_grpc::types::{Clause, KeysClause, Query};
 use tsify::Tsify;
-use wasm_bindgen::{prelude::*, JsObject};
-
-use dojo_types::primitive::Primitive;
-use dojo_types::schema::Ty;
-use serde_json::Value;
-use torii_grpc::types::schema::Entity;
+use wasm_bindgen::prelude::*;
 
 use crate::constants;
-use crate::types::{Account, CJsonRpcClient};
+use crate::types::{Account, Provider};
 use crate::utils::watch_tx;
-
-pub fn parse_entities_as_json_str(entities: Vec<Entity>) -> Value {
-    entities
-        .into_iter()
-        .map(|entity| {
-            let entity_key = format!("{:#x}", entity.hashed_keys);
-            let models_map = entity
-                .models
-                .into_iter()
-                .map(|model| {
-                    let model_map = model
-                        .members
-                        .iter()
-                        .map(|member| (member.name.to_owned(), parse_ty_as_json_str(&member.ty)))
-                        .collect::<serde_json::Map<String, Value>>();
-
-                    (model.name, model_map.into())
-                })
-                .collect::<serde_json::Map<String, Value>>();
-
-            (entity_key, models_map.into())
-        })
-        .collect::<serde_json::Map<String, Value>>()
-        .into()
-}
-
-pub fn parse_ty_as_json_str(ty: &Ty) -> Value {
-    match ty {
-        Ty::Primitive(primitive) => serde_json::json!({
-            "type": primitive.to_string(),
-            "value": primitive_value_json(*primitive)
-        }),
-
-        Ty::Struct(struct_ty) => serde_json::json!({
-            "type": "struct",
-            "value": struct_ty
-            .children
-            .iter()
-            .map(|child| (child.name.to_owned(), parse_ty_as_json_str(&child.ty)))
-            .collect::<serde_json::Map<String, Value>>()
-        }),
-
-        Ty::Enum(enum_ty) => serde_json::json!({
-            "type": "enum",
-            "value": if let Some(option) = enum_ty.option {
-                option.into()
-            } else {
-                Value::Null
-            }
-        }),
-
-        Ty::Tuple(_) => unimplemented!("tuple not supported"),
-    }
-}
-
-fn primitive_value_json(primitive: Primitive) -> Value {
-    match primitive {
-        Primitive::Bool(Some(value)) => Value::Bool(value),
-        Primitive::U8(Some(value)) => Value::Number(value.into()),
-        Primitive::U16(Some(value)) => Value::Number(value.into()),
-        Primitive::U32(Some(value)) => Value::Number(value.into()),
-        Primitive::U64(Some(value)) => Value::Number(value.into()),
-        Primitive::USize(Some(value)) => Value::Number(value.into()),
-        Primitive::U128(Some(value)) => Value::String(format!("{value:#x}")),
-        Primitive::U256(Some(value)) => Value::String(format!("{value:#x}")),
-        Primitive::Felt252(Some(value)) => Value::String(format!("{value:#x}")),
-        Primitive::ClassHash(Some(value)) => Value::String(format!("{value:#x}")),
-        Primitive::ContractAddress(Some(value)) => Value::String(format!("{value:#x}")),
-        _ => Value::Null,
-    }
-}
+use crate::wasm::utils::{parse_entities_as_json_str, parse_ty_as_json_str};
 
 type JsFieldElement = JsValue;
 
@@ -323,8 +247,8 @@ pub fn verifying_key_verify(
     }
 }
 
-#[wasm_bindgen(js_name = jsonrpcClientNew)]
-pub unsafe fn jsonrpc_client_new(rpc_url: &str) -> Result<*mut CJsonRpcClient, JsValue> {
+#[wasm_bindgen(js_name = createProvider)]
+pub unsafe fn create_provider(rpc_url: &str) -> Result<*mut Provider, JsValue> {
     let rpc_url = url::Url::parse(rpc_url);
     if let Err(e) = rpc_url {
         return Err(JsValue::from(format!("failed to parse rpc url: {e}")));
@@ -333,113 +257,162 @@ pub unsafe fn jsonrpc_client_new(rpc_url: &str) -> Result<*mut CJsonRpcClient, J
 
     let rpc = JsonRpcClient::new(HttpTransport::new(rpc_url));
 
-    Result::Ok(Box::into_raw(Box::new(CJsonRpcClient(rpc))))
+    Result::Ok(Box::into_raw(Box::new(Provider(Arc::new(rpc)))))
 }
 
-#[wasm_bindgen(js_name = accountNew)]
-pub async unsafe fn account_new(
-    rpc: *mut CJsonRpcClient,
-    private_key: &str,
-    address: &str,
-) -> Result<*mut Account, JsValue> {
-    let private_key = FieldElement::from_hex_be(private_key);
-    if let Err(e) = private_key {
-        return Err(JsValue::from(format!("failed to parse private key: {e}")));
+#[wasm_bindgen]
+impl Provider {
+    #[wasm_bindgen(js_name = createAccount)]
+    pub async unsafe fn create_account(
+        &self,
+        private_key: &str,
+        address: &str,
+    ) -> Result<*mut Account, JsValue> {
+        let private_key = FieldElement::from_hex_be(private_key);
+        if let Err(e) = private_key {
+            return Err(JsValue::from(format!("failed to parse private key: {e}")));
+        }
+
+        let private_key = private_key.unwrap();
+
+        let address = FieldElement::from_hex_be(address);
+        if let Err(e) = address {
+            return Err(JsValue::from(format!("failed to parse address: {e}")));
+        }
+
+        let address = address.unwrap();
+
+        let chain_id = (*self).0.chain_id().await;
+        if let Err(e) = chain_id {
+            return Err(JsValue::from(format!("failed to get chain id: {e}")));
+        }
+
+        let chain_id = chain_id.unwrap();
+
+        let signer = LocalWallet::from_signing_key(SigningKey::from_secret_scalar(private_key));
+        let account = SingleOwnerAccount::new(
+            (*self).0.clone(),
+            signer,
+            address,
+            chain_id,
+            ExecutionEncoding::New,
+        );
+
+        Result::Ok(Box::into_raw(Box::new(Account(account))))
     }
 
-    let private_key = private_key.unwrap();
+    #[wasm_bindgen(js_name = call)]
+    pub async unsafe fn call(&self, call: JsCall, block_id: JsBlockId) -> Result<Array, JsValue> {
+        let result = (*self)
+            .0
+            .call::<FunctionCall, starknet::core::types::BlockId>(
+                (&call).into(),
+                (&block_id).into(),
+            )
+            .await;
 
-    let address = FieldElement::from_hex_be(address);
-    if let Err(e) = address {
-        return Err(JsValue::from(format!("failed to parse address: {e}")));
+        match result {
+            Ok(res) => Ok(res
+                .iter()
+                .map(|f| JsValue::from(format!("{:#x}", f)))
+                .collect()),
+            Err(e) => Err(JsValue::from_str(&e.to_string())),
+        }
     }
 
-    let address = address.unwrap();
+    #[wasm_bindgen(js_name = waitForTransaction)]
+    pub async unsafe fn wait_for_transaction(&self, txn_hash: &str) -> Result<bool, JsValue> {
+        let txn_hash = FieldElement::from_hex_be(txn_hash)
+            .map_err(|err| JsValue::from(format!("failed to parse transaction hash: {err}")))?;
+        let result: Result<(), anyhow::Error> = watch_tx(&(*self).0, txn_hash).await;
 
-    let chain_id = (*rpc).0.chain_id().await;
-    if let Err(e) = chain_id {
-        return Err(JsValue::from(format!("failed to get chain id: {e}")));
-    }
-
-    let chain_id = chain_id.unwrap();
-
-    let signer = LocalWallet::from_signing_key(SigningKey::from_secret_scalar(private_key));
-    let account =
-        SingleOwnerAccount::new(&(*rpc).0, signer, address, chain_id, ExecutionEncoding::New);
-
-    Result::Ok(Box::into_raw(Box::new(Account(account))))
-}
-
-#[wasm_bindgen(js_name = accountAddress)]
-pub unsafe fn account_address(account: *mut Account) -> Result<String, JsValue> {
-    let address = (*account).0.address();
-    Ok(format!("{:#x}", address))
-}
-
-#[wasm_bindgen(js_name = accountChainId)]
-pub unsafe fn account_chain_id(account: *mut Account) -> Result<String, JsValue> {
-    let chain_id = (*account).0.chain_id();
-    Ok(format!("{:#x}", chain_id))
-}
-
-#[wasm_bindgen(js_name = accountSetBlockId)]
-pub unsafe fn account_set_block_id(account: *mut Account, block_id: String) -> Result<(), JsValue> {
-    let block_id = FieldElement::from_hex_be(&block_id)
-        .map_err(|err| JsValue::from(format!("failed to parse block id: {err}")))?;
-    (*account).0.set_block_id(BlockId::Hash(block_id));
-    Ok(())
-}
-
-#[wasm_bindgen(js_name = accountExecuteRaw)]
-pub async unsafe fn account_execute_raw(
-    account: *mut Account,
-    calldata: JsCalls,
-) -> Result<String, JsValue> {
-    let calldata = calldata
-        .calls
-        .iter()
-        .map(|c| c.into())
-        .collect::<Vec<Call>>();
-
-    let call = (*account).0.execute(calldata);
-
-    let result = call.send().await;
-
-    match result {
-        Ok(res) => Ok(format!("{:#x}", res.transaction_hash)),
-        Err(e) => Err(JsValue::from_str(&e.to_string())),
+        match result {
+            Ok(_) => Result::Ok(true),
+            Err(e) => Err(JsValue::from_str(&e.to_string())),
+        }
     }
 }
 
-#[wasm_bindgen(js_name = starknetCall)]
-pub async unsafe fn starknet_call(
-    provider: *mut CJsonRpcClient,
-    call: JsCall,
-    block_id: JsBlockId,
-) -> Result<Strings, JsValue> {
-    let result = (*provider)
-        .0
-        .call::<FunctionCall, starknet::core::types::BlockId>((&call).into(), (&block_id).into())
-        .await;
-
-    match result {
-        Ok(res) => Ok(res.iter().map(|f| format!("{:#x}", f))),
-        Err(e) => Err(JsValue::from_str(&e.to_string())),
+#[wasm_bindgen]
+impl Account {
+    #[wasm_bindgen(js_name = address)]
+    pub unsafe fn address(&self) -> Result<String, JsValue> {
+        let address = (*self).0.address();
+        Ok(format!("{:#x}", address))
     }
-}
 
-#[wasm_bindgen(js_name = waitForTransaction)]
-pub async unsafe fn wait_for_transaction(
-    rpc: *mut CJsonRpcClient,
-    txn_hash: &str,
-) -> Result<bool, JsValue> {
-    let txn_hash = FieldElement::from_hex_be(txn_hash)
-        .map_err(|err| JsValue::from(format!("failed to parse transaction hash: {err}")))?;
-    let result: Result<(), anyhow::Error> = watch_tx(&(*rpc).0, txn_hash).await;
+    #[wasm_bindgen(js_name = chainId)]
+    pub unsafe fn chain_id(&self) -> Result<String, JsValue> {
+        let chain_id = (*self).0.chain_id();
+        Ok(format!("{:#x}", chain_id))
+    }
 
-    match result {
-        Ok(_) => Result::Ok(true),
-        Err(e) => Err(JsValue::from_str(&e.to_string())),
+    #[wasm_bindgen(js_name = setBlockId)]
+    pub unsafe fn set_block_id(&mut self, block_id: String) -> Result<(), JsValue> {
+        let block_id = FieldElement::from_hex_be(&block_id)
+            .map_err(|err| JsValue::from(format!("failed to parse block id: {err}")))?;
+        (*self).0.set_block_id(BlockId::Hash(block_id));
+        Ok(())
+    }
+
+    #[wasm_bindgen(js_name = executeRaw)]
+    pub async unsafe fn execute_raw(&self, calldata: JsCalls) -> Result<String, JsValue> {
+        let calldata = calldata.0.iter().map(|c| c.into()).collect::<Vec<Call>>();
+
+        let call = (*self).0.execute(calldata);
+
+        let result = call.send().await;
+
+        match result {
+            Ok(res) => Ok(format!("{:#x}", res.transaction_hash)),
+            Err(e) => Err(JsValue::from_str(&e.to_string())),
+        }
+    }
+
+    #[wasm_bindgen(js_name = deployBurner)]
+    pub async unsafe fn deploy_burner(&self) -> Result<*mut Account, JsValue> {
+        let signing_key = SigningKey::from_random();
+        let verifying_key = signing_key.verifying_key();
+        let address = get_contract_address(
+            verifying_key.scalar(),
+            constants::KATANA_ACCOUNT_CLASS_HASH,
+            &[verifying_key.scalar()],
+            FieldElement::ZERO,
+        );
+        let signer = LocalWallet::from_signing_key(signing_key);
+
+        let chain_id = (*self).0.chain_id();
+
+        let provider = (*self).0.provider().clone();
+        let account =
+            SingleOwnerAccount::new(provider, signer, address, chain_id, ExecutionEncoding::New);
+
+        // deploy the burner
+        let exec = (*self).0.execute(vec![starknet::accounts::Call {
+            to: constants::UDC_ADDRESS,
+            calldata: vec![
+                constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
+                verifying_key.scalar(),               // salt
+                FieldElement::ZERO,                   // deployer_address
+                FieldElement::ONE,                    // constructor calldata length (1)
+                verifying_key.scalar(),               // constructor calldata
+            ],
+            selector: get_selector_from_name("deployContract").unwrap(),
+        }]);
+
+        let result = exec.send().await;
+
+        if let Err(e) = result {
+            return Err(JsValue::from(format!(
+                "failed to start torii client subscription service: {e}"
+            )));
+        }
+
+        let result = result.unwrap();
+
+        let _ = watch_tx((*self).0.provider(), result.transaction_hash).await;
+
+        Result::Ok(Box::into_raw(Box::new(Account(account))))
     }
 }
 
@@ -469,58 +442,6 @@ pub fn hash_get_contract_address(
     let address = get_contract_address(salt, class_hash, &constructor_calldata, deployer_address);
 
     Ok(format!("{:#x}", address))
-}
-
-#[wasm_bindgen(js_name = accountDeployBurner)]
-pub async unsafe fn account_deploy_burner(
-    master_account: *mut Account,
-) -> Result<*mut Account, JsValue> {
-    let signing_key = SigningKey::from_random();
-    let verifying_key = signing_key.verifying_key();
-    let address = get_contract_address(
-        verifying_key.scalar(),
-        constants::KATANA_ACCOUNT_CLASS_HASH,
-        &[verifying_key.scalar()],
-        FieldElement::ZERO,
-    );
-    let signer = LocalWallet::from_signing_key(signing_key);
-
-    let chain_id = (*master_account).0.chain_id();
-
-    let account = SingleOwnerAccount::new(
-        *(*master_account).0.provider(),
-        signer,
-        address,
-        chain_id,
-        ExecutionEncoding::New,
-    );
-
-    // deploy the burner
-    let exec = (*master_account).0.execute(vec![starknet::accounts::Call {
-        to: constants::UDC_ADDRESS,
-        calldata: vec![
-            constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
-            verifying_key.scalar(),               // salt
-            FieldElement::ZERO,                   // deployer_address
-            FieldElement::ONE,                    // constructor calldata length (1)
-            verifying_key.scalar(),               // constructor calldata
-        ],
-        selector: get_selector_from_name("deployContract").unwrap(),
-    }]);
-
-    let result = exec.send().await;
-
-    if let Err(e) = result {
-        return Err(JsValue::from(format!(
-            "failed to start torii client subscription service: {e}"
-        )));
-    }
-
-    let result = result.unwrap();
-
-    let _ = watch_tx((*master_account).0.provider(), result.transaction_hash).await;
-
-    Result::Ok(Box::into_raw(Box::new(Account(account))))
 }
 
 #[wasm_bindgen]

@@ -24,7 +24,7 @@ typedef enum LogicalOperator {
 
 typedef struct Account Account;
 
-typedef struct CJsonRpcClient CJsonRpcClient;
+typedef struct Provider Provider;
 
 typedef struct ToriiClient ToriiClient;
 
@@ -455,22 +455,22 @@ typedef struct ResultSignature {
   };
 } ResultSignature;
 
-typedef enum ResultCJsonRpcClient_Tag {
-  OkCJsonRpcClient,
-  ErrCJsonRpcClient,
-} ResultCJsonRpcClient_Tag;
+typedef enum ResultProvider_Tag {
+  OkProvider,
+  ErrProvider,
+} ResultProvider_Tag;
 
-typedef struct ResultCJsonRpcClient {
-  ResultCJsonRpcClient_Tag tag;
+typedef struct ResultProvider {
+  ResultProvider_Tag tag;
   union {
     struct {
-      struct CJsonRpcClient *ok;
+      struct Provider *ok;
     };
     struct {
       struct Error err;
     };
   };
-} ResultCJsonRpcClient;
+} ResultProvider;
 
 typedef enum ResultAccount_Tag {
   OkAccount,
@@ -518,7 +518,7 @@ typedef struct Call {
 typedef enum BlockId_Tag {
   Hash,
   Number,
-  BlockTag_,
+  Tag,
 } BlockId_Tag;
 
 typedef struct BlockId {
@@ -531,7 +531,7 @@ typedef struct BlockId {
       uint64_t number;
     };
     struct {
-      enum BlockTag block_tag;
+      enum BlockTag tag;
     };
   };
 } BlockId;
@@ -615,17 +615,17 @@ struct Resultbool verifying_key_verify(struct FieldElement verifying_key,
                                        struct FieldElement hash,
                                        struct Signature signature);
 
-struct ResultCJsonRpcClient jsonrpc_client_new(const char *rpc_url);
+struct ResultProvider provider_new(const char *rpc_url);
 
-struct ResultAccount account_new(struct CJsonRpcClient *rpc,
+struct ResultAccount account_new(struct Provider *rpc,
                                  struct FieldElement private_key,
                                  const char *address);
 
-struct ResultCArrayFieldElement starknet_call(struct CJsonRpcClient *provider,
+struct ResultCArrayFieldElement starknet_call(struct Provider *provider,
                                               struct Call call,
                                               struct BlockId block_id);
 
-struct ResultAccount account_deploy_burner(struct CJsonRpcClient *provider,
+struct ResultAccount account_deploy_burner(struct Provider *provider,
                                            struct Account *master_account);
 
 struct FieldElement account_address(struct Account *account);
@@ -638,7 +638,7 @@ struct ResultFieldElement account_execute_raw(struct Account *account,
                                               const struct Call *calldata,
                                               uintptr_t calldata_len);
 
-struct Resultbool wait_for_transaction(struct CJsonRpcClient *rpc, struct FieldElement txn_hash);
+struct Resultbool wait_for_transaction(struct Provider *rpc, struct FieldElement txn_hash);
 
 struct FieldElement hash_get_contract_address(struct FieldElement class_hash,
                                               struct FieldElement salt,
@@ -648,7 +648,7 @@ struct FieldElement hash_get_contract_address(struct FieldElement class_hash,
 
 void client_free(struct ToriiClient *t);
 
-void jsonrpc_client_free(struct CJsonRpcClient *rpc);
+void provider_free(struct Provider *rpc);
 
 void model_free(struct Model *model);
 

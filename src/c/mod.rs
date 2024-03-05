@@ -1,9 +1,11 @@
-use crate::constants;
-use crate::types;
-use crate::types::{
-    Account, BlockId, CArray, CJsonRpcClient, COption, Call, Entity, Error, KeysClause, Model,
-    Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
+mod types;
+
+use self::types::{
+    BlockId, CArray, COption, Call, Entity, Error, KeysClause, Model, Query, Result, Signature,
+    ToriiClient, Ty, WorldMetadata,
 };
+use crate::constants;
+use crate::types::{Account, Provider};
 use crate::utils::watch_tx;
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::types::FunctionCall;
@@ -11,12 +13,13 @@ use starknet::core::utils::{
     cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
 };
 use starknet::providers::jsonrpc::HttpTransport;
-use starknet::providers::{JsonRpcClient, Provider};
+use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
 use starknet_crypto::FieldElement;
 use std::ffi::{c_void, CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
+use std::sync::Arc;
 use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 
@@ -371,7 +374,7 @@ pub unsafe extern "C" fn verifying_key_verify(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn jsonrpc_client_new(rpc_url: *const c_char) -> Result<*mut CJsonRpcClient> {
+pub unsafe extern "C" fn provider_new(rpc_url: *const c_char) -> Result<*mut Provider> {
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy() };
     let rpc_url = match url::Url::parse(rpc_url.deref()) {
         Ok(url) => url,
@@ -380,13 +383,13 @@ pub unsafe extern "C" fn jsonrpc_client_new(rpc_url: *const c_char) -> Result<*m
 
     let rpc = JsonRpcClient::new(HttpTransport::new(rpc_url));
 
-    Result::Ok(Box::into_raw(Box::new(CJsonRpcClient(rpc))))
+    Result::Ok(Box::into_raw(Box::new(Provider(Arc::new(rpc)))))
 }
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn account_new(
-    rpc: *mut CJsonRpcClient,
+    rpc: *mut Provider,
     private_key: types::FieldElement,
     address: *const c_char,
 ) -> Result<*mut Account> {
@@ -406,8 +409,13 @@ pub unsafe extern "C" fn account_new(
 
     let signer =
         LocalWallet::from_signing_key(SigningKey::from_secret_scalar((&private_key).into()));
-    let account =
-        SingleOwnerAccount::new(&(*rpc).0, signer, address, chain_id, ExecutionEncoding::New);
+    let account = SingleOwnerAccount::new(
+        (*rpc).0.clone(),
+        signer,
+        address,
+        chain_id,
+        ExecutionEncoding::New,
+    );
 
     Result::Ok(Box::into_raw(Box::new(Account(account))))
 }
@@ -415,7 +423,7 @@ pub unsafe extern "C" fn account_new(
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn starknet_call(
-    provider: *mut CJsonRpcClient,
+    provider: *mut Provider,
     call: Call,
     block_id: BlockId,
 ) -> Result<CArray<types::FieldElement>> {
@@ -441,7 +449,7 @@ pub unsafe extern "C" fn starknet_call(
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn account_deploy_burner(
-    provider: *mut CJsonRpcClient,
+    provider: *mut Provider,
     master_account: *mut Account,
 ) -> Result<*mut Account> {
     let signing_key = SigningKey::from_random();
@@ -457,7 +465,7 @@ pub unsafe extern "C" fn account_deploy_burner(
     let chain_id = (*master_account).0.chain_id();
 
     let account = SingleOwnerAccount::new(
-        &(*provider).0,
+        (*provider).0.clone(),
         signer,
         address,
         chain_id,
@@ -540,7 +548,7 @@ pub unsafe extern "C" fn account_execute_raw(
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn wait_for_transaction(
-    rpc: *mut CJsonRpcClient,
+    rpc: *mut Provider,
     txn_hash: types::FieldElement,
 ) -> Result<bool> {
     let txn_hash = (&txn_hash).into();
@@ -593,7 +601,7 @@ pub unsafe extern "C" fn client_free(t: *mut ToriiClient) {
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn jsonrpc_client_free(rpc: *mut CJsonRpcClient) {
+pub unsafe extern "C" fn provider_free(rpc: *mut Provider) {
     if !rpc.is_null() {
         unsafe {
             let _ = Box::from_raw(rpc);
