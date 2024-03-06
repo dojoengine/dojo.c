@@ -518,7 +518,7 @@ typedef struct Call {
 typedef enum BlockId_Tag {
   Hash,
   Number,
-  Tag,
+  BlockTag,
 } BlockId_Tag;
 
 typedef struct BlockId {
@@ -531,7 +531,7 @@ typedef struct BlockId {
       uint64_t number;
     };
     struct {
-      enum BlockTag tag;
+      enum BlockTag block_tag;
     };
   };
 } BlockId;
