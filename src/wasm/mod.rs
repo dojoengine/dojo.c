@@ -3,13 +3,14 @@ mod utils;
 use std::str::FromStr;
 use std::sync::Arc;
 
+use crypto_bigint::U256;
 use futures::StreamExt;
 use js_sys::Array;
 use serde::{Deserialize, Serialize};
 use starknet::accounts::{
-    Account as _, Call, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount,
+    Account as _, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount,
 };
-use starknet::core::types::{BlockId, BlockTag, FieldElement, FunctionCall};
+use starknet::core::types::{FieldElement, FunctionCall};
 use starknet::core::utils::{
     cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
 };
@@ -17,7 +18,6 @@ use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
 use starknet_crypto::Signature;
-use torii_grpc::types::{Clause, KeysClause, Query};
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
@@ -25,45 +25,6 @@ use crate::constants;
 use crate::types::{Account, Provider};
 use crate::utils::watch_tx;
 use crate::wasm::utils::{parse_entities_as_json_str, parse_ty_as_json_str};
-
-type JsFieldElement = JsValue;
-
-// TODO: remove this in favour of the new EntityQuery
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub struct EntityModel {
-    pub model: String,
-    pub keys: Vec<FieldElement>,
-}
-
-impl From<EntityModel> for KeysClause {
-    fn from(value: EntityModel) -> Self {
-        Self {
-            model: value.model,
-            keys: value.keys,
-        }
-    }
-}
-
-#[wasm_bindgen(typescript_custom_section)]
-pub const ENTITY_MODEL_STR: &'static str = r#"
-export interface EntityModel {
-    model: string;
-    keys: string[];
-}
-"#;
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(typescript_type = "EntityModel")]
-    pub type IEntityModel;
-}
-
-impl TryFrom<IEntityModel> for KeysClause {
-    type Error = serde_wasm_bindgen::Error;
-    fn try_from(value: IEntityModel) -> Result<Self, Self::Error> {
-        serde_wasm_bindgen::from_value::<EntityModel>(value.into()).map(|e| e.into())
-    }
-}
 
 #[derive(Tsify, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -116,25 +77,20 @@ impl From<&JsSignature> for Signature {
         }
     }
 }
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Calls(Vec<Call>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct Strings(Vec<String>);
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct JsCalls(Vec<JsCall>);
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct JsCall {
+pub struct Call {
     pub to: String,
     pub selector: String,
     pub calldata: Vec<String>,
 }
 
-impl From<&JsCall> for starknet::accounts::Call {
-    fn from(value: &JsCall) -> Self {
+impl From<&Call> for starknet::accounts::Call {
+    fn from(value: &Call) -> Self {
         Self {
             to: FieldElement::from_str(value.to.as_str()).unwrap(),
             selector: get_selector_from_name(value.selector.as_str()).unwrap(),
@@ -147,8 +103,8 @@ impl From<&JsCall> for starknet::accounts::Call {
     }
 }
 
-impl From<&JsCall> for FunctionCall {
-    fn from(value: &JsCall) -> Self {
+impl From<&Call> for FunctionCall {
+    fn from(value: &Call) -> Self {
         Self {
             contract_address: FieldElement::from_str(value.to.as_str()).unwrap(),
             entry_point_selector: get_selector_from_name(value.selector.as_str()).unwrap(),
@@ -163,18 +119,253 @@ impl From<&JsCall> for FunctionCall {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub enum JsBlockId {
-    Hash(FieldElement),
+pub enum BlockTag {
+    Latest,
+    Pending,
+}
+
+impl From<&BlockTag> for starknet::core::types::BlockTag {
+    fn from(value: &BlockTag) -> Self {
+        match value {
+            BlockTag::Latest => starknet::core::types::BlockTag::Latest,
+            BlockTag::Pending => starknet::core::types::BlockTag::Pending,
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum BlockId {
+    Hash(String),
     Number(u64),
     BlockTag(BlockTag),
 }
 
-impl From<&JsBlockId> for BlockId {
-    fn from(value: &JsBlockId) -> Self {
+impl From<&BlockId> for starknet::core::types::BlockId {
+    fn from(value: &BlockId) -> Self {
         match value {
-            JsBlockId::Hash(hash) => BlockId::Hash(*hash),
-            JsBlockId::Number(number) => BlockId::Number(*number),
-            JsBlockId::BlockTag(tag) => BlockId::Tag(*tag),
+            BlockId::Hash(hash) => {
+                starknet::core::types::BlockId::Hash(FieldElement::from_str(hash.as_str()).unwrap())
+            }
+            BlockId::Number(number) => starknet::core::types::BlockId::Number(*number),
+            BlockId::BlockTag(tag) => starknet::core::types::BlockId::Tag(tag.into()),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Query {
+    pub limit: u32,
+    pub offset: u32,
+    pub clause: Option<Clause>,
+}
+
+impl From<&Query> for torii_grpc::types::Query {
+    fn from(value: &Query) -> Self {
+        Self {
+            limit: value.limit,
+            offset: value.offset,
+            clause: value.clause.as_ref().map(|c| c.into()),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum Clause {
+    Keys(KeysClause),
+    Member(MemberClause),
+    Composite(CompositeClause),
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct KeysClauses(pub Vec<KeysClause>);
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct KeysClause {
+    pub model: String,
+    pub keys: Vec<String>,
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct MemberClause {
+    pub model: String,
+    pub member: String,
+    pub operator: ComparisonOperator,
+    pub value: Value,
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct CompositeClause {
+    pub model: String,
+    pub operator: LogicalOperator,
+    pub clauses: Vec<Clause>,
+}
+
+impl From<&KeysClause> for torii_grpc::types::KeysClause {
+    fn from(value: &KeysClause) -> Self {
+        Self {
+            model: value.model.to_string(),
+            keys: value
+                .keys
+                .iter()
+                .map(|k| FieldElement::from_str(k.as_str()).unwrap())
+                .collect(),
+        }
+    }
+}
+
+impl From<&MemberClause> for torii_grpc::types::MemberClause {
+    fn from(value: &MemberClause) -> Self {
+        Self {
+            model: value.model.to_string(),
+            member: value.member.to_string(),
+            operator: (&value.operator).into(),
+            value: (&value.value).into(),
+        }
+    }
+}
+
+impl From<&CompositeClause> for torii_grpc::types::CompositeClause {
+    fn from(value: &CompositeClause) -> Self {
+        Self {
+            model: value.model.to_string(),
+            operator: (&value.operator).into(),
+            clauses: value.clauses.iter().map(|c| c.into()).collect(),
+        }
+    }
+}
+
+impl From<&Clause> for torii_grpc::types::Clause {
+    fn from(value: &Clause) -> Self {
+        match value {
+            Clause::Keys(keys) => Self::Keys(keys.into()),
+            Clause::Member(member) => Self::Member(member.into()),
+            Clause::Composite(composite) => Self::Composite(composite.into()),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum LogicalOperator {
+    And,
+    Or,
+}
+
+impl From<&LogicalOperator> for torii_grpc::types::LogicalOperator {
+    fn from(value: &LogicalOperator) -> Self {
+        match value {
+            LogicalOperator::And => Self::And,
+            LogicalOperator::Or => Self::Or,
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum ComparisonOperator {
+    Eq,
+    Neq,
+    Gt,
+    Gte,
+    Lt,
+    Lte,
+}
+
+impl From<&ComparisonOperator> for torii_grpc::types::ComparisonOperator {
+    fn from(value: &ComparisonOperator) -> Self {
+        match value {
+            ComparisonOperator::Eq => Self::Eq,
+            ComparisonOperator::Neq => Self::Neq,
+            ComparisonOperator::Gt => Self::Gt,
+            ComparisonOperator::Gte => Self::Gte,
+            ComparisonOperator::Lt => Self::Lt,
+            ComparisonOperator::Lte => Self::Lte,
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Value {
+    pub primitive_type: Primitive,
+    pub value_type: ValueType,
+}
+
+impl From<&Value> for torii_grpc::types::Value {
+    fn from(value: &Value) -> Self {
+        Self {
+            primitive_type: (&value.primitive_type).into(),
+            value_type: (&value.value_type).into(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum ValueType {
+    String(String),
+    Int(i64),
+    UInt(u64),
+    VBool(bool),
+    Bytes(Vec<u8>),
+}
+
+impl From<&ValueType> for torii_grpc::types::ValueType {
+    fn from(value: &ValueType) -> Self {
+        match &value {
+            ValueType::String(s) => Self::String(s.to_string()),
+            ValueType::Int(i) => Self::Int(*i),
+            ValueType::UInt(u) => Self::UInt(*u),
+            ValueType::VBool(b) => Self::Bool(*b),
+            ValueType::Bytes(b) => Self::Bytes(b.to_vec()),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum Primitive {
+    U8(Option<u8>),
+    U16(Option<u16>),
+    U32(Option<u32>),
+    U64(Option<u64>),
+    U128(Option<String>),
+    U256(Option<String>),
+    USize(Option<u32>),
+    Bool(Option<bool>),
+    Felt252(Option<String>),
+    ClassHash(Option<String>),
+    ContractAddress(Option<String>),
+}
+
+impl From<&Primitive> for dojo_types::primitive::Primitive {
+    fn from(value: &Primitive) -> Self {
+        match value {
+            Primitive::U8(Some(value)) => Self::U8(Some(*value)),
+            Primitive::U16(Some(value)) => Self::U16(Some(*value)),
+            Primitive::U32(Some(value)) => Self::U32(Some(*value)),
+            Primitive::U64(Some(value)) => Self::U64(Some(*value)),
+            Primitive::U128(Some(value)) => Self::U128(Some(u128::from_str(value).unwrap())),
+            Primitive::U256(Some(value)) => Self::U256(Some(U256::from_be_hex(value.as_str()))),
+            Primitive::USize(Some(value)) => Self::USize(Some(*value)),
+            Primitive::Bool(Some(value)) => Self::Bool(Some(*value)),
+            Primitive::Felt252(Some(value)) => {
+                Self::Felt252(Some(FieldElement::from_str(value).unwrap()))
+            }
+            Primitive::ClassHash(Some(value)) => {
+                Self::ClassHash(Some(FieldElement::from_str(value).unwrap()))
+            }
+            Primitive::ContractAddress(Some(value)) => {
+                Self::ContractAddress(Some(FieldElement::from_str(value).unwrap()))
+            }
+            _ => unimplemented!(),
         }
     }
 }
@@ -282,7 +473,7 @@ impl Provider {
 
         let address = address.unwrap();
 
-        let chain_id = (*self).0.chain_id().await;
+        let chain_id = self.0.chain_id().await;
         if let Err(e) = chain_id {
             return Err(JsValue::from(format!("failed to get chain id: {e}")));
         }
@@ -291,7 +482,7 @@ impl Provider {
 
         let signer = LocalWallet::from_signing_key(SigningKey::from_secret_scalar(private_key));
         let account = SingleOwnerAccount::new(
-            (*self).0.clone(),
+            self.0.clone(),
             signer,
             address,
             chain_id,
@@ -302,8 +493,8 @@ impl Provider {
     }
 
     #[wasm_bindgen(js_name = call)]
-    pub async unsafe fn call(&self, call: JsCall, block_id: JsBlockId) -> Result<Array, JsValue> {
-        let result = (*self)
+    pub async unsafe fn call(&self, call: Call, block_id: BlockId) -> Result<Array, JsValue> {
+        let result = self
             .0
             .call::<FunctionCall, starknet::core::types::BlockId>(
                 (&call).into(),
@@ -324,7 +515,7 @@ impl Provider {
     pub async unsafe fn wait_for_transaction(&self, txn_hash: &str) -> Result<bool, JsValue> {
         let txn_hash = FieldElement::from_hex_be(txn_hash)
             .map_err(|err| JsValue::from(format!("failed to parse transaction hash: {err}")))?;
-        let result: Result<(), anyhow::Error> = watch_tx(&(*self).0, txn_hash).await;
+        let result: Result<(), anyhow::Error> = watch_tx(&self.0, txn_hash).await;
 
         match result {
             Ok(_) => Result::Ok(true),
@@ -337,13 +528,13 @@ impl Provider {
 impl Account {
     #[wasm_bindgen(js_name = address)]
     pub unsafe fn address(&self) -> Result<String, JsValue> {
-        let address = (*self).0.address();
+        let address = self.0.address();
         Ok(format!("{:#x}", address))
     }
 
     #[wasm_bindgen(js_name = chainId)]
     pub unsafe fn chain_id(&self) -> Result<String, JsValue> {
-        let chain_id = (*self).0.chain_id();
+        let chain_id = self.0.chain_id();
         Ok(format!("{:#x}", chain_id))
     }
 
@@ -351,15 +542,16 @@ impl Account {
     pub unsafe fn set_block_id(&mut self, block_id: String) -> Result<(), JsValue> {
         let block_id = FieldElement::from_hex_be(&block_id)
             .map_err(|err| JsValue::from(format!("failed to parse block id: {err}")))?;
-        (*self).0.set_block_id(BlockId::Hash(block_id));
+        self.0
+            .set_block_id(starknet::core::types::BlockId::Hash(block_id));
         Ok(())
     }
 
     #[wasm_bindgen(js_name = executeRaw)]
-    pub async unsafe fn execute_raw(&self, calldata: JsCalls) -> Result<String, JsValue> {
-        let calldata = calldata.0.iter().map(|c| c.into()).collect::<Vec<Call>>();
+    pub async unsafe fn execute_raw(&self, calldata: Calls) -> Result<String, JsValue> {
+        let calldata = calldata.0.iter().map(|c| c.into()).collect();
 
-        let call = (*self).0.execute(calldata);
+        let call = self.0.execute(calldata);
 
         let result = call.send().await;
 
@@ -381,14 +573,14 @@ impl Account {
         );
         let signer = LocalWallet::from_signing_key(signing_key);
 
-        let chain_id = (*self).0.chain_id();
+        let chain_id = self.0.chain_id();
 
-        let provider = (*self).0.provider().clone();
+        let provider = self.0.provider().clone();
         let account =
             SingleOwnerAccount::new(provider, signer, address, chain_id, ExecutionEncoding::New);
 
         // deploy the burner
-        let exec = (*self).0.execute(vec![starknet::accounts::Call {
+        let exec = self.0.execute(vec![starknet::accounts::Call {
             to: constants::UDC_ADDRESS,
             calldata: vec![
                 constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
@@ -410,7 +602,7 @@ impl Account {
 
         let result = result.unwrap();
 
-        let _ = watch_tx((*self).0.provider(), result.transaction_hash).await;
+        let _ = watch_tx(self.0.provider(), result.transaction_hash).await;
 
         Result::Ok(Box::into_raw(Box::new(Account(account))))
     }
@@ -447,55 +639,11 @@ pub fn hash_get_contract_address(
 #[wasm_bindgen]
 impl Client {
     #[wasm_bindgen(js_name = getEntities)]
-    pub async fn get_entities(&self, limit: u32, offset: u32) -> Result<JsValue, JsValue> {
+    pub async fn get_entities(&self, query: Query) -> Result<JsValue, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let results = self
-            .inner
-            .entities(Query {
-                clause: None,
-                limit,
-                offset,
-            })
-            .await;
-
-        match results {
-            Ok(entities) => Ok(js_sys::JSON::parse(
-                &parse_entities_as_json_str(entities).to_string(),
-            )?),
-            Err(err) => Err(JsValue::from(format!("failed to get entities: {err}"))),
-        }
-    }
-
-    #[wasm_bindgen(js_name = getEntitiesByKeys)]
-    pub async fn get_entities_by_keys(
-        &self,
-        model: &str,
-        keys: Vec<JsFieldElement>,
-        limit: u32,
-        offset: u32,
-    ) -> Result<JsValue, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
-        let keys = keys
-            .into_iter()
-            .map(serde_wasm_bindgen::from_value::<FieldElement>)
-            .collect::<Result<Vec<FieldElement>, _>>()
-            .map_err(|err| JsValue::from(format!("failed to parse entity keys: {err}")))?;
-
-        let results = self
-            .inner
-            .entities(Query {
-                clause: Some(Clause::Keys(KeysClause {
-                    model: model.to_string(),
-                    keys,
-                })),
-                limit,
-                offset,
-            })
-            .await;
+        let results = self.inner.entities((&query).into()).await;
 
         match results {
             Ok(entities) => Ok(js_sys::JSON::parse(
@@ -510,20 +658,20 @@ impl Client {
     pub async fn get_model_value(
         &self,
         model: &str,
-        keys: Vec<JsFieldElement>,
+        keys: Vec<String>,
     ) -> Result<JsValue, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let keys = keys
             .into_iter()
-            .map(serde_wasm_bindgen::from_value::<FieldElement>)
+            .map(|k| FieldElement::from_str(k.as_str()))
             .collect::<Result<Vec<FieldElement>, _>>()
             .map_err(|err| JsValue::from(format!("failed to parse entity keys: {err}")))?;
 
         match self
             .inner
-            .model(&KeysClause {
+            .model(&torii_grpc::types::KeysClause {
                 model: model.to_string(),
                 keys,
             })
@@ -538,19 +686,13 @@ impl Client {
 
     /// Register new entities to be synced.
     #[wasm_bindgen(js_name = addModelsToSync)]
-    pub async unsafe fn add_models_to_sync(
-        &self,
-        models: Vec<IEntityModel>,
-    ) -> Result<(), JsValue> {
+    pub async unsafe fn add_models_to_sync(&self, models: KeysClauses) -> Result<(), JsValue> {
         log("adding models to sync...");
 
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let models = models
-            .into_iter()
-            .map(|e| TryInto::<KeysClause>::try_into(e))
-            .collect::<Result<Vec<_>, _>>()?;
+        let models = models.0.iter().map(|e| e.into()).collect();
 
         self.inner
             .add_models_to_sync(models)
@@ -560,19 +702,13 @@ impl Client {
 
     /// Remove the entities from being synced.
     #[wasm_bindgen(js_name = removeModelsToSync)]
-    pub async unsafe fn remove_models_to_sync(
-        &self,
-        models: Vec<IEntityModel>,
-    ) -> Result<(), JsValue> {
+    pub async unsafe fn remove_models_to_sync(&self, models: KeysClauses) -> Result<(), JsValue> {
         log("removing models to sync...");
 
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let models = models
-            .into_iter()
-            .map(|e| TryInto::<KeysClause>::try_into(e))
-            .collect::<Result<Vec<_>, _>>()?;
+        let models = models.0.iter().map(|e| e.into()).collect();
 
         self.inner
             .remove_models_to_sync(models)
@@ -584,18 +720,25 @@ impl Client {
     #[wasm_bindgen(js_name = onSyncModelChange)]
     pub async fn on_sync_model_change(
         &self,
-        model: IEntityModel,
+        model: KeysClause,
         callback: js_sys::Function,
     ) -> Result<(), JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let model = serde_wasm_bindgen::from_value::<EntityModel>(model.into())?;
         let name = cairo_short_string_to_felt(&model.model).expect("invalid model name");
         let mut rcv = self
             .inner
             .storage()
-            .add_listener(name, &model.keys)
+            .add_listener(
+                name,
+                &model
+                    .keys
+                    .iter()
+                    .map(|k| FieldElement::from_str(k.as_str()))
+                    .collect::<Result<Vec<_>, _>>()
+                    .unwrap(),
+            )
             .unwrap();
 
         wasm_bindgen_futures::spawn_local(async move {
@@ -617,7 +760,7 @@ impl Client {
         console_error_panic_hook::set_once();
 
         let ids = ids
-            .unwrap_or(vec![])
+            .unwrap_or_default()
             .into_iter()
             .map(|id| {
                 FieldElement::from_str(&id)
@@ -721,7 +864,7 @@ impl Client {
 #[wasm_bindgen(js_name = createClient)]
 #[allow(non_snake_case)]
 pub async fn create_client(
-    initialModelsToSync: Vec<IEntityModel>,
+    initialModelsToSync: KeysClauses,
     config: ClientConfig,
 ) -> Result<Client, JsValue> {
     #[cfg(feature = "console-error-panic")]
@@ -734,10 +877,7 @@ pub async fn create_client(
         world_address,
     } = config;
 
-    let models = initialModelsToSync
-        .into_iter()
-        .map(|e| TryInto::<KeysClause>::try_into(e))
-        .collect::<Result<Vec<_>, _>>()?;
+    let models = initialModelsToSync.0.iter().map(|e| e.into()).collect();
 
     let world_address = FieldElement::from_str(&world_address)
         .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;

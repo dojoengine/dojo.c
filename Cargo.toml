@@ -39,6 +39,7 @@ web-sys = { version = "0.3.4", features = [
     'WorkerGlobalScope',
     'console',
 ] }
+crypto-bigint = "0.5.5"
 
 [build-dependencies]
 cbindgen = "0.26.0"
