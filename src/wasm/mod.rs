@@ -562,7 +562,7 @@ impl Account {
     }
 
     #[wasm_bindgen(js_name = deployBurner)]
-    pub async unsafe fn deploy_burner(&self) -> Result<*mut Account, JsValue> {
+    pub async unsafe fn deploy_burner(&self) -> Result<Account, JsValue> {
         let signing_key = SigningKey::from_random();
         let verifying_key = signing_key.verifying_key();
         let address = get_contract_address(
@@ -604,7 +604,7 @@ impl Account {
 
         let _ = watch_tx(self.0.provider(), result.transaction_hash).await;
 
-        Result::Ok(Box::into_raw(Box::new(Account(account))))
+        Result::Ok(Account(account))
     }
 }
 
