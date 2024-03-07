@@ -439,7 +439,7 @@ pub fn verifying_key_verify(
 }
 
 #[wasm_bindgen(js_name = createProvider)]
-pub unsafe fn create_provider(rpc_url: &str) -> Result<*mut Provider, JsValue> {
+pub unsafe fn create_provider(rpc_url: &str) -> Result<Provider, JsValue> {
     let rpc_url = url::Url::parse(rpc_url);
     if let Err(e) = rpc_url {
         return Err(JsValue::from(format!("failed to parse rpc url: {e}")));
@@ -448,7 +448,7 @@ pub unsafe fn create_provider(rpc_url: &str) -> Result<*mut Provider, JsValue> {
 
     let rpc = JsonRpcClient::new(HttpTransport::new(rpc_url));
 
-    Result::Ok(Box::into_raw(Box::new(Provider(Arc::new(rpc)))))
+    Result::Ok(Provider(Arc::new(rpc)))
 }
 
 #[wasm_bindgen]
@@ -458,7 +458,7 @@ impl Provider {
         &self,
         private_key: &str,
         address: &str,
-    ) -> Result<*mut Account, JsValue> {
+    ) -> Result<Account, JsValue> {
         let private_key = FieldElement::from_hex_be(private_key);
         if let Err(e) = private_key {
             return Err(JsValue::from(format!("failed to parse private key: {e}")));
@@ -489,7 +489,7 @@ impl Provider {
             ExecutionEncoding::New,
         );
 
-        Result::Ok(Box::into_raw(Box::new(Account(account))))
+        Result::Ok(Account(account))
     }
 
     #[wasm_bindgen(js_name = call)]
