@@ -59,23 +59,6 @@ typedef struct KeysClause {
   struct CArrayc_char keys;
 } KeysClause;
 
-typedef enum Resultbool_Tag {
-  Okbool,
-  Errbool,
-} Resultbool_Tag;
-
-typedef struct Resultbool {
-  Resultbool_Tag tag;
-  union {
-    struct {
-      bool ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} Resultbool;
-
 typedef struct CArrayu8 {
   uint8_t *data;
   uintptr_t data_len;
@@ -101,6 +84,17 @@ typedef struct ResultCArrayu8 {
 typedef struct FieldElement {
   uint8_t data[32];
 } FieldElement;
+
+typedef struct Signature {
+  /**
+   * The `r` value of a signature
+   */
+  struct FieldElement r;
+  /**
+   * The `s` value of a signature
+   */
+  struct FieldElement s;
+} Signature;
 
 typedef enum Primitive_Tag {
   U8,
@@ -406,6 +400,7 @@ typedef struct ModelMetadata {
   uint32_t packed_size;
   uint32_t unpacked_size;
   struct FieldElement class_hash;
+  struct FieldElement contract_address;
   struct CArrayFieldElement layout;
 } ModelMetadata;
 
@@ -422,21 +417,25 @@ typedef struct CArrayCHashItemc_charModelMetadata {
 typedef struct WorldMetadata {
   struct FieldElement world_address;
   struct FieldElement world_class_hash;
-  struct FieldElement executor_address;
-  struct FieldElement executor_class_hash;
   struct CArrayCHashItemc_charModelMetadata models;
 } WorldMetadata;
 
-typedef struct Signature {
-  /**
-   * The `r` value of a signature
-   */
-  struct FieldElement r;
-  /**
-   * The `s` value of a signature
-   */
-  struct FieldElement s;
-} Signature;
+typedef enum Resultbool_Tag {
+  Okbool,
+  Errbool,
+} Resultbool_Tag;
+
+typedef struct Resultbool {
+  Resultbool_Tag tag;
+  union {
+    struct {
+      bool ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Resultbool;
 
 typedef enum ResultSignature_Tag {
   OkSignature,
@@ -564,20 +563,9 @@ struct ResultToriiClient client_new(const char *torii_url,
                                     const struct KeysClause *entities,
                                     uintptr_t entities_len);
 
-struct Resultbool client_on_message(struct ToriiClient *client,
-                                    void (*callback)(const char *propagation_source,
-                                                     const char *source,
-                                                     const char *message_id,
-                                                     const char *topic,
-                                                     struct CArrayu8 data));
-
-struct Resultbool client_subscribe_topic(struct ToriiClient *client, const char *topic);
-
-struct Resultbool client_unsubscribe_topic(struct ToriiClient *client, const char *topic);
-
 struct ResultCArrayu8 client_publish_message(struct ToriiClient *client,
-                                             const char *topic,
-                                             struct CArrayu8 data);
+                                             const char *message,
+                                             struct Signature signature);
 
 struct ResultCOptionTy client_model(struct ToriiClient *client, const struct KeysClause *keys);
 

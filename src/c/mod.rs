@@ -22,6 +22,8 @@ use std::os::raw::c_char;
 use std::sync::Arc;
 use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
+use torii_relay::typed_data::TypedData;
+use torii_relay::types::Message;
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -58,16 +60,16 @@ pub unsafe extern "C" fn client_new(
     let client_future = TClient::new(torii_url, rpc_url, libp2p_relay_url, world, some_entities);
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
-    let client = match runtime.block_on(client_future) {
+    let mut client = match runtime.block_on(client_future) {
         Ok(client) => client,
         Err(e) => return Result::Err(e.into()),
     };
 
     // Run relay
-    let relay_runner = client.relay_client_runner();
-    runtime.spawn(async move {
-        relay_runner.lock().await.run().await;
-    });
+    match runtime.block_on(client.wait_for_relay()) {
+        Ok(_) => {}
+        Err(e) => return Result::Err(e.into()),
+    }
 
     // Start subscription
     let result = runtime.block_on(client.start_subscription());
@@ -86,78 +88,25 @@ pub unsafe extern "C" fn client_new(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_on_message(
-    client: *mut ToriiClient,
-    callback: unsafe extern "C" fn(
-        propagation_source: *const c_char,
-        source: *const c_char,
-        message_id: *const c_char,
-        topic: *const c_char,
-        data: CArray<u8>,
-    ),
-) -> Result<bool> {
-    let stream = (*client).inner.relay_client_stream();
-
-    (*client).runtime.spawn(async move {
-        while let Some(msg) = stream.lock().await.next().await {
-            let propagation_source = CString::new(msg.propagation_source.to_string())
-                .unwrap()
-                .into_raw();
-            let source = CString::new(msg.source.to_string()).unwrap().into_raw();
-            let message_id = CString::new(msg.message_id.to_string()).unwrap().into_raw();
-            let topic = CString::new(msg.topic.as_str()).unwrap().into_raw();
-            let data = msg.data.into();
-
-            callback(propagation_source, source, message_id, topic, data);
-        }
-    });
-
-    Result::Ok(true)
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_subscribe_topic(
-    client: *mut ToriiClient,
-    topic: *const c_char,
-) -> Result<bool> {
-    let topic = unsafe { CStr::from_ptr(topic).to_string_lossy().into_owned() };
-
-    let client_future = unsafe { (*client).inner.subscribe_topic(topic) };
-
-    match (*client).runtime.block_on(client_future) {
-        Ok(_) => Result::Ok(true),
-        Err(e) => Result::Err(e.into()),
-    }
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_unsubscribe_topic(
-    client: *mut ToriiClient,
-    topic: *const c_char,
-) -> Result<bool> {
-    let topic = unsafe { CStr::from_ptr(topic).to_string_lossy().into_owned() };
-
-    let client_future = unsafe { (*client).inner.unsubscribe_topic(topic) };
-
-    match (*client).runtime.block_on(client_future) {
-        Ok(_) => Result::Ok(true),
-        Err(e) => Result::Err(e.into()),
-    }
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_publish_message(
     client: *mut ToriiClient,
-    topic: *const c_char,
-    data: CArray<u8>,
+    // A json string representing the typed data message
+    message: *const c_char,
+    signature: types::Signature,
 ) -> Result<CArray<u8>> {
-    let topic = unsafe { CStr::from_ptr(topic).to_string_lossy().to_string() };
-    let data = unsafe { std::slice::from_raw_parts(data.data, data.data_len) };
+    let message = unsafe { CStr::from_ptr(message).to_string_lossy().into_owned() };
+    let message = match serde_json::from_str::<TypedData>(message.as_str()) {
+        Ok(message) => message,
+        Err(e) => return Result::Err(e.into()),
+    };
 
-    let client_future = unsafe { (*client).inner.publish_message(topic.as_str(), data) };
+    let client_future = unsafe {
+        (*client).inner.publish_message(Message {
+            message,
+            signature_r: (&signature.r).into(),
+            signature_s: (&signature.s).into(),
+        })
+    };
 
     match (*client).runtime.block_on(client_future) {
         Ok(data) => Result::Ok(data.into()),
