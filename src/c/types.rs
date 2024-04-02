@@ -963,8 +963,6 @@ pub struct ModelStorage {
 pub struct WorldMetadata {
     pub world_address: FieldElement,
     pub world_class_hash: FieldElement,
-    pub executor_address: FieldElement,
-    pub executor_class_hash: FieldElement,
     pub models: CArray<CHashItem<*const c_char, ModelMetadata>>,
 }
 
@@ -982,8 +980,6 @@ impl From<&dojo_types::WorldMetadata> for WorldMetadata {
         WorldMetadata {
             world_address: (&value.world_address.clone()).into(),
             world_class_hash: (&value.world_class_hash.clone()).into(),
-            executor_address: (&value.executor_address.clone()).into(),
-            executor_class_hash: (&value.executor_class_hash.clone()).into(),
             models: models.into(),
         }
     }
@@ -1009,8 +1005,6 @@ impl From<&WorldMetadata> for dojo_types::WorldMetadata {
         dojo_types::WorldMetadata {
             world_address: (&value.world_address.clone()).into(),
             world_class_hash: (&value.world_class_hash.clone()).into(),
-            executor_address: (&value.executor_address.clone()).into(),
-            executor_class_hash: (&value.executor_class_hash.clone()).into(),
             models,
         }
     }
@@ -1024,6 +1018,7 @@ pub struct ModelMetadata {
     pub packed_size: u32,
     pub unpacked_size: u32,
     pub class_hash: FieldElement,
+    pub contract_address: FieldElement,
     pub layout: CArray<FieldElement>,
 }
 
@@ -1041,6 +1036,7 @@ impl From<&dojo_types::schema::ModelMetadata> for ModelMetadata {
             packed_size: value.packed_size,
             unpacked_size: value.unpacked_size,
             class_hash: (&value.class_hash.clone()).into(),
+            contract_address: (&value.contract_address.clone()).into(),
             layout: layout.into(),
         }
     }
@@ -1063,6 +1059,7 @@ impl From<&ModelMetadata> for dojo_types::schema::ModelMetadata {
             packed_size: value.packed_size,
             unpacked_size: value.unpacked_size,
             class_hash: (&value.class_hash).into(),
+            contract_address: (&value.contract_address).into(),
             layout,
         }
     }
