@@ -2210,8 +2210,9 @@ dependencies = [
 
 [[package]]
 name = "deno_task_shell"
-version = "0.15.0"
-source = "git+https://github.com/denoland/deno_task_shell?tag=0.15.0#250c0b7269bfaf2f9afc03abe4e3e0ae1b5fee8e"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b44af10161906e1bccc1fc966f074bec0148997bb7e2221ecd29416dcad90b3"
 dependencies = [
  "anyhow",
  "futures",
@@ -2219,6 +2220,7 @@ dependencies = [
  "monch",
  "os_pipe",
  "path-dedot",
+ "thiserror",
  "tokio",
  "tokio-util",
 ]
@@ -2403,7 +2405,7 @@ dependencies = [
 [[package]]
 name = "dojo-bindgen"
 version = "0.6.0-alpha.10"
-source = "git+https://github.com/dojoengine/dojo#a23a0c6ebe7474aa20ebfdc9aafcfb0023742e42"
+source = "git+https://github.com/dojoengine/dojo#b952d0fa881283c612f8945ea00b2d26aa456517"
 dependencies = [
  "async-trait",
  "cainome 0.1.5",
@@ -2449,7 +2451,7 @@ dependencies = [
 [[package]]
 name = "dojo-lang"
 version = "0.6.0-alpha.10"
-source = "git+https://github.com/dojoengine/dojo#a23a0c6ebe7474aa20ebfdc9aafcfb0023742e42"
+source = "git+https://github.com/dojoengine/dojo#b952d0fa881283c612f8945ea00b2d26aa456517"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -2494,7 +2496,7 @@ dependencies = [
 [[package]]
 name = "dojo-types"
 version = "0.6.0-alpha.10"
-source = "git+https://github.com/dojoengine/dojo#a23a0c6ebe7474aa20ebfdc9aafcfb0023742e42"
+source = "git+https://github.com/dojoengine/dojo#b952d0fa881283c612f8945ea00b2d26aa456517"
 dependencies = [
  "crypto-bigint",
  "hex",
@@ -2510,7 +2512,7 @@ dependencies = [
 [[package]]
 name = "dojo-world"
 version = "0.6.0-alpha.10"
-source = "git+https://github.com/dojoengine/dojo#a23a0c6ebe7474aa20ebfdc9aafcfb0023742e42"
+source = "git+https://github.com/dojoengine/dojo#b952d0fa881283c612f8945ea00b2d26aa456517"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8099,7 +8101,7 @@ dependencies = [
 [[package]]
 name = "sozo-ops"
 version = "0.6.0-alpha.10"
-source = "git+https://github.com/dojoengine/dojo#a23a0c6ebe7474aa20ebfdc9aafcfb0023742e42"
+source = "git+https://github.com/dojoengine/dojo#b952d0fa881283c612f8945ea00b2d26aa456517"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -9316,7 +9318,7 @@ dependencies = [
 [[package]]
 name = "torii-client"
 version = "0.6.0-alpha.10"
-source = "git+https://github.com/dojoengine/dojo#a23a0c6ebe7474aa20ebfdc9aafcfb0023742e42"
+source = "git+https://github.com/dojoengine/dojo#b952d0fa881283c612f8945ea00b2d26aa456517"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -9344,7 +9346,7 @@ dependencies = [
 [[package]]
 name = "torii-core"
 version = "0.6.0-alpha.10"
-source = "git+https://github.com/dojoengine/dojo#a23a0c6ebe7474aa20ebfdc9aafcfb0023742e42"
+source = "git+https://github.com/dojoengine/dojo#b952d0fa881283c612f8945ea00b2d26aa456517"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -9378,7 +9380,7 @@ dependencies = [
 [[package]]
 name = "torii-grpc"
 version = "0.6.0-alpha.10"
-source = "git+https://github.com/dojoengine/dojo#a23a0c6ebe7474aa20ebfdc9aafcfb0023742e42"
+source = "git+https://github.com/dojoengine/dojo#b952d0fa881283c612f8945ea00b2d26aa456517"
 dependencies = [
  "bytes",
  "crypto-bigint",
@@ -9417,7 +9419,7 @@ dependencies = [
 [[package]]
 name = "torii-relay"
 version = "0.6.0-alpha.10"
-source = "git+https://github.com/dojoengine/dojo#a23a0c6ebe7474aa20ebfdc9aafcfb0023742e42"
+source = "git+https://github.com/dojoengine/dojo#b952d0fa881283c612f8945ea00b2d26aa456517"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -10749,3 +10751,8 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
+
+[[patch.unused]]
+name = "deno_task_shell"
+version = "0.15.0"
+source = "git+https://github.com/denoland/deno_task_shell?tag=0.15.0#250c0b7269bfaf2f9afc03abe4e3e0ae1b5fee8e"

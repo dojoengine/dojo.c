@@ -18,6 +18,7 @@ use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
 use starknet_crypto::Signature;
+use torii_relay::types::Message;
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
@@ -784,79 +785,29 @@ impl Client {
         Ok(())
     }
 
-    #[wasm_bindgen(js_name = subscribeTopic)]
-    pub async fn subscribe_topic(&mut self, topic: String) -> Result<bool, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
-        let sub = self
-            .inner
-            .subscribe_topic(topic)
-            .await
-            .map_err(|err| JsValue::from(err.to_string()))?;
-
-        Ok(sub)
-    }
-
-    #[wasm_bindgen(js_name = unsubscribeTopic)]
-    pub async fn unsubscribe_topic(&mut self, topic: String) -> Result<bool, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
-        let sub = self
-            .inner
-            .unsubscribe_topic(topic)
-            .await
-            .map_err(|err| JsValue::from(err.to_string()))?;
-
-        Ok(sub)
-    }
-
     #[wasm_bindgen(js_name = publishMessage)]
     pub async fn publish_message(
         &mut self,
-        topic: &str,
-        message: &[u8],
+        message: &str,
+        signature: JsSignature
     ) -> Result<js_sys::Uint8Array, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
+        let message = serde_json::from_str(message)
+            .map_err(|err| JsValue::from(format!("failed to parse message: {err}")))?;
+
         let message_id = self
             .inner
-            .publish_message(topic, message)
+            .publish_message(Message {
+                message,
+                signature_r: FieldElement::from_str(signature.r.as_str()).map_err(|err| JsValue::from(err.to_string()))?,
+                signature_s: FieldElement::from_str(signature.s.as_str()).map_err(|err| JsValue::from(err.to_string()))?,
+            })
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
 
         Ok(message_id.as_slice().into())
-    }
-
-    #[wasm_bindgen(js_name = onMessage)]
-    pub async fn on_message(&self, callback: js_sys::Function) -> Result<(), JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
-        let stream = self.inner.relay_client_stream();
-
-        wasm_bindgen_futures::spawn_local(async move {
-            while let Some(message) = stream.lock().await.next().await {
-                let array = &js_sys::Array::new_with_length(5);
-                array.set(
-                    0,
-                    JsValue::from_str(message.propagation_source.to_string().as_str()),
-                );
-                array.set(1, JsValue::from_str(message.source.to_string().as_str()));
-                array.set(
-                    2,
-                    JsValue::from_str(message.message_id.to_string().as_str()),
-                );
-                array.set(3, JsValue::from_str(message.topic.as_str()));
-                array.set(4, js_sys::Uint8Array::from(message.data.as_slice()).into());
-
-                let _ = callback.apply(&JsValue::null(), array);
-            }
-        });
-
-        Ok(())
     }
 }
 
@@ -882,7 +833,7 @@ pub async fn create_client(
     let world_address = FieldElement::from_str(&world_address)
         .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
 
-    let client = torii_client::client::Client::new(
+    let mut client = torii_client::client::Client::new(
         torii_url,
         rpc_url,
         relay_url,
@@ -898,10 +849,7 @@ pub async fn create_client(
         ))
     })?);
 
-    let relay_client_runner = client.relay_client_runner();
-    wasm_bindgen_futures::spawn_local(async move {
-        relay_client_runner.lock().await.run().await;
-    });
+    client.wait_for_relay().await.map_err(|err| JsValue::from(err.to_string()))?;
 
     Ok(Client { inner: client })
 }
