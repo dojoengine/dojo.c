@@ -789,7 +789,7 @@ impl Client {
     pub async fn publish_message(
         &mut self,
         message: &str,
-        signature: JsSignature
+        signature: JsSignature,
     ) -> Result<js_sys::Uint8Array, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
@@ -801,8 +801,10 @@ impl Client {
             .inner
             .publish_message(Message {
                 message,
-                signature_r: FieldElement::from_str(signature.r.as_str()).map_err(|err| JsValue::from(err.to_string()))?,
-                signature_s: FieldElement::from_str(signature.s.as_str()).map_err(|err| JsValue::from(err.to_string()))?,
+                signature_r: FieldElement::from_str(signature.r.as_str())
+                    .map_err(|err| JsValue::from(err.to_string()))?,
+                signature_s: FieldElement::from_str(signature.s.as_str())
+                    .map_err(|err| JsValue::from(err.to_string()))?,
             })
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
@@ -849,7 +851,10 @@ pub async fn create_client(
         ))
     })?);
 
-    client.wait_for_relay().await.map_err(|err| JsValue::from(err.to_string()))?;
+    client
+        .wait_for_relay()
+        .await
+        .map_err(|err| JsValue::from(err.to_string()))?;
 
     Ok(Client { inner: client })
 }
