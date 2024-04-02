@@ -273,6 +273,27 @@ pub unsafe extern "C" fn client_remove_models_to_sync(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn typed_data_encode(
+    typed_data: *const c_char,
+    address: types::FieldElement,
+) -> Result<types::FieldElement> {
+    let typed_data = unsafe { CStr::from_ptr(typed_data).to_string_lossy().into_owned() };
+    let typed_data = match serde_json::from_str::<TypedData>(typed_data.as_str()) {
+        Ok(typed_data) => typed_data,
+        Err(err) => return Result::Err(Error { message: CString::new(format!("Invalid typed data: {}", err)).unwrap().into_raw() }),
+    };
+
+    let address = (&address).into();
+    let encoded = match typed_data.encode(address) {
+        Ok(encoded) => encoded,
+        Err(err) => return Result::Err(err.into()),
+    };
+
+    Result::Ok((&encoded).into())
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn signing_key_new() -> types::FieldElement {
     let private_key = SigningKey::from_random();
     (&private_key.secret_scalar()).into()
