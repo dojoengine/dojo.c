@@ -6,9 +6,6 @@ version = "1.0.0"
 [lib]
 crate-type = ["cdylib", "rlib", "staticlib"]
 
-[patch.crates-io]
-deno_task_shell = { git = "https://github.com/denoland/deno_task_shell", tag = "0.15.0" }
-
 [dependencies]
 dojo-types = { git = "https://github.com/dojoengine/dojo" }
 torii-client = { git = "https://github.com/dojoengine/dojo" }
@@ -29,6 +26,9 @@ tokio-stream = "0.1.14"
 futures = "0.3.30"
 futures-channel = "0.3.30"
 wasm-bindgen = "0.2.92"
+
+[patch.crates-io]
+deno_task_shell = { git = "https://github.com/denoland/deno_task_shell", tag = "0.15.0" }
 
 # WASM
 [target.'cfg(target_arch = "wasm32")'.dependencies]
