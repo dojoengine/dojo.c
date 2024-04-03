@@ -60,16 +60,15 @@ pub unsafe extern "C" fn client_new(
     let client_future = TClient::new(torii_url, rpc_url, libp2p_relay_url, world, some_entities);
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
-    let mut client = match runtime.block_on(client_future) {
+    let client = match runtime.block_on(client_future) {
         Ok(client) => client,
         Err(e) => return Result::Err(e.into()),
     };
 
-    // Run relay
-    match runtime.block_on(client.wait_for_relay()) {
-        Ok(_) => {}
-        Err(e) => return Result::Err(e.into()),
-    }
+    let relay_runner = client.relay_runner();
+    runtime.spawn(async move {
+        relay_runner.lock().await.run().await;
+    });
 
     // Start subscription
     let result = runtime.block_on(client.start_subscription());
@@ -280,7 +279,13 @@ pub unsafe extern "C" fn typed_data_encode(
     let typed_data = unsafe { CStr::from_ptr(typed_data).to_string_lossy().into_owned() };
     let typed_data = match serde_json::from_str::<TypedData>(typed_data.as_str()) {
         Ok(typed_data) => typed_data,
-        Err(err) => return Result::Err(Error { message: CString::new(format!("Invalid typed data: {}", err)).unwrap().into_raw() }),
+        Err(err) => {
+            return Result::Err(Error {
+                message: CString::new(format!("Invalid typed data: {}", err))
+                    .unwrap()
+                    .into_raw(),
+            })
+        }
     };
 
     let address = (&address).into();

@@ -850,7 +850,7 @@ pub async fn create_client(
     let world_address = FieldElement::from_str(&world_address)
         .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
 
-    let mut client = torii_client::client::Client::new(
+    let client = torii_client::client::Client::new(
         torii_url,
         rpc_url,
         relay_url,
@@ -866,10 +866,10 @@ pub async fn create_client(
         ))
     })?);
 
-    client
-        .wait_for_relay()
-        .await
-        .map_err(|err| JsValue::from(err.to_string()))?;
+    let relay_runner = client.relay_runner();
+    wasm_bindgen_futures::spawn_local(async move {
+        relay_runner.lock().await.run().await;
+    });
 
     Ok(Client { inner: client })
 }
