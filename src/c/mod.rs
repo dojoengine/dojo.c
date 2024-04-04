@@ -60,16 +60,15 @@ pub unsafe extern "C" fn client_new(
     let client_future = TClient::new(torii_url, rpc_url, libp2p_relay_url, world, some_entities);
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
-    let mut client = match runtime.block_on(client_future) {
+    let client = match runtime.block_on(client_future) {
         Ok(client) => client,
         Err(e) => return Result::Err(e.into()),
     };
 
-    // Run relay
-    match runtime.block_on(client.wait_for_relay()) {
-        Ok(_) => {}
-        Err(e) => return Result::Err(e.into()),
-    }
+    let relay_runner = client.relay_runner();
+    runtime.spawn(async move {
+        relay_runner.lock().await.run().await;
+    });
 
     // Start subscription
     let result = runtime.block_on(client.start_subscription());
@@ -273,6 +272,33 @@ pub unsafe extern "C" fn client_remove_models_to_sync(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn typed_data_encode(
+    typed_data: *const c_char,
+    address: types::FieldElement,
+) -> Result<types::FieldElement> {
+    let typed_data = unsafe { CStr::from_ptr(typed_data).to_string_lossy().into_owned() };
+    let typed_data = match serde_json::from_str::<TypedData>(typed_data.as_str()) {
+        Ok(typed_data) => typed_data,
+        Err(err) => {
+            return Result::Err(Error {
+                message: CString::new(format!("Invalid typed data: {}", err))
+                    .unwrap()
+                    .into_raw(),
+            })
+        }
+    };
+
+    let address = (&address).into();
+    let encoded = match typed_data.encode(address) {
+        Ok(encoded) => encoded,
+        Err(err) => return Result::Err(err.into()),
+    };
+
+    Result::Ok((&encoded).into())
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn signing_key_new() -> types::FieldElement {
     let private_key = SigningKey::from_random();
     (&private_key.secret_scalar()).into()
@@ -400,8 +426,9 @@ pub unsafe extern "C" fn starknet_call(
 pub unsafe extern "C" fn account_deploy_burner(
     provider: *mut Provider,
     master_account: *mut Account,
+    signing_key: types::FieldElement,
 ) -> Result<*mut Account> {
-    let signing_key = SigningKey::from_random();
+    let signing_key = SigningKey::from_secret_scalar((&signing_key).into());
     let verifying_key = signing_key.verifying_key();
     let address = get_contract_address(
         verifying_key.scalar(),

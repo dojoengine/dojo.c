@@ -437,6 +437,23 @@ typedef struct Resultbool {
   };
 } Resultbool;
 
+typedef enum ResultFieldElement_Tag {
+  OkFieldElement,
+  ErrFieldElement,
+} ResultFieldElement_Tag;
+
+typedef struct ResultFieldElement {
+  ResultFieldElement_Tag tag;
+  union {
+    struct {
+      struct FieldElement ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultFieldElement;
+
 typedef enum ResultSignature_Tag {
   OkSignature,
   ErrSignature,
@@ -535,23 +552,6 @@ typedef struct BlockId {
   };
 } BlockId;
 
-typedef enum ResultFieldElement_Tag {
-  OkFieldElement,
-  ErrFieldElement,
-} ResultFieldElement_Tag;
-
-typedef struct ResultFieldElement {
-  ResultFieldElement_Tag tag;
-  union {
-    struct {
-      struct FieldElement ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultFieldElement;
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -593,6 +593,8 @@ struct Resultbool client_remove_models_to_sync(struct ToriiClient *client,
                                                const struct KeysClause *models,
                                                uintptr_t models_len);
 
+struct ResultFieldElement typed_data_encode(const char *typed_data, struct FieldElement address);
+
 struct FieldElement signing_key_new(void);
 
 struct ResultSignature signing_key_sign(struct FieldElement private_key, struct FieldElement hash);
@@ -614,7 +616,8 @@ struct ResultCArrayFieldElement starknet_call(struct Provider *provider,
                                               struct BlockId block_id);
 
 struct ResultAccount account_deploy_burner(struct Provider *provider,
-                                           struct Account *master_account);
+                                           struct Account *master_account,
+                                           struct FieldElement signing_key);
 
 struct FieldElement account_address(struct Account *account);
 

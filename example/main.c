@@ -54,11 +54,11 @@ int main()
     const char *torii_url = "http://localhost:8080";
     const char *rpc_url = "http://localhost:5050";
 
-    const char *player_key = "0x028cd7ee02d7f6ec9810e75b930e8e607793b302445abbdee0ac88143f18da20";
+    const char *player_key = "0x02038e0daba5c3948a6289e91e2a68dfc28e734a281c753933b8bd331e6d3dae";
     const char *player_address = "0x06162896d1d7ab204c7ccac6dd5f8e9e7c25ecd5ae4fcb4ad32e57786bb46e03";
     const char *player_signing_key = "0x1800000000300000180000000000030000000000003006001800006600";
-    const char *world = "0x028f5999ae62fec17c09c52a800e244961dba05251f5aaf923afabd9c9804d1a";
-    const char *actions = "0x0297bde19ca499fd8a39dd9bedbcd881a47f7b8f66c19478ce97d7de89e6112e";
+    const char *world = "0x01385f25d20a724edc9c7b3bd9636c59af64cbaf9fcd12f33b3af96b2452f295";
+    const char *actions = "0x03539c9b89b08095ba914653fb0f20e55d4b172a415beade611bc260b346d0f7";
     // Initialize world.data here...
 
     KeysClause entities[1] = {};
@@ -75,6 +75,7 @@ int main()
         return 1;
     }
     ToriiClient *client = resClient.ok;
+
 
     // signing key
     FieldElement signing_key = {};
@@ -115,11 +116,11 @@ int main()
 
     Account *burner = resBurner.ok;
 
-    FieldElement address = account_address(master_account);
-    printf("New account: 0x");
+    printf("Burner account: 0x");
+    FieldElement burner_address = account_address(burner);
     for (size_t i = 0; i < 32; i++)
     {
-        printf("%02x", address.data[i]);
+        printf("%02x", burner_address.data[i]);
     }
     printf("\n");
 
@@ -225,6 +226,11 @@ int main()
     // move left felt(0x01)
     hex_to_bytes("0x01", &move.calldata.data[0]);
 
+    BlockId block_id = {
+        .tag = BlockTag_,
+        .block_tag = Pending,
+    };
+    account_set_block_id(master_account, block_id);
     ResultFieldElement resSpawn = account_execute_raw(master_account, &spawn, 1);
     if (resSpawn.tag == Errbool)
     {
@@ -232,6 +238,8 @@ int main()
         return 1;
     }
     wait_for_transaction(provider, resSpawn.ok);
+
+    printf("Spawned\n");
 
     ResultFieldElement resMove = account_execute_raw(master_account, &move, 1);
     if (resMove.tag == Errbool)
@@ -241,26 +249,33 @@ int main()
     }
     wait_for_transaction(provider, resMove.ok);
 
-    resSpawn = account_execute_raw(burner, &spawn, 1);
-    if (resSpawn.tag == Errbool)
-    {
-        printf("Failed to execute call: %s\n", resSpawn.err.message);
-        return 1;
-    }
-    wait_for_transaction(provider, resSpawn.ok);
+    printf("Moved\n");
 
-    resMove = account_execute_raw(burner, &move, 1);
-    if (resMove.tag == Errbool)
-    {
-        printf("Failed to execute call: %s\n", resMove.err.message);
-        return 1;
-    }
-    wait_for_transaction(provider, resMove.ok);
-
-    // while (1)
+    // account_set_block_id(burner, block_id);
+    // resSpawn = account_execute_raw(burner, &spawn, 1);
+    // if (resSpawn.tag == Errbool)
     // {
-
+    //     printf("Failed to execute call: %s\n", resSpawn.err.message);
+    //     return 1;
     // }
+    // wait_for_transaction(provider, resSpawn.ok);
+
+    // printf("Spawned burner\n");
+
+    // resMove = account_execute_raw(burner, &move, 1);
+    // if (resMove.tag == Errbool)
+    // {
+    //     printf("Failed to execute call: %s\n", resMove.err.message);
+    //     return 1;
+    // }
+    // wait_for_transaction(provider, resMove.ok);
+
+    // printf("Moved burner\n");
+
+    while (1)
+    {
+
+    }
 
     // Result_bool resRemoveEntities = client_remove_models_to_sync(client, entities, 1);
     // if (resRemoveEntities.tag == Err_bool)

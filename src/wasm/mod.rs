@@ -18,6 +18,7 @@ use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
 use starknet_crypto::Signature;
+use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
@@ -371,6 +372,20 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
     }
 }
 
+#[wasm_bindgen(js_name = typedDataEncode)]
+pub fn typed_data_encode(typed_data: &str, address: &str) -> Result<String, JsValue> {
+    let typed_data = serde_json::from_str::<TypedData>(&typed_data)
+        .map_err(|err| JsValue::from(format!("failed to parse typed data: {err}")))?;
+
+    let address = FieldElement::from_str(&address)
+        .map_err(|err| JsValue::from(format!("failed to parse address: {err}")))?;
+
+    typed_data
+        .encode(address)
+        .map(|felt| format!("{:#x}", felt))
+        .map_err(|err| JsValue::from(err.to_string()))
+}
+
 #[wasm_bindgen(js_name = signingKeyNew)]
 pub fn signing_key_new() -> String {
     let private_key: SigningKey = SigningKey::from_random();
@@ -380,12 +395,12 @@ pub fn signing_key_new() -> String {
 
 #[wasm_bindgen(js_name = signingKeySign)]
 pub fn signing_key_sign(private_key: &str, hash: &str) -> Result<JsSignature, JsValue> {
-    let private_key = FieldElement::from_hex_be(private_key);
+    let private_key = FieldElement::from_str(private_key);
     if let Err(e) = private_key {
         return Err(JsValue::from(format!("failed to parse private key: {e}")));
     }
 
-    let hash = FieldElement::from_hex_be(hash);
+    let hash = FieldElement::from_str(hash);
     if let Err(e) = hash {
         return Err(JsValue::from(format!("failed to parse hash: {e}")));
     }
@@ -401,7 +416,7 @@ pub fn signing_key_sign(private_key: &str, hash: &str) -> Result<JsSignature, Js
 
 #[wasm_bindgen(js_name = verifyingKeyNew)]
 pub fn verifying_key_new(signing_key: &str) -> Result<String, JsValue> {
-    let signing_key = FieldElement::from_hex_be(signing_key);
+    let signing_key = FieldElement::from_str(signing_key);
     if let Err(e) = signing_key {
         return Err(JsValue::from(format!("failed to parse signing key: {e}")));
     }
@@ -417,14 +432,14 @@ pub fn verifying_key_verify(
     hash: &str,
     signature: JsSignature,
 ) -> Result<bool, JsValue> {
-    let verifying_key = FieldElement::from_hex_be(verifying_key);
+    let verifying_key = FieldElement::from_str(verifying_key);
     if let Err(e) = verifying_key {
         return Err(JsValue::from(format!("failed to parse verifying key: {e}")));
     }
 
     let verifying_key = VerifyingKey::from_scalar(verifying_key.unwrap());
 
-    let hash = FieldElement::from_hex_be(hash);
+    let hash = FieldElement::from_str(hash);
     if let Err(e) = hash {
         return Err(JsValue::from(format!("failed to parse hash: {e}")));
     }
@@ -460,14 +475,14 @@ impl Provider {
         private_key: &str,
         address: &str,
     ) -> Result<Account, JsValue> {
-        let private_key = FieldElement::from_hex_be(private_key);
+        let private_key = FieldElement::from_str(private_key);
         if let Err(e) = private_key {
             return Err(JsValue::from(format!("failed to parse private key: {e}")));
         }
 
         let private_key = private_key.unwrap();
 
-        let address = FieldElement::from_hex_be(address);
+        let address = FieldElement::from_str(address);
         if let Err(e) = address {
             return Err(JsValue::from(format!("failed to parse address: {e}")));
         }
@@ -514,7 +529,7 @@ impl Provider {
 
     #[wasm_bindgen(js_name = waitForTransaction)]
     pub async unsafe fn wait_for_transaction(&self, txn_hash: &str) -> Result<bool, JsValue> {
-        let txn_hash = FieldElement::from_hex_be(txn_hash)
+        let txn_hash = FieldElement::from_str(txn_hash)
             .map_err(|err| JsValue::from(format!("failed to parse transaction hash: {err}")))?;
         let result: Result<(), anyhow::Error> = watch_tx(&self.0, txn_hash).await;
 
@@ -541,7 +556,7 @@ impl Account {
 
     #[wasm_bindgen(js_name = setBlockId)]
     pub unsafe fn set_block_id(&mut self, block_id: String) -> Result<(), JsValue> {
-        let block_id = FieldElement::from_hex_be(&block_id)
+        let block_id = FieldElement::from_str(&block_id)
             .map_err(|err| JsValue::from(format!("failed to parse block id: {err}")))?;
         self.0
             .set_block_id(starknet::core::types::BlockId::Hash(block_id));
@@ -563,8 +578,13 @@ impl Account {
     }
 
     #[wasm_bindgen(js_name = deployBurner)]
-    pub async unsafe fn deploy_burner(&self) -> Result<Account, JsValue> {
-        let signing_key = SigningKey::from_random();
+    pub async unsafe fn deploy_burner(&self, private_key: &str) -> Result<Account, JsValue> {
+        let private_key = match FieldElement::from_str(private_key) {
+            Ok(key) => key,
+            Err(e) => return Err(JsValue::from(format!("failed to parse private key: {e}"))),
+        };
+
+        let signing_key = SigningKey::from_secret_scalar(private_key);
         let verifying_key = signing_key.verifying_key();
         let address = get_contract_address(
             verifying_key.scalar(),
@@ -616,17 +636,17 @@ pub fn hash_get_contract_address(
     constructor_calldata: Vec<String>,
     deployer_address: &str,
 ) -> Result<String, JsValue> {
-    let class_hash = FieldElement::from_hex_be(class_hash)
+    let class_hash = FieldElement::from_str(class_hash)
         .map_err(|err| JsValue::from(format!("failed to parse class hash: {err}")))?;
-    let salt = FieldElement::from_hex_be(salt)
+    let salt = FieldElement::from_str(salt)
         .map_err(|err| JsValue::from(format!("failed to parse salt: {err}")))?;
-    let deployer_address = FieldElement::from_hex_be(deployer_address)
+    let deployer_address = FieldElement::from_str(deployer_address)
         .map_err(|err| JsValue::from(format!("failed to parse deployer address: {err}")))?;
 
     let constructor_calldata = constructor_calldata
         .into_iter()
         .map(|c| {
-            FieldElement::from_hex_be(c.as_str()).map_err(|err| {
+            FieldElement::from_str(c.as_str()).map_err(|err| {
                 JsValue::from(format!("failed to parse constructor calldata: {err}"))
             })
         })
@@ -678,7 +698,9 @@ impl Client {
             })
             .await
         {
-            Ok(Some(ty)) => Ok(js_sys::JSON::parse(&parse_ty_as_json_str(&ty).to_string())?),
+            Ok(Some(ty)) => Ok(js_sys::JSON::parse(
+                &parse_ty_as_json_str(&ty, false).to_string(),
+            )?),
             Ok(None) => Ok(JsValue::NULL),
 
             Err(err) => Err(JsValue::from(format!("failed to get entity: {err}"))),
@@ -835,7 +857,7 @@ pub async fn create_client(
     let world_address = FieldElement::from_str(&world_address)
         .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
 
-    let mut client = torii_client::client::Client::new(
+    let client = torii_client::client::Client::new(
         torii_url,
         rpc_url,
         relay_url,
@@ -851,10 +873,10 @@ pub async fn create_client(
         ))
     })?);
 
-    client
-        .wait_for_relay()
-        .await
-        .map_err(|err| JsValue::from(err.to_string()))?;
+    let relay_runner = client.relay_runner();
+    wasm_bindgen_futures::spawn_local(async move {
+        relay_runner.lock().await.run().await;
+    });
 
     Ok(Client { inner: client })
 }

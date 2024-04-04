@@ -14,7 +14,12 @@ pub fn parse_entities_as_json_str(entities: Vec<Entity>) -> Value {
                     let model_map = model
                         .members
                         .iter()
-                        .map(|member| (member.name.to_owned(), parse_ty_as_json_str(&member.ty)))
+                        .map(|member| {
+                            (
+                                member.name.to_owned(),
+                                parse_ty_as_json_str(&member.ty, member.key),
+                            )
+                        })
                         .collect::<serde_json::Map<String, Value>>();
 
                     (model.name, model_map.into())
@@ -27,11 +32,12 @@ pub fn parse_entities_as_json_str(entities: Vec<Entity>) -> Value {
         .into()
 }
 
-pub fn parse_ty_as_json_str(ty: &Ty) -> Value {
+pub fn parse_ty_as_json_str(ty: &Ty, key: bool) -> Value {
     match ty {
         Ty::Primitive(primitive) => serde_json::json!({
             "type": primitive.to_string(),
-            "value": primitive_value_json(*primitive)
+            "value": primitive_value_json(*primitive),
+            "key": key,
         }),
 
         Ty::Struct(struct_ty) => serde_json::json!({
@@ -39,8 +45,9 @@ pub fn parse_ty_as_json_str(ty: &Ty) -> Value {
             "value": struct_ty
             .children
             .iter()
-            .map(|child| (child.name.to_owned(), parse_ty_as_json_str(&child.ty)))
-            .collect::<serde_json::Map<String, Value>>()
+            .map(|child| (child.name.to_owned(), parse_ty_as_json_str(&child.ty, child.key)))
+            .collect::<serde_json::Map<String, Value>>(),
+            "key": key,
         }),
 
         Ty::Enum(enum_ty) => serde_json::json!({
@@ -49,7 +56,8 @@ pub fn parse_ty_as_json_str(ty: &Ty) -> Value {
                 option.into()
             } else {
                 Value::Null
-            }
+            },
+            "key": key,
         }),
 
         Ty::Tuple(_) => unimplemented!("tuple not supported"),
