@@ -373,7 +373,7 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
 }
 
 #[wasm_bindgen(js_name = typedDataEncode)]
-pub fn typed_data_encode(typed_data: String, address: &str) -> Result<String, JsValue> {
+pub fn typed_data_encode(typed_data: &str, address: &str) -> Result<String, JsValue> {
     let typed_data = serde_json::from_str::<TypedData>(&typed_data)
         .map_err(|err| JsValue::from(format!("failed to parse typed data: {err}")))?;
 
