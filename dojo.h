@@ -616,7 +616,8 @@ struct ResultCArrayFieldElement starknet_call(struct Provider *provider,
                                               struct BlockId block_id);
 
 struct ResultAccount account_deploy_burner(struct Provider *provider,
-                                           struct Account *master_account);
+                                           struct Account *master_account,
+                                           struct FieldElement signing_key);
 
 struct FieldElement account_address(struct Account *account);
 

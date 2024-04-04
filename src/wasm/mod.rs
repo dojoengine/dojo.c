@@ -578,8 +578,17 @@ impl Account {
     }
 
     #[wasm_bindgen(js_name = deployBurner)]
-    pub async unsafe fn deploy_burner(&self) -> Result<Account, JsValue> {
-        let signing_key = SigningKey::from_random();
+    pub async unsafe fn deploy_burner(&self, private_key: &str) -> Result<Account, JsValue> {
+        let private_key = match FieldElement::from_str(private_key) {
+            Ok(key) => key,
+            Err(e) => {
+                return Err(JsValue::from(format!(
+                    "failed to parse private key: {e}"
+                )))
+            }
+        };
+
+        let signing_key = SigningKey::from_secret_scalar(private_key);
         let verifying_key = signing_key.verifying_key();
         let address = get_contract_address(
             verifying_key.scalar(),

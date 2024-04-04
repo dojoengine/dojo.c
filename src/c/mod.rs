@@ -426,8 +426,9 @@ pub unsafe extern "C" fn starknet_call(
 pub unsafe extern "C" fn account_deploy_burner(
     provider: *mut Provider,
     master_account: *mut Account,
+    signing_key: types::FieldElement
 ) -> Result<*mut Account> {
-    let signing_key = SigningKey::from_random();
+    let signing_key = SigningKey::from_secret_scalar((&signing_key).into());
     let verifying_key = signing_key.verifying_key();
     let address = get_contract_address(
         verifying_key.scalar(),
