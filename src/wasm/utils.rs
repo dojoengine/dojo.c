@@ -14,7 +14,12 @@ pub fn parse_entities_as_json_str(entities: Vec<Entity>) -> Value {
                     let model_map = model
                         .members
                         .iter()
-                        .map(|member| (member.name.to_owned(), parse_ty_as_json_str(&member.ty, member.key)))
+                        .map(|member| {
+                            (
+                                member.name.to_owned(),
+                                parse_ty_as_json_str(&member.ty, member.key),
+                            )
+                        })
                         .collect::<serde_json::Map<String, Value>>();
 
                     (model.name, model_map.into())

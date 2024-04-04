@@ -581,11 +581,7 @@ impl Account {
     pub async unsafe fn deploy_burner(&self, private_key: &str) -> Result<Account, JsValue> {
         let private_key = match FieldElement::from_str(private_key) {
             Ok(key) => key,
-            Err(e) => {
-                return Err(JsValue::from(format!(
-                    "failed to parse private key: {e}"
-                )))
-            }
+            Err(e) => return Err(JsValue::from(format!("failed to parse private key: {e}"))),
         };
 
         let signing_key = SigningKey::from_secret_scalar(private_key);
@@ -702,7 +698,9 @@ impl Client {
             })
             .await
         {
-            Ok(Some(ty)) => Ok(js_sys::JSON::parse(&parse_ty_as_json_str(&ty, false).to_string())?),
+            Ok(Some(ty)) => Ok(js_sys::JSON::parse(
+                &parse_ty_as_json_str(&ty, false).to_string(),
+            )?),
             Ok(None) => Ok(JsValue::NULL),
 
             Err(err) => Err(JsValue::from(format!("failed to get entity: {err}"))),
