@@ -107,7 +107,8 @@ int main()
     }
     printf("\n");
 
-    ResultAccount resBurner = account_deploy_burner(provider, master_account);
+    FieldElement burner_signer = signing_key_new();
+    ResultAccount resBurner = account_deploy_burner(provider, master_account, burner_signer);
     if (resBurner.tag == ErrAccount)
     {
         printf("Failed to create burner: %s\n", resBurner.err.message);
@@ -147,7 +148,7 @@ int main()
 
     Query query = {};
     query.limit = 100;
-    query.clause.tag = NoneClause;
+    query.clause.tag = SomeClause;
     query.clause.some.tag = Keys;
     query.clause.some.keys.keys.data = malloc(sizeof(char *));
     query.clause.some.keys.keys.data_len = 1;
