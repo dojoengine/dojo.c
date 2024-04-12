@@ -66,6 +66,7 @@ fn main() {
 
             // config.structure.derive_constructor = true;
             // config.structure.derive_eq = true;
+            config.namespace = Some("dojo_bindings".to_string());
 
             config.defines = HashMap::new();
             config.defines.insert(
