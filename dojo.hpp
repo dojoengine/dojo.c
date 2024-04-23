@@ -830,7 +830,7 @@ FieldElement hash_get_contract_address(FieldElement class_hash,
                                        uintptr_t constructor_calldata_len,
                                        FieldElement deployer_address);
 
-void subscription_abort(Subscription *subscription);
+void subscription_cancel(Subscription *subscription);
 
 void client_free(ToriiClient *t);
 

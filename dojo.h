@@ -656,7 +656,7 @@ struct FieldElement hash_get_contract_address(struct FieldElement class_hash,
                                               uintptr_t constructor_calldata_len,
                                               struct FieldElement deployer_address);
 
-void subscription_abort(struct Subscription *subscription);
+void subscription_cancel(struct Subscription *subscription);
 
 void client_free(struct ToriiClient *t);
 
