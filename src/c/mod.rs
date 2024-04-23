@@ -199,7 +199,7 @@ pub unsafe extern "C" fn client_on_sync_model_update(
     client: *mut ToriiClient,
     model: KeysClause,
     callback: unsafe extern "C" fn(),
-) -> Result<bool> {
+) -> Result<Subscription> {
     let model: torii_grpc::types::KeysClause = (&model).into();
     let storage = (*client).inner.storage();
 
@@ -211,13 +211,13 @@ pub unsafe extern "C" fn client_on_sync_model_update(
         Err(e) => return Result::Err(e.into()),
     };
 
-    (*client).runtime.spawn(async move {
+    let handle = (*client).runtime.spawn(async move {
         if let Ok(Some(_)) = rcv.try_next() {
             callback();
         }
     });
 
-    Result::Ok(true)
+    Result::Ok(handle.abort_handle())
 }
 
 #[no_mangle]

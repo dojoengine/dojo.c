@@ -777,7 +777,9 @@ Result<bool> client_add_models_to_sync(ToriiClient *client,
                                        const KeysClause *models,
                                        uintptr_t models_len);
 
-Result<bool> client_on_sync_model_update(ToriiClient *client, KeysClause model, void (*callback)());
+Result<Subscription> client_on_sync_model_update(ToriiClient *client,
+                                                 KeysClause model,
+                                                 void (*callback)());
 
 Result<Subscription> client_on_entity_state_update(ToriiClient *client,
                                                    FieldElement *entities,

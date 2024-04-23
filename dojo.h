@@ -598,9 +598,9 @@ struct Resultbool client_add_models_to_sync(struct ToriiClient *client,
                                             const struct KeysClause *models,
                                             uintptr_t models_len);
 
-struct Resultbool client_on_sync_model_update(struct ToriiClient *client,
-                                              struct KeysClause model,
-                                              void (*callback)(void));
+struct ResultSubscription client_on_sync_model_update(struct ToriiClient *client,
+                                                      struct KeysClause model,
+                                                      void (*callback)(void));
 
 struct ResultSubscription client_on_entity_state_update(struct ToriiClient *client,
                                                         struct FieldElement *entities,
