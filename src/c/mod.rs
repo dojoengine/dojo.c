@@ -5,7 +5,7 @@ use self::types::{
     ToriiClient, Ty, WorldMetadata,
 };
 use crate::constants;
-use crate::types::{Account, Provider};
+use crate::types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::types::FunctionCall;
@@ -227,7 +227,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     entities: *mut types::FieldElement,
     entities_len: usize,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Model>),
-) -> Result<bool> {
+) -> Result<Subscription> {
     let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };
     // to vec of fieldleemnt
     let entities = entities.iter().map(|e| (&e.clone()).into()).collect();
@@ -238,7 +238,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         Err(e) => return Result::Err(e.into()),
     };
 
-    (*client).runtime.spawn(async move {
+    let handle = (*client).runtime.spawn(async move {
         while let Some(Ok(entity)) = rcv.next().await {
             let key: types::FieldElement = (&entity.hashed_keys).into();
             let models: Vec<Model> = entity.models.into_iter().map(|e| (&e).into()).collect();
@@ -246,7 +246,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         }
     });
 
-    Result::Ok(true)
+    Result::Ok(Subscription(handle.abort_handle()))
 }
 
 #[no_mangle]
@@ -558,6 +558,17 @@ pub unsafe extern "C" fn hash_get_contract_address(
     let address = get_contract_address(salt, class_hash, &constructor_calldata, deployer_address);
 
     (&address).into()
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn subscription_abort(subscription: *mut Subscription) {
+    if !subscription.is_null() {
+        unsafe {
+            let subscription = Box::from_raw(subscription);
+            subscription.0.abort();
+        }
+    }
 }
 
 // This function takes a raw pointer to ToriiClient as an argument.
