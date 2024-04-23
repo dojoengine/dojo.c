@@ -200,7 +200,7 @@ pub unsafe extern "C" fn client_on_sync_model_update(
     client: *mut ToriiClient,
     model: KeysClause,
     callback: unsafe extern "C" fn(),
-) -> Result<Subscription> {
+) -> Result<*mut Subscription> {
     let model: torii_grpc::types::KeysClause = (&model).into();
     let storage = (*client).inner.storage();
 
@@ -216,12 +216,12 @@ pub unsafe extern "C" fn client_on_sync_model_update(
     (*client).runtime.spawn(async move {
         let mut rcv = rcv.take_until_if(tripwire);
 
-        while let Some(_) = rcv.next().await {
+        while rcv.next().await.is_some() {
             callback();
         }
     });
 
-    Result::Ok(Subscription(trigger))
+    Result::Ok(Box::into_raw(Box::new(Subscription(trigger))))
 }
 
 #[no_mangle]
@@ -231,7 +231,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     entities: *mut types::FieldElement,
     entities_len: usize,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Model>),
-) -> Result<Subscription> {
+) -> Result<*mut Subscription> {
     let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };
     // to vec of fieldleemnt
     let entities = entities.iter().map(|e| (&e.clone()).into()).collect();
@@ -253,7 +253,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         }
     });
 
-    Result::Ok(Subscription(trigger))
+    Result::Ok(Box::into_raw(Box::new(Subscription(trigger))))
 }
 
 #[no_mangle]

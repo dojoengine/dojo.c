@@ -448,7 +448,7 @@ typedef struct ResultSubscription {
   ResultSubscription_Tag tag;
   union {
     struct {
-      struct Subscription ok;
+      struct Subscription *ok;
     };
     struct {
       struct Error err;
