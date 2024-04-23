@@ -769,6 +769,8 @@ Result<COption<Ty*>> client_model(ToriiClient *client, const KeysClause *keys);
 
 Result<CArray<Entity>> client_entities(ToriiClient *client, const Query *query);
 
+Result<CArray<Entity>> client_event_messages(ToriiClient *client, const Query *query);
+
 CArray<KeysClause> client_subscribed_models(ToriiClient *client);
 
 WorldMetadata client_metadata(ToriiClient *client);
@@ -785,6 +787,11 @@ Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
                                                     FieldElement *entities,
                                                     uintptr_t entities_len,
                                                     void (*callback)(FieldElement, CArray<Model>));
+
+Result<Subscription*> client_on_event_message_update(ToriiClient *client,
+                                                     FieldElement *event_messages,
+                                                     uintptr_t event_messages_len,
+                                                     void (*callback)(FieldElement, CArray<Model>));
 
 Result<bool> client_remove_models_to_sync(ToriiClient *client,
                                           const KeysClause *models,

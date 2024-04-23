@@ -157,6 +157,27 @@ pub unsafe extern "C" fn client_entities(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_event_messages(
+    client: *mut ToriiClient,
+    query: &Query,
+) -> Result<CArray<Entity>> {
+    let query = (&query.clone()).into();
+
+    let event_messages_future = unsafe { (*client).inner.event_messages(query) };
+
+    match (*client).runtime.block_on(event_messages_future) {
+        Ok(event_messages) => {
+            let event_messages: Vec<Entity> =
+                event_messages.into_iter().map(|e| (&e).into()).collect();
+
+            Result::Ok(event_messages.into())
+        }
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_subscribed_models(client: *mut ToriiClient) -> CArray<KeysClause> {
     let entities = unsafe { (*client).inner.subscribed_models().clone() };
     let entities = entities
@@ -256,6 +277,37 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     Result::Ok(Box::into_raw(Box::new(Subscription(trigger))))
 }
 
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_on_event_message_update(
+    client: *mut ToriiClient,
+    event_messages: *mut types::FieldElement,
+    event_messages_len: usize,
+    callback: unsafe extern "C" fn(types::FieldElement, CArray<Model>),
+) -> Result<*mut Subscription> {
+    let event_messages = unsafe { std::slice::from_raw_parts(event_messages, event_messages_len) };
+    // to vec of fieldleemnt
+    let event_messages = event_messages.iter().map(|e| (&e.clone()).into()).collect();
+
+    let entity_stream = unsafe { (*client).inner.on_event_message_updated(event_messages) };
+    let rcv = match (*client).runtime.block_on(entity_stream) {
+        Ok(rcv) => rcv,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    let (trigger, tripwire) = Tripwire::new();
+    (*client).runtime.spawn(async move {
+        let mut rcv = rcv.take_until_if(tripwire);
+
+        while let Some(Ok(entity)) = rcv.next().await {
+            let key: types::FieldElement = (&entity.hashed_keys).into();
+            let models: Vec<Model> = entity.models.into_iter().map(|e| (&e).into()).collect();
+            callback(key, models.into());
+        }
+    });
+
+    Result::Ok(Box::into_raw(Box::new(Subscription(trigger))))
+}
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_remove_models_to_sync(

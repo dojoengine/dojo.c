@@ -590,6 +590,9 @@ struct ResultCOptionTy client_model(struct ToriiClient *client, const struct Key
 
 struct ResultCArrayEntity client_entities(struct ToriiClient *client, const struct Query *query);
 
+struct ResultCArrayEntity client_event_messages(struct ToriiClient *client,
+                                                const struct Query *query);
+
 struct CArrayKeysClause client_subscribed_models(struct ToriiClient *client);
 
 struct WorldMetadata client_metadata(struct ToriiClient *client);
@@ -607,6 +610,12 @@ struct ResultSubscription client_on_entity_state_update(struct ToriiClient *clie
                                                         uintptr_t entities_len,
                                                         void (*callback)(struct FieldElement,
                                                                          struct CArrayModel));
+
+struct ResultSubscription client_on_event_message_update(struct ToriiClient *client,
+                                                         struct FieldElement *event_messages,
+                                                         uintptr_t event_messages_len,
+                                                         void (*callback)(struct FieldElement,
+                                                                          struct CArrayModel));
 
 struct Resultbool client_remove_models_to_sync(struct ToriiClient *client,
                                                const struct KeysClause *models,
