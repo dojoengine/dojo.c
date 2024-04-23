@@ -5,7 +5,7 @@ use self::types::{
     ToriiClient, Ty, WorldMetadata,
 };
 use crate::constants;
-use crate::types::{Account, Provider};
+use crate::types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::types::FunctionCall;
@@ -20,6 +20,7 @@ use std::ffi::{c_void, CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
 use std::sync::Arc;
+use stream_cancel::{StreamExt as _, Tripwire};
 use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
@@ -199,11 +200,11 @@ pub unsafe extern "C" fn client_on_sync_model_update(
     client: *mut ToriiClient,
     model: KeysClause,
     callback: unsafe extern "C" fn(),
-) -> Result<bool> {
+) -> Result<*mut Subscription> {
     let model: torii_grpc::types::KeysClause = (&model).into();
     let storage = (*client).inner.storage();
 
-    let mut rcv = match storage.add_listener(
+    let rcv = match storage.add_listener(
         cairo_short_string_to_felt(model.model.as_str()).unwrap(),
         model.keys.as_slice(),
     ) {
@@ -211,13 +212,16 @@ pub unsafe extern "C" fn client_on_sync_model_update(
         Err(e) => return Result::Err(e.into()),
     };
 
+    let (trigger, tripwire) = Tripwire::new();
     (*client).runtime.spawn(async move {
-        if let Ok(Some(_)) = rcv.try_next() {
+        let mut rcv = rcv.take_until_if(tripwire);
+
+        while rcv.next().await.is_some() {
             callback();
         }
     });
 
-    Result::Ok(true)
+    Result::Ok(Box::into_raw(Box::new(Subscription(trigger))))
 }
 
 #[no_mangle]
@@ -227,18 +231,21 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     entities: *mut types::FieldElement,
     entities_len: usize,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Model>),
-) -> Result<bool> {
+) -> Result<*mut Subscription> {
     let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };
     // to vec of fieldleemnt
     let entities = entities.iter().map(|e| (&e.clone()).into()).collect();
 
     let entity_stream = unsafe { (*client).inner.on_entity_updated(entities) };
-    let mut rcv = match (*client).runtime.block_on(entity_stream) {
+    let rcv = match (*client).runtime.block_on(entity_stream) {
         Ok(rcv) => rcv,
         Err(e) => return Result::Err(e.into()),
     };
 
+    let (trigger, tripwire) = Tripwire::new();
     (*client).runtime.spawn(async move {
+        let mut rcv = rcv.take_until_if(tripwire);
+
         while let Some(Ok(entity)) = rcv.next().await {
             let key: types::FieldElement = (&entity.hashed_keys).into();
             let models: Vec<Model> = entity.models.into_iter().map(|e| (&e).into()).collect();
@@ -246,7 +253,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         }
     });
 
-    Result::Ok(true)
+    Result::Ok(Box::into_raw(Box::new(Subscription(trigger))))
 }
 
 #[no_mangle]
@@ -558,6 +565,17 @@ pub unsafe extern "C" fn hash_get_contract_address(
     let address = get_contract_address(salt, class_hash, &constructor_calldata, deployer_address);
 
     (&address).into()
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn subscription_cancel(subscription: *mut Subscription) {
+    if !subscription.is_null() {
+        unsafe {
+            let subscription = Box::from_raw(subscription);
+            subscription.0.cancel();
+        }
+    }
 }
 
 // This function takes a raw pointer to ToriiClient as an argument.

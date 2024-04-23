@@ -18,13 +18,14 @@ use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
 use starknet_crypto::Signature;
+use stream_cancel::{StreamExt as _, Tripwire};
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
 use crate::constants;
-use crate::types::{Account, Provider};
+use crate::types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
 use crate::wasm::utils::{parse_entities_as_json_str, parse_ty_as_json_str};
 
@@ -745,12 +746,12 @@ impl Client {
         &self,
         model: KeysClause,
         callback: js_sys::Function,
-    ) -> Result<(), JsValue> {
+    ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let name = cairo_short_string_to_felt(&model.model).expect("invalid model name");
-        let mut rcv = self
+        let rcv = self
             .inner
             .storage()
             .add_listener(
@@ -764,13 +765,16 @@ impl Client {
             )
             .unwrap();
 
+        let (trigger, tripwire) = Tripwire::new();
         wasm_bindgen_futures::spawn_local(async move {
+            let mut rcv = rcv.take_until_if(tripwire);
+
             while rcv.next().await.is_some() {
                 let _ = callback.call0(&JsValue::null());
             }
         });
 
-        Ok(())
+        Ok(Subscription(trigger))
     }
 
     #[wasm_bindgen(js_name = onEntityUpdated)]
@@ -778,7 +782,7 @@ impl Client {
         &self,
         ids: Option<Vec<String>>,
         callback: js_sys::Function,
-    ) -> Result<(), JsValue> {
+    ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
@@ -791,9 +795,12 @@ impl Client {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let mut stream = self.inner.on_entity_updated(ids).await.unwrap();
+        let stream = self.inner.on_entity_updated(ids).await.unwrap();
 
+        let (trigger, tripwire) = Tripwire::new();
         wasm_bindgen_futures::spawn_local(async move {
+            let mut stream = stream.take_until_if(tripwire);
+
             while let Some(update) = stream.next().await {
                 let entity = update.expect("no updated entity");
                 let json_str = parse_entities_as_json_str(vec![entity]).to_string();
@@ -804,7 +811,7 @@ impl Client {
             }
         });
 
-        Ok(())
+        Ok(Subscription(trigger))
     }
 
     #[wasm_bindgen(js_name = publishMessage)]
@@ -832,6 +839,13 @@ impl Client {
             .map_err(|err| JsValue::from(err.to_string()))?;
 
         Ok(message_id.as_slice().into())
+    }
+}
+
+#[wasm_bindgen]
+impl Subscription {
+    pub fn cancel(self) {
+        self.0.cancel();
     }
 }
 

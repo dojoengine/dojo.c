@@ -26,6 +26,8 @@ typedef struct Account Account;
 
 typedef struct Provider Provider;
 
+typedef struct Subscription Subscription;
+
 typedef struct ToriiClient ToriiClient;
 
 typedef struct Error {
@@ -437,6 +439,23 @@ typedef struct Resultbool {
   };
 } Resultbool;
 
+typedef enum ResultSubscription_Tag {
+  OkSubscription,
+  ErrSubscription,
+} ResultSubscription_Tag;
+
+typedef struct ResultSubscription {
+  ResultSubscription_Tag tag;
+  union {
+    struct {
+      struct Subscription *ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultSubscription;
+
 typedef enum ResultFieldElement_Tag {
   OkFieldElement,
   ErrFieldElement,
@@ -579,15 +598,15 @@ struct Resultbool client_add_models_to_sync(struct ToriiClient *client,
                                             const struct KeysClause *models,
                                             uintptr_t models_len);
 
-struct Resultbool client_on_sync_model_update(struct ToriiClient *client,
-                                              struct KeysClause model,
-                                              void (*callback)(void));
+struct ResultSubscription client_on_sync_model_update(struct ToriiClient *client,
+                                                      struct KeysClause model,
+                                                      void (*callback)(void));
 
-struct Resultbool client_on_entity_state_update(struct ToriiClient *client,
-                                                struct FieldElement *entities,
-                                                uintptr_t entities_len,
-                                                void (*callback)(struct FieldElement,
-                                                                 struct CArrayModel));
+struct ResultSubscription client_on_entity_state_update(struct ToriiClient *client,
+                                                        struct FieldElement *entities,
+                                                        uintptr_t entities_len,
+                                                        void (*callback)(struct FieldElement,
+                                                                         struct CArrayModel));
 
 struct Resultbool client_remove_models_to_sync(struct ToriiClient *client,
                                                const struct KeysClause *models,
@@ -636,6 +655,8 @@ struct FieldElement hash_get_contract_address(struct FieldElement class_hash,
                                               const struct FieldElement *constructor_calldata,
                                               uintptr_t constructor_calldata_len,
                                               struct FieldElement deployer_address);
+
+void subscription_cancel(struct Subscription *subscription);
 
 void client_free(struct ToriiClient *t);
 

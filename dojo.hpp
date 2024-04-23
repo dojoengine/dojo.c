@@ -29,6 +29,8 @@ struct Account;
 
 struct Provider;
 
+struct Subscription;
+
 struct ToriiClient;
 
 struct Error {
@@ -775,12 +777,14 @@ Result<bool> client_add_models_to_sync(ToriiClient *client,
                                        const KeysClause *models,
                                        uintptr_t models_len);
 
-Result<bool> client_on_sync_model_update(ToriiClient *client, KeysClause model, void (*callback)());
+Result<Subscription*> client_on_sync_model_update(ToriiClient *client,
+                                                  KeysClause model,
+                                                  void (*callback)());
 
-Result<bool> client_on_entity_state_update(ToriiClient *client,
-                                           FieldElement *entities,
-                                           uintptr_t entities_len,
-                                           void (*callback)(FieldElement, CArray<Model>));
+Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
+                                                    FieldElement *entities,
+                                                    uintptr_t entities_len,
+                                                    void (*callback)(FieldElement, CArray<Model>));
 
 Result<bool> client_remove_models_to_sync(ToriiClient *client,
                                           const KeysClause *models,
@@ -825,6 +829,8 @@ FieldElement hash_get_contract_address(FieldElement class_hash,
                                        const FieldElement *constructor_calldata,
                                        uintptr_t constructor_calldata_len,
                                        FieldElement deployer_address);
+
+void subscription_cancel(Subscription *subscription);
 
 void client_free(ToriiClient *t);
 
