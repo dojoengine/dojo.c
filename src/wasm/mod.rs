@@ -675,6 +675,23 @@ impl Client {
         }
     }
 
+    #[wasm_bindgen(js_name = getEventMessages)]
+    pub async fn get_event_messages(&self, query: Query) -> Result<JsValue, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        let results = self.inner.event_messages((&query).into()).await;
+
+        match results {
+            Ok(event_messages) => Ok(js_sys::JSON::parse(
+                &parse_entities_as_json_str(event_messages).to_string(),
+            )?),
+            Err(err) => Err(JsValue::from(format!(
+                "failed to get event_messages: {err}"
+            ))),
+        }
+    }
+
     /// Retrieves the model value of an entity. Will fetch from remote if the requested entity is not one of the entities that are being synced.
     #[wasm_bindgen(js_name = getModelValue)]
     pub async fn get_model_value(
@@ -796,6 +813,43 @@ impl Client {
             .collect::<Result<Vec<_>, _>>()?;
 
         let stream = self.inner.on_entity_updated(ids).await.unwrap();
+
+        let (trigger, tripwire) = Tripwire::new();
+        wasm_bindgen_futures::spawn_local(async move {
+            let mut stream = stream.take_until_if(tripwire);
+
+            while let Some(update) = stream.next().await {
+                let entity = update.expect("no updated entity");
+                let json_str = parse_entities_as_json_str(vec![entity]).to_string();
+                let _ = callback.call1(
+                    &JsValue::null(),
+                    &js_sys::JSON::parse(&json_str).expect("json parse failed"),
+                );
+            }
+        });
+
+        Ok(Subscription(trigger))
+    }
+
+    #[wasm_bindgen(js_name = onEventMessageUpdated)]
+    pub async fn on_event_message_updated(
+        &self,
+        ids: Option<Vec<String>>,
+        callback: js_sys::Function,
+    ) -> Result<Subscription, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        let ids = ids
+            .unwrap_or_default()
+            .into_iter()
+            .map(|id| {
+                FieldElement::from_str(&id)
+                    .map_err(|err| JsValue::from(format!("failed to parse entity id: {err}")))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let stream = self.inner.on_event_message_updated(ids).await.unwrap();
 
         let (trigger, tripwire) = Tripwire::new();
         wasm_bindgen_futures::spawn_local(async move {
