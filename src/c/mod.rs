@@ -7,6 +7,7 @@ use self::types::{
 use crate::constants;
 use crate::types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
+use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::types::FunctionCall;
 use starknet::core::utils::{
@@ -327,6 +328,43 @@ pub unsafe extern "C" fn client_remove_models_to_sync(
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn bytearray_serialize(
+    str: *const c_char,
+) -> Result<CArray<types::FieldElement>> {
+    let str = unsafe { CStr::from_ptr(str).to_string_lossy().into_owned() };
+    let bytearray = match ByteArray::from_string(str.as_str()) {
+        Ok(bytearray) => bytearray,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    let felts = cairo_serde::ByteArray::cairo_serialize(&bytearray);
+    let felts = felts.iter().map(|f| f.into()).collect::<Vec<types::FieldElement>>();
+    Result::Ok(felts.into())
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn bytearray_deserialize(
+    felts: *const types::FieldElement,
+    felts_len: usize,
+) -> Result<*const c_char> {
+    let felts = unsafe { std::slice::from_raw_parts(felts, felts_len) };
+    let felts = felts.iter().map(|f| (&f.clone()).into()).collect::<Vec<FieldElement>>();
+    let bytearray = match cairo_serde::ByteArray::cairo_deserialize(&felts, 0) {
+        Ok(bytearray) => bytearray,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    let bytearray = match bytearray.to_string() {
+        Ok(bytearray) => bytearray,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    Result::Ok(CString::new(bytearray).unwrap().into_raw())
 }
 
 #[no_mangle]

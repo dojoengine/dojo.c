@@ -464,6 +464,40 @@ typedef struct ResultSubscription {
   };
 } ResultSubscription;
 
+typedef enum ResultCArrayFieldElement_Tag {
+  OkCArrayFieldElement,
+  ErrCArrayFieldElement,
+} ResultCArrayFieldElement_Tag;
+
+typedef struct ResultCArrayFieldElement {
+  ResultCArrayFieldElement_Tag tag;
+  union {
+    struct {
+      struct CArrayFieldElement ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultCArrayFieldElement;
+
+typedef enum Resultc_char_Tag {
+  Okc_char,
+  Errc_char,
+} Resultc_char_Tag;
+
+typedef struct Resultc_char {
+  Resultc_char_Tag tag;
+  union {
+    struct {
+      const char *ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Resultc_char;
+
 typedef enum ResultFieldElement_Tag {
   OkFieldElement,
   ErrFieldElement,
@@ -531,23 +565,6 @@ typedef struct ResultAccount {
     };
   };
 } ResultAccount;
-
-typedef enum ResultCArrayFieldElement_Tag {
-  OkCArrayFieldElement,
-  ErrCArrayFieldElement,
-} ResultCArrayFieldElement_Tag;
-
-typedef struct ResultCArrayFieldElement {
-  ResultCArrayFieldElement_Tag tag;
-  union {
-    struct {
-      struct CArrayFieldElement ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultCArrayFieldElement;
 
 typedef struct Call {
   const char *to;
@@ -628,6 +645,10 @@ struct ResultSubscription client_on_event_message_update(struct ToriiClient *cli
 struct Resultbool client_remove_models_to_sync(struct ToriiClient *client,
                                                const struct KeysClause *models,
                                                uintptr_t models_len);
+
+struct ResultCArrayFieldElement bytearray_serialize(const char *str);
+
+struct Resultc_char bytearray_deserialize(const struct FieldElement *felts, uintptr_t felts_len);
 
 struct ResultFieldElement typed_data_encode(const char *typed_data, struct FieldElement address);
 
