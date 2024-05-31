@@ -3,6 +3,7 @@ mod utils;
 use std::str::FromStr;
 use std::sync::Arc;
 
+use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use crypto_bigint::U256;
 use futures::StreamExt;
 use js_sys::Array;
@@ -657,6 +658,36 @@ pub fn hash_get_contract_address(
 
     Ok(format!("{:#x}", address))
 }
+
+#[wasm_bindgen(js_name = byteArraySerialize)]
+pub fn bytearray_serialize(str: &str) -> Result<Vec<String>, JsValue> {
+    let bytearray = match ByteArray::from_string(str) {
+        Ok(bytearray) => bytearray,
+        Err(e) => return Err(JsValue::from(format!("failed to parse bytearray: {e}"))),
+    };
+    let felts = cairo_serde::ByteArray::cairo_serialize(&bytearray);
+
+    Ok(felts.iter().map(|f| format!("{:#x}", f)).collect())
+}
+
+#[wasm_bindgen(js_name = byteArrayDeserialize)]
+pub fn bytearray_deserialize(felts: Vec<String>) -> Result<String, JsValue> {
+    let felts = felts
+        .into_iter()
+        .map(|f| FieldElement::from_str(f.as_str()))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| JsValue::from(format!("failed to parse felts: {e}")))?;
+
+    let bytearray = match cairo_serde::ByteArray::cairo_deserialize(&felts, 0) {
+        Ok(bytearray) => bytearray,
+        Err(e) => return Err(JsValue::from(format!("failed to deserialize bytearray: {e}"))),
+    };
+
+    match bytearray.to_string() {
+        Ok(s) => Ok(s),
+        Err(e) => Err(JsValue::from(format!("failed to serialize bytearray: {e}"))),
+    }
+} 
 
 #[wasm_bindgen]
 impl Client {
