@@ -680,14 +680,18 @@ pub fn bytearray_deserialize(felts: Vec<String>) -> Result<String, JsValue> {
 
     let bytearray = match cairo_serde::ByteArray::cairo_deserialize(&felts, 0) {
         Ok(bytearray) => bytearray,
-        Err(e) => return Err(JsValue::from(format!("failed to deserialize bytearray: {e}"))),
+        Err(e) => {
+            return Err(JsValue::from(format!(
+                "failed to deserialize bytearray: {e}"
+            )))
+        }
     };
 
     match bytearray.to_string() {
         Ok(s) => Ok(s),
         Err(e) => Err(JsValue::from(format!("failed to serialize bytearray: {e}"))),
     }
-} 
+}
 
 #[wasm_bindgen]
 impl Client {

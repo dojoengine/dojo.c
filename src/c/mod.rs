@@ -342,7 +342,10 @@ pub unsafe extern "C" fn bytearray_serialize(
     };
 
     let felts = cairo_serde::ByteArray::cairo_serialize(&bytearray);
-    let felts = felts.iter().map(|f| f.into()).collect::<Vec<types::FieldElement>>();
+    let felts = felts
+        .iter()
+        .map(|f| f.into())
+        .collect::<Vec<types::FieldElement>>();
     Result::Ok(felts.into())
 }
 
@@ -353,7 +356,10 @@ pub unsafe extern "C" fn bytearray_deserialize(
     felts_len: usize,
 ) -> Result<*const c_char> {
     let felts = unsafe { std::slice::from_raw_parts(felts, felts_len) };
-    let felts = felts.iter().map(|f| (&f.clone()).into()).collect::<Vec<FieldElement>>();
+    let felts = felts
+        .iter()
+        .map(|f| (&f.clone()).into())
+        .collect::<Vec<FieldElement>>();
     let bytearray = match cairo_serde::ByteArray::cairo_deserialize(&felts, 0) {
         Ok(bytearray) => bytearray,
         Err(e) => return Result::Err(e.into()),
