@@ -2248,8 +2248,9 @@ dependencies = [
 
 [[package]]
 name = "deno_task_shell"
-version = "0.15.0"
-source = "git+https://github.com/denoland/deno_task_shell?tag=0.15.0#250c0b7269bfaf2f9afc03abe4e3e0ae1b5fee8e"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97e5ff66a1e89edb7ca0c36b73a8fcdc008ba426c4ad7a36e1dfb3f4a166179e"
 dependencies = [
  "anyhow",
  "futures",
@@ -2257,6 +2258,7 @@ dependencies = [
  "monch",
  "os_pipe",
  "path-dedot",
+ "thiserror",
  "tokio",
  "tokio-util",
 ]
