@@ -2473,7 +2473,7 @@ dependencies = [
 
 [[package]]
 name = "dojo-c"
-version = "0.6.1"
+version = "0.7.0-alpha.5"
 dependencies = [
  "anyhow",
  "cbindgen",
