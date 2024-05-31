@@ -366,6 +366,8 @@ struct Ty {
     Struct_,
     Enum_,
     Tuple_,
+    Array_,
+    ByteArray,
   };
 
   struct Primitive__Body {
@@ -384,12 +386,22 @@ struct Ty {
     CArray<Ty> _0;
   };
 
+  struct Array__Body {
+    CArray<Ty> _0;
+  };
+
+  struct ByteArray_Body {
+    const char *_0;
+  };
+
   Tag tag;
   union {
     Primitive__Body primitive;
     Struct__Body struct_;
     Enum__Body enum_;
     Tuple__Body tuple;
+    Array__Body array;
+    ByteArray_Body byte_array;
   };
 
   static Ty Primitive_(const Primitive &_0) {
@@ -434,6 +446,28 @@ struct Ty {
 
   bool IsTuple_() const {
     return tag == Tag::Tuple_;
+  }
+
+  static Ty Array_(const CArray<Ty> &_0) {
+    Ty result;
+    ::new (&result.array._0) (CArray<Ty>)(_0);
+    result.tag = Tag::Array_;
+    return result;
+  }
+
+  bool IsArray_() const {
+    return tag == Tag::Array_;
+  }
+
+  static Ty ByteArray(const char *const &_0) {
+    Ty result;
+    ::new (&result.byte_array._0) (const char*)(_0);
+    result.tag = Tag::ByteArray;
+    return result;
+  }
+
+  bool IsByteArray() const {
+    return tag == Tag::ByteArray;
   }
 };
 

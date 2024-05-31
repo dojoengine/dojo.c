@@ -405,6 +405,8 @@ pub enum Ty {
     Struct_(Struct),
     Enum_(Enum),
     Tuple_(CArray<Ty>),
+    Array_(CArray<Ty>),
+    ByteArray(*const c_char),
 }
 
 impl From<&dojo_types::schema::Ty> for Ty {
@@ -424,6 +426,18 @@ impl From<&dojo_types::schema::Ty> for Ty {
                     .collect::<Vec<_>>();
 
                 Ty::Tuple_(children.into())
+            }
+            dojo_types::schema::Ty::Array(array) => {
+                let children = array
+                    .iter()
+                    .map(|c| (&c.clone()).into())
+                    .collect::<Vec<_>>();
+
+                Ty::Array_(children.into())
+            }
+            dojo_types::schema::Ty::ByteArray(array) => {
+                let array = CString::new(array.clone()).unwrap().into_raw();
+                Ty::ByteArray(array)
             }
         }
     }
@@ -448,6 +462,20 @@ impl From<&Ty> for dojo_types::schema::Ty {
                 };
 
                 dojo_types::schema::Ty::Tuple(children)
+            }
+            Ty::Array_(array) => {
+                let children = unsafe {
+                    Vec::from_raw_parts(array.data, array.data_len, array.data_len)
+                        .iter()
+                        .map(|c| (&c.clone()).into())
+                        .collect::<Vec<_>>()
+                };
+
+                dojo_types::schema::Ty::Array(children)
+            }
+            Ty::ByteArray(array) => {
+                let array = unsafe { CStr::from_ptr(*array).to_string_lossy().to_string() };
+                dojo_types::schema::Ty::ByteArray(array)
             }
         }
     }
