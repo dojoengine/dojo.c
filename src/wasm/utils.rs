@@ -53,14 +53,38 @@ pub fn parse_ty_as_json_str(ty: &Ty, key: bool) -> Value {
         Ty::Enum(enum_ty) => serde_json::json!({
             "type": "enum",
             "value": if let Some(option) = enum_ty.option {
-                option.into()
+                let option = &enum_ty.options[option as usize];
+                serde_json::json!({
+                    "type": option.name,
+                    // should we hardcode key to always be false for inners of enum?
+                    "data": parse_ty_as_json_str(&option.ty, false),
+                })
             } else {
                 Value::Null
             },
             "key": key,
         }),
 
-        Ty::Tuple(_) => unimplemented!("tuple not supported"),
+        Ty::Tuple(tuple) => serde_json::json!({
+            "type": "tuple",
+            "value": tuple
+            .iter()
+            // should we hardcode key to always be false for inners of tuple?
+            .map(|child| parse_ty_as_json_str(child, false))
+            .collect::<Vec<Value>>(),
+            "key": key,
+        }),
+        Ty::Array(array) => serde_json::json!({
+            "type": "array",
+            // should we hardcode key to always be false for inners of array?
+            "value": array.iter().map(|child| parse_ty_as_json_str(child, false)).collect::<Vec<Value>>(),
+            "key": key,
+        }),
+        Ty::ByteArray(byte_array) => serde_json::json!({
+            "type": "byte_array",
+            "value": byte_array.to_string(),
+            "key": key,
+        }),
     }
 }
 

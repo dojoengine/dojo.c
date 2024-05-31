@@ -205,6 +205,8 @@ typedef enum Ty_Tag {
   Struct_,
   Enum_,
   Tuple_,
+  Array_,
+  ByteArray,
 } Ty_Tag;
 
 typedef struct Ty {
@@ -221,6 +223,12 @@ typedef struct Ty {
     };
     struct {
       struct CArrayTy tuple;
+    };
+    struct {
+      struct CArrayTy array;
+    };
+    struct {
+      const char *byte_array;
     };
   };
 } Ty;
