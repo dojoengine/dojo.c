@@ -831,6 +831,10 @@ Result<bool> client_remove_models_to_sync(ToriiClient *client,
                                           const KeysClause *models,
                                           uintptr_t models_len);
 
+Result<CArray<FieldElement>> bytearray_serialize(const char *str);
+
+Result<const char*> bytearray_deserialize(const FieldElement *felts, uintptr_t felts_len);
+
 Result<FieldElement> typed_data_encode(const char *typed_data, FieldElement address);
 
 FieldElement signing_key_new();
