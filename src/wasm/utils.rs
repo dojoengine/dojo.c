@@ -35,15 +35,16 @@ pub fn parse_entities_as_json_str(entities: Vec<Entity>) -> Value {
 pub fn parse_ty_as_json_str(ty: &Ty, key: bool) -> Value {
     match ty {
         Ty::Primitive(primitive) => serde_json::json!({
-            "type": primitive.to_string(),
+            "type": "primitive",
+            "type_name": ty.name(),
             "value": primitive_value_json(*primitive),
             "key": key,
         }),
 
         Ty::Struct(struct_ty) => serde_json::json!({
             "type": "struct",
+            "type_name": ty.name(),
             "value": serde_json::json!({
-                "name": struct_ty.name,
                 "children": struct_ty
                 .children
                 .iter()
@@ -55,12 +56,13 @@ pub fn parse_ty_as_json_str(ty: &Ty, key: bool) -> Value {
 
         Ty::Enum(enum_ty) => serde_json::json!({
             "type": "enum",
+            "type_name": ty.name(),
             "value": if let Some(option) = enum_ty.option {
                 let option = &enum_ty.options[option as usize];
                 serde_json::json!({
-                    "type": option.name,
+                    "option": option.name,
                     // should we hardcode key to always be false for inners of enum?
-                    "data": parse_ty_as_json_str(&option.ty, false),
+                    "value": parse_ty_as_json_str(&option.ty, false),
                 })
             } else {
                 Value::Null
@@ -70,6 +72,7 @@ pub fn parse_ty_as_json_str(ty: &Ty, key: bool) -> Value {
 
         Ty::Tuple(tuple) => serde_json::json!({
             "type": "tuple",
+            "type_name": ty.name(),
             "value": tuple
             .iter()
             // should we hardcode key to always be false for inners of tuple?
@@ -79,13 +82,15 @@ pub fn parse_ty_as_json_str(ty: &Ty, key: bool) -> Value {
         }),
         Ty::Array(array) => serde_json::json!({
             "type": "array",
+            "type_name": ty.name(),
             // should we hardcode key to always be false for inners of array?
             "value": array.iter().map(|child| parse_ty_as_json_str(child, false)).collect::<Vec<Value>>(),
             "key": key,
         }),
-        Ty::ByteArray(byte_array) => serde_json::json!({
-            "type": "byte_array",
-            "value": byte_array.to_string(),
+        Ty::ByteArray(bytearray) => serde_json::json!({
+            "type": "bytearray",
+            "type_name": ty.name(),
+            "value": bytearray.to_string(),
             "key": key,
         }),
     }
