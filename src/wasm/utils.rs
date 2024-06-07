@@ -44,13 +44,11 @@ pub fn parse_ty_as_json_str(ty: &Ty, key: bool) -> Value {
         Ty::Struct(struct_ty) => serde_json::json!({
             "type": "struct",
             "type_name": ty.name(),
-            "value": serde_json::json!({
-                "children": struct_ty
+            "value": struct_ty
                 .children
                 .iter()
                 .map(|child| (child.name.to_owned(), parse_ty_as_json_str(&child.ty, child.key)))
-                .collect::<serde_json::Map<String, Value>>()
-            }),
+                .collect::<serde_json::Map<String, Value>>(),
             "key": key,
         }),
 
