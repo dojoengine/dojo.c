@@ -855,6 +855,10 @@ impl Client {
 
             while let Some(update) = stream.next().await {
                 let entity = update.expect("no updated entity");
+                if entity.hashed_keys == FieldElement::ZERO {
+                    continue;
+                }
+
                 let json_str = parse_entities_as_json_str(vec![entity]).to_string();
                 let _ = callback.call1(
                     &JsValue::null(),
@@ -892,6 +896,10 @@ impl Client {
 
             while let Some(update) = stream.next().await {
                 let entity = update.expect("no updated entity");
+                if entity.hashed_keys == FieldElement::ZERO {
+                    continue;
+                }
+
                 let json_str = parse_entities_as_json_str(vec![entity]).to_string();
                 let _ = callback.call1(
                     &JsValue::null(),
