@@ -710,6 +710,28 @@ impl Client {
         }
     }
 
+    #[wasm_bindgen(js_name = getAllEntities)]
+    pub async fn get_all_entities(&self, limit: u32, offset: u32) -> Result<JsValue, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        let results = self
+            .inner
+            .entities(torii_grpc::types::Query {
+                limit,
+                offset,
+                clause: None,
+            })
+            .await;
+
+        match results {
+            Ok(entities) => Ok(js_sys::JSON::parse(
+                &parse_entities_as_json_str(entities).to_string(),
+            )?),
+            Err(err) => Err(JsValue::from(format!("failed to get entities: {err}"))),
+        }
+    }
+
     #[wasm_bindgen(js_name = getEventMessages)]
     pub async fn get_event_messages(&self, query: Query) -> Result<JsValue, JsValue> {
         #[cfg(feature = "console-error-panic")]
