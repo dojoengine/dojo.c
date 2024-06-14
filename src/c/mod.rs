@@ -269,6 +269,10 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         let mut rcv = rcv.take_until_if(tripwire);
 
         while let Some(Ok(entity)) = rcv.next().await {
+            if entity.hashed_keys == FieldElement::ZERO {
+                continue;
+            }
+
             let key: types::FieldElement = (&entity.hashed_keys).into();
             let models: Vec<Model> = entity.models.into_iter().map(|e| (&e).into()).collect();
             callback(key, models.into());
@@ -301,6 +305,10 @@ pub unsafe extern "C" fn client_on_event_message_update(
         let mut rcv = rcv.take_until_if(tripwire);
 
         while let Some(Ok(entity)) = rcv.next().await {
+            if entity.hashed_keys == FieldElement::ZERO {
+                continue;
+            }
+
             let key: types::FieldElement = (&entity.hashed_keys).into();
             let models: Vec<Model> = entity.models.into_iter().map(|e| (&e).into()).collect();
             callback(key, models.into());
