@@ -18,7 +18,7 @@ use starknet::core::utils::{
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::Signature;
+use starknet_crypto::{Signature, poseidon_hash_many};
 use stream_cancel::{StreamExt as _, Tripwire};
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
@@ -691,6 +691,17 @@ pub fn bytearray_deserialize(felts: Vec<String>) -> Result<String, JsValue> {
         Ok(s) => Ok(s),
         Err(e) => Err(JsValue::from(format!("failed to serialize bytearray: {e}"))),
     }
+}
+
+#[wasm_bindgen(js_name = poseidonHash)]
+pub fn poseidon_hash(inputs: Vec<String>) -> Result<String, JsValue> {
+    let inputs = inputs
+        .into_iter()
+        .map(|i| FieldElement::from_str(i.as_str()))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| JsValue::from(format!("failed to parse inputs: {e}")))?;
+
+    Ok(format!("{:#x}", poseidon_hash_many(&inputs)))
 }
 
 #[wasm_bindgen]
