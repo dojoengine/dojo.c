@@ -16,7 +16,7 @@ use starknet::core::utils::{
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::FieldElement;
+use starknet_crypto::{poseidon_hash_many, FieldElement};
 use std::ffi::{c_void, CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
@@ -371,6 +371,29 @@ pub unsafe extern "C" fn bytearray_deserialize(
     };
 
     Result::Ok(CString::new(bytearray).unwrap().into_raw())
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn poseidon_hash(
+    felts: *const *const c_char,
+    felts_len: usize,
+) -> Result<types::FieldElement> {
+    let felts: &[*const c_char] = unsafe { std::slice::from_raw_parts(felts, felts_len) };
+
+    let felts = match felts
+        .iter()
+        .map(|f| {
+            let k = unsafe { CStr::from_ptr(*f) }.to_string_lossy().to_string();
+            FieldElement::from_hex_be(&k)
+        })
+        .collect::<std::result::Result<Vec<FieldElement>, _>>()
+    {
+        Ok(felts) => felts.to_vec(),
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    Result::Ok((&poseidon_hash_many(&felts)).into())
 }
 
 #[no_mangle]

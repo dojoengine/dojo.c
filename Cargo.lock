@@ -2537,7 +2537,7 @@ dependencies = [
 
 [[package]]
 name = "dojo-c"
-version = "0.7.0-alpha.5"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "cainome 0.2.3 (git+https://github.com/cartridge-gg/cainome)",
