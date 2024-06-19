@@ -378,14 +378,14 @@ pub unsafe extern "C" fn bytearray_deserialize(
 pub unsafe extern "C" fn poseidon_hash(
     felts: *const types::FieldElement,
     felts_len: usize,
-) -> Result<types::FieldElement> {
+) -> types::FieldElement {
     let felts = unsafe { std::slice::from_raw_parts(felts, felts_len) };
     let felts = felts
         .iter()
         .map(|f| (&f.clone()).into())
         .collect::<Vec<FieldElement>>();
 
-    Result::Ok((&poseidon_hash_many(&felts)).into())
+    (&poseidon_hash_many(&felts)).into()
 }
 
 #[no_mangle]
