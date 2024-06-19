@@ -650,7 +650,7 @@ struct ResultCArrayFieldElement bytearray_serialize(const char *str);
 
 struct Resultc_char bytearray_deserialize(const struct FieldElement *felts, uintptr_t felts_len);
 
-struct ResultFieldElement poseidon_hash(const char *const *felts, uintptr_t felts_len);
+struct ResultFieldElement poseidon_hash(const struct FieldElement *felts, uintptr_t felts_len);
 
 struct ResultFieldElement typed_data_encode(const char *typed_data, struct FieldElement address);
 

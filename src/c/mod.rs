@@ -376,22 +376,14 @@ pub unsafe extern "C" fn bytearray_deserialize(
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn poseidon_hash(
-    felts: *const *const c_char,
+    felts: *const types::FieldElement,
     felts_len: usize,
 ) -> Result<types::FieldElement> {
-    let felts: &[*const c_char] = unsafe { std::slice::from_raw_parts(felts, felts_len) };
-
-    let felts = match felts
+    let felts = unsafe { std::slice::from_raw_parts(felts, felts_len) };
+    let felts = felts
         .iter()
-        .map(|f| {
-            let k = unsafe { CStr::from_ptr(*f) }.to_string_lossy().to_string();
-            FieldElement::from_hex_be(&k)
-        })
-        .collect::<std::result::Result<Vec<FieldElement>, _>>()
-    {
-        Ok(felts) => felts.to_vec(),
-        Err(e) => return Result::Err(e.into()),
-    };
+        .map(|f| (&f.clone()).into())
+        .collect::<Vec<FieldElement>>();
 
     Result::Ok((&poseidon_hash_many(&felts)).into())
 }
