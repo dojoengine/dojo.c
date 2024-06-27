@@ -1,8 +1,8 @@
 mod types;
 
 use self::types::{
-    BlockId, CArray, COption, Call, Entity, Error, KeysClause, Model, Query, Result, Signature,
-    ToriiClient, Ty, WorldMetadata,
+    BlockId, CArray, COption, Call, Entity, Error, Model, Query, Result, Signature, ToriiClient,
+    Ty, WorldMetadata,
 };
 use crate::constants;
 use crate::types::{Account, Provider, Subscription};
@@ -26,6 +26,7 @@ use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
+use types::{EntityKeysClause, ModelKeysClause};
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -34,9 +35,6 @@ pub unsafe extern "C" fn client_new(
     rpc_url: *const c_char,
     libp2p_relay_url: *const c_char,
     world: *const c_char,
-    // entities is optional
-    entities: *const KeysClause,
-    entities_len: usize,
 ) -> Result<*mut ToriiClient> {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
@@ -46,20 +44,12 @@ pub unsafe extern "C" fn client_new(
             .into_owned()
     };
     let world = unsafe { CStr::from_ptr(world).to_string_lossy().into_owned() };
-    let some_entities = if entities.is_null() || entities_len == 0 {
-        None
-    } else {
-        let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };
-        let entities = entities.iter().map(|e| (&e.clone()).into()).collect();
-        Some(entities)
-    };
-
     let world = match FieldElement::from_hex_be(world.as_str()) {
         Ok(world) => world,
         Err(e) => return Result::Err(e.into()),
     };
 
-    let client_future = TClient::new(torii_url, rpc_url, libp2p_relay_url, world, some_entities);
+    let client_future = TClient::new(torii_url, rpc_url, libp2p_relay_url, world);
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
     let client = match runtime.block_on(client_future) {
@@ -119,7 +109,7 @@ pub unsafe extern "C" fn client_publish_message(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_model(
     client: *mut ToriiClient,
-    keys: &KeysClause,
+    keys: &ModelKeysClause,
 ) -> Result<COption<*mut Ty>> {
     let keys = (&keys.clone()).into();
     let entity_future = unsafe { (*client).inner.model(&keys) };
@@ -179,12 +169,14 @@ pub unsafe extern "C" fn client_event_messages(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_subscribed_models(client: *mut ToriiClient) -> CArray<KeysClause> {
+pub unsafe extern "C" fn client_subscribed_models(
+    client: *mut ToriiClient,
+) -> CArray<ModelKeysClause> {
     let entities = unsafe { (*client).inner.subscribed_models().clone() };
     let entities = entities
         .into_iter()
         .map(|e| (&e).into())
-        .collect::<Vec<KeysClause>>();
+        .collect::<Vec<ModelKeysClause>>();
 
     entities.into()
 }
@@ -199,7 +191,7 @@ pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetad
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_add_models_to_sync(
     client: *mut ToriiClient,
-    models: *const KeysClause,
+    models: *const ModelKeysClause,
     models_len: usize,
 ) -> Result<bool> {
     let models = unsafe { std::slice::from_raw_parts(models, models_len).to_vec() };
@@ -220,10 +212,10 @@ pub unsafe extern "C" fn client_add_models_to_sync(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_on_sync_model_update(
     client: *mut ToriiClient,
-    model: KeysClause,
+    model: ModelKeysClause,
     callback: unsafe extern "C" fn(),
 ) -> Result<*mut Subscription> {
-    let model: torii_grpc::types::KeysClause = (&model).into();
+    let model: torii_grpc::types::ModelKeysClause = (&model).into();
     let storage = (*client).inner.storage();
 
     let rcv = match storage.add_listener(
@@ -250,15 +242,12 @@ pub unsafe extern "C" fn client_on_sync_model_update(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_on_entity_state_update(
     client: *mut ToriiClient,
-    entities: *mut types::FieldElement,
-    entities_len: usize,
+    clause: Option<&EntityKeysClause>,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Model>),
 ) -> Result<*mut Subscription> {
-    let entities = unsafe { std::slice::from_raw_parts(entities, entities_len) };
-    // to vec of fieldleemnt
-    let entities = entities.iter().map(|e| (&e.clone()).into()).collect();
+    let clause = clause.map(|c| c.into());
 
-    let entity_stream = unsafe { (*client).inner.on_entity_updated(entities) };
+    let entity_stream = unsafe { (*client).inner.on_entity_updated(clause) };
     let rcv = match (*client).runtime.block_on(entity_stream) {
         Ok(rcv) => rcv,
         Err(e) => return Result::Err(e.into()),
@@ -282,15 +271,12 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_on_event_message_update(
     client: *mut ToriiClient,
-    event_messages: *mut types::FieldElement,
-    event_messages_len: usize,
+    clause: Option<&EntityKeysClause>,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Model>),
 ) -> Result<*mut Subscription> {
-    let event_messages = unsafe { std::slice::from_raw_parts(event_messages, event_messages_len) };
-    // to vec of fieldleemnt
-    let event_messages = event_messages.iter().map(|e| (&e.clone()).into()).collect();
+    let clause = clause.map(|c| c.into());
 
-    let entity_stream = unsafe { (*client).inner.on_event_message_updated(event_messages) };
+    let entity_stream = unsafe { (*client).inner.on_event_message_updated(clause) };
     let rcv = match (*client).runtime.block_on(entity_stream) {
         Ok(rcv) => rcv,
         Err(e) => return Result::Err(e.into()),
@@ -309,11 +295,12 @@ pub unsafe extern "C" fn client_on_event_message_update(
 
     Result::Ok(Box::into_raw(Box::new(Subscription(trigger))))
 }
+
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_remove_models_to_sync(
     client: *mut ToriiClient,
-    models: *const KeysClause,
+    models: *const ModelKeysClause,
     models_len: usize,
 ) -> Result<bool> {
     let models = unsafe { std::slice::from_raw_parts(models, models_len).to_vec() };

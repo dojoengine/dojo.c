@@ -1,8 +1,5 @@
 use starknet::core::utils::get_selector_from_name;
-use std::{
-    ffi::{c_char, CStr, CString},
-    fmt::Write,
-};
+use std::ffi::{c_char, CStr, CString};
 use torii_client::client::Client;
 
 #[derive(Debug, Clone)]
@@ -233,9 +230,31 @@ pub enum Clause {
 
 #[derive(Clone, Debug)]
 #[repr(C)]
+pub enum EntityKeysClause {
+    HashedKeys(CArray<FieldElement>),
+    EntityKeys(KeysClause),
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub enum PatternMatching {
+    FixedLen = 0,
+    VariableLen = 1,
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
 pub struct KeysClause {
+    pub keys: CArray<FieldElement>,
+    pub pattern_matching: PatternMatching,
+    pub models: CArray<*const c_char>,
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct ModelKeysClause {
+    pub keys: CArray<FieldElement>,
     pub model: *const c_char,
-    pub keys: CArray<*const c_char>,
 }
 
 #[derive(Clone, Debug)]
@@ -782,19 +801,71 @@ impl From<&torii_grpc::types::Clause> for Clause {
     }
 }
 
+impl From<&PatternMatching> for torii_grpc::types::PatternMatching {
+    fn from(val: &PatternMatching) -> Self {
+        match val {
+            PatternMatching::FixedLen => torii_grpc::types::PatternMatching::FixedLen,
+            PatternMatching::VariableLen => torii_grpc::types::PatternMatching::VariableLen,
+        }
+    }
+}
+
+impl From<&torii_grpc::types::PatternMatching> for PatternMatching {
+    fn from(val: &torii_grpc::types::PatternMatching) -> Self {
+        match val {
+            torii_grpc::types::PatternMatching::FixedLen => PatternMatching::FixedLen,
+            torii_grpc::types::PatternMatching::VariableLen => PatternMatching::VariableLen,
+        }
+    }
+}
+
+impl From<&EntityKeysClause> for torii_grpc::types::EntityKeysClause {
+    fn from(val: &EntityKeysClause) -> Self {
+        match val {
+            EntityKeysClause::HashedKeys(keys) => {
+                let keys: Vec<FieldElement> = keys.into();
+                let keys = keys.iter().map(|k| k.into()).collect();
+
+                torii_grpc::types::EntityKeysClause::HashedKeys(keys)
+            }
+            EntityKeysClause::EntityKeys(keys) => {
+                torii_grpc::types::EntityKeysClause::Keys(keys.into())
+            }
+        }
+    }
+}
+
+impl From<&torii_grpc::types::EntityKeysClause> for EntityKeysClause {
+    fn from(val: &torii_grpc::types::EntityKeysClause) -> Self {
+        match val {
+            torii_grpc::types::EntityKeysClause::HashedKeys(keys) => {
+                let keys = keys.iter().map(|k| k.into()).collect::<Vec<FieldElement>>();
+                EntityKeysClause::HashedKeys(keys.into())
+            }
+            torii_grpc::types::EntityKeysClause::Keys(keys) => {
+                EntityKeysClause::EntityKeys(keys.into())
+            }
+        }
+    }
+}
+
 impl From<&KeysClause> for torii_grpc::types::KeysClause {
     fn from(val: &KeysClause) -> Self {
-        let keys: Vec<*const c_char> = (&val.keys).into();
+        let keys: Vec<FieldElement> = (&val.keys).into();
         let keys = std::mem::ManuallyDrop::new(keys);
 
+        let models: Vec<*const c_char> = (&val.models).into();
+        let models = std::mem::ManuallyDrop::new(models);
+
         torii_grpc::types::KeysClause {
-            model: unsafe { CStr::from_ptr(val.model).to_string_lossy().to_string() },
             keys: keys
                 .iter()
-                .map(|k| {
-                    let k = unsafe { CStr::from_ptr(*k).to_string_lossy().to_string() };
-                    starknet::core::types::FieldElement::from_hex_be(k.as_str()).unwrap()
-                })
+                .map(Into::into)
+                .collect::<Vec<starknet::core::types::FieldElement>>(),
+            pattern_matching: (&val.pattern_matching).into(),
+            models: models
+                .iter()
+                .map(|m| unsafe { CStr::from_ptr(*m).to_string_lossy().to_string() })
                 .collect(),
         }
     }
@@ -805,16 +876,43 @@ impl From<&torii_grpc::types::KeysClause> for KeysClause {
         let keys = val
             .keys
             .iter()
-            .map(|k| {
-                // convert bytes to hex string
-                let str = k.to_bytes_be().iter().fold("0x".to_string(), |mut acc, b| {
-                    write!(acc, "{:02x}", b).unwrap();
-                    acc
-                });
-                CString::new(str).unwrap().into_raw() as *const c_char
-            })
+            .map(|k| k.into())
+            .collect::<Vec<FieldElement>>();
+        let models = val
+            .models
+            .iter()
+            .map(|m| CString::new(m.clone()).unwrap().into_raw() as *const c_char)
             .collect::<Vec<*const c_char>>();
+
         KeysClause {
+            models: models.into(),
+            keys: keys.into(),
+            pattern_matching: (&val.pattern_matching).into(),
+        }
+    }
+}
+
+impl From<&ModelKeysClause> for torii_grpc::types::ModelKeysClause {
+    fn from(val: &ModelKeysClause) -> Self {
+        let keys: Vec<FieldElement> = (&val.keys).into();
+        let keys = std::mem::ManuallyDrop::new(keys);
+
+        torii_grpc::types::ModelKeysClause {
+            model: unsafe { CStr::from_ptr(val.model).to_string_lossy().to_string() },
+            keys: keys.iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<&torii_grpc::types::ModelKeysClause> for ModelKeysClause {
+    fn from(val: &torii_grpc::types::ModelKeysClause) -> Self {
+        let keys = val
+            .keys
+            .iter()
+            .map(|k| k.into())
+            .collect::<Vec<FieldElement>>();
+
+        ModelKeysClause {
             model: CString::new(val.model.clone()).unwrap().into_raw(),
             keys: keys.into(),
         }
