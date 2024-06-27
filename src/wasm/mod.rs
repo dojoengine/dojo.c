@@ -185,13 +185,53 @@ pub enum Clause {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct KeysClauses(pub Vec<KeysClause>);
+pub struct KeysClauses(pub Vec<ModelKeysClause>);
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct ModelKeysClause {
+    pub model: String,
+    pub keys: Vec<String>,
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum PatternMatching {
+    FixedLen = 0,
+    VariableLen = 1
+}
+
+impl From<&PatternMatching> for torii_grpc::types::PatternMatching {
+    fn from(value: &PatternMatching) -> Self {
+        match value {
+            PatternMatching::FixedLen => Self::FixedLen,
+            PatternMatching::VariableLen => Self::VariableLen
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum EntityKeysClause {
+    HashedKeys(Vec<String>),
+    Keys(KeysClause)
+}
+
+impl From<&EntityKeysClause> for torii_grpc::types::EntityKeysClause {
+    fn from(value: &EntityKeysClause) -> Self {
+        match value {
+            EntityKeysClause::HashedKeys(keys) => Self::HashedKeys(keys.iter().map(|k| FieldElement::from_str(k.as_str()).unwrap()).collect()),
+            EntityKeysClause::Keys(keys) => Self::Keys(keys.into())
+        }
+    }
+}
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct KeysClause {
-    pub model: String,
     pub keys: Vec<String>,
+    pub pattern_matching: PatternMatching,
+    pub models: Vec<String>
 }
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
@@ -211,8 +251,8 @@ pub struct CompositeClause {
     pub clauses: Vec<Clause>,
 }
 
-impl From<&KeysClause> for torii_grpc::types::KeysClause {
-    fn from(value: &KeysClause) -> Self {
+impl From<&ModelKeysClause> for torii_grpc::types::ModelKeysClause {
+    fn from(value: &ModelKeysClause) -> Self {
         Self {
             model: value.model.to_string(),
             keys: value
@@ -220,6 +260,20 @@ impl From<&KeysClause> for torii_grpc::types::KeysClause {
                 .iter()
                 .map(|k| FieldElement::from_str(k.as_str()).unwrap())
                 .collect(),
+        }
+    }
+}
+
+impl From<&KeysClause> for torii_grpc::types::KeysClause {
+    fn from(value: &KeysClause) -> Self {
+        Self {
+            keys: value
+                .keys
+                .iter()
+                .map(|k: &String| FieldElement::from_str(k.as_str()).unwrap())
+                .collect(),
+            models: value.models.iter().map(|m| m.to_string()).collect(),
+            pattern_matching: (&value.pattern_matching).into()
         }
     }
 }
@@ -778,7 +832,7 @@ impl Client {
 
         match self
             .inner
-            .model(&torii_grpc::types::KeysClause {
+            .model(&torii_grpc::types::ModelKeysClause {
                 model: model.to_string(),
                 keys,
             })
@@ -829,7 +883,7 @@ impl Client {
     #[wasm_bindgen(js_name = onSyncModelChange)]
     pub async fn on_sync_model_change(
         &self,
-        model: KeysClause,
+        model: ModelKeysClause,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
@@ -865,22 +919,14 @@ impl Client {
     #[wasm_bindgen(js_name = onEntityUpdated)]
     pub async fn on_entity_updated(
         &self,
-        ids: Option<Vec<String>>,
+        clause: Option<EntityKeysClause>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let ids = ids
-            .unwrap_or_default()
-            .into_iter()
-            .map(|id| {
-                FieldElement::from_str(&id)
-                    .map_err(|err| JsValue::from(format!("failed to parse entity id: {err}")))
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        let stream = self.inner.on_entity_updated(ids).await.unwrap();
+        let clause = clause.map(|c| (&c).into());
+        let stream = self.inner.on_entity_updated(clause).await.unwrap();
 
         let (trigger, tripwire) = Tripwire::new();
         wasm_bindgen_futures::spawn_local(async move {
@@ -906,22 +952,14 @@ impl Client {
     #[wasm_bindgen(js_name = onEventMessageUpdated)]
     pub async fn on_event_message_updated(
         &self,
-        ids: Option<Vec<String>>,
+        clause: Option<EntityKeysClause>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let ids = ids
-            .unwrap_or_default()
-            .into_iter()
-            .map(|id| {
-                FieldElement::from_str(&id)
-                    .map_err(|err| JsValue::from(format!("failed to parse entity id: {err}")))
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        let stream = self.inner.on_event_message_updated(ids).await.unwrap();
+        let clause = clause.map(|c| (&c).into());
+        let stream = self.inner.on_event_message_updated(clause).await.unwrap();
 
         let (trigger, tripwire) = Tripwire::new();
         wasm_bindgen_futures::spawn_local(async move {
@@ -983,7 +1021,6 @@ impl Subscription {
 #[wasm_bindgen(js_name = createClient)]
 #[allow(non_snake_case)]
 pub async fn create_client(
-    initialModelsToSync: KeysClauses,
     config: ClientConfig,
 ) -> Result<Client, JsValue> {
     #[cfg(feature = "console-error-panic")]
@@ -996,8 +1033,6 @@ pub async fn create_client(
         world_address,
     } = config;
 
-    let models = initialModelsToSync.0.iter().map(|e| e.into()).collect();
-
     let world_address = FieldElement::from_str(&world_address)
         .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
 
@@ -1006,7 +1041,6 @@ pub async fn create_client(
         rpc_url,
         relay_url,
         world_address,
-        Some(models),
     )
     .await
     .map_err(|err| JsValue::from(format!("failed to build client: {err}")))?;
