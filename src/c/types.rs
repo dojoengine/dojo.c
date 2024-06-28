@@ -63,7 +63,7 @@ impl From<&starknet_crypto::Signature> for Signature {
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub struct Call {
-    pub to: *const c_char,
+    pub to: FieldElement,
     pub selector: *const c_char,
     pub calldata: CArray<FieldElement>,
 }
@@ -105,7 +105,6 @@ impl From<&BlockTag> for starknet::core::types::BlockTag {
 
 impl From<&Call> for starknet::accounts::Call {
     fn from(val: &Call) -> Self {
-        let to = unsafe { CStr::from_ptr(val.to).to_string_lossy().to_string() };
         let selector = unsafe { CStr::from_ptr(val.selector).to_string_lossy().to_string() };
 
         let calldata: Vec<FieldElement> = (&val.calldata).into();
@@ -113,7 +112,7 @@ impl From<&Call> for starknet::accounts::Call {
         let calldata = calldata.iter().map(|c| (&c.clone()).into()).collect();
 
         starknet::accounts::Call {
-            to: starknet_crypto::FieldElement::from_hex_be(&to).unwrap(),
+            to: (&val.to).into(),
             selector: get_selector_from_name(&selector).unwrap(),
             calldata,
         }
@@ -122,7 +121,6 @@ impl From<&Call> for starknet::accounts::Call {
 
 impl From<&Call> for starknet::core::types::FunctionCall {
     fn from(val: &Call) -> Self {
-        let to = unsafe { CStr::from_ptr(val.to).to_string_lossy().to_string() };
         let selector = unsafe { CStr::from_ptr(val.selector).to_string_lossy().to_string() };
 
         let calldata: Vec<FieldElement> = (&val.calldata).into();
@@ -130,7 +128,7 @@ impl From<&Call> for starknet::core::types::FunctionCall {
         let calldata = calldata.iter().map(|c| (&c.clone()).into()).collect();
 
         starknet::core::types::FunctionCall {
-            contract_address: starknet_crypto::FieldElement::from_hex_be(&to).unwrap(),
+            contract_address: (&val.to).into(),
             entry_point_selector: get_selector_from_name(&selector).unwrap(),
             calldata,
         }

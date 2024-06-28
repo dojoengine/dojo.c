@@ -56,6 +56,10 @@ typedef struct ResultToriiClient {
   };
 } ResultToriiClient;
 
+typedef struct FieldElement {
+  uint8_t data[32];
+} FieldElement;
+
 typedef struct CArrayu8 {
   uint8_t *data;
   uintptr_t data_len;
@@ -77,10 +81,6 @@ typedef struct ResultCArrayu8 {
     };
   };
 } ResultCArrayu8;
-
-typedef struct FieldElement {
-  uint8_t data[32];
-} FieldElement;
 
 typedef struct Signature {
   /**
@@ -595,7 +595,7 @@ typedef struct ResultAccount {
 } ResultAccount;
 
 typedef struct Call {
-  const char *to;
+  struct FieldElement to;
   const char *selector;
   struct CArrayFieldElement calldata;
 } Call;
@@ -631,7 +631,7 @@ extern "C" {
 struct ResultToriiClient client_new(const char *torii_url,
                                     const char *rpc_url,
                                     const char *libp2p_relay_url,
-                                    const char *world);
+                                    struct FieldElement world);
 
 struct ResultCArrayu8 client_publish_message(struct ToriiClient *client,
                                              const char *message,

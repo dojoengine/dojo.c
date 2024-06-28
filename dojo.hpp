@@ -86,14 +86,14 @@ struct Result {
   }
 };
 
+struct FieldElement {
+  uint8_t data[32];
+};
+
 template<typename T>
 struct CArray {
   T *data;
   uintptr_t data_len;
-};
-
-struct FieldElement {
-  uint8_t data[32];
 };
 
 struct Signature {
@@ -774,7 +774,7 @@ struct EntityKeysClause {
 };
 
 struct Call {
-  const char *to;
+  FieldElement to;
   const char *selector;
   CArray<FieldElement> calldata;
 };
@@ -845,7 +845,7 @@ extern "C" {
 Result<ToriiClient*> client_new(const char *torii_url,
                                 const char *rpc_url,
                                 const char *libp2p_relay_url,
-                                const char *world);
+                                FieldElement world);
 
 Result<CArray<uint8_t>> client_publish_message(ToriiClient *client,
                                                const char *message,

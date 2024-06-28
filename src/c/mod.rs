@@ -34,7 +34,7 @@ pub unsafe extern "C" fn client_new(
     torii_url: *const c_char,
     rpc_url: *const c_char,
     libp2p_relay_url: *const c_char,
-    world: *const c_char,
+    world: types::FieldElement,
 ) -> Result<*mut ToriiClient> {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
@@ -43,13 +43,8 @@ pub unsafe extern "C" fn client_new(
             .to_string_lossy()
             .into_owned()
     };
-    let world = unsafe { CStr::from_ptr(world).to_string_lossy().into_owned() };
-    let world = match FieldElement::from_hex_be(world.as_str()) {
-        Ok(world) => world,
-        Err(e) => return Result::Err(e.into()),
-    };
 
-    let client_future = TClient::new(torii_url, rpc_url, libp2p_relay_url, world);
+    let client_future = TClient::new(torii_url, rpc_url, libp2p_relay_url, (&world).into());
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
     let client = match runtime.block_on(client_future) {
