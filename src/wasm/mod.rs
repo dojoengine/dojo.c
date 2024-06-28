@@ -18,7 +18,7 @@ use starknet::core::utils::{
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::{Signature, poseidon_hash_many};
+use starknet_crypto::{poseidon_hash_many, Signature};
 use stream_cancel::{StreamExt as _, Tripwire};
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
@@ -198,14 +198,14 @@ pub struct ModelKeysClause {
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub enum PatternMatching {
     FixedLen = 0,
-    VariableLen = 1
+    VariableLen = 1,
 }
 
 impl From<&PatternMatching> for torii_grpc::types::PatternMatching {
     fn from(value: &PatternMatching) -> Self {
         match value {
             PatternMatching::FixedLen => Self::FixedLen,
-            PatternMatching::VariableLen => Self::VariableLen
+            PatternMatching::VariableLen => Self::VariableLen,
         }
     }
 }
@@ -214,14 +214,18 @@ impl From<&PatternMatching> for torii_grpc::types::PatternMatching {
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub enum EntityKeysClause {
     HashedKeys(Vec<String>),
-    Keys(KeysClause)
+    Keys(KeysClause),
 }
 
 impl From<&EntityKeysClause> for torii_grpc::types::EntityKeysClause {
     fn from(value: &EntityKeysClause) -> Self {
         match value {
-            EntityKeysClause::HashedKeys(keys) => Self::HashedKeys(keys.iter().map(|k| FieldElement::from_str(k.as_str()).unwrap()).collect()),
-            EntityKeysClause::Keys(keys) => Self::Keys(keys.into())
+            EntityKeysClause::HashedKeys(keys) => Self::HashedKeys(
+                keys.iter()
+                    .map(|k| FieldElement::from_str(k.as_str()).unwrap())
+                    .collect(),
+            ),
+            EntityKeysClause::Keys(keys) => Self::Keys(keys.into()),
         }
     }
 }
@@ -231,7 +235,7 @@ impl From<&EntityKeysClause> for torii_grpc::types::EntityKeysClause {
 pub struct KeysClause {
     pub keys: Vec<String>,
     pub pattern_matching: PatternMatching,
-    pub models: Vec<String>
+    pub models: Vec<String>,
 }
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
@@ -273,7 +277,7 @@ impl From<&KeysClause> for torii_grpc::types::KeysClause {
                 .map(|k: &String| FieldElement::from_str(k.as_str()).unwrap())
                 .collect(),
             models: value.models.iter().map(|m| m.to_string()).collect(),
-            pattern_matching: (&value.pattern_matching).into()
+            pattern_matching: (&value.pattern_matching).into(),
         }
     }
 }
@@ -1020,9 +1024,7 @@ impl Subscription {
 /// Create the a client with the given configurations.
 #[wasm_bindgen(js_name = createClient)]
 #[allow(non_snake_case)]
-pub async fn create_client(
-    config: ClientConfig,
-) -> Result<Client, JsValue> {
+pub async fn create_client(config: ClientConfig) -> Result<Client, JsValue> {
     #[cfg(feature = "console-error-panic")]
     console_error_panic_hook::set_once();
 
@@ -1036,14 +1038,9 @@ pub async fn create_client(
     let world_address = FieldElement::from_str(&world_address)
         .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
 
-    let client = torii_client::client::Client::new(
-        torii_url,
-        rpc_url,
-        relay_url,
-        world_address,
-    )
-    .await
-    .map_err(|err| JsValue::from(format!("failed to build client: {err}")))?;
+    let client = torii_client::client::Client::new(torii_url, rpc_url, relay_url, world_address)
+        .await
+        .map_err(|err| JsValue::from(format!("failed to build client: {err}")))?;
 
     wasm_bindgen_futures::spawn_local(client.start_subscription().await.map_err(|err| {
         JsValue::from(format!(
