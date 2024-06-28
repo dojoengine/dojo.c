@@ -25,6 +25,11 @@ enum class LogicalOperator {
   Or,
 };
 
+enum class PatternMatching {
+  FixedLen = 0,
+  VariableLen = 1,
+};
+
 struct Account;
 
 struct Provider;
@@ -81,19 +86,14 @@ struct Result {
   }
 };
 
+struct FieldElement {
+  uint8_t data[32];
+};
+
 template<typename T>
 struct CArray {
   T *data;
   uintptr_t data_len;
-};
-
-struct KeysClause {
-  const char *model;
-  CArray<const char*> keys;
-};
-
-struct FieldElement {
-  uint8_t data[32];
 };
 
 struct Signature {
@@ -509,6 +509,11 @@ struct COption {
   }
 };
 
+struct ModelKeysClause {
+  CArray<FieldElement> keys;
+  const char *model;
+};
+
 struct Model {
   const char *name;
   CArray<Member> members;
@@ -517,6 +522,12 @@ struct Model {
 struct Entity {
   FieldElement hashed_keys;
   CArray<Model> models;
+};
+
+struct KeysClause {
+  CArray<FieldElement> keys;
+  PatternMatching pattern_matching;
+  CArray<const char*> models;
 };
 
 struct ValueType {
@@ -719,8 +730,51 @@ struct WorldMetadata {
   CArray<CHashItem<const char*, ModelMetadata>> models;
 };
 
+struct EntityKeysClause {
+  enum class Tag {
+    HashedKeys,
+    EntityKeys,
+  };
+
+  struct HashedKeys_Body {
+    CArray<FieldElement> _0;
+  };
+
+  struct EntityKeys_Body {
+    KeysClause _0;
+  };
+
+  Tag tag;
+  union {
+    HashedKeys_Body hashed_keys;
+    EntityKeys_Body entity_keys;
+  };
+
+  static EntityKeysClause HashedKeys(const CArray<FieldElement> &_0) {
+    EntityKeysClause result;
+    ::new (&result.hashed_keys._0) (CArray<FieldElement>)(_0);
+    result.tag = Tag::HashedKeys;
+    return result;
+  }
+
+  bool IsHashedKeys() const {
+    return tag == Tag::HashedKeys;
+  }
+
+  static EntityKeysClause EntityKeys(const KeysClause &_0) {
+    EntityKeysClause result;
+    ::new (&result.entity_keys._0) (KeysClause)(_0);
+    result.tag = Tag::EntityKeys;
+    return result;
+  }
+
+  bool IsEntityKeys() const {
+    return tag == Tag::EntityKeys;
+  }
+};
+
 struct Call {
-  const char *to;
+  FieldElement to;
   const char *selector;
   CArray<FieldElement> calldata;
 };
@@ -791,44 +845,40 @@ extern "C" {
 Result<ToriiClient*> client_new(const char *torii_url,
                                 const char *rpc_url,
                                 const char *libp2p_relay_url,
-                                const char *world,
-                                const KeysClause *entities,
-                                uintptr_t entities_len);
+                                FieldElement world);
 
 Result<CArray<uint8_t>> client_publish_message(ToriiClient *client,
                                                const char *message,
                                                Signature signature);
 
-Result<COption<Ty*>> client_model(ToriiClient *client, const KeysClause *keys);
+Result<COption<Ty*>> client_model(ToriiClient *client, const ModelKeysClause *keys);
 
 Result<CArray<Entity>> client_entities(ToriiClient *client, const Query *query);
 
 Result<CArray<Entity>> client_event_messages(ToriiClient *client, const Query *query);
 
-CArray<KeysClause> client_subscribed_models(ToriiClient *client);
+CArray<ModelKeysClause> client_subscribed_models(ToriiClient *client);
 
 WorldMetadata client_metadata(ToriiClient *client);
 
 Result<bool> client_add_models_to_sync(ToriiClient *client,
-                                       const KeysClause *models,
+                                       const ModelKeysClause *models,
                                        uintptr_t models_len);
 
 Result<Subscription*> client_on_sync_model_update(ToriiClient *client,
-                                                  KeysClause model,
+                                                  ModelKeysClause model,
                                                   void (*callback)());
 
 Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
-                                                    FieldElement *entities,
-                                                    uintptr_t entities_len,
+                                                    const EntityKeysClause *clause,
                                                     void (*callback)(FieldElement, CArray<Model>));
 
 Result<Subscription*> client_on_event_message_update(ToriiClient *client,
-                                                     FieldElement *event_messages,
-                                                     uintptr_t event_messages_len,
+                                                     const EntityKeysClause *clause,
                                                      void (*callback)(FieldElement, CArray<Model>));
 
 Result<bool> client_remove_models_to_sync(ToriiClient *client,
-                                          const KeysClause *models,
+                                          const ModelKeysClause *models,
                                           uintptr_t models_len);
 
 Result<CArray<FieldElement>> bytearray_serialize(const char *str);
