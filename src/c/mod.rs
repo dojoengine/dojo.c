@@ -1,7 +1,7 @@
 mod types;
 
 use self::types::{
-    BlockId, CArray, COption, Call, Entity, Error, Model, Query, Result, Signature, ToriiClient,
+    BlockId, CArray, Call, Entity, Error, Model, Query, Result, Signature, ToriiClient,
     Ty, WorldMetadata,
 };
 use crate::constants;
@@ -105,16 +105,16 @@ pub unsafe extern "C" fn client_publish_message(
 pub unsafe extern "C" fn client_model(
     client: *mut ToriiClient,
     keys: &ModelKeysClause,
-) -> Result<COption<*mut Ty>> {
+) -> Result<*mut Ty> {
     let keys = (&keys.clone()).into();
     let entity_future = unsafe { (*client).inner.model(&keys) };
 
     match (*client).runtime.block_on(entity_future) {
         Ok(ty) => {
             if let Some(ty) = ty {
-                Result::Ok(COption::Some(Box::into_raw(Box::new((&ty).into()))))
+                Result::Ok(Box::into_raw(Box::new((&ty).into())))
             } else {
-                Result::Ok(COption::None)
+                Result::Ok(std::ptr::null_mut())
             }
         }
         Err(e) => Result::Err(e.into()),

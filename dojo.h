@@ -228,36 +228,22 @@ typedef struct Ty {
   };
 } Ty;
 
-typedef enum COptionTy_Tag {
-  SomeTy,
-  NoneTy,
-} COptionTy_Tag;
+typedef enum ResultTy_Tag {
+  OkTy,
+  ErrTy,
+} ResultTy_Tag;
 
-typedef struct COptionTy {
-  COptionTy_Tag tag;
+typedef struct ResultTy {
+  ResultTy_Tag tag;
   union {
     struct {
-      struct Ty *some;
-    };
-  };
-} COptionTy;
-
-typedef enum ResultCOptionTy_Tag {
-  OkCOptionTy,
-  ErrCOptionTy,
-} ResultCOptionTy_Tag;
-
-typedef struct ResultCOptionTy {
-  ResultCOptionTy_Tag tag;
-  union {
-    struct {
-      struct COptionTy ok;
+      struct Ty *ok;
     };
     struct {
       struct Error err;
     };
   };
-} ResultCOptionTy;
+} ResultTy;
 
 typedef struct CArrayFieldElement {
   struct FieldElement *data;
@@ -306,13 +292,20 @@ typedef struct ResultCArrayEntity {
   };
 } ResultCArrayEntity;
 
+typedef const struct FieldElement *COptionFieldElement;
+
+typedef struct CArrayCOptionFieldElement {
+  COptionFieldElement *data;
+  uintptr_t data_len;
+} CArrayCOptionFieldElement;
+
 typedef struct CArrayc_char {
   const char **data;
   uintptr_t data_len;
 } CArrayc_char;
 
 typedef struct KeysClause {
-  struct CArrayFieldElement keys;
+  struct CArrayCOptionFieldElement keys;
   enum PatternMatching pattern_matching;
   struct CArrayc_char models;
 } KeysClause;
@@ -390,24 +383,12 @@ typedef struct Clause {
   };
 } Clause;
 
-typedef enum COptionClause_Tag {
-  SomeClause,
-  NoneClause,
-} COptionClause_Tag;
-
-typedef struct COptionClause {
-  COptionClause_Tag tag;
-  union {
-    struct {
-      struct Clause some;
-    };
-  };
-} COptionClause;
+typedef const struct Clause *COptionClause;
 
 typedef struct Query {
   uint32_t limit;
   uint32_t offset;
-  struct COptionClause clause;
+  COptionClause clause;
 } Query;
 
 typedef struct CArrayModelKeysClause {
@@ -637,7 +618,7 @@ struct ResultCArrayu8 client_publish_message(struct ToriiClient *client,
                                              const char *message,
                                              struct Signature signature);
 
-struct ResultCOptionTy client_model(struct ToriiClient *client, const struct ModelKeysClause *keys);
+struct ResultTy client_model(struct ToriiClient *client, const struct ModelKeysClause *keys);
 
 struct ResultCArrayEntity client_entities(struct ToriiClient *client, const struct Query *query);
 

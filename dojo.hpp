@@ -471,44 +471,6 @@ struct Ty {
   }
 };
 
-template<typename T>
-struct COption {
-  enum class Tag {
-    Some,
-    None,
-  };
-
-  struct Some_Body {
-    T _0;
-  };
-
-  Tag tag;
-  union {
-    Some_Body some;
-  };
-
-  static COption Some(const T &_0) {
-    COption result;
-    ::new (&result.some._0) (T)(_0);
-    result.tag = Tag::Some;
-    return result;
-  }
-
-  bool IsSome() const {
-    return tag == Tag::Some;
-  }
-
-  static COption None() {
-    COption result;
-    result.tag = Tag::None;
-    return result;
-  }
-
-  bool IsNone() const {
-    return tag == Tag::None;
-  }
-};
-
 struct ModelKeysClause {
   CArray<FieldElement> keys;
   const char *model;
@@ -524,8 +486,11 @@ struct Entity {
   CArray<Model> models;
 };
 
+template<typename T>
+using COption = const T*;
+
 struct KeysClause {
-  CArray<FieldElement> keys;
+  CArray<COption<FieldElement>> keys;
   PatternMatching pattern_matching;
   CArray<const char*> models;
 };
@@ -851,7 +816,7 @@ Result<CArray<uint8_t>> client_publish_message(ToriiClient *client,
                                                const char *message,
                                                Signature signature);
 
-Result<COption<Ty*>> client_model(ToriiClient *client, const ModelKeysClause *keys);
+Result<Ty*> client_model(ToriiClient *client, const ModelKeysClause *keys);
 
 Result<CArray<Entity>> client_entities(ToriiClient *client, const Query *query);
 
