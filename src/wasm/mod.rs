@@ -233,7 +233,7 @@ impl From<&EntityKeysClause> for torii_grpc::types::EntityKeysClause {
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct KeysClause {
-    pub keys: Vec<String>,
+    pub keys: Vec<Option<String>>,
     pub pattern_matching: PatternMatching,
     pub models: Vec<String>,
 }
@@ -274,7 +274,10 @@ impl From<&KeysClause> for torii_grpc::types::KeysClause {
             keys: value
                 .keys
                 .iter()
-                .map(|k: &String| FieldElement::from_str(k.as_str()).unwrap())
+                .map(|o| {
+                    o.as_ref()
+                        .map(|k| FieldElement::from_str(k.as_str()).unwrap())
+                })
                 .collect(),
             models: value.models.iter().map(|m| m.to_string()).collect(),
             pattern_matching: (&value.pattern_matching).into(),

@@ -1,8 +1,8 @@
 mod types;
 
 use self::types::{
-    BlockId, CArray, Call, Entity, Error, Model, Query, Result, Signature, ToriiClient,
-    Ty, WorldMetadata,
+    BlockId, CArray, Call, Entity, Error, Model, Query, Result, Signature, ToriiClient, Ty,
+    WorldMetadata,
 };
 use crate::constants;
 use crate::types::{Account, Provider, Subscription};

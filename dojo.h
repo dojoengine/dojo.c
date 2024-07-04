@@ -250,6 +250,11 @@ typedef struct CArrayFieldElement {
   uintptr_t data_len;
 } CArrayFieldElement;
 
+typedef struct CArrayFieldElement {
+  struct FieldElement **data;
+  uintptr_t data_len;
+} CArrayFieldElement;
+
 typedef struct ModelKeysClause {
   struct CArrayFieldElement keys;
   const char *model;
@@ -292,20 +297,13 @@ typedef struct ResultCArrayEntity {
   };
 } ResultCArrayEntity;
 
-typedef const struct FieldElement *COptionFieldElement;
-
-typedef struct CArrayCOptionFieldElement {
-  COptionFieldElement *data;
-  uintptr_t data_len;
-} CArrayCOptionFieldElement;
-
 typedef struct CArrayc_char {
   const char **data;
   uintptr_t data_len;
 } CArrayc_char;
 
 typedef struct KeysClause {
-  struct CArrayCOptionFieldElement keys;
+  struct CArrayFieldElement keys;
   enum PatternMatching pattern_matching;
   struct CArrayc_char models;
 } KeysClause;
@@ -383,12 +381,10 @@ typedef struct Clause {
   };
 } Clause;
 
-typedef const struct Clause *COptionClause;
-
 typedef struct Query {
   uint32_t limit;
   uint32_t offset;
-  COptionClause clause;
+  struct Clause *clause;
 } Query;
 
 typedef struct CArrayModelKeysClause {

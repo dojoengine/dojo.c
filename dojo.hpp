@@ -486,11 +486,8 @@ struct Entity {
   CArray<Model> models;
 };
 
-template<typename T>
-using COption = const T*;
-
 struct KeysClause {
-  CArray<COption<FieldElement>> keys;
+  CArray<FieldElement*> keys;
   PatternMatching pattern_matching;
   CArray<const char*> models;
 };
@@ -670,7 +667,7 @@ struct Clause {
 struct Query {
   uint32_t limit;
   uint32_t offset;
-  COption<Clause> clause;
+  Clause *clause;
 };
 
 struct ModelMetadata {
