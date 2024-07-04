@@ -486,8 +486,46 @@ struct Entity {
   CArray<Model> models;
 };
 
+template<typename T>
+struct COption {
+  enum class Tag {
+    Some,
+    None,
+  };
+
+  struct Some_Body {
+    T _0;
+  };
+
+  Tag tag;
+  union {
+    Some_Body some;
+  };
+
+  static COption Some(const T &_0) {
+    COption result;
+    ::new (&result.some._0) (T)(_0);
+    result.tag = Tag::Some;
+    return result;
+  }
+
+  bool IsSome() const {
+    return tag == Tag::Some;
+  }
+
+  static COption None() {
+    COption result;
+    result.tag = Tag::None;
+    return result;
+  }
+
+  bool IsNone() const {
+    return tag == Tag::None;
+  }
+};
+
 struct KeysClause {
-  CArray<FieldElement*> keys;
+  CArray<COption<FieldElement>> keys;
   PatternMatching pattern_matching;
   CArray<const char*> models;
 };
@@ -667,7 +705,7 @@ struct Clause {
 struct Query {
   uint32_t limit;
   uint32_t offset;
-  Clause *clause;
+  COption<Clause> clause;
 };
 
 struct ModelMetadata {
@@ -832,11 +870,11 @@ Result<Subscription*> client_on_sync_model_update(ToriiClient *client,
                                                   void (*callback)());
 
 Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
-                                                    const EntityKeysClause *clause,
+                                                    COption<EntityKeysClause> clause,
                                                     void (*callback)(FieldElement, CArray<Model>));
 
 Result<Subscription*> client_on_event_message_update(ToriiClient *client,
-                                                     const EntityKeysClause *clause,
+                                                     COption<EntityKeysClause> clause,
                                                      void (*callback)(FieldElement, CArray<Model>));
 
 Result<bool> client_remove_models_to_sync(ToriiClient *client,

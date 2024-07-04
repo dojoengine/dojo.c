@@ -1,8 +1,5 @@
 use starknet::core::utils::get_selector_from_name;
-use std::{
-    ffi::{c_char, CStr, CString},
-    ptr::NonNull,
-};
+use std::ffi::{c_char, CStr, CString};
 use torii_client::client::Client;
 
 #[derive(Debug, Clone)]
@@ -10,6 +7,46 @@ use torii_client::client::Client;
 pub enum Result<T> {
     Ok(T),
     Err(Error),
+}
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub enum COption<T> {
+    Some(T),
+    None,
+}
+
+impl<T> COption<T> {
+    pub fn as_ref(&self) -> COption<&T> {
+        match self {
+            COption::Some(x) => COption::Some(x),
+            COption::None => COption::None,
+        }
+    }
+
+    pub fn map<U, F: FnOnce(T) -> U>(self, f: F) -> COption<U> {
+        match self {
+            COption::Some(x) => COption::Some(f(x)),
+            COption::None => COption::None,
+        }
+    }
+}
+
+impl<T> From<Option<T>> for COption<T> {
+    fn from(val: Option<T>) -> Self {
+        match val {
+            Some(v) => COption::Some(v),
+            None => COption::None,
+        }
+    }
+}
+
+impl<T> From<COption<T>> for Option<T> {
+    fn from(val: COption<T>) -> Self {
+        match val {
+            COption::Some(v) => Some(v),
+            COption::None => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -194,8 +231,7 @@ impl From<&starknet::core::types::FieldElement> for FieldElement {
 pub struct Query {
     pub limit: u32,
     pub offset: u32,
-    // nullable
-    pub clause: Option<NonNull<Clause>>,
+    pub clause: COption<Clause>,
 }
 
 #[derive(Clone, Debug)]
@@ -223,7 +259,7 @@ pub enum PatternMatching {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct KeysClause {
-    pub keys: CArray<*mut FieldElement>,
+    pub keys: CArray<COption<FieldElement>>,
     pub pattern_matching: PatternMatching,
     pub models: CArray<*const c_char>,
 }
@@ -717,27 +753,40 @@ impl From<&dojo_types::primitive::Primitive> for Primitive {
 
 impl From<&Query> for torii_grpc::types::Query {
     fn from(val: &Query) -> Self {
-        Self {
-            limit: val.limit,
-            offset: val.offset,
-            clause: unsafe { val.clause.map(|c| c.as_ref().into()) },
+        match &val.clause {
+            COption::Some(clause) => {
+                let clause = (&clause.clone()).into();
+                torii_grpc::types::Query {
+                    limit: val.limit,
+                    offset: val.offset,
+                    clause: Option::Some(clause),
+                }
+            }
+            COption::None => torii_grpc::types::Query {
+                limit: val.limit,
+                offset: val.offset,
+                clause: Option::None,
+            },
         }
     }
 }
 
 impl From<&torii_grpc::types::Query> for Query {
     fn from(val: &torii_grpc::types::Query) -> Self {
-        let clause_ptr = val
-            .clause
-            .as_ref()
-            .map(|c| Box::into_raw(Box::new(c.into())))
-            .unwrap_or(std::ptr::null_mut());
-
-        Query {
-            limit: val.limit,
-            offset: val.offset,
-            // convert option to ptr
-            clause: NonNull::new(clause_ptr),
+        match &val.clause {
+            Option::Some(clause) => {
+                let clause = (&clause.clone()).into();
+                Query {
+                    limit: val.limit,
+                    offset: val.offset,
+                    clause: COption::Some(clause),
+                }
+            }
+            Option::None => Query {
+                limit: val.limit,
+                offset: val.offset,
+                clause: COption::None,
+            },
         }
     }
 }
@@ -825,8 +874,9 @@ impl From<&KeysClause> for torii_grpc::types::KeysClause {
         torii_grpc::types::KeysClause {
             keys: keys
                 .iter()
-                .map(|o| unsafe { o.as_ref().map(|k| k.into()) })
-                .collect::<Vec<_>>(),
+                .map(|o| o.as_ref().map(Into::into))
+                .map(Into::into)
+                .collect(),
             pattern_matching: (&val.pattern_matching).into(),
             models: models
                 .iter()
@@ -841,17 +891,14 @@ impl From<&torii_grpc::types::KeysClause> for KeysClause {
         let keys = val
             .keys
             .iter()
-            .map(|k| {
-                k.as_ref()
-                    .map(|k| Box::into_raw(Box::new(k.into())))
-                    .unwrap_or(std::ptr::null_mut())
-            })
-            .collect::<Vec<_>>();
+            .map(|o| o.as_ref().map(|k| k.into()))
+            .map(Into::into)
+            .collect::<Vec<COption<FieldElement>>>();
         let models = val
             .models
             .iter()
             .map(|m| CString::new(m.clone()).unwrap().into_raw() as *const c_char)
-            .collect::<Vec<_>>();
+            .collect::<Vec<*const c_char>>();
 
         KeysClause {
             models: models.into(),

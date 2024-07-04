@@ -250,11 +250,6 @@ typedef struct CArrayFieldElement {
   uintptr_t data_len;
 } CArrayFieldElement;
 
-typedef struct CArrayFieldElement {
-  struct FieldElement **data;
-  uintptr_t data_len;
-} CArrayFieldElement;
-
 typedef struct ModelKeysClause {
   struct CArrayFieldElement keys;
   const char *model;
@@ -297,13 +292,32 @@ typedef struct ResultCArrayEntity {
   };
 } ResultCArrayEntity;
 
+typedef enum COptionFieldElement_Tag {
+  SomeFieldElement,
+  NoneFieldElement,
+} COptionFieldElement_Tag;
+
+typedef struct COptionFieldElement {
+  COptionFieldElement_Tag tag;
+  union {
+    struct {
+      struct FieldElement some;
+    };
+  };
+} COptionFieldElement;
+
+typedef struct CArrayCOptionFieldElement {
+  struct COptionFieldElement *data;
+  uintptr_t data_len;
+} CArrayCOptionFieldElement;
+
 typedef struct CArrayc_char {
   const char **data;
   uintptr_t data_len;
 } CArrayc_char;
 
 typedef struct KeysClause {
-  struct CArrayFieldElement keys;
+  struct CArrayCOptionFieldElement keys;
   enum PatternMatching pattern_matching;
   struct CArrayc_char models;
 } KeysClause;
@@ -381,10 +395,24 @@ typedef struct Clause {
   };
 } Clause;
 
+typedef enum COptionClause_Tag {
+  SomeClause,
+  NoneClause,
+} COptionClause_Tag;
+
+typedef struct COptionClause {
+  COptionClause_Tag tag;
+  union {
+    struct {
+      struct Clause some;
+    };
+  };
+} COptionClause;
+
 typedef struct Query {
   uint32_t limit;
   uint32_t offset;
-  struct Clause *clause;
+  struct COptionClause clause;
 } Query;
 
 typedef struct CArrayModelKeysClause {
@@ -468,6 +496,20 @@ typedef struct EntityKeysClause {
     };
   };
 } EntityKeysClause;
+
+typedef enum COptionEntityKeysClause_Tag {
+  SomeEntityKeysClause,
+  NoneEntityKeysClause,
+} COptionEntityKeysClause_Tag;
+
+typedef struct COptionEntityKeysClause {
+  COptionEntityKeysClause_Tag tag;
+  union {
+    struct {
+      struct EntityKeysClause some;
+    };
+  };
+} COptionEntityKeysClause;
 
 typedef enum ResultCArrayFieldElement_Tag {
   OkCArrayFieldElement,
@@ -634,12 +676,12 @@ struct ResultSubscription client_on_sync_model_update(struct ToriiClient *client
                                                       void (*callback)(void));
 
 struct ResultSubscription client_on_entity_state_update(struct ToriiClient *client,
-                                                        const struct EntityKeysClause *clause,
+                                                        struct COptionEntityKeysClause clause,
                                                         void (*callback)(struct FieldElement,
                                                                          struct CArrayModel));
 
 struct ResultSubscription client_on_event_message_update(struct ToriiClient *client,
-                                                         const struct EntityKeysClause *clause,
+                                                         struct COptionEntityKeysClause clause,
                                                          void (*callback)(struct FieldElement,
                                                                           struct CArrayModel));
 
