@@ -497,20 +497,6 @@ typedef struct EntityKeysClause {
   };
 } EntityKeysClause;
 
-typedef enum COptionEntityKeysClause_Tag {
-  SomeEntityKeysClause,
-  NoneEntityKeysClause,
-} COptionEntityKeysClause_Tag;
-
-typedef struct COptionEntityKeysClause {
-  COptionEntityKeysClause_Tag tag;
-  union {
-    struct {
-      struct EntityKeysClause some;
-    };
-  };
-} COptionEntityKeysClause;
-
 typedef enum ResultCArrayFieldElement_Tag {
   OkCArrayFieldElement,
   ErrCArrayFieldElement,
@@ -676,12 +662,12 @@ struct ResultSubscription client_on_sync_model_update(struct ToriiClient *client
                                                       void (*callback)(void));
 
 struct ResultSubscription client_on_entity_state_update(struct ToriiClient *client,
-                                                        struct COptionEntityKeysClause clause,
+                                                        const struct EntityKeysClause *clause,
                                                         void (*callback)(struct FieldElement,
                                                                          struct CArrayModel));
 
 struct ResultSubscription client_on_event_message_update(struct ToriiClient *client,
-                                                         struct COptionEntityKeysClause clause,
+                                                         const struct EntityKeysClause *clause,
                                                          void (*callback)(struct FieldElement,
                                                                           struct CArrayModel));
 

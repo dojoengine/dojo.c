@@ -26,7 +26,7 @@ use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
-use types::{COption, EntityKeysClause, ModelKeysClause};
+use types::{EntityKeysClause, ModelKeysClause};
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -237,12 +237,12 @@ pub unsafe extern "C" fn client_on_sync_model_update(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_on_entity_state_update(
     client: *mut ToriiClient,
-    clause: COption<EntityKeysClause>,
+    clause: Option<&EntityKeysClause>,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Model>),
 ) -> Result<*mut Subscription> {
-    let clause = clause.as_ref().map(|c| c.into());
+    let clause = clause.map(|c| c.into());
 
-    let entity_stream = unsafe { (*client).inner.on_entity_updated(clause.into()) };
+    let entity_stream = unsafe { (*client).inner.on_entity_updated(clause) };
     let rcv = match (*client).runtime.block_on(entity_stream) {
         Ok(rcv) => rcv,
         Err(e) => return Result::Err(e.into()),
@@ -266,12 +266,12 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_on_event_message_update(
     client: *mut ToriiClient,
-    clause: COption<EntityKeysClause>,
+    clause: Option<&EntityKeysClause>,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Model>),
 ) -> Result<*mut Subscription> {
-    let clause = clause.as_ref().map(|c| c.into());
+    let clause = clause.map(|c| c.into());
 
-    let entity_stream = unsafe { (*client).inner.on_event_message_updated(clause.into()) };
+    let entity_stream = unsafe { (*client).inner.on_event_message_updated(clause) };
     let rcv = match (*client).runtime.block_on(entity_stream) {
         Ok(rcv) => rcv,
         Err(e) => return Result::Err(e.into()),
