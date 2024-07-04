@@ -638,6 +638,8 @@ struct ResultToriiClient client_new(const char *torii_url,
                                     const char *libp2p_relay_url,
                                     struct FieldElement world);
 
+void client_set_logger(struct ToriiClient *client, void (*logger)(const char*));
+
 struct ResultCArrayu8 client_publish_message(struct ToriiClient *client,
                                              const char *message,
                                              struct Signature signature);
