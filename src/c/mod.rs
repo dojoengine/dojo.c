@@ -69,7 +69,19 @@ pub unsafe extern "C" fn client_new(
     Result::Ok(Box::into_raw(Box::new(ToriiClient {
         inner: client,
         runtime,
+        logger: None,
     })))
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_set_logger(
+    client: *mut ToriiClient,
+    logger: extern "C" fn(*const c_char),
+) {
+    unsafe {
+        (*client).logger = Some(logger);
+    }
 }
 
 #[no_mangle]
@@ -127,9 +139,7 @@ pub unsafe extern "C" fn client_entities(
     client: *mut ToriiClient,
     query: &Query,
 ) -> Result<CArray<Entity>> {
-    let query = (&query.clone()).into();
-
-    let entities_future = unsafe { (*client).inner.entities(query) };
+    let entities_future = unsafe { (*client).inner.entities(query.into()) };
 
     match (*client).runtime.block_on(entities_future) {
         Ok(entities) => {
@@ -147,9 +157,7 @@ pub unsafe extern "C" fn client_event_messages(
     client: *mut ToriiClient,
     query: &Query,
 ) -> Result<CArray<Entity>> {
-    let query = (&query.clone()).into();
-
-    let event_messages_future = unsafe { (*client).inner.event_messages(query) };
+    let event_messages_future = unsafe { (*client).inner.event_messages(query.into()) };
 
     match (*client).runtime.block_on(event_messages_future) {
         Ok(event_messages) => {

@@ -847,6 +847,8 @@ Result<ToriiClient*> client_new(const char *torii_url,
                                 const char *libp2p_relay_url,
                                 FieldElement world);
 
+void client_set_logger(ToriiClient *client, void (*logger)(const char*));
+
 Result<CArray<uint8_t>> client_publish_message(ToriiClient *client,
                                                const char *message,
                                                Signature signature);

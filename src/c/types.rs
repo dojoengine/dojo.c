@@ -41,7 +41,7 @@ impl<T> From<Option<T>> for COption<T> {
 }
 
 impl<T> From<COption<T>> for Option<T> {
-    fn from(val: COption<T>) -> Self {
+fn from(val: COption<T>) -> Self {
         match val {
             COption::Some(v) => Some(v),
             COption::None => None,
@@ -154,6 +154,7 @@ impl From<&Call> for starknet::core::types::FunctionCall {
 pub struct ToriiClient {
     pub inner: Client,
     pub runtime: tokio::runtime::Runtime,
+    pub logger: Option<extern "C" fn(*const c_char)>,
 }
 
 #[derive(Clone, Debug)]
@@ -874,8 +875,8 @@ impl From<&KeysClause> for torii_grpc::types::KeysClause {
         torii_grpc::types::KeysClause {
             keys: keys
                 .iter()
-                .map(|o| o.as_ref().map(Into::into))
-                .map(Into::into)
+                .map(|o| o.clone().into())
+                .map(|o: Option<FieldElement>| o.as_ref().map(Into::into))
                 .collect(),
             pattern_matching: (&val.pattern_matching).into(),
             models: models
@@ -891,8 +892,8 @@ impl From<&torii_grpc::types::KeysClause> for KeysClause {
         let keys = val
             .keys
             .iter()
-            .map(|o| o.as_ref().map(|k| k.into()))
-            .map(Into::into)
+            .map(|o| o.clone().into())
+            .map(|o: COption<_>| o.as_ref().map(Into::into))
             .collect::<Vec<COption<FieldElement>>>();
         let models = val
             .models
