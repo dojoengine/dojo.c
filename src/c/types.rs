@@ -1,5 +1,8 @@
 use starknet::core::utils::get_selector_from_name;
-use std::ffi::{c_char, CStr, CString};
+use std::{
+    ffi::{c_char, CStr, CString},
+    ptr::NonNull,
+};
 use torii_client::client::Client;
 
 #[derive(Debug, Clone)]
@@ -8,8 +11,6 @@ pub enum Result<T> {
     Ok(T),
     Err(Error),
 }
-
-type COption<T> = *const T;
 
 #[derive(Debug, Clone)]
 #[repr(C)]
@@ -193,7 +194,8 @@ impl From<&starknet::core::types::FieldElement> for FieldElement {
 pub struct Query {
     pub limit: u32,
     pub offset: u32,
-    pub clause: COption<Clause>,
+    // nullable
+    pub clause: Option<NonNull<Clause>>,
 }
 
 #[derive(Clone, Debug)]
@@ -221,7 +223,7 @@ pub enum PatternMatching {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct KeysClause {
-    pub keys: CArray<COption<FieldElement>>,
+    pub keys: CArray<*mut FieldElement>,
     pub pattern_matching: PatternMatching,
     pub models: CArray<*const c_char>,
 }
@@ -718,22 +720,24 @@ impl From<&Query> for torii_grpc::types::Query {
         Self {
             limit: val.limit,
             offset: val.offset,
-            clause: unsafe { val.clause.as_ref().map(|c| c.into()) },
+            clause: unsafe { val.clause.map(|c| c.as_ref().into()) },
         }
     }
 }
 
 impl From<&torii_grpc::types::Query> for Query {
     fn from(val: &torii_grpc::types::Query) -> Self {
+        let clause_ptr = val
+            .clause
+            .as_ref()
+            .map(|c| Box::into_raw(Box::new(c.into())))
+            .unwrap_or(std::ptr::null_mut());
+
         Query {
             limit: val.limit,
             offset: val.offset,
             // convert option to ptr
-            clause: val
-                .clause
-                .as_ref()
-                .map(|c| Box::into_raw(Box::new(c.into())) as *const _)
-                .unwrap_or(std::ptr::null()),
+            clause: NonNull::new(clause_ptr),
         }
     }
 }
@@ -837,7 +841,11 @@ impl From<&torii_grpc::types::KeysClause> for KeysClause {
         let keys = val
             .keys
             .iter()
-            .map(|k| k.as_ref().map(|k| Box::into_raw(Box::new(k.clone())) as *const _).unwrap_or(std::ptr::null()))
+            .map(|k| {
+                k.as_ref()
+                    .map(|k| Box::into_raw(Box::new(k.into())))
+                    .unwrap_or(std::ptr::null_mut())
+            })
             .collect::<Vec<_>>();
         let models = val
             .models
