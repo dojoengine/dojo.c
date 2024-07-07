@@ -854,7 +854,7 @@ impl From<&torii_grpc::types::KeysClause> for KeysClause {
         let keys = val
             .keys
             .iter()
-            .map(|o| o.clone().into())
+            .map(|o| (*o).into())
             .map(|o: COption<_>| o.as_ref().map(Into::into))
             .collect::<Vec<COption<FieldElement>>>();
         let models = val
