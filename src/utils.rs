@@ -4,9 +4,9 @@ use starknet::{
     core::types::StarknetError,
     providers::{Provider, ProviderError},
 };
-use starknet_crypto::FieldElement;
+use starknet_crypto::Felt;
 
-pub async fn watch_tx<P>(provider: P, transaction_hash: FieldElement) -> Result<()>
+pub async fn watch_tx<P>(provider: P, transaction_hash: Felt) -> Result<()>
 where
     P: Provider,
     ProviderError: 'static,

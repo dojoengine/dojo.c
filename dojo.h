@@ -255,19 +255,14 @@ typedef struct ModelKeysClause {
   const char *model;
 } ModelKeysClause;
 
-typedef struct Model {
-  const char *name;
-  struct CArrayMember members;
-} Model;
-
-typedef struct CArrayModel {
-  struct Model *data;
+typedef struct CArrayStruct {
+  struct Struct *data;
   uintptr_t data_len;
-} CArrayModel;
+} CArrayStruct;
 
 typedef struct Entity {
   struct FieldElement hashed_keys;
-  struct CArrayModel models;
+  struct CArrayStruct models;
 } Entity;
 
 typedef struct CArrayEntity {
@@ -369,7 +364,6 @@ typedef struct CArrayClause {
 } CArrayClause;
 
 typedef struct CompositeClause {
-  const char *model;
   enum LogicalOperator operator_;
   struct CArrayClause clauses;
 } CompositeClause;
@@ -422,6 +416,7 @@ typedef struct CArrayModelKeysClause {
 
 typedef struct ModelMetadata {
   struct Ty schema;
+  const char *namespace_;
   const char *name;
   uint32_t packed_size;
   uint32_t unpacked_size;
@@ -430,20 +425,20 @@ typedef struct ModelMetadata {
   struct CArrayFieldElement layout;
 } ModelMetadata;
 
-typedef struct CHashItemc_charModelMetadata {
-  const char *key;
+typedef struct CHashItemFieldElementModelMetadata {
+  struct FieldElement key;
   struct ModelMetadata value;
-} CHashItemc_charModelMetadata;
+} CHashItemFieldElementModelMetadata;
 
-typedef struct CArrayCHashItemc_charModelMetadata {
-  struct CHashItemc_charModelMetadata *data;
+typedef struct CArrayCHashItemFieldElementModelMetadata {
+  struct CHashItemFieldElementModelMetadata *data;
   uintptr_t data_len;
-} CArrayCHashItemc_charModelMetadata;
+} CArrayCHashItemFieldElementModelMetadata;
 
 typedef struct WorldMetadata {
   struct FieldElement world_address;
   struct FieldElement world_class_hash;
-  struct CArrayCHashItemc_charModelMetadata models;
+  struct CArrayCHashItemFieldElementModelMetadata models;
 } WorldMetadata;
 
 typedef enum Resultbool_Tag {
@@ -666,12 +661,12 @@ struct ResultSubscription client_on_sync_model_update(struct ToriiClient *client
 struct ResultSubscription client_on_entity_state_update(struct ToriiClient *client,
                                                         const struct EntityKeysClause *clause,
                                                         void (*callback)(struct FieldElement,
-                                                                         struct CArrayModel));
+                                                                         struct CArrayStruct));
 
 struct ResultSubscription client_on_event_message_update(struct ToriiClient *client,
                                                          const struct EntityKeysClause *clause,
                                                          void (*callback)(struct FieldElement,
-                                                                          struct CArrayModel));
+                                                                          struct CArrayStruct));
 
 struct Resultbool client_remove_models_to_sync(struct ToriiClient *client,
                                                const struct ModelKeysClause *models,
@@ -723,7 +718,7 @@ struct Resultbool wait_for_transaction(struct Provider *rpc, struct FieldElement
 
 struct FieldElement hash_get_contract_address(struct FieldElement class_hash,
                                               struct FieldElement salt,
-                                              const struct FieldElement *constructor_calldata,
+                                              const Felt *constructor_calldata,
                                               uintptr_t constructor_calldata_len,
                                               struct FieldElement deployer_address);
 
@@ -733,7 +728,7 @@ void client_free(struct ToriiClient *t);
 
 void provider_free(struct Provider *rpc);
 
-void model_free(struct Model *model);
+void model_free(struct Struct *model);
 
 void account_free(struct Account *account);
 

@@ -476,14 +476,9 @@ struct ModelKeysClause {
   const char *model;
 };
 
-struct Model {
-  const char *name;
-  CArray<Member> members;
-};
-
 struct Entity {
   FieldElement hashed_keys;
-  CArray<Model> models;
+  CArray<Struct> models;
 };
 
 template<typename T>
@@ -637,7 +632,6 @@ struct MemberClause {
 };
 
 struct CompositeClause {
-  const char *model;
   LogicalOperator operator_;
   CArray<Clause> clauses;
 };
@@ -710,6 +704,7 @@ struct Query {
 
 struct ModelMetadata {
   Ty schema;
+  const char *namespace_;
   const char *name;
   uint32_t packed_size;
   uint32_t unpacked_size;
@@ -727,7 +722,7 @@ struct CHashItem {
 struct WorldMetadata {
   FieldElement world_address;
   FieldElement world_class_hash;
-  CArray<CHashItem<const char*, ModelMetadata>> models;
+  CArray<CHashItem<FieldElement, ModelMetadata>> models;
 };
 
 struct EntityKeysClause {
@@ -873,11 +868,11 @@ Result<Subscription*> client_on_sync_model_update(ToriiClient *client,
 
 Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
                                                     const EntityKeysClause *clause,
-                                                    void (*callback)(FieldElement, CArray<Model>));
+                                                    void (*callback)(FieldElement, CArray<Struct>));
 
 Result<Subscription*> client_on_event_message_update(ToriiClient *client,
                                                      const EntityKeysClause *clause,
-                                                     void (*callback)(FieldElement, CArray<Model>));
+                                                     void (*callback)(FieldElement, CArray<Struct>));
 
 Result<bool> client_remove_models_to_sync(ToriiClient *client,
                                           const ModelKeysClause *models,
@@ -925,7 +920,7 @@ Result<bool> wait_for_transaction(Provider *rpc, FieldElement txn_hash);
 
 FieldElement hash_get_contract_address(FieldElement class_hash,
                                        FieldElement salt,
-                                       const FieldElement *constructor_calldata,
+                                       const Felt *constructor_calldata,
                                        uintptr_t constructor_calldata_len,
                                        FieldElement deployer_address);
 
@@ -935,7 +930,7 @@ void client_free(ToriiClient *t);
 
 void provider_free(Provider *rpc);
 
-void model_free(Model *model);
+void model_free(Struct *model);
 
 void account_free(Account *account);
 
