@@ -251,7 +251,6 @@ pub struct MemberClause {
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct CompositeClause {
-    pub model: String,
     pub operator: LogicalOperator,
     pub clauses: Vec<Clause>,
 }
