@@ -41,7 +41,7 @@ impl<T> From<Option<T>> for COption<T> {
 }
 
 impl<T> From<COption<T>> for Option<T> {
-fn from(val: COption<T>) -> Self {
+    fn from(val: COption<T>) -> Self {
         match val {
             COption::Some(v) => Some(v),
             COption::None => None,
@@ -58,17 +58,17 @@ pub struct Signature {
     pub s: FieldElement,
 }
 
-impl From<&Signature> for starknet_crypto::Signature {
+impl From<&Signature> for starknet::core::crypto::Signature {
     fn from(val: &Signature) -> Self {
-        starknet_crypto::Signature {
+        Self {
             r: (&val.r).into(),
             s: (&val.s).into(),
         }
     }
 }
 
-impl From<&starknet_crypto::Signature> for Signature {
-    fn from(val: &starknet_crypto::Signature) -> Self {
+impl From<&starknet::core::crypto::Signature> for Signature {
+    fn from(val: &starknet::core::crypto::Signature) -> Self {
         Signature {
             r: (&val.r).into(),
             s: (&val.s).into(),
@@ -213,14 +213,14 @@ pub struct FieldElement {
     data: [u8; 32],
 }
 
-impl From<&FieldElement> for starknet::core::types::FieldElement {
+impl From<&FieldElement> for starknet::core::types::Felt {
     fn from(val: &FieldElement) -> Self {
-        starknet::core::types::FieldElement::from_bytes_be(&val.data).unwrap()
+        starknet::core::types::Felt::from_bytes_be(&val.data)
     }
 }
 
-impl From<&starknet::core::types::FieldElement> for FieldElement {
-    fn from(val: &starknet::core::types::FieldElement) -> Self {
+impl From<&starknet::core::types::Felt> for FieldElement {
+    fn from(val: &starknet::core::types::Felt) -> Self {
         FieldElement {
             data: val.to_bytes_be(),
         }
@@ -284,7 +284,6 @@ pub struct MemberClause {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct CompositeClause {
-    pub model: *const c_char,
     pub operator: LogicalOperator,
     pub clauses: CArray<Clause>,
 }
@@ -328,12 +327,12 @@ pub enum ValueType {
 #[repr(C)]
 pub struct Entity {
     pub hashed_keys: FieldElement,
-    pub models: CArray<Model>,
+    pub models: CArray<Struct>,
 }
 
 impl From<&Entity> for torii_grpc::types::schema::Entity {
     fn from(val: &Entity) -> Self {
-        let models: Vec<Model> = (&val.models).into();
+        let models: Vec<Struct> = (&val.models).into();
         let models = models.iter().map(|m| (&m.clone()).into()).collect();
 
         torii_grpc::types::schema::Entity {
@@ -349,48 +348,11 @@ impl From<&torii_grpc::types::schema::Entity> for Entity {
             .models
             .iter()
             .map(|m| (&m.clone()).into())
-            .collect::<Vec<Model>>();
+            .collect::<Vec<Struct>>();
 
         Entity {
             hashed_keys: (&val.hashed_keys.clone()).into(),
             models: models.into(),
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-#[repr(C)]
-pub struct Model {
-    pub name: *const c_char,
-    pub members: CArray<Member>,
-}
-
-impl From<&Model> for torii_grpc::types::schema::Model {
-    fn from(val: &Model) -> Self {
-        let members: Vec<Member> = (&val.members).into();
-
-        torii_grpc::types::schema::Model {
-            name: unsafe {
-                CString::from_raw(val.name as *mut c_char)
-                    .into_string()
-                    .unwrap()
-            },
-            members: members.iter().map(|m| m.into()).collect(),
-        }
-    }
-}
-
-impl From<&torii_grpc::types::schema::Model> for Model {
-    fn from(val: &torii_grpc::types::schema::Model) -> Self {
-        let members = val
-            .members
-            .iter()
-            .map(|m| (&m.clone()).into())
-            .collect::<Vec<Member>>();
-
-        Model {
-            name: CString::new(val.name.clone()).unwrap().into_raw(),
-            members: members.into(),
         }
     }
 }
@@ -892,7 +854,7 @@ impl From<&torii_grpc::types::KeysClause> for KeysClause {
         let keys = val
             .keys
             .iter()
-            .map(|o| o.clone().into())
+            .map(|o| (*o).into())
             .map(|o: COption<_>| o.as_ref().map(Into::into))
             .collect::<Vec<COption<FieldElement>>>();
         let models = val
@@ -974,11 +936,6 @@ impl From<&CompositeClause> for torii_grpc::types::CompositeClause {
         };
 
         torii_grpc::types::CompositeClause {
-            model: unsafe {
-                CString::from_raw(val.model as *mut c_char)
-                    .into_string()
-                    .unwrap()
-            },
             operator: operator.into(),
             clauses: clauses.iter().map(|c| c.into()).collect(),
         }
@@ -995,7 +952,6 @@ impl From<&torii_grpc::types::CompositeClause> for CompositeClause {
             .collect::<Vec<Clause>>();
 
         CompositeClause {
-            model: CString::new(val.model.clone()).unwrap().into_raw(),
             operator: operator.into(),
             clauses: clauses.into(),
         }
@@ -1106,7 +1062,7 @@ pub struct ModelStorage {
 pub struct WorldMetadata {
     pub world_address: FieldElement,
     pub world_class_hash: FieldElement,
-    pub models: CArray<CHashItem<*const c_char, ModelMetadata>>,
+    pub models: CArray<CHashItem<FieldElement, ModelMetadata>>,
 }
 
 impl From<&dojo_types::WorldMetadata> for WorldMetadata {
@@ -1115,10 +1071,10 @@ impl From<&dojo_types::WorldMetadata> for WorldMetadata {
             .models
             .iter()
             .map(|(k, v)| CHashItem {
-                key: CString::new(k.clone()).unwrap().into_raw() as *const c_char,
-                value: (&v.clone()).into(),
+                key: k.into(),
+                value: v.into(),
             })
-            .collect::<Vec<CHashItem<*const c_char, ModelMetadata>>>();
+            .collect::<Vec<CHashItem<FieldElement, ModelMetadata>>>();
 
         WorldMetadata {
             world_address: (&value.world_address.clone()).into(),
@@ -1130,18 +1086,14 @@ impl From<&dojo_types::WorldMetadata> for WorldMetadata {
 
 impl From<&WorldMetadata> for dojo_types::WorldMetadata {
     fn from(value: &WorldMetadata) -> Self {
-        let models: Vec<CHashItem<*const c_char, ModelMetadata>> = (&value.models).into();
+        let models: Vec<CHashItem<FieldElement, ModelMetadata>> = (&value.models).into();
         let models = models
             .iter()
             .map(|m| {
-                let key = unsafe {
-                    CString::from_raw(m.key as *mut c_char)
-                        .into_string()
-                        .unwrap()
-                };
-                let value: dojo_types::schema::ModelMetadata = (&m.value).into();
+                let k = (&m.key).into();
+                let v: dojo_types::schema::ModelMetadata = (&m.value).into();
 
-                (key, value)
+                (k, v)
             })
             .collect();
 
@@ -1157,6 +1109,7 @@ impl From<&WorldMetadata> for dojo_types::WorldMetadata {
 #[repr(C)]
 pub struct ModelMetadata {
     pub schema: Ty,
+    pub namespace: *const c_char,
     pub name: *const c_char,
     pub packed_size: u32,
     pub unpacked_size: u32,
@@ -1176,6 +1129,7 @@ impl From<&dojo_types::schema::ModelMetadata> for ModelMetadata {
         ModelMetadata {
             schema: (&value.schema.clone()).into(),
             name: CString::new(value.name.clone()).unwrap().into_raw(),
+            namespace: CString::new(value.namespace.clone()).unwrap().into_raw(),
             packed_size: value.packed_size,
             unpacked_size: value.unpacked_size,
             class_hash: (&value.class_hash.clone()).into(),
@@ -1189,11 +1143,16 @@ impl From<&ModelMetadata> for dojo_types::schema::ModelMetadata {
     fn from(value: &ModelMetadata) -> Self {
         let layout: Vec<FieldElement> = (&value.layout).into();
 
-        let layout: Vec<starknet::core::types::FieldElement> =
+        let layout: Vec<starknet::core::types::Felt> =
             layout.iter().map(|v| (&v.clone()).into()).collect();
 
         dojo_types::schema::ModelMetadata {
             schema: (&value.schema).into(),
+            namespace: unsafe {
+                CString::from_raw(value.namespace as *mut c_char)
+                    .into_string()
+                    .unwrap()
+            },
             name: unsafe {
                 CString::from_raw(value.name as *mut c_char)
                     .into_string()

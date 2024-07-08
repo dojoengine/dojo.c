@@ -12,7 +12,7 @@ pub fn parse_entities_as_json_str(entities: Vec<Entity>) -> Value {
                 .into_iter()
                 .map(|model| {
                     let model_map = model
-                        .members
+                        .children
                         .iter()
                         .map(|member| {
                             (

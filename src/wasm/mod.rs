@@ -11,14 +11,15 @@ use serde::{Deserialize, Serialize};
 use starknet::accounts::{
     Account as _, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount,
 };
-use starknet::core::types::{FieldElement, FunctionCall};
+use starknet::core::crypto::Signature;
+use starknet::core::types::{Felt, FunctionCall};
 use starknet::core::utils::{
     cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
 };
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::{poseidon_hash_many, Signature};
+use starknet_crypto::poseidon_hash_many;
 use stream_cancel::{StreamExt as _, Tripwire};
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
@@ -76,8 +77,8 @@ impl From<&Signature> for JsSignature {
 impl From<&JsSignature> for Signature {
     fn from(value: &JsSignature) -> Self {
         Self {
-            r: FieldElement::from_str(value.r.as_str()).unwrap(),
-            s: FieldElement::from_str(value.s.as_str()).unwrap(),
+            r: Felt::from_str(value.r.as_str()).unwrap(),
+            s: Felt::from_str(value.s.as_str()).unwrap(),
         }
     }
 }
@@ -96,12 +97,12 @@ pub struct Call {
 impl From<&Call> for starknet::accounts::Call {
     fn from(value: &Call) -> Self {
         Self {
-            to: FieldElement::from_str(value.to.as_str()).unwrap(),
+            to: Felt::from_str(value.to.as_str()).unwrap(),
             selector: get_selector_from_name(value.selector.as_str()).unwrap(),
             calldata: value
                 .calldata
                 .iter()
-                .map(|c| FieldElement::from_str(c.as_str()).unwrap())
+                .map(|c| Felt::from_str(c.as_str()).unwrap())
                 .collect(),
         }
     }
@@ -110,12 +111,12 @@ impl From<&Call> for starknet::accounts::Call {
 impl From<&Call> for FunctionCall {
     fn from(value: &Call) -> Self {
         Self {
-            contract_address: FieldElement::from_str(value.to.as_str()).unwrap(),
+            contract_address: Felt::from_str(value.to.as_str()).unwrap(),
             entry_point_selector: get_selector_from_name(value.selector.as_str()).unwrap(),
             calldata: value
                 .calldata
                 .iter()
-                .map(|c| FieldElement::from_str(c.as_str()).unwrap())
+                .map(|c| Felt::from_str(c.as_str()).unwrap())
                 .collect(),
         }
     }
@@ -149,7 +150,7 @@ impl From<&BlockId> for starknet::core::types::BlockId {
     fn from(value: &BlockId) -> Self {
         match value {
             BlockId::Hash(hash) => {
-                starknet::core::types::BlockId::Hash(FieldElement::from_str(hash.as_str()).unwrap())
+                starknet::core::types::BlockId::Hash(Felt::from_str(hash.as_str()).unwrap())
             }
             BlockId::Number(number) => starknet::core::types::BlockId::Number(*number),
             BlockId::BlockTag(tag) => starknet::core::types::BlockId::Tag(tag.into()),
@@ -222,7 +223,7 @@ impl From<&EntityKeysClause> for torii_grpc::types::EntityKeysClause {
         match value {
             EntityKeysClause::HashedKeys(keys) => Self::HashedKeys(
                 keys.iter()
-                    .map(|k| FieldElement::from_str(k.as_str()).unwrap())
+                    .map(|k| Felt::from_str(k.as_str()).unwrap())
                     .collect(),
             ),
             EntityKeysClause::Keys(keys) => Self::Keys(keys.into()),
@@ -262,7 +263,7 @@ impl From<&ModelKeysClause> for torii_grpc::types::ModelKeysClause {
             keys: value
                 .keys
                 .iter()
-                .map(|k| FieldElement::from_str(k.as_str()).unwrap())
+                .map(|k| Felt::from_str(k.as_str()).unwrap())
                 .collect(),
         }
     }
@@ -274,10 +275,7 @@ impl From<&KeysClause> for torii_grpc::types::KeysClause {
             keys: value
                 .keys
                 .iter()
-                .map(|o| {
-                    o.as_ref()
-                        .map(|k| FieldElement::from_str(k.as_str()).unwrap())
-                })
+                .map(|o| o.as_ref().map(|k| Felt::from_str(k.as_str()).unwrap()))
                 .collect(),
             models: value.models.iter().map(|m| m.to_string()).collect(),
             pattern_matching: (&value.pattern_matching).into(),
@@ -299,7 +297,6 @@ impl From<&MemberClause> for torii_grpc::types::MemberClause {
 impl From<&CompositeClause> for torii_grpc::types::CompositeClause {
     fn from(value: &CompositeClause) -> Self {
         Self {
-            model: value.model.to_string(),
             operator: (&value.operator).into(),
             clauses: value.clauses.iter().map(|c| c.into()).collect(),
         }
@@ -421,14 +418,12 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
             Primitive::U256(Some(value)) => Self::U256(Some(U256::from_be_hex(value.as_str()))),
             Primitive::USize(Some(value)) => Self::USize(Some(*value)),
             Primitive::Bool(Some(value)) => Self::Bool(Some(*value)),
-            Primitive::Felt252(Some(value)) => {
-                Self::Felt252(Some(FieldElement::from_str(value).unwrap()))
-            }
+            Primitive::Felt252(Some(value)) => Self::Felt252(Some(Felt::from_str(value).unwrap())),
             Primitive::ClassHash(Some(value)) => {
-                Self::ClassHash(Some(FieldElement::from_str(value).unwrap()))
+                Self::ClassHash(Some(Felt::from_str(value).unwrap()))
             }
             Primitive::ContractAddress(Some(value)) => {
-                Self::ContractAddress(Some(FieldElement::from_str(value).unwrap()))
+                Self::ContractAddress(Some(Felt::from_str(value).unwrap()))
             }
             _ => unimplemented!(),
         }
@@ -440,7 +435,7 @@ pub fn typed_data_encode(typed_data: &str, address: &str) -> Result<String, JsVa
     let typed_data = serde_json::from_str::<TypedData>(&typed_data)
         .map_err(|err| JsValue::from(format!("failed to parse typed data: {err}")))?;
 
-    let address = FieldElement::from_str(&address)
+    let address = Felt::from_str(&address)
         .map_err(|err| JsValue::from(format!("failed to parse address: {err}")))?;
 
     typed_data
@@ -458,12 +453,12 @@ pub fn signing_key_new() -> String {
 
 #[wasm_bindgen(js_name = signingKeySign)]
 pub fn signing_key_sign(private_key: &str, hash: &str) -> Result<JsSignature, JsValue> {
-    let private_key = FieldElement::from_str(private_key);
+    let private_key = Felt::from_str(private_key);
     if let Err(e) = private_key {
         return Err(JsValue::from(format!("failed to parse private key: {e}")));
     }
 
-    let hash = FieldElement::from_str(hash);
+    let hash = Felt::from_str(hash);
     if let Err(e) = hash {
         return Err(JsValue::from(format!("failed to parse hash: {e}")));
     }
@@ -479,7 +474,7 @@ pub fn signing_key_sign(private_key: &str, hash: &str) -> Result<JsSignature, Js
 
 #[wasm_bindgen(js_name = verifyingKeyNew)]
 pub fn verifying_key_new(signing_key: &str) -> Result<String, JsValue> {
-    let signing_key = FieldElement::from_str(signing_key);
+    let signing_key = Felt::from_str(signing_key);
     if let Err(e) = signing_key {
         return Err(JsValue::from(format!("failed to parse signing key: {e}")));
     }
@@ -495,14 +490,14 @@ pub fn verifying_key_verify(
     hash: &str,
     signature: JsSignature,
 ) -> Result<bool, JsValue> {
-    let verifying_key = FieldElement::from_str(verifying_key);
+    let verifying_key = Felt::from_str(verifying_key);
     if let Err(e) = verifying_key {
         return Err(JsValue::from(format!("failed to parse verifying key: {e}")));
     }
 
     let verifying_key = VerifyingKey::from_scalar(verifying_key.unwrap());
 
-    let hash = FieldElement::from_str(hash);
+    let hash = Felt::from_str(hash);
     if let Err(e) = hash {
         return Err(JsValue::from(format!("failed to parse hash: {e}")));
     }
@@ -538,14 +533,14 @@ impl Provider {
         private_key: &str,
         address: &str,
     ) -> Result<Account, JsValue> {
-        let private_key = FieldElement::from_str(private_key);
+        let private_key = Felt::from_str(private_key);
         if let Err(e) = private_key {
             return Err(JsValue::from(format!("failed to parse private key: {e}")));
         }
 
         let private_key = private_key.unwrap();
 
-        let address = FieldElement::from_str(address);
+        let address = Felt::from_str(address);
         if let Err(e) = address {
             return Err(JsValue::from(format!("failed to parse address: {e}")));
         }
@@ -592,7 +587,7 @@ impl Provider {
 
     #[wasm_bindgen(js_name = waitForTransaction)]
     pub async unsafe fn wait_for_transaction(&self, txn_hash: &str) -> Result<bool, JsValue> {
-        let txn_hash = FieldElement::from_str(txn_hash)
+        let txn_hash = Felt::from_str(txn_hash)
             .map_err(|err| JsValue::from(format!("failed to parse transaction hash: {err}")))?;
         let result: Result<(), anyhow::Error> = watch_tx(&self.0, txn_hash).await;
 
@@ -619,7 +614,7 @@ impl Account {
 
     #[wasm_bindgen(js_name = setBlockId)]
     pub unsafe fn set_block_id(&mut self, block_id: String) -> Result<(), JsValue> {
-        let block_id = FieldElement::from_str(&block_id)
+        let block_id = Felt::from_str(&block_id)
             .map_err(|err| JsValue::from(format!("failed to parse block id: {err}")))?;
         self.0
             .set_block_id(starknet::core::types::BlockId::Hash(block_id));
@@ -630,7 +625,7 @@ impl Account {
     pub async unsafe fn execute_raw(&self, calldata: Calls) -> Result<String, JsValue> {
         let calldata = calldata.0.iter().map(|c| c.into()).collect();
 
-        let call = self.0.execute(calldata);
+        let call = self.0.execute_v3(calldata);
 
         let result = call.send().await;
 
@@ -642,7 +637,7 @@ impl Account {
 
     #[wasm_bindgen(js_name = deployBurner)]
     pub async unsafe fn deploy_burner(&self, private_key: &str) -> Result<Account, JsValue> {
-        let private_key = match FieldElement::from_str(private_key) {
+        let private_key = match Felt::from_str(private_key) {
             Ok(key) => key,
             Err(e) => return Err(JsValue::from(format!("failed to parse private key: {e}"))),
         };
@@ -653,7 +648,7 @@ impl Account {
             verifying_key.scalar(),
             constants::KATANA_ACCOUNT_CLASS_HASH,
             &[verifying_key.scalar()],
-            FieldElement::ZERO,
+            Felt::ZERO,
         );
         let signer = LocalWallet::from_signing_key(signing_key);
 
@@ -664,13 +659,13 @@ impl Account {
             SingleOwnerAccount::new(provider, signer, address, chain_id, ExecutionEncoding::New);
 
         // deploy the burner
-        let exec = self.0.execute(vec![starknet::accounts::Call {
+        let exec = self.0.execute_v3(vec![starknet::accounts::Call {
             to: constants::UDC_ADDRESS,
             calldata: vec![
                 constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
                 verifying_key.scalar(),               // salt
-                FieldElement::ZERO,                   // deployer_address
-                FieldElement::ONE,                    // constructor calldata length (1)
+                Felt::ZERO,                           // deployer_address
+                Felt::ONE,                            // constructor calldata length (1)
                 verifying_key.scalar(),               // constructor calldata
             ],
             selector: get_selector_from_name("deployContract").unwrap(),
@@ -699,17 +694,17 @@ pub fn hash_get_contract_address(
     constructor_calldata: Vec<String>,
     deployer_address: &str,
 ) -> Result<String, JsValue> {
-    let class_hash = FieldElement::from_str(class_hash)
+    let class_hash = Felt::from_str(class_hash)
         .map_err(|err| JsValue::from(format!("failed to parse class hash: {err}")))?;
-    let salt = FieldElement::from_str(salt)
+    let salt = Felt::from_str(salt)
         .map_err(|err| JsValue::from(format!("failed to parse salt: {err}")))?;
-    let deployer_address = FieldElement::from_str(deployer_address)
+    let deployer_address = Felt::from_str(deployer_address)
         .map_err(|err| JsValue::from(format!("failed to parse deployer address: {err}")))?;
 
     let constructor_calldata = constructor_calldata
         .into_iter()
         .map(|c| {
-            FieldElement::from_str(c.as_str()).map_err(|err| {
+            Felt::from_str(c.as_str()).map_err(|err| {
                 JsValue::from(format!("failed to parse constructor calldata: {err}"))
             })
         })
@@ -735,7 +730,7 @@ pub fn bytearray_serialize(str: &str) -> Result<Vec<String>, JsValue> {
 pub fn bytearray_deserialize(felts: Vec<String>) -> Result<String, JsValue> {
     let felts = felts
         .into_iter()
-        .map(|f| FieldElement::from_str(f.as_str()))
+        .map(|f| Felt::from_str(f.as_str()))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| JsValue::from(format!("failed to parse felts: {e}")))?;
 
@@ -758,7 +753,7 @@ pub fn bytearray_deserialize(felts: Vec<String>) -> Result<String, JsValue> {
 pub fn poseidon_hash(inputs: Vec<String>) -> Result<String, JsValue> {
     let inputs = inputs
         .into_iter()
-        .map(|i| FieldElement::from_str(i.as_str()))
+        .map(|i| Felt::from_str(i.as_str()))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| JsValue::from(format!("failed to parse inputs: {e}")))?;
 
@@ -833,8 +828,8 @@ impl Client {
 
         let keys = keys
             .into_iter()
-            .map(|k| FieldElement::from_str(k.as_str()))
-            .collect::<Result<Vec<FieldElement>, _>>()
+            .map(|k| Felt::from_str(k.as_str()))
+            .collect::<Result<Vec<Felt>, _>>()
             .map_err(|err| JsValue::from(format!("failed to parse entity keys: {err}")))?;
 
         match self
@@ -905,7 +900,7 @@ impl Client {
                 &model
                     .keys
                     .iter()
-                    .map(|k| FieldElement::from_str(k.as_str()))
+                    .map(|k| Felt::from_str(k.as_str()))
                     .collect::<Result<Vec<_>, _>>()
                     .unwrap(),
             )
@@ -941,7 +936,7 @@ impl Client {
 
             while let Some(update) = stream.next().await {
                 let entity = update.expect("no updated entity");
-                if entity.hashed_keys == FieldElement::ZERO {
+                if entity.hashed_keys == Felt::ZERO {
                     continue;
                 }
 
@@ -974,7 +969,7 @@ impl Client {
 
             while let Some(update) = stream.next().await {
                 let entity = update.expect("no updated entity");
-                if entity.hashed_keys == FieldElement::ZERO {
+                if entity.hashed_keys == Felt::ZERO {
                     continue;
                 }
 
@@ -1005,9 +1000,9 @@ impl Client {
             .inner
             .publish_message(Message {
                 message,
-                signature_r: FieldElement::from_str(signature.r.as_str())
+                signature_r: Felt::from_str(signature.r.as_str())
                     .map_err(|err| JsValue::from(err.to_string()))?,
-                signature_s: FieldElement::from_str(signature.s.as_str())
+                signature_s: Felt::from_str(signature.s.as_str())
                     .map_err(|err| JsValue::from(err.to_string()))?,
             })
             .await
@@ -1038,7 +1033,7 @@ pub async fn create_client(config: ClientConfig) -> Result<Client, JsValue> {
         world_address,
     } = config;
 
-    let world_address = FieldElement::from_str(&world_address)
+    let world_address = Felt::from_str(&world_address)
         .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
 
     let client = torii_client::client::Client::new(torii_url, rpc_url, relay_url, world_address)

@@ -1,8 +1,7 @@
 mod types;
 
 use self::types::{
-    BlockId, CArray, Call, Entity, Error, Model, Query, Result, Signature, ToriiClient, Ty,
-    WorldMetadata,
+    BlockId, CArray, Call, Entity, Error, Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
 };
 use crate::constants;
 use crate::types::{Account, Provider, Subscription};
@@ -16,7 +15,7 @@ use starknet::core::utils::{
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::{poseidon_hash_many, FieldElement};
+use starknet_crypto::{poseidon_hash_many, Felt};
 use std::ffi::{c_void, CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
@@ -26,7 +25,7 @@ use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
-use types::{EntityKeysClause, ModelKeysClause};
+use types::{EntityKeysClause, ModelKeysClause, Struct};
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -246,7 +245,7 @@ pub unsafe extern "C" fn client_on_sync_model_update(
 pub unsafe extern "C" fn client_on_entity_state_update(
     client: *mut ToriiClient,
     clause: Option<&EntityKeysClause>,
-    callback: unsafe extern "C" fn(types::FieldElement, CArray<Model>),
+    callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
     let clause = clause.map(|c| c.into());
 
@@ -262,7 +261,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 
         while let Some(Ok(entity)) = rcv.next().await {
             let key: types::FieldElement = (&entity.hashed_keys).into();
-            let models: Vec<Model> = entity.models.into_iter().map(|e| (&e).into()).collect();
+            let models: Vec<Struct> = entity.models.into_iter().map(|e| (&e).into()).collect();
             callback(key, models.into());
         }
     });
@@ -275,7 +274,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 pub unsafe extern "C" fn client_on_event_message_update(
     client: *mut ToriiClient,
     clause: Option<&EntityKeysClause>,
-    callback: unsafe extern "C" fn(types::FieldElement, CArray<Model>),
+    callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
     let clause = clause.map(|c| c.into());
 
@@ -291,7 +290,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
 
         while let Some(Ok(entity)) = rcv.next().await {
             let key: types::FieldElement = (&entity.hashed_keys).into();
-            let models: Vec<Model> = entity.models.into_iter().map(|e| (&e).into()).collect();
+            let models: Vec<Struct> = entity.models.into_iter().map(|e| (&e).into()).collect();
             callback(key, models.into());
         }
     });
@@ -349,7 +348,7 @@ pub unsafe extern "C" fn bytearray_deserialize(
     let felts = felts
         .iter()
         .map(|f| (&f.clone()).into())
-        .collect::<Vec<FieldElement>>();
+        .collect::<Vec<Felt>>();
     let bytearray = match cairo_serde::ByteArray::cairo_deserialize(&felts, 0) {
         Ok(bytearray) => bytearray,
         Err(e) => return Result::Err(e.into()),
@@ -373,7 +372,7 @@ pub unsafe extern "C" fn poseidon_hash(
     let felts = felts
         .iter()
         .map(|f| (&f.clone()).into())
-        .collect::<Vec<FieldElement>>();
+        .collect::<Vec<Felt>>();
 
     (&poseidon_hash_many(&felts)).into()
 }
@@ -477,7 +476,7 @@ pub unsafe extern "C" fn account_new(
     address: *const c_char,
 ) -> Result<*mut Account> {
     let address = unsafe { CStr::from_ptr(address).to_string_lossy() };
-    let address = match FieldElement::from_hex_be(address.deref()) {
+    let address = match Felt::from_hex(address.deref()) {
         Ok(address) => address,
         Err(e) => return Result::Err(e.into()),
     };
@@ -542,7 +541,7 @@ pub unsafe extern "C" fn account_deploy_burner(
         verifying_key.scalar(),
         constants::KATANA_ACCOUNT_CLASS_HASH,
         &[verifying_key.scalar()],
-        FieldElement::ZERO,
+        Felt::ZERO,
     );
     let signer = LocalWallet::from_signing_key(signing_key);
 
@@ -557,17 +556,19 @@ pub unsafe extern "C" fn account_deploy_burner(
     );
 
     // deploy the burner
-    let exec = (*master_account).0.execute(vec![starknet::accounts::Call {
-        to: constants::UDC_ADDRESS,
-        calldata: vec![
-            constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
-            verifying_key.scalar(),               // salt
-            FieldElement::ZERO,                   // deployer_address
-            FieldElement::ONE,                    // constructor calldata length (1)
-            verifying_key.scalar(),               // constructor calldata
-        ],
-        selector: get_selector_from_name("deployContract").unwrap(),
-    }]);
+    let exec = (*master_account)
+        .0
+        .execute_v3(vec![starknet::accounts::Call {
+            to: constants::UDC_ADDRESS,
+            calldata: vec![
+                constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
+                verifying_key.scalar(),               // salt
+                Felt::ZERO,                           // deployer_address
+                Felt::ONE,                            // constructor calldata length (1)
+                verifying_key.scalar(),               // constructor calldata
+            ],
+            selector: get_selector_from_name("deployContract").unwrap(),
+        }]);
 
     let runtime = match tokio::runtime::Runtime::new() {
         Ok(runtime) => runtime,
@@ -618,7 +619,7 @@ pub unsafe extern "C" fn account_execute_raw(
         .into_iter()
         .map(|c| (&c).into())
         .collect::<Vec<starknet::accounts::Call>>();
-    let call = (*account).0.execute(calldata);
+    let call = (*account).0.execute_v3(calldata);
 
     match tokio::runtime::Runtime::new() {
         Ok(runtime) => match runtime.block_on(call.send()) {
@@ -652,7 +653,7 @@ pub unsafe extern "C" fn wait_for_transaction(
 pub unsafe extern "C" fn hash_get_contract_address(
     class_hash: types::FieldElement,
     salt: types::FieldElement,
-    constructor_calldata: *const FieldElement,
+    constructor_calldata: *const Felt,
     constructor_calldata_len: usize,
     deployer_address: types::FieldElement,
 ) -> types::FieldElement {
@@ -706,9 +707,9 @@ pub unsafe extern "C" fn provider_free(rpc: *mut Provider) {
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn model_free(model: *mut Model) {
+pub unsafe extern "C" fn model_free(model: *mut Struct) {
     if !model.is_null() {
-        let _: torii_grpc::types::schema::Model = (&*Box::<Model>::from_raw(model)).into();
+        let _: dojo_types::schema::Struct = (&*Box::<Struct>::from_raw(model)).into();
     }
 }
 
