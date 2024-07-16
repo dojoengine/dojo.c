@@ -718,7 +718,7 @@ struct Resultbool wait_for_transaction(struct Provider *rpc, struct FieldElement
 
 struct FieldElement hash_get_contract_address(struct FieldElement class_hash,
                                               struct FieldElement salt,
-                                              const Felt *constructor_calldata,
+                                              const struct FieldElement *constructor_calldata,
                                               uintptr_t constructor_calldata_len,
                                               struct FieldElement deployer_address);
 

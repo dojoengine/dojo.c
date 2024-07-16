@@ -653,7 +653,7 @@ pub unsafe extern "C" fn wait_for_transaction(
 pub unsafe extern "C" fn hash_get_contract_address(
     class_hash: types::FieldElement,
     salt: types::FieldElement,
-    constructor_calldata: *const Felt,
+    constructor_calldata: *const types::FieldElement,
     constructor_calldata_len: usize,
     deployer_address: types::FieldElement,
 ) -> types::FieldElement {
@@ -662,6 +662,10 @@ pub unsafe extern "C" fn hash_get_contract_address(
     let constructor_calldata = unsafe {
         std::slice::from_raw_parts(constructor_calldata, constructor_calldata_len).to_vec()
     };
+    let constructor_calldata = constructor_calldata
+        .iter()
+        .map(|f| (&f.clone()).into())
+        .collect::<Vec<Felt>>();
     let deployer_address = (&deployer_address).into();
 
     let address = get_contract_address(salt, class_hash, &constructor_calldata, deployer_address);

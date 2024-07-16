@@ -920,7 +920,7 @@ Result<bool> wait_for_transaction(Provider *rpc, FieldElement txn_hash);
 
 FieldElement hash_get_contract_address(FieldElement class_hash,
                                        FieldElement salt,
-                                       const Felt *constructor_calldata,
+                                       const FieldElement *constructor_calldata,
                                        uintptr_t constructor_calldata_len,
                                        FieldElement deployer_address);
 
