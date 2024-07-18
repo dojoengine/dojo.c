@@ -1,4 +1,5 @@
-use dojo_types::{primitive::Primitive, schema::Ty};
+use dojo_types::primitive::Primitive;
+use dojo_types::schema::Ty;
 use serde_json::Value;
 use torii_grpc::types::schema::Entity;
 
@@ -15,10 +16,7 @@ pub fn parse_entities_as_json_str(entities: Vec<Entity>) -> Value {
                         .children
                         .iter()
                         .map(|member| {
-                            (
-                                member.name.to_owned(),
-                                parse_ty_as_json_str(&member.ty, member.key),
-                            )
+                            (member.name.to_owned(), parse_ty_as_json_str(&member.ty, member.key))
                         })
                         .collect::<serde_json::Map<String, Value>>();
 

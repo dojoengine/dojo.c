@@ -1,11 +1,13 @@
-use starknet::core::utils::get_selector_from_name;
 use std::ffi::{c_char, CStr, CString};
+
+use starknet::core::utils::get_selector_from_name;
 use torii_client::client::Client;
 
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub enum Result<T> {
     Ok(T),
+    #[allow(dead_code)]
     Err(Error),
 }
 #[derive(Debug, Clone)]
@@ -60,19 +62,13 @@ pub struct Signature {
 
 impl From<&Signature> for starknet::core::crypto::Signature {
     fn from(val: &Signature) -> Self {
-        Self {
-            r: (&val.r).into(),
-            s: (&val.s).into(),
-        }
+        Self { r: (&val.r).into(), s: (&val.s).into() }
     }
 }
 
 impl From<&starknet::core::crypto::Signature> for Signature {
     fn from(val: &starknet::core::crypto::Signature) -> Self {
-        Signature {
-            r: (&val.r).into(),
-            s: (&val.s).into(),
-        }
+        Signature { r: (&val.r).into(), s: (&val.s).into() }
     }
 }
 
@@ -169,10 +165,7 @@ impl<T> From<Vec<T>> for CArray<T> {
         let mut val = std::mem::ManuallyDrop::new(val);
         val.shrink_to_fit();
 
-        CArray {
-            data: val.as_mut_ptr(),
-            data_len: val.len(),
-        }
+        CArray { data: val.as_mut_ptr(), data_len: val.len() }
     }
 }
 
@@ -201,9 +194,7 @@ where
     T: std::error::Error,
 {
     fn from(val: T) -> Self {
-        Error {
-            message: CString::new(val.to_string()).unwrap().into_raw(),
-        }
+        Error { message: CString::new(val.to_string()).unwrap().into_raw() }
     }
 }
 
@@ -221,9 +212,7 @@ impl From<&FieldElement> for starknet::core::types::Felt {
 
 impl From<&starknet::core::types::Felt> for FieldElement {
     fn from(val: &starknet::core::types::Felt) -> Self {
-        FieldElement {
-            data: val.to_bytes_be(),
-        }
+        FieldElement { data: val.to_bytes_be() }
     }
 }
 
@@ -335,25 +324,15 @@ impl From<&Entity> for torii_grpc::types::schema::Entity {
         let models: Vec<Struct> = (&val.models).into();
         let models = models.iter().map(|m| (&m.clone()).into()).collect();
 
-        torii_grpc::types::schema::Entity {
-            hashed_keys: (&val.hashed_keys.clone()).into(),
-            models,
-        }
+        torii_grpc::types::schema::Entity { hashed_keys: (&val.hashed_keys.clone()).into(), models }
     }
 }
 
 impl From<&torii_grpc::types::schema::Entity> for Entity {
     fn from(val: &torii_grpc::types::schema::Entity) -> Self {
-        let models = val
-            .models
-            .iter()
-            .map(|m| (&m.clone()).into())
-            .collect::<Vec<Struct>>();
+        let models = val.models.iter().map(|m| (&m.clone()).into()).collect::<Vec<Struct>>();
 
-        Entity {
-            hashed_keys: (&val.hashed_keys.clone()).into(),
-            models: models.into(),
-        }
+        Entity { hashed_keys: (&val.hashed_keys.clone()).into(), models: models.into() }
     }
 }
 
@@ -416,18 +395,12 @@ impl From<&dojo_types::schema::Ty> for Ty {
             dojo_types::schema::Ty::Struct(struct_) => Ty::Struct_((&struct_.clone()).into()),
             dojo_types::schema::Ty::Enum(enum_) => Ty::Enum_((&enum_.clone()).into()),
             dojo_types::schema::Ty::Tuple(tuple) => {
-                let children = tuple
-                    .iter()
-                    .map(|c| (&c.clone()).into())
-                    .collect::<Vec<_>>();
+                let children = tuple.iter().map(|c| (&c.clone()).into()).collect::<Vec<_>>();
 
                 Ty::Tuple_(children.into())
             }
             dojo_types::schema::Ty::Array(array) => {
-                let children = array
-                    .iter()
-                    .map(|c| (&c.clone()).into())
-                    .collect::<Vec<_>>();
+                let children = array.iter().map(|c| (&c.clone()).into()).collect::<Vec<_>>();
 
                 Ty::Array_(children.into())
             }
@@ -491,11 +464,7 @@ impl From<&Enum> for dojo_types::schema::Enum {
         let options = options.iter().map(|o| (&o.clone()).into()).collect();
 
         dojo_types::schema::Enum {
-            name: unsafe {
-                CString::from_raw(value.name as *mut c_char)
-                    .into_string()
-                    .unwrap()
-            },
+            name: unsafe { CString::from_raw(value.name as *mut c_char).into_string().unwrap() },
             option: Some(value.option),
             options,
         }
@@ -504,11 +473,8 @@ impl From<&Enum> for dojo_types::schema::Enum {
 
 impl From<&dojo_types::schema::Enum> for Enum {
     fn from(value: &dojo_types::schema::Enum) -> Self {
-        let options = value
-            .options
-            .iter()
-            .map(|o| (&o.clone()).into())
-            .collect::<Vec<EnumOption>>();
+        let options =
+            value.options.iter().map(|o| (&o.clone()).into()).collect::<Vec<EnumOption>>();
 
         Enum {
             name: CString::new(value.name.clone()).unwrap().into_raw(),
@@ -528,11 +494,7 @@ pub struct EnumOption {
 impl From<&EnumOption> for dojo_types::schema::EnumOption {
     fn from(value: &EnumOption) -> Self {
         dojo_types::schema::EnumOption {
-            name: unsafe {
-                CString::from_raw(value.name as *mut c_char)
-                    .into_string()
-                    .unwrap()
-            },
+            name: unsafe { CString::from_raw(value.name as *mut c_char).into_string().unwrap() },
             ty: unsafe { (&*Box::<Ty>::from_raw(value.ty)).into() },
         }
     }
@@ -560,11 +522,7 @@ impl From<&Struct> for dojo_types::schema::Struct {
         let children = children.iter().map(|c| (&c.clone()).into()).collect();
 
         dojo_types::schema::Struct {
-            name: unsafe {
-                CString::from_raw(value.name as *mut c_char)
-                    .into_string()
-                    .unwrap()
-            },
+            name: unsafe { CString::from_raw(value.name as *mut c_char).into_string().unwrap() },
             children,
         }
     }
@@ -572,11 +530,7 @@ impl From<&Struct> for dojo_types::schema::Struct {
 
 impl From<&dojo_types::schema::Struct> for Struct {
     fn from(value: &dojo_types::schema::Struct) -> Self {
-        let children = value
-            .children
-            .iter()
-            .map(|c| (&c.clone()).into())
-            .collect::<Vec<Member>>();
+        let children = value.children.iter().map(|c| (&c.clone()).into()).collect::<Vec<Member>>();
 
         Struct {
             name: CString::new(value.name.clone()).unwrap().into_raw(),
@@ -596,11 +550,7 @@ pub struct Member {
 impl From<&Member> for dojo_types::schema::Member {
     fn from(value: &Member) -> Self {
         dojo_types::schema::Member {
-            name: unsafe {
-                CString::from_raw(value.name as *mut c_char)
-                    .into_string()
-                    .unwrap()
-            },
+            name: unsafe { CString::from_raw(value.name as *mut c_char).into_string().unwrap() },
             ty: unsafe { (&*Box::<Ty>::from_raw(value.ty)).into() },
             key: value.key,
         }
@@ -620,6 +570,12 @@ impl From<&dojo_types::schema::Member> for Member {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub enum Primitive {
+    I8(i8),
+    I16(i16),
+    I32(i32),
+    I64(i64),
+    // TODO: better way?
+    I128([u8; 16]),
     U8(u8),
     U16(u16),
     U32(u32),
@@ -640,6 +596,13 @@ pub enum Primitive {
 impl From<&Primitive> for dojo_types::primitive::Primitive {
     fn from(value: &Primitive) -> Self {
         match value {
+            Primitive::I8(v) => dojo_types::primitive::Primitive::I8(Some(*v)),
+            Primitive::I16(v) => dojo_types::primitive::Primitive::I16(Some(*v)),
+            Primitive::I32(v) => dojo_types::primitive::Primitive::I32(Some(*v)),
+            Primitive::I64(v) => dojo_types::primitive::Primitive::I64(Some(*v)),
+            Primitive::I128(v) => {
+                dojo_types::primitive::Primitive::I128(Some(i128::from_be_bytes(*v)))
+            }
             Primitive::U8(v) => dojo_types::primitive::Primitive::U8(Some(*v)),
             Primitive::U16(v) => dojo_types::primitive::Primitive::U16(Some(*v)),
             Primitive::U32(v) => dojo_types::primitive::Primitive::U32(Some(*v)),
@@ -666,6 +629,17 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
 impl From<&dojo_types::primitive::Primitive> for Primitive {
     fn from(value: &dojo_types::primitive::Primitive) -> Self {
         match value {
+            dojo_types::primitive::Primitive::I8(v) => Primitive::I8(v.unwrap_or(0)),
+            dojo_types::primitive::Primitive::I16(v) => Primitive::I16(v.unwrap_or(0)),
+            dojo_types::primitive::Primitive::I32(v) => Primitive::I32(v.unwrap_or(0)),
+            dojo_types::primitive::Primitive::I64(v) => Primitive::I64(v.unwrap_or(0)),
+            dojo_types::primitive::Primitive::I128(v) => {
+                if let Some(v) = v {
+                    Primitive::I128(v.to_be_bytes())
+                } else {
+                    Primitive::I128([0; 16])
+                }
+            }
             dojo_types::primitive::Primitive::U8(v) => Primitive::U8(v.unwrap_or(0)),
             dojo_types::primitive::Primitive::U16(v) => Primitive::U16(v.unwrap_or(0)),
             dojo_types::primitive::Primitive::U32(v) => Primitive::U32(v.unwrap_or(0)),
@@ -739,17 +713,9 @@ impl From<&torii_grpc::types::Query> for Query {
         match &val.clause {
             Option::Some(clause) => {
                 let clause = (&clause.clone()).into();
-                Query {
-                    limit: val.limit,
-                    offset: val.offset,
-                    clause: COption::Some(clause),
-                }
+                Query { limit: val.limit, offset: val.offset, clause: COption::Some(clause) }
             }
-            Option::None => Query {
-                limit: val.limit,
-                offset: val.offset,
-                clause: COption::None,
-            },
+            Option::None => Query { limit: val.limit, offset: val.offset, clause: COption::None },
         }
     }
 }
@@ -885,11 +851,7 @@ impl From<&ModelKeysClause> for torii_grpc::types::ModelKeysClause {
 
 impl From<&torii_grpc::types::ModelKeysClause> for ModelKeysClause {
     fn from(val: &torii_grpc::types::ModelKeysClause) -> Self {
-        let keys = val
-            .keys
-            .iter()
-            .map(|k| k.into())
-            .collect::<Vec<FieldElement>>();
+        let keys = val.keys.iter().map(|k| k.into()).collect::<Vec<FieldElement>>();
 
         ModelKeysClause {
             model: CString::new(val.model.clone()).unwrap().into_raw(),
@@ -901,16 +863,8 @@ impl From<&torii_grpc::types::ModelKeysClause> for ModelKeysClause {
 impl From<&MemberClause> for torii_grpc::types::MemberClause {
     fn from(val: &MemberClause) -> Self {
         torii_grpc::types::MemberClause {
-            member: unsafe {
-                CString::from_raw(val.member as *mut c_char)
-                    .into_string()
-                    .unwrap()
-            },
-            model: unsafe {
-                CString::from_raw(val.model as *mut c_char)
-                    .into_string()
-                    .unwrap()
-            },
+            member: unsafe { CString::from_raw(val.member as *mut c_char).into_string().unwrap() },
+            model: unsafe { CString::from_raw(val.model as *mut c_char).into_string().unwrap() },
             operator: (&val.operator.clone()).into(),
             value: (&val.value.clone()).into(),
         }
@@ -945,16 +899,9 @@ impl From<&CompositeClause> for torii_grpc::types::CompositeClause {
 impl From<&torii_grpc::types::CompositeClause> for CompositeClause {
     fn from(val: &torii_grpc::types::CompositeClause) -> Self {
         let operator = &val.operator.clone();
-        let clauses = val
-            .clauses
-            .iter()
-            .map(|c| (&c.clone()).into())
-            .collect::<Vec<Clause>>();
+        let clauses = val.clauses.iter().map(|c| (&c.clone()).into()).collect::<Vec<Clause>>();
 
-        CompositeClause {
-            operator: operator.into(),
-            clauses: clauses.into(),
-        }
+        CompositeClause { operator: operator.into(), clauses: clauses.into() }
     }
 }
 
@@ -1013,49 +960,9 @@ impl From<&Value> for torii_grpc::types::Value {
 
 impl From<&torii_grpc::types::Value> for Value {
     fn from(val: &torii_grpc::types::Value) -> Self {
-        Value {
-            primitive_type: (&val.primitive_type).into(),
-            value_type: (&val.value_type).into(),
-        }
+        Value { primitive_type: (&val.primitive_type).into(), value_type: (&val.value_type).into() }
     }
 }
-
-pub type EntityKeys = CArray<FieldElement>;
-pub type StorageKey = FieldElement;
-pub type StorageValue = FieldElement;
-
-#[derive(Clone, Debug)]
-#[repr(C)]
-pub struct ModelIndex {
-    model: FieldElement,
-    keys: CArray<EntityKeys>,
-}
-
-#[derive(Clone, Debug)]
-#[repr(C)]
-pub struct ModelStorage {
-    metadata: WorldMetadata,
-    storage: CArray<CHashItem<StorageKey, StorageValue>>,
-    // a map of model name to a set of entity keys.
-    model_index: CArray<CHashItem<FieldElement, CArray<EntityKeys>>>,
-    // listener for storage updates.
-    // senders: Mutex<HashMap<u8, Sender<()>>>,
-    // listeners: Mutex<HashMap<StorageKey, Vec<u8>>>,
-}
-
-// impl From<&torii_client::client::storage::ModelStorage> for ModelStorage {
-//     fn from(value: &torii_client::client::storage::ModelStorage) -> Self {
-//         let metadata = value.metadata;
-//         let storage = value.storage.clone();
-//         let model_index = value.model_index.clone();
-
-//         Self {
-//             metadata: (&metadata).into(),
-//             storage: (&storage).into(),
-//             model_index: (&model_index).into(),
-//         }
-//     }
-// }
 
 #[derive(Clone, Debug)]
 #[repr(C)]
@@ -1070,10 +977,7 @@ impl From<&dojo_types::WorldMetadata> for WorldMetadata {
         let models = value
             .models
             .iter()
-            .map(|(k, v)| CHashItem {
-                key: k.into(),
-                value: v.into(),
-            })
+            .map(|(k, v)| CHashItem { key: k.into(), value: v.into() })
             .collect::<Vec<CHashItem<FieldElement, ModelMetadata>>>();
 
         WorldMetadata {
@@ -1120,11 +1024,8 @@ pub struct ModelMetadata {
 
 impl From<&dojo_types::schema::ModelMetadata> for ModelMetadata {
     fn from(value: &dojo_types::schema::ModelMetadata) -> Self {
-        let layout = value
-            .layout
-            .iter()
-            .map(|v| (&v.clone()).into())
-            .collect::<Vec<FieldElement>>();
+        let layout =
+            value.layout.iter().map(|v| (&v.clone()).into()).collect::<Vec<FieldElement>>();
 
         ModelMetadata {
             schema: (&value.schema.clone()).into(),
@@ -1149,15 +1050,9 @@ impl From<&ModelMetadata> for dojo_types::schema::ModelMetadata {
         dojo_types::schema::ModelMetadata {
             schema: (&value.schema).into(),
             namespace: unsafe {
-                CString::from_raw(value.namespace as *mut c_char)
-                    .into_string()
-                    .unwrap()
+                CString::from_raw(value.namespace as *mut c_char).into_string().unwrap()
             },
-            name: unsafe {
-                CString::from_raw(value.name as *mut c_char)
-                    .into_string()
-                    .unwrap()
-            },
+            name: unsafe { CString::from_raw(value.name as *mut c_char).into_string().unwrap() },
             packed_size: value.packed_size,
             unpacked_size: value.unpacked_size,
             class_hash: (&value.class_hash).into(),

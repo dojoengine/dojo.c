@@ -1,4 +1,5 @@
-use std::{collections::HashMap, env};
+use std::collections::HashMap;
+use std::env;
 
 fn main() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
@@ -11,24 +12,20 @@ fn main() {
             config.braces = cbindgen::Braces::SameLine;
             config.cpp_compat = true;
             config.style = cbindgen::Style::Both;
-            config.layout = cbindgen::LayoutConfig {
-                ..Default::default()
-            };
+            config.layout = cbindgen::LayoutConfig { ..Default::default() };
             config.enumeration = cbindgen::EnumConfig {
                 derive_helper_methods: true,
                 // prefix_with_name: true,
                 ..Default::default()
             };
             config.export = cbindgen::ExportConfig {
-                mangle: cbindgen::MangleConfig {
-                    remove_underscores: true,
-                    ..Default::default()
-                },
+                mangle: cbindgen::MangleConfig { remove_underscores: true, ..Default::default() },
                 ..Default::default()
             };
 
             config.defines = HashMap::new();
-            // config.defines.insert("target_arch = wasm32".to_string(), "TARGET_WASM32".to_string());
+            // config.defines.insert("target_arch = wasm32".to_string(),
+            // "TARGET_WASM32".to_string());
             config.defines.insert(
                 "target_pointer_width = 32".to_string(),
                 "TARGET_POINTER_WIDTH_32".to_string(),
@@ -48,19 +45,14 @@ fn main() {
             config.language = cbindgen::Language::Cxx;
             config.braces = cbindgen::Braces::SameLine;
             config.style = cbindgen::Style::Both;
-            config.layout = cbindgen::LayoutConfig {
-                ..Default::default()
-            };
+            config.layout = cbindgen::LayoutConfig { ..Default::default() };
             config.enumeration = cbindgen::EnumConfig {
                 derive_helper_methods: true,
                 // prefix_with_name: true,
                 ..Default::default()
             };
             config.export = cbindgen::ExportConfig {
-                mangle: cbindgen::MangleConfig {
-                    remove_underscores: true,
-                    ..Default::default()
-                },
+                mangle: cbindgen::MangleConfig { remove_underscores: true, ..Default::default() },
                 ..Default::default()
             };
 

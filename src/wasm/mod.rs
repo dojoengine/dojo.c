@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use crypto_bigint::U256;
-use futures::StreamExt;
+use futures::{StreamExt, TryFutureExt};
 use js_sys::Array;
 use serde::{Deserialize, Serialize};
 use starknet::accounts::{
@@ -67,10 +67,7 @@ pub struct JsSignature {
 
 impl From<&Signature> for JsSignature {
     fn from(value: &Signature) -> Self {
-        Self {
-            r: format!("{:#x}", value.r),
-            s: format!("{:#x}", value.s),
-        }
+        Self { r: format!("{:#x}", value.r), s: format!("{:#x}", value.s) }
     }
 }
 
@@ -99,11 +96,7 @@ impl From<&Call> for starknet::accounts::Call {
         Self {
             to: Felt::from_str(value.to.as_str()).unwrap(),
             selector: get_selector_from_name(value.selector.as_str()).unwrap(),
-            calldata: value
-                .calldata
-                .iter()
-                .map(|c| Felt::from_str(c.as_str()).unwrap())
-                .collect(),
+            calldata: value.calldata.iter().map(|c| Felt::from_str(c.as_str()).unwrap()).collect(),
         }
     }
 }
@@ -113,11 +106,7 @@ impl From<&Call> for FunctionCall {
         Self {
             contract_address: Felt::from_str(value.to.as_str()).unwrap(),
             entry_point_selector: get_selector_from_name(value.selector.as_str()).unwrap(),
-            calldata: value
-                .calldata
-                .iter()
-                .map(|c| Felt::from_str(c.as_str()).unwrap())
-                .collect(),
+            calldata: value.calldata.iter().map(|c| Felt::from_str(c.as_str()).unwrap()).collect(),
         }
     }
 }
@@ -186,7 +175,11 @@ pub enum Clause {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct KeysClauses(pub Vec<ModelKeysClause>);
+pub struct KeysClauses(pub Vec<EntityKeysClause>);
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct ModelKeysClauses(pub Vec<ModelKeysClause>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -221,11 +214,9 @@ pub enum EntityKeysClause {
 impl From<&EntityKeysClause> for torii_grpc::types::EntityKeysClause {
     fn from(value: &EntityKeysClause) -> Self {
         match value {
-            EntityKeysClause::HashedKeys(keys) => Self::HashedKeys(
-                keys.iter()
-                    .map(|k| Felt::from_str(k.as_str()).unwrap())
-                    .collect(),
-            ),
+            EntityKeysClause::HashedKeys(keys) => {
+                Self::HashedKeys(keys.iter().map(|k| Felt::from_str(k.as_str()).unwrap()).collect())
+            }
             EntityKeysClause::Keys(keys) => Self::Keys(keys.into()),
         }
     }
@@ -259,11 +250,7 @@ impl From<&ModelKeysClause> for torii_grpc::types::ModelKeysClause {
     fn from(value: &ModelKeysClause) -> Self {
         Self {
             model: value.model.to_string(),
-            keys: value
-                .keys
-                .iter()
-                .map(|k| Felt::from_str(k.as_str()).unwrap())
-                .collect(),
+            keys: value.keys.iter().map(|k| Felt::from_str(k.as_str()).unwrap()).collect(),
         }
     }
 }
@@ -393,6 +380,11 @@ impl From<&ValueType> for torii_grpc::types::ValueType {
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub enum Primitive {
+    I8(Option<i8>),
+    I16(Option<i16>),
+    I32(Option<i32>),
+    I64(Option<i64>),
+    I128(Option<String>),
     U8(Option<u8>),
     U16(Option<u16>),
     U32(Option<u32>),
@@ -409,6 +401,11 @@ pub enum Primitive {
 impl From<&Primitive> for dojo_types::primitive::Primitive {
     fn from(value: &Primitive) -> Self {
         match value {
+            Primitive::I8(Some(value)) => Self::I8(Some(*value)),
+            Primitive::I16(Some(value)) => Self::I16(Some(*value)),
+            Primitive::I32(Some(value)) => Self::I32(Some(*value)),
+            Primitive::I64(Some(value)) => Self::I64(Some(*value)),
+            Primitive::I128(Some(value)) => Self::I128(Some(i128::from_str(value).unwrap())),
             Primitive::U8(Some(value)) => Self::U8(Some(*value)),
             Primitive::U16(Some(value)) => Self::U16(Some(*value)),
             Primitive::U32(Some(value)) => Self::U32(Some(*value)),
@@ -576,10 +573,7 @@ impl Provider {
             .await;
 
         match result {
-            Ok(res) => Ok(res
-                .iter()
-                .map(|f| JsValue::from(format!("{:#x}", f)))
-                .collect()),
+            Ok(res) => Ok(res.iter().map(|f| JsValue::from(format!("{:#x}", f))).collect()),
             Err(e) => Err(JsValue::from_str(&e.to_string())),
         }
     }
@@ -615,8 +609,7 @@ impl Account {
     pub unsafe fn set_block_id(&mut self, block_id: String) -> Result<(), JsValue> {
         let block_id = Felt::from_str(&block_id)
             .map_err(|err| JsValue::from(format!("failed to parse block id: {err}")))?;
-        self.0
-            .set_block_id(starknet::core::types::BlockId::Hash(block_id));
+        self.0.set_block_id(starknet::core::types::BlockId::Hash(block_id));
         Ok(())
     }
 
@@ -735,11 +728,7 @@ pub fn bytearray_deserialize(felts: Vec<String>) -> Result<String, JsValue> {
 
     let bytearray = match cairo_serde::ByteArray::cairo_deserialize(&felts, 0) {
         Ok(bytearray) => bytearray,
-        Err(e) => {
-            return Err(JsValue::from(format!(
-                "failed to deserialize bytearray: {e}"
-            )))
-        }
+        Err(e) => return Err(JsValue::from(format!("failed to deserialize bytearray: {e}"))),
     };
 
     match bytearray.to_string() {
@@ -769,9 +758,9 @@ impl Client {
         let results = self.inner.entities((&query).into()).await;
 
         match results {
-            Ok(entities) => Ok(js_sys::JSON::parse(
-                &parse_entities_as_json_str(entities).to_string(),
-            )?),
+            Ok(entities) => {
+                Ok(js_sys::JSON::parse(&parse_entities_as_json_str(entities).to_string())?)
+            }
             Err(err) => Err(JsValue::from(format!("failed to get entities: {err}"))),
         }
     }
@@ -781,19 +770,13 @@ impl Client {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let results = self
-            .inner
-            .entities(torii_grpc::types::Query {
-                limit,
-                offset,
-                clause: None,
-            })
-            .await;
+        let results =
+            self.inner.entities(torii_grpc::types::Query { limit, offset, clause: None }).await;
 
         match results {
-            Ok(entities) => Ok(js_sys::JSON::parse(
-                &parse_entities_as_json_str(entities).to_string(),
-            )?),
+            Ok(entities) => {
+                Ok(js_sys::JSON::parse(&parse_entities_as_json_str(entities).to_string())?)
+            }
             Err(err) => Err(JsValue::from(format!("failed to get entities: {err}"))),
         }
     }
@@ -806,16 +789,15 @@ impl Client {
         let results = self.inner.event_messages((&query).into()).await;
 
         match results {
-            Ok(event_messages) => Ok(js_sys::JSON::parse(
-                &parse_entities_as_json_str(event_messages).to_string(),
-            )?),
-            Err(err) => Err(JsValue::from(format!(
-                "failed to get event_messages: {err}"
-            ))),
+            Ok(event_messages) => {
+                Ok(js_sys::JSON::parse(&parse_entities_as_json_str(event_messages).to_string())?)
+            }
+            Err(err) => Err(JsValue::from(format!("failed to get event_messages: {err}"))),
         }
     }
 
-    /// Retrieves the model value of an entity. Will fetch from remote if the requested entity is not one of the entities that are being synced.
+    /// Retrieves the model value of an entity. Will fetch from remote if the requested entity is
+    /// not one of the entities that are being synced.
     #[wasm_bindgen(js_name = getModelValue)]
     pub async fn get_model_value(
         &self,
@@ -833,15 +815,10 @@ impl Client {
 
         match self
             .inner
-            .model(&torii_grpc::types::ModelKeysClause {
-                model: model.to_string(),
-                keys,
-            })
+            .model(&torii_grpc::types::ModelKeysClause { model: model.to_string(), keys })
             .await
         {
-            Ok(Some(ty)) => Ok(js_sys::JSON::parse(
-                &parse_ty_as_json_str(&ty, false).to_string(),
-            )?),
+            Ok(Some(ty)) => Ok(js_sys::JSON::parse(&parse_ty_as_json_str(&ty, false).to_string())?),
             Ok(None) => Ok(JsValue::NULL),
 
             Err(err) => Err(JsValue::from(format!("failed to get entity: {err}"))),
@@ -850,7 +827,7 @@ impl Client {
 
     /// Register new entities to be synced.
     #[wasm_bindgen(js_name = addModelsToSync)]
-    pub async unsafe fn add_models_to_sync(&self, models: KeysClauses) -> Result<(), JsValue> {
+    pub async unsafe fn add_models_to_sync(&self, models: ModelKeysClauses) -> Result<(), JsValue> {
         log("adding models to sync...");
 
         #[cfg(feature = "console-error-panic")]
@@ -858,15 +835,15 @@ impl Client {
 
         let models = models.0.iter().map(|e| e.into()).collect();
 
-        self.inner
-            .add_models_to_sync(models)
-            .await
-            .map_err(|err| JsValue::from(err.to_string()))
+        self.inner.add_models_to_sync(models).await.map_err(|err| JsValue::from(err.to_string()))
     }
 
     /// Remove the entities from being synced.
     #[wasm_bindgen(js_name = removeModelsToSync)]
-    pub async unsafe fn remove_models_to_sync(&self, models: KeysClauses) -> Result<(), JsValue> {
+    pub async unsafe fn remove_models_to_sync(
+        &self,
+        models: ModelKeysClauses,
+    ) -> Result<(), JsValue> {
         log("removing models to sync...");
 
         #[cfg(feature = "console-error-panic")]
@@ -874,10 +851,7 @@ impl Client {
 
         let models = models.0.iter().map(|e| e.into()).collect();
 
-        self.inner
-            .remove_models_to_sync(models)
-            .await
-            .map_err(|err| JsValue::from(err.to_string()))
+        self.inner.remove_models_to_sync(models).await.map_err(|err| JsValue::from(err.to_string()))
     }
 
     /// Register a callback to be called every time the specified synced entity's value changes.
@@ -914,31 +888,31 @@ impl Client {
             }
         });
 
-        Ok(Subscription(trigger))
+        Ok(Subscription { id: 0, trigger })
     }
 
     #[wasm_bindgen(js_name = onEntityUpdated)]
     pub async fn on_entity_updated(
         &self,
-        clause: Option<EntityKeysClause>,
+        clauses: KeysClauses,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let clause = clause.map(|c| (&c).into());
-        let stream = self.inner.on_entity_updated(clause).await.unwrap();
+        let clauses = clauses.0.iter().map(|c| c.into()).collect();
+        let mut stream = self.inner.on_entity_updated(clauses).await.unwrap();
+
+        let subscription_id = match stream.next().await {
+            Some(Ok((subscription_id, _))) => subscription_id,
+            _ => return Err(JsValue::from("failed to get subscription id")),
+        };
 
         let (trigger, tripwire) = Tripwire::new();
         wasm_bindgen_futures::spawn_local(async move {
             let mut stream = stream.take_until_if(tripwire);
 
-            while let Some(update) = stream.next().await {
-                let entity = update.expect("no updated entity");
-                if entity.hashed_keys == Felt::ZERO {
-                    continue;
-                }
-
+            while let Some(Ok((_, entity))) = stream.next().await {
                 let json_str = parse_entities_as_json_str(vec![entity]).to_string();
                 let _ = callback.call1(
                     &JsValue::null(),
@@ -947,31 +921,44 @@ impl Client {
             }
         });
 
-        Ok(Subscription(trigger))
+        Ok(Subscription { id: subscription_id, trigger })
+    }
+
+    #[wasm_bindgen(js_name = updateEntitySubscription)]
+    pub async fn update_entity_subscription(
+        &self,
+        subscription: &Subscription,
+        clauses: KeysClauses,
+    ) -> Result<(), JsValue> {
+        let clauses = clauses.0.iter().map(|c| c.into()).collect();
+        self.inner
+            .update_entity_subscription(subscription.id, clauses)
+            .await
+            .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }
 
     #[wasm_bindgen(js_name = onEventMessageUpdated)]
     pub async fn on_event_message_updated(
         &self,
-        clause: Option<EntityKeysClause>,
+        clauses: KeysClauses,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let clause = clause.map(|c| (&c).into());
-        let stream = self.inner.on_event_message_updated(clause).await.unwrap();
+        let clauses = clauses.0.iter().map(|c| c.into()).collect();
+        let mut stream = self.inner.on_event_message_updated(clauses).await.unwrap();
+
+        let subscription_id = match stream.next().await {
+            Some(Ok((subscription_id, _))) => subscription_id,
+            _ => return Err(JsValue::from("failed to get subscription id")),
+        };
 
         let (trigger, tripwire) = Tripwire::new();
         wasm_bindgen_futures::spawn_local(async move {
             let mut stream = stream.take_until_if(tripwire);
 
-            while let Some(update) = stream.next().await {
-                let entity = update.expect("no updated entity");
-                if entity.hashed_keys == Felt::ZERO {
-                    continue;
-                }
-
+            while let Some(Ok((_, entity))) = stream.next().await {
                 let json_str = parse_entities_as_json_str(vec![entity]).to_string();
                 let _ = callback.call1(
                     &JsValue::null(),
@@ -980,7 +967,20 @@ impl Client {
             }
         });
 
-        Ok(Subscription(trigger))
+        Ok(Subscription { id: subscription_id, trigger })
+    }
+
+    #[wasm_bindgen(js_name = updateEventMessageSubscription)]
+    pub async fn update_event_message_subscription(
+        &self,
+        subscription: &Subscription,
+        clauses: KeysClauses,
+    ) -> Result<(), JsValue> {
+        let clauses = clauses.0.iter().map(|c| c.into()).collect();
+        self.inner
+            .update_event_message_subscription(subscription.id, clauses)
+            .await
+            .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }
 
     #[wasm_bindgen(js_name = publishMessage)]
@@ -1014,7 +1014,7 @@ impl Client {
 #[wasm_bindgen]
 impl Subscription {
     pub fn cancel(self) {
-        self.0.cancel();
+        self.trigger.cancel();
     }
 }
 
@@ -1025,12 +1025,7 @@ pub async fn create_client(config: ClientConfig) -> Result<Client, JsValue> {
     #[cfg(feature = "console-error-panic")]
     console_error_panic_hook::set_once();
 
-    let ClientConfig {
-        rpc_url,
-        torii_url,
-        relay_url,
-        world_address,
-    } = config;
+    let ClientConfig { rpc_url, torii_url, relay_url, world_address } = config;
 
     let world_address = Felt::from_str(&world_address)
         .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
@@ -1040,9 +1035,7 @@ pub async fn create_client(config: ClientConfig) -> Result<Client, JsValue> {
         .map_err(|err| JsValue::from(format!("failed to build client: {err}")))?;
 
     wasm_bindgen_futures::spawn_local(client.start_subscription().await.map_err(|err| {
-        JsValue::from(format!(
-            "failed to start torii client subscription service: {err}"
-        ))
+        JsValue::from(format!("failed to start torii client subscription service: {err}"))
     })?);
 
     let relay_runner = client.relay_runner();

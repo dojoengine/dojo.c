@@ -94,6 +94,11 @@ typedef struct Signature {
 } Signature;
 
 typedef enum Primitive_Tag {
+  I8,
+  I16,
+  I32,
+  I64,
+  I128,
   U8,
   U16,
   U32,
@@ -115,6 +120,21 @@ typedef enum Primitive_Tag {
 typedef struct Primitive {
   Primitive_Tag tag;
   union {
+    struct {
+      int8_t i8;
+    };
+    struct {
+      int16_t i16;
+    };
+    struct {
+      int32_t i32;
+    };
+    struct {
+      int64_t i64;
+    };
+    struct {
+      uint8_t i128[16];
+    };
     struct {
       uint8_t u8;
     };
@@ -659,14 +679,26 @@ struct ResultSubscription client_on_sync_model_update(struct ToriiClient *client
                                                       void (*callback)(void));
 
 struct ResultSubscription client_on_entity_state_update(struct ToriiClient *client,
-                                                        const struct EntityKeysClause *clause,
+                                                        const struct EntityKeysClause *clauses,
+                                                        uintptr_t clauses_len,
                                                         void (*callback)(struct FieldElement,
                                                                          struct CArrayStruct));
 
+struct Resultbool client_update_entity_subscription(struct ToriiClient *client,
+                                                    struct Subscription *subscription,
+                                                    const struct EntityKeysClause *clauses,
+                                                    uintptr_t clauses_len);
+
 struct ResultSubscription client_on_event_message_update(struct ToriiClient *client,
-                                                         const struct EntityKeysClause *clause,
+                                                         const struct EntityKeysClause *clauses,
+                                                         uintptr_t clauses_len,
                                                          void (*callback)(struct FieldElement,
                                                                           struct CArrayStruct));
+
+struct Resultbool client_update_event_message_subscription(struct ToriiClient *client,
+                                                           struct Subscription *subscription,
+                                                           const struct EntityKeysClause *clauses,
+                                                           uintptr_t clauses_len);
 
 struct Resultbool client_remove_models_to_sync(struct ToriiClient *client,
                                                const struct ModelKeysClause *models,
