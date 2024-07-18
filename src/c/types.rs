@@ -620,6 +620,12 @@ impl From<&dojo_types::schema::Member> for Member {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub enum Primitive {
+    I8(i8),
+    I16(i16),
+    I32(i32),
+    I64(i64),
+    // TODO: better way?
+    I128([i8; 16]),    
     U8(u8),
     U16(u16),
     U32(u32),
@@ -640,6 +646,13 @@ pub enum Primitive {
 impl From<&Primitive> for dojo_types::primitive::Primitive {
     fn from(value: &Primitive) -> Self {
         match value {
+            Primitive::I8(v) => dojo_types::primitive::Primitive::I8(Some(*v)),
+            Primitive::I16(v) => dojo_types::primitive::Primitive::I16(Some(*v)),
+            Primitive::I32(v) => dojo_types::primitive::Primitive::I32(Some(*v)),
+            Primitive::I64(v) => dojo_types::primitive::Primitive::I64(Some(*v)),
+            Primitive::I128(v) => {
+                dojo_types::primitive::Primitive::I128(Some(i128::from_be_bytes(*v)))
+            }
             Primitive::U8(v) => dojo_types::primitive::Primitive::U8(Some(*v)),
             Primitive::U16(v) => dojo_types::primitive::Primitive::U16(Some(*v)),
             Primitive::U32(v) => dojo_types::primitive::Primitive::U32(Some(*v)),
@@ -666,6 +679,17 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
 impl From<&dojo_types::primitive::Primitive> for Primitive {
     fn from(value: &dojo_types::primitive::Primitive) -> Self {
         match value {
+            dojo_types::primitive::Primitive::I8(v) => Primitive::I8(v.unwrap_or(0)),
+            dojo_types::primitive::Primitive::I16(v) => Primitive::I16(v.unwrap_or(0)),
+            dojo_types::primitive::Primitive::I32(v) => Primitive::I32(v.unwrap_or(0)),
+            dojo_types::primitive::Primitive::I64(v) => Primitive::I64(v.unwrap_or(0)),
+            dojo_types::primitive::Primitive::I128(v) => {
+                if let Some(v) = v {
+                    Primitive::I128(v.to_be_bytes())
+                } else {
+                    Primitive::I128([0; 16])
+                }
+            }
             dojo_types::primitive::Primitive::U8(v) => Primitive::U8(v.unwrap_or(0)),
             dojo_types::primitive::Primitive::U16(v) => Primitive::U16(v.unwrap_or(0)),
             dojo_types::primitive::Primitive::U32(v) => Primitive::U32(v.unwrap_or(0)),

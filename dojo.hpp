@@ -105,6 +105,11 @@ struct Signature {
 
 struct Primitive {
   enum class Tag {
+    I8,
+    I16,
+    I32,
+    I64,
+    I128,
     U8,
     U16,
     U32,
@@ -121,6 +126,26 @@ struct Primitive {
     Felt252,
     ClassHash,
     ContractAddress,
+  };
+
+  struct I8_Body {
+    int8_t _0;
+  };
+
+  struct I16_Body {
+    int16_t _0;
+  };
+
+  struct I32_Body {
+    int32_t _0;
+  };
+
+  struct I64_Body {
+    int64_t _0;
+  };
+
+  struct I128_Body {
+    int8_t _0[16];
   };
 
   struct U8_Body {
@@ -177,6 +202,11 @@ struct Primitive {
 
   Tag tag;
   union {
+    I8_Body i8;
+    I16_Body i16;
+    I32_Body i32;
+    I64_Body i64;
+    I128_Body i128;
     U8_Body u8;
     U16_Body u16;
     U32_Body u32;
@@ -194,6 +224,63 @@ struct Primitive {
     ClassHash_Body class_hash;
     ContractAddress_Body contract_address;
   };
+
+  static Primitive I8(const int8_t &_0) {
+    Primitive result;
+    ::new (&result.i8._0) (int8_t)(_0);
+    result.tag = Tag::I8;
+    return result;
+  }
+
+  bool IsI8() const {
+    return tag == Tag::I8;
+  }
+
+  static Primitive I16(const int16_t &_0) {
+    Primitive result;
+    ::new (&result.i16._0) (int16_t)(_0);
+    result.tag = Tag::I16;
+    return result;
+  }
+
+  bool IsI16() const {
+    return tag == Tag::I16;
+  }
+
+  static Primitive I32(const int32_t &_0) {
+    Primitive result;
+    ::new (&result.i32._0) (int32_t)(_0);
+    result.tag = Tag::I32;
+    return result;
+  }
+
+  bool IsI32() const {
+    return tag == Tag::I32;
+  }
+
+  static Primitive I64(const int64_t &_0) {
+    Primitive result;
+    ::new (&result.i64._0) (int64_t)(_0);
+    result.tag = Tag::I64;
+    return result;
+  }
+
+  bool IsI64() const {
+    return tag == Tag::I64;
+  }
+
+  static Primitive I128(const int8_t (&_0)[16]) {
+    Primitive result;
+    for (int i = 0; i < 16; i++) {
+      ::new (&result.i128._0[i]) (int8_t)(_0[i]);
+    }
+    result.tag = Tag::I128;
+    return result;
+  }
+
+  bool IsI128() const {
+    return tag == Tag::I128;
+  }
 
   static Primitive U8(const uint8_t &_0) {
     Primitive result;

@@ -94,6 +94,11 @@ typedef struct Signature {
 } Signature;
 
 typedef enum Primitive_Tag {
+  I8,
+  I16,
+  I32,
+  I64,
+  I128,
   U8,
   U16,
   U32,
@@ -115,6 +120,21 @@ typedef enum Primitive_Tag {
 typedef struct Primitive {
   Primitive_Tag tag;
   union {
+    struct {
+      int8_t i8;
+    };
+    struct {
+      int16_t i16;
+    };
+    struct {
+      int32_t i32;
+    };
+    struct {
+      int64_t i64;
+    };
+    struct {
+      int8_t i128[16];
+    };
     struct {
       uint8_t u8;
     };
