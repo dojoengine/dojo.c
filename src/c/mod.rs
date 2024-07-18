@@ -248,7 +248,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         Some(Ok((subscription_id, _))) => subscription_id,
         _ => {
             return Result::Err(Error {
-                message: CString::new("expected subscription initial message").unwrap().into_raw(),
+                message: CString::new("failed to get subscription id").unwrap().into_raw(),
             })
         }
     };
@@ -308,7 +308,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
         Some(Ok((subscription_id, _))) => subscription_id,
         _ => {
             return Result::Err(Error {
-                message: CString::new("expected subscription initial message").unwrap().into_raw(),
+                message: CString::new("faild to get subscription id").unwrap().into_raw(),
             })
         }
     };
