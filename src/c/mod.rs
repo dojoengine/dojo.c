@@ -6,7 +6,6 @@ use self::types::{
 use crate::constants;
 use crate::types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
-use anyhow::Context;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::types::FunctionCall;
@@ -38,11 +37,8 @@ pub unsafe extern "C" fn client_new(
 ) -> Result<*mut ToriiClient> {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
-    let libp2p_relay_url = unsafe {
-        CStr::from_ptr(libp2p_relay_url)
-            .to_string_lossy()
-            .into_owned()
-    };
+    let libp2p_relay_url =
+        unsafe { CStr::from_ptr(libp2p_relay_url).to_string_lossy().into_owned() };
 
     let client_future = TClient::new(torii_url, rpc_url, libp2p_relay_url, (&world).into());
 
@@ -66,11 +62,7 @@ pub unsafe extern "C" fn client_new(
         Err(e) => return Result::Err(e.into()),
     }
 
-    Result::Ok(Box::into_raw(Box::new(ToriiClient {
-        inner: client,
-        runtime,
-        logger: None,
-    })))
+    Result::Ok(Box::into_raw(Box::new(ToriiClient { inner: client, runtime, logger: None })))
 }
 
 #[no_mangle]
@@ -176,10 +168,7 @@ pub unsafe extern "C" fn client_subscribed_models(
     client: *mut ToriiClient,
 ) -> CArray<ModelKeysClause> {
     let entities = unsafe { (*client).inner.subscribed_models().clone() };
-    let entities = entities
-        .into_iter()
-        .map(|e| (&e).into())
-        .collect::<Vec<ModelKeysClause>>();
+    let entities = entities.into_iter().map(|e| (&e).into()).collect::<Vec<ModelKeysClause>>();
 
     entities.into()
 }
@@ -199,11 +188,8 @@ pub unsafe extern "C" fn client_add_models_to_sync(
 ) -> Result<bool> {
     let models = unsafe { std::slice::from_raw_parts(models, models_len).to_vec() };
 
-    let client_future = unsafe {
-        (*client)
-            .inner
-            .add_models_to_sync(models.iter().map(|e| e.into()).collect())
-    };
+    let client_future =
+        unsafe { (*client).inner.add_models_to_sync(models.iter().map(|e| e.into()).collect()) };
 
     match (*client).runtime.block_on(client_future) {
         Ok(_) => Result::Ok(true),
@@ -238,7 +224,7 @@ pub unsafe extern "C" fn client_on_sync_model_update(
         }
     });
 
-    Result::Ok(Box::into_raw(Box::new(Subscription(trigger))))
+    Result::Ok(Box::into_raw(Box::new(Subscription { id: 0, trigger })))
 }
 
 #[no_mangle]
@@ -253,9 +239,18 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
     let entity_stream = unsafe { (*client).inner.on_entity_updated(clauses) };
-    let rcv = match (*client).runtime.block_on(entity_stream) {
+    let mut rcv = match (*client).runtime.block_on(entity_stream) {
         Ok(rcv) => rcv,
         Err(e) => return Result::Err(e.into()),
+    };
+
+    let subscription_id = match (*client).runtime.block_on(rcv.next()) {
+        Some(Ok((subscription_id, _))) => subscription_id,
+        _ => {
+            return Result::Err(Error {
+                message: CString::new("expected subscription initial message").unwrap().into_raw(),
+            })
+        }
     };
 
     let (trigger, tripwire) = Tripwire::new();
@@ -269,8 +264,6 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         }
     });
 
-    let (subscription_id, _) = rcv.next().await.context("subscription initial message")??;
-
     Result::Ok(Box::into_raw(Box::new(Subscription { id: subscription_id, trigger })))
 }
 
@@ -281,11 +274,17 @@ pub unsafe extern "C" fn client_update_entity_subscription(
     subscription: *mut Subscription,
     clauses: *const EntityKeysClause,
     clauses_len: usize,
-) -> Result<c_void> {
+) -> Result<bool> {
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
-    (*client).inner.update_entity_subscription((*subscription).id, clauses)
+    match (*client)
+        .runtime
+        .block_on((*client).inner.update_entity_subscription((*subscription).id, clauses))
+    {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(e.into()),
+    }
 }
 
 #[no_mangle]
@@ -300,9 +299,18 @@ pub unsafe extern "C" fn client_on_event_message_update(
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
     let entity_stream = unsafe { (*client).inner.on_event_message_updated(clauses) };
-    let rcv = match (*client).runtime.block_on(entity_stream) {
+    let mut rcv = match (*client).runtime.block_on(entity_stream) {
         Ok(rcv) => rcv,
         Err(e) => return Result::Err(e.into()),
+    };
+
+    let subscription_id = match (*client).runtime.block_on(rcv.next()) {
+        Some(Ok((subscription_id, _))) => subscription_id,
+        _ => {
+            return Result::Err(Error {
+                message: CString::new("expected subscription initial message").unwrap().into_raw(),
+            })
+        }
     };
 
     let (trigger, tripwire) = Tripwire::new();
@@ -316,9 +324,27 @@ pub unsafe extern "C" fn client_on_event_message_update(
         }
     });
 
-    let (subscription_id, _) = rcv.next().await.context("subscription initial message")??;
-
     Result::Ok(Box::into_raw(Box::new(Subscription { id: subscription_id, trigger })))
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_update_event_message_subscription(
+    client: *mut ToriiClient,
+    subscription: *mut Subscription,
+    clauses: *const EntityKeysClause,
+    clauses_len: usize,
+) -> Result<bool> {
+    let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
+    let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
+
+    match (*client)
+        .runtime
+        .block_on((*client).inner.update_event_message_subscription((*subscription).id, clauses))
+    {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(e.into()),
+    }
 }
 
 #[no_mangle]
@@ -330,11 +356,8 @@ pub unsafe extern "C" fn client_remove_models_to_sync(
 ) -> Result<bool> {
     let models = unsafe { std::slice::from_raw_parts(models, models_len).to_vec() };
 
-    let client_future = unsafe {
-        (*client)
-            .inner
-            .remove_models_to_sync(models.iter().map(|e| e.into()).collect())
-    };
+    let client_future =
+        unsafe { (*client).inner.remove_models_to_sync(models.iter().map(|e| e.into()).collect()) };
 
     match (*client).runtime.block_on(client_future) {
         Ok(_) => Result::Ok(true),
@@ -354,10 +377,7 @@ pub unsafe extern "C" fn bytearray_serialize(
     };
 
     let felts = cairo_serde::ByteArray::cairo_serialize(&bytearray);
-    let felts = felts
-        .iter()
-        .map(|f| f.into())
-        .collect::<Vec<types::FieldElement>>();
+    let felts = felts.iter().map(|f| f.into()).collect::<Vec<types::FieldElement>>();
     Result::Ok(felts.into())
 }
 
@@ -368,10 +388,7 @@ pub unsafe extern "C" fn bytearray_deserialize(
     felts_len: usize,
 ) -> Result<*const c_char> {
     let felts = unsafe { std::slice::from_raw_parts(felts, felts_len) };
-    let felts = felts
-        .iter()
-        .map(|f| (&f.clone()).into())
-        .collect::<Vec<Felt>>();
+    let felts = felts.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
     let bytearray = match cairo_serde::ByteArray::cairo_deserialize(&felts, 0) {
         Ok(bytearray) => bytearray,
         Err(e) => return Result::Err(e.into()),
@@ -392,10 +409,7 @@ pub unsafe extern "C" fn poseidon_hash(
     felts_len: usize,
 ) -> types::FieldElement {
     let felts = unsafe { std::slice::from_raw_parts(felts, felts_len) };
-    let felts = felts
-        .iter()
-        .map(|f| (&f.clone()).into())
-        .collect::<Vec<Felt>>();
+    let felts = felts.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
 
     (&poseidon_hash_many(&felts)).into()
 }
@@ -411,9 +425,7 @@ pub unsafe extern "C" fn typed_data_encode(
         Ok(typed_data) => typed_data,
         Err(err) => {
             return Result::Err(Error {
-                message: CString::new(format!("Invalid typed data: {}", err))
-                    .unwrap()
-                    .into_raw(),
+                message: CString::new(format!("Invalid typed data: {}", err)).unwrap().into_raw(),
             })
         }
     };
@@ -534,12 +546,10 @@ pub unsafe extern "C" fn starknet_call(
 ) -> Result<CArray<types::FieldElement>> {
     let res = match tokio::runtime::Runtime::new() {
         Ok(runtime) => match runtime.block_on(
-            (*provider)
-                .0
-                .call::<FunctionCall, starknet::core::types::BlockId>(
-                    (&call).into(),
-                    (&block_id).into(),
-                ),
+            (*provider).0.call::<FunctionCall, starknet::core::types::BlockId>(
+                (&call).into(),
+                (&block_id).into(),
+            ),
         ) {
             Ok(res) => res,
             Err(e) => return Result::Err(e.into()),
@@ -579,19 +589,17 @@ pub unsafe extern "C" fn account_deploy_burner(
     );
 
     // deploy the burner
-    let exec = (*master_account)
-        .0
-        .execute_v3(vec![starknet::accounts::Call {
-            to: constants::UDC_ADDRESS,
-            calldata: vec![
-                constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
-                verifying_key.scalar(),               // salt
-                Felt::ZERO,                           // deployer_address
-                Felt::ONE,                            // constructor calldata length (1)
-                verifying_key.scalar(),               // constructor calldata
-            ],
-            selector: get_selector_from_name("deployContract").unwrap(),
-        }]);
+    let exec = (*master_account).0.execute_v3(vec![starknet::accounts::Call {
+        to: constants::UDC_ADDRESS,
+        calldata: vec![
+            constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
+            verifying_key.scalar(),               // salt
+            Felt::ZERO,                           // deployer_address
+            Felt::ONE,                            // constructor calldata length (1)
+            verifying_key.scalar(),               // constructor calldata
+        ],
+        selector: get_selector_from_name("deployContract").unwrap(),
+    }]);
 
     let runtime = match tokio::runtime::Runtime::new() {
         Ok(runtime) => runtime,
@@ -605,9 +613,7 @@ pub unsafe extern "C" fn account_deploy_burner(
 
     match runtime.block_on(watch_tx(&(*provider).0, result.transaction_hash)) {
         Ok(_) => Result::Ok(Box::into_raw(Box::new(Account(account)))),
-        Err(e) => Result::Err(Error {
-            message: CString::new(e.to_string()).unwrap().into_raw(),
-        }),
+        Err(e) => Result::Err(Error { message: CString::new(e.to_string()).unwrap().into_raw() }),
     }
 }
 
@@ -638,10 +644,8 @@ pub unsafe extern "C" fn account_execute_raw(
     calldata_len: usize,
 ) -> Result<types::FieldElement> {
     let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
-    let calldata = calldata
-        .into_iter()
-        .map(|c| (&c).into())
-        .collect::<Vec<starknet::accounts::Call>>();
+    let calldata =
+        calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::accounts::Call>>();
     let call = (*account).0.execute_v3(calldata);
 
     match tokio::runtime::Runtime::new() {
@@ -663,9 +667,9 @@ pub unsafe extern "C" fn wait_for_transaction(
     match tokio::runtime::Runtime::new() {
         Ok(runtime) => match runtime.block_on(watch_tx(&(*rpc).0, txn_hash)) {
             Ok(_) => Result::Ok(true),
-            Err(e) => Result::Err(Error {
-                message: CString::new(e.to_string()).unwrap().into_raw(),
-            }),
+            Err(e) => {
+                Result::Err(Error { message: CString::new(e.to_string()).unwrap().into_raw() })
+            }
         },
         Err(e) => Result::Err(e.into()),
     }
@@ -685,10 +689,8 @@ pub unsafe extern "C" fn hash_get_contract_address(
     let constructor_calldata = unsafe {
         std::slice::from_raw_parts(constructor_calldata, constructor_calldata_len).to_vec()
     };
-    let constructor_calldata = constructor_calldata
-        .iter()
-        .map(|f| (&f.clone()).into())
-        .collect::<Vec<Felt>>();
+    let constructor_calldata =
+        constructor_calldata.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
     let deployer_address = (&deployer_address).into();
 
     let address = get_contract_address(salt, class_hash, &constructor_calldata, deployer_address);

@@ -145,7 +145,7 @@ struct Primitive {
   };
 
   struct I128_Body {
-    int8_t _0[16];
+    uint8_t _0[16];
   };
 
   struct U8_Body {
@@ -269,10 +269,10 @@ struct Primitive {
     return tag == Tag::I64;
   }
 
-  static Primitive I128(const int8_t (&_0)[16]) {
+  static Primitive I128(const uint8_t (&_0)[16]) {
     Primitive result;
     for (int i = 0; i < 16; i++) {
-      ::new (&result.i128._0[i]) (int8_t)(_0[i]);
+      ::new (&result.i128._0[i]) (uint8_t)(_0[i]);
     }
     result.tag = Tag::I128;
     return result;
@@ -958,7 +958,7 @@ Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
                                                     uintptr_t clauses_len,
                                                     void (*callback)(FieldElement, CArray<Struct>));
 
-Result<void> client_update_entity_subscription(ToriiClient *client,
+Result<bool> client_update_entity_subscription(ToriiClient *client,
                                                Subscription *subscription,
                                                const EntityKeysClause *clauses,
                                                uintptr_t clauses_len);
@@ -967,6 +967,11 @@ Result<Subscription*> client_on_event_message_update(ToriiClient *client,
                                                      const EntityKeysClause *clauses,
                                                      uintptr_t clauses_len,
                                                      void (*callback)(FieldElement, CArray<Struct>));
+
+Result<bool> client_update_event_message_subscription(ToriiClient *client,
+                                                      Subscription *subscription,
+                                                      const EntityKeysClause *clauses,
+                                                      uintptr_t clauses_len);
 
 Result<bool> client_remove_models_to_sync(ToriiClient *client,
                                           const ModelKeysClause *models,

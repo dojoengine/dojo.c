@@ -393,6 +393,11 @@ impl From<&ValueType> for torii_grpc::types::ValueType {
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub enum Primitive {
+    I8(Option<i8>),
+    I16(Option<i16>),
+    I32(Option<i32>),
+    I64(Option<i64>),
+    I128(Option<String>),
     U8(Option<u8>),
     U16(Option<u16>),
     U32(Option<u32>),
@@ -409,6 +414,11 @@ pub enum Primitive {
 impl From<&Primitive> for dojo_types::primitive::Primitive {
     fn from(value: &Primitive) -> Self {
         match value {
+            Primitive::I8(Some(value)) => Self::I8(Some(*value)),
+            Primitive::I16(Some(value)) => Self::I16(Some(*value)),
+            Primitive::I32(Some(value)) => Self::I32(Some(*value)),
+            Primitive::I64(Some(value)) => Self::I64(Some(*value)),
+            Primitive::I128(Some(value)) => Self::I128(Some(i128::from_str(value).unwrap())),
             Primitive::U8(Some(value)) => Self::U8(Some(*value)),
             Primitive::U16(Some(value)) => Self::U16(Some(*value)),
             Primitive::U32(Some(value)) => Self::U32(Some(*value)),
