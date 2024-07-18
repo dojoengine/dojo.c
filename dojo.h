@@ -492,6 +492,23 @@ typedef struct EntityKeysClause {
   };
 } EntityKeysClause;
 
+typedef enum Resultc_void_Tag {
+  Okc_void,
+  Errc_void,
+} Resultc_void_Tag;
+
+typedef struct Resultc_void {
+  Resultc_void_Tag tag;
+  union {
+    struct {
+      void ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Resultc_void;
+
 typedef enum ResultCArrayFieldElement_Tag {
   OkCArrayFieldElement,
   ErrCArrayFieldElement,
@@ -659,12 +676,19 @@ struct ResultSubscription client_on_sync_model_update(struct ToriiClient *client
                                                       void (*callback)(void));
 
 struct ResultSubscription client_on_entity_state_update(struct ToriiClient *client,
-                                                        const struct EntityKeysClause *clause,
+                                                        const struct EntityKeysClause *clauses,
+                                                        uintptr_t clauses_len,
                                                         void (*callback)(struct FieldElement,
                                                                          struct CArrayStruct));
 
+struct Resultc_void client_update_entity_subscription(struct ToriiClient *client,
+                                                      struct Subscription *subscription,
+                                                      const struct EntityKeysClause *clauses,
+                                                      uintptr_t clauses_len);
+
 struct ResultSubscription client_on_event_message_update(struct ToriiClient *client,
-                                                         const struct EntityKeysClause *clause,
+                                                         const struct EntityKeysClause *clauses,
+                                                         uintptr_t clauses_len,
                                                          void (*callback)(struct FieldElement,
                                                                           struct CArrayStruct));
 

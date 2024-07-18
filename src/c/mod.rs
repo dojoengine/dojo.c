@@ -6,6 +6,7 @@ use self::types::{
 use crate::constants;
 use crate::types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
+use anyhow::Context;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::types::FunctionCall;
@@ -244,12 +245,14 @@ pub unsafe extern "C" fn client_on_sync_model_update(
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_on_entity_state_update(
     client: *mut ToriiClient,
-    clause: Option<&EntityKeysClause>,
+    clauses: *const EntityKeysClause,
+    clauses_len: usize,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
-    let clause = clause.map(|c| c.into());
+    let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
+    let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
-    let entity_stream = unsafe { (*client).inner.on_entity_updated(clause) };
+    let entity_stream = unsafe { (*client).inner.on_entity_updated(clauses) };
     let rcv = match (*client).runtime.block_on(entity_stream) {
         Ok(rcv) => rcv,
         Err(e) => return Result::Err(e.into()),
@@ -259,26 +262,44 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     (*client).runtime.spawn(async move {
         let mut rcv = rcv.take_until_if(tripwire);
 
-        while let Some(Ok(entity)) = rcv.next().await {
+        while let Some(Ok((_, entity))) = rcv.next().await {
             let key: types::FieldElement = (&entity.hashed_keys).into();
             let models: Vec<Struct> = entity.models.into_iter().map(|e| (&e).into()).collect();
             callback(key, models.into());
         }
     });
 
-    Result::Ok(Box::into_raw(Box::new(Subscription(trigger))))
+    let (subscription_id, _) = rcv.next().await.context("subscription initial message")??;
+
+    Result::Ok(Box::into_raw(Box::new(Subscription { id: subscription_id, trigger })))
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_update_entity_subscription(
+    client: *mut ToriiClient,
+    subscription: *mut Subscription,
+    clauses: *const EntityKeysClause,
+    clauses_len: usize,
+) -> Result<c_void> {
+    let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
+    let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
+
+    (*client).inner.update_entity_subscription((*subscription).id, clauses)
 }
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_on_event_message_update(
     client: *mut ToriiClient,
-    clause: Option<&EntityKeysClause>,
+    clauses: *const EntityKeysClause,
+    clauses_len: usize,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
-    let clause = clause.map(|c| c.into());
+    let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
+    let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
-    let entity_stream = unsafe { (*client).inner.on_event_message_updated(clause) };
+    let entity_stream = unsafe { (*client).inner.on_event_message_updated(clauses) };
     let rcv = match (*client).runtime.block_on(entity_stream) {
         Ok(rcv) => rcv,
         Err(e) => return Result::Err(e.into()),
@@ -288,14 +309,16 @@ pub unsafe extern "C" fn client_on_event_message_update(
     (*client).runtime.spawn(async move {
         let mut rcv = rcv.take_until_if(tripwire);
 
-        while let Some(Ok(entity)) = rcv.next().await {
+        while let Some(Ok((_, entity))) = rcv.next().await {
             let key: types::FieldElement = (&entity.hashed_keys).into();
             let models: Vec<Struct> = entity.models.into_iter().map(|e| (&e).into()).collect();
             callback(key, models.into());
         }
     });
 
-    Result::Ok(Box::into_raw(Box::new(Subscription(trigger))))
+    let (subscription_id, _) = rcv.next().await.context("subscription initial message")??;
+
+    Result::Ok(Box::into_raw(Box::new(Subscription { id: subscription_id, trigger })))
 }
 
 #[no_mangle]
@@ -679,7 +702,7 @@ pub unsafe extern "C" fn subscription_cancel(subscription: *mut Subscription) {
     if !subscription.is_null() {
         unsafe {
             let subscription = Box::from_raw(subscription);
-            subscription.0.cancel();
+            subscription.trigger.cancel();
         }
     }
 }
