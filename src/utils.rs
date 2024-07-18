@@ -1,9 +1,6 @@
 use anyhow::Result;
-
-use starknet::{
-    core::types::StarknetError,
-    providers::{Provider, ProviderError},
-};
+use starknet::core::types::StarknetError;
+use starknet::providers::{Provider, ProviderError};
 use starknet_crypto::Felt;
 
 pub async fn watch_tx<P>(provider: P, transaction_hash: Felt) -> Result<()>

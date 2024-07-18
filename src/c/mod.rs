@@ -1,11 +1,10 @@
 mod types;
 
-use self::types::{
-    BlockId, CArray, Call, Entity, Error, Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
-};
-use crate::constants;
-use crate::types::{Account, Provider, Subscription};
-use crate::utils::watch_tx;
+use std::ffi::{c_void, CStr, CString};
+use std::ops::Deref;
+use std::os::raw::c_char;
+use std::sync::Arc;
+
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::types::FunctionCall;
@@ -16,16 +15,19 @@ use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
 use starknet_crypto::{poseidon_hash_many, Felt};
-use std::ffi::{c_void, CStr, CString};
-use std::ops::Deref;
-use std::os::raw::c_char;
-use std::sync::Arc;
 use stream_cancel::{StreamExt as _, Tripwire};
 use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
 use types::{EntityKeysClause, ModelKeysClause, Struct};
+
+use self::types::{
+    BlockId, CArray, Call, Entity, Error, Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
+};
+use crate::constants;
+use crate::types::{Account, Provider, Subscription};
+use crate::utils::watch_tx;
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
@@ -249,7 +251,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         _ => {
             return Result::Err(Error {
                 message: CString::new("failed to get subscription id").unwrap().into_raw(),
-            })
+            });
         }
     };
 
@@ -309,7 +311,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
         _ => {
             return Result::Err(Error {
                 message: CString::new("faild to get subscription id").unwrap().into_raw(),
-            })
+            });
         }
     };
 
@@ -426,7 +428,7 @@ pub unsafe extern "C" fn typed_data_encode(
         Err(err) => {
             return Result::Err(Error {
                 message: CString::new(format!("Invalid typed data: {}", err)).unwrap().into_raw(),
-            })
+            });
         }
     };
 

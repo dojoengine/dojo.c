@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
-use starknet::{
-    accounts::SingleOwnerAccount,
-    providers::{jsonrpc::HttpTransport, JsonRpcClient},
-    signers::LocalWallet,
-};
+use starknet::accounts::SingleOwnerAccount;
+use starknet::providers::jsonrpc::HttpTransport;
+use starknet::providers::JsonRpcClient;
+use starknet::signers::LocalWallet;
 use stream_cancel::Trigger;
 use wasm_bindgen::prelude::*;
 
@@ -15,5 +14,5 @@ pub struct Account(pub(crate) SingleOwnerAccount<Arc<JsonRpcClient<HttpTransport
 #[wasm_bindgen]
 pub struct Subscription {
     pub(crate) id: u64,
-    pub(crate) trigger: Trigger
+    pub(crate) trigger: Trigger,
 }

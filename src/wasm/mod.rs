@@ -796,7 +796,8 @@ impl Client {
         }
     }
 
-    /// Retrieves the model value of an entity. Will fetch from remote if the requested entity is not one of the entities that are being synced.
+    /// Retrieves the model value of an entity. Will fetch from remote if the requested entity is
+    /// not one of the entities that are being synced.
     #[wasm_bindgen(js_name = getModelValue)]
     pub async fn get_model_value(
         &self,

@@ -1,5 +1,6 @@
-use starknet::core::utils::get_selector_from_name;
 use std::ffi::{c_char, CStr, CString};
+
+use starknet::core::utils::get_selector_from_name;
 use torii_client::client::Client;
 
 #[derive(Debug, Clone)]
