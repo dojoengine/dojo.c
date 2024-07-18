@@ -7,6 +7,7 @@ use torii_client::client::Client;
 #[repr(C)]
 pub enum Result<T> {
     Ok(T),
+    #[allow(dead_code)]
     Err(Error),
 }
 #[derive(Debug, Clone)]
@@ -962,43 +963,6 @@ impl From<&torii_grpc::types::Value> for Value {
         Value { primitive_type: (&val.primitive_type).into(), value_type: (&val.value_type).into() }
     }
 }
-
-pub type EntityKeys = CArray<FieldElement>;
-pub type StorageKey = FieldElement;
-pub type StorageValue = FieldElement;
-
-#[derive(Clone, Debug)]
-#[repr(C)]
-pub struct ModelIndex {
-    model: FieldElement,
-    keys: CArray<EntityKeys>,
-}
-
-#[derive(Clone, Debug)]
-#[repr(C)]
-pub struct ModelStorage {
-    metadata: WorldMetadata,
-    storage: CArray<CHashItem<StorageKey, StorageValue>>,
-    // a map of model name to a set of entity keys.
-    model_index: CArray<CHashItem<FieldElement, CArray<EntityKeys>>>,
-    // listener for storage updates.
-    // senders: Mutex<HashMap<u8, Sender<()>>>,
-    // listeners: Mutex<HashMap<StorageKey, Vec<u8>>>,
-}
-
-// impl From<&torii_client::client::storage::ModelStorage> for ModelStorage {
-//     fn from(value: &torii_client::client::storage::ModelStorage) -> Self {
-//         let metadata = value.metadata;
-//         let storage = value.storage.clone();
-//         let model_index = value.model_index.clone();
-
-//         Self {
-//             metadata: (&metadata).into(),
-//             storage: (&storage).into(),
-//             model_index: (&model_index).into(),
-//         }
-//     }
-// }
 
 #[derive(Clone, Debug)]
 #[repr(C)]
