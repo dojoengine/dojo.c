@@ -13,6 +13,6 @@ pub struct Provider(pub(crate) Arc<JsonRpcClient<HttpTransport>>);
 pub struct Account(pub(crate) SingleOwnerAccount<Arc<JsonRpcClient<HttpTransport>>, LocalWallet>);
 #[wasm_bindgen]
 pub struct Subscription {
-    pub(crate) id: u64,
+    pub id: u64,
     pub(crate) trigger: Trigger,
 }
