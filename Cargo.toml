@@ -7,12 +7,12 @@ version = "1.0.0-alpha.0"
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
-dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "5d8b5f9d4f8bdbfc61ba39b3d8366e6284a4c9c6" }
-torii-client = { git = "https://github.com/dojoengine/dojo", rev = "5d8b5f9d4f8bdbfc61ba39b3d8366e6284a4c9c6" }
+dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "1c0e8cc17e0c6e3fd4cc0d3e0826f19cff674740" }
+torii-client = { git = "https://github.com/dojoengine/dojo", rev = "1c0e8cc17e0c6e3fd4cc0d3e0826f19cff674740" }
 torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
     "client",
-], rev = "5d8b5f9d4f8bdbfc61ba39b3d8366e6284a4c9c6" }
-torii-relay = { git = "https://github.com/dojoengine/dojo", rev = "5d8b5f9d4f8bdbfc61ba39b3d8366e6284a4c9c6" }
+], rev = "1c0e8cc17e0c6e3fd4cc0d3e0826f19cff674740" }
+torii-relay = { git = "https://github.com/dojoengine/dojo", rev = "1c0e8cc17e0c6e3fd4cc0d3e0826f19cff674740" }
 
 
 starknet = "0.11.0"

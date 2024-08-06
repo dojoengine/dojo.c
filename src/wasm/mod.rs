@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use crypto_bigint::U256;
-use futures::{StreamExt, TryFutureExt};
+use futures::StreamExt;
 use js_sys::Array;
 use serde::{Deserialize, Serialize};
 use starknet::accounts::{
@@ -13,9 +13,7 @@ use starknet::accounts::{
 };
 use starknet::core::crypto::Signature;
 use starknet::core::types::{Felt, FunctionCall};
-use starknet::core::utils::{
-    cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
-};
+use starknet::core::utils::{get_contract_address, get_selector_from_name};
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
@@ -29,7 +27,7 @@ use wasm_bindgen::prelude::*;
 use crate::constants;
 use crate::types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
-use crate::wasm::utils::{parse_entities_as_json_str, parse_ty_as_json_str};
+use crate::wasm::utils::parse_entities_as_json_str;
 
 #[derive(Tsify, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -796,101 +794,6 @@ impl Client {
         }
     }
 
-    /// Retrieves the model value of an entity. Will fetch from remote if the requested entity is
-    /// not one of the entities that are being synced.
-    #[wasm_bindgen(js_name = getModelValue)]
-    pub async fn get_model_value(
-        &self,
-        model: &str,
-        keys: Vec<String>,
-    ) -> Result<JsValue, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
-        let keys = keys
-            .into_iter()
-            .map(|k| Felt::from_str(k.as_str()))
-            .collect::<Result<Vec<Felt>, _>>()
-            .map_err(|err| JsValue::from(format!("failed to parse entity keys: {err}")))?;
-
-        match self
-            .inner
-            .model(&torii_grpc::types::ModelKeysClause { model: model.to_string(), keys })
-            .await
-        {
-            Ok(Some(ty)) => Ok(js_sys::JSON::parse(&parse_ty_as_json_str(&ty, false).to_string())?),
-            Ok(None) => Ok(JsValue::NULL),
-
-            Err(err) => Err(JsValue::from(format!("failed to get entity: {err}"))),
-        }
-    }
-
-    /// Register new entities to be synced.
-    #[wasm_bindgen(js_name = addModelsToSync)]
-    pub async unsafe fn add_models_to_sync(&self, models: ModelKeysClauses) -> Result<(), JsValue> {
-        log("adding models to sync...");
-
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
-        let models = models.0.iter().map(|e| e.into()).collect();
-
-        self.inner.add_models_to_sync(models).await.map_err(|err| JsValue::from(err.to_string()))
-    }
-
-    /// Remove the entities from being synced.
-    #[wasm_bindgen(js_name = removeModelsToSync)]
-    pub async unsafe fn remove_models_to_sync(
-        &self,
-        models: ModelKeysClauses,
-    ) -> Result<(), JsValue> {
-        log("removing models to sync...");
-
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
-        let models = models.0.iter().map(|e| e.into()).collect();
-
-        self.inner.remove_models_to_sync(models).await.map_err(|err| JsValue::from(err.to_string()))
-    }
-
-    /// Register a callback to be called every time the specified synced entity's value changes.
-    #[wasm_bindgen(js_name = onSyncModelChange)]
-    pub async fn on_sync_model_change(
-        &self,
-        model: ModelKeysClause,
-        callback: js_sys::Function,
-    ) -> Result<Subscription, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
-        let name = cairo_short_string_to_felt(&model.model).expect("invalid model name");
-        let rcv = self
-            .inner
-            .storage()
-            .add_listener(
-                name,
-                &model
-                    .keys
-                    .iter()
-                    .map(|k| Felt::from_str(k.as_str()))
-                    .collect::<Result<Vec<_>, _>>()
-                    .unwrap(),
-            )
-            .unwrap();
-
-        let (trigger, tripwire) = Tripwire::new();
-        wasm_bindgen_futures::spawn_local(async move {
-            let mut rcv = rcv.take_until_if(tripwire);
-
-            while rcv.next().await.is_some() {
-                let _ = callback.call0(&JsValue::null());
-            }
-        });
-
-        Ok(Subscription { id: 0, trigger })
-    }
-
     #[wasm_bindgen(js_name = onEntityUpdated)]
     pub async fn on_entity_updated(
         &self,
@@ -1033,10 +936,6 @@ pub async fn create_client(config: ClientConfig) -> Result<Client, JsValue> {
     let client = torii_client::client::Client::new(torii_url, rpc_url, relay_url, world_address)
         .await
         .map_err(|err| JsValue::from(format!("failed to build client: {err}")))?;
-
-    wasm_bindgen_futures::spawn_local(client.start_subscription().await.map_err(|err| {
-        JsValue::from(format!("failed to start torii client subscription service: {err}"))
-    })?);
 
     let relay_runner = client.relay_runner();
     wasm_bindgen_futures::spawn_local(async move {

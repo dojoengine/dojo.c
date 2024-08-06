@@ -8,9 +8,7 @@ use std::sync::Arc;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::types::FunctionCall;
-use starknet::core::utils::{
-    cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
-};
+use starknet::core::utils::{get_contract_address, get_selector_from_name};
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
@@ -20,7 +18,7 @@ use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
-use types::{EntityKeysClause, ModelKeysClause, Struct};
+use types::{EntityKeysClause, Struct};
 
 use self::types::{
     BlockId, CArray, Call, Entity, Error, Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
@@ -54,15 +52,6 @@ pub unsafe extern "C" fn client_new(
     runtime.spawn(async move {
         relay_runner.lock().await.run().await;
     });
-
-    // Start subscription
-    let result = runtime.block_on(client.start_subscription());
-    match result {
-        Ok(sub) => {
-            runtime.spawn(sub);
-        }
-        Err(e) => return Result::Err(e.into()),
-    }
 
     Result::Ok(Box::into_raw(Box::new(ToriiClient { inner: client, runtime, logger: None })))
 }
@@ -108,27 +97,6 @@ pub unsafe extern "C" fn client_publish_message(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_model(
-    client: *mut ToriiClient,
-    keys: &ModelKeysClause,
-) -> Result<*mut Ty> {
-    let keys = (&keys.clone()).into();
-    let entity_future = unsafe { (*client).inner.model(&keys) };
-
-    match (*client).runtime.block_on(entity_future) {
-        Ok(ty) => {
-            if let Some(ty) = ty {
-                Result::Ok(Box::into_raw(Box::new((&ty).into())))
-            } else {
-                Result::Ok(std::ptr::null_mut())
-            }
-        }
-        Err(e) => Result::Err(e.into()),
-    }
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_entities(
     client: *mut ToriiClient,
     query: &Query,
@@ -166,67 +134,8 @@ pub unsafe extern "C" fn client_event_messages(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_subscribed_models(
-    client: *mut ToriiClient,
-) -> CArray<ModelKeysClause> {
-    let entities = unsafe { (*client).inner.subscribed_models().clone() };
-    let entities = entities.into_iter().map(|e| (&e).into()).collect::<Vec<ModelKeysClause>>();
-
-    entities.into()
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetadata {
     unsafe { (&(*client).inner.metadata().clone()).into() }
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_add_models_to_sync(
-    client: *mut ToriiClient,
-    models: *const ModelKeysClause,
-    models_len: usize,
-) -> Result<bool> {
-    let models = unsafe { std::slice::from_raw_parts(models, models_len).to_vec() };
-
-    let client_future =
-        unsafe { (*client).inner.add_models_to_sync(models.iter().map(|e| e.into()).collect()) };
-
-    match (*client).runtime.block_on(client_future) {
-        Ok(_) => Result::Ok(true),
-        Err(e) => Result::Err(e.into()),
-    }
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_on_sync_model_update(
-    client: *mut ToriiClient,
-    model: ModelKeysClause,
-    callback: unsafe extern "C" fn(),
-) -> Result<*mut Subscription> {
-    let model: torii_grpc::types::ModelKeysClause = (&model).into();
-    let storage = (*client).inner.storage();
-
-    let rcv = match storage.add_listener(
-        cairo_short_string_to_felt(model.model.as_str()).unwrap(),
-        model.keys.as_slice(),
-    ) {
-        Ok(rcv) => rcv,
-        Err(e) => return Result::Err(e.into()),
-    };
-
-    let (trigger, tripwire) = Tripwire::new();
-    (*client).runtime.spawn(async move {
-        let mut rcv = rcv.take_until_if(tripwire);
-
-        while rcv.next().await.is_some() {
-            callback();
-        }
-    });
-
-    Result::Ok(Box::into_raw(Box::new(Subscription { id: 0, trigger })))
 }
 
 #[no_mangle]
@@ -344,24 +253,6 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
         .runtime
         .block_on((*client).inner.update_event_message_subscription((*subscription).id, clauses))
     {
-        Ok(_) => Result::Ok(true),
-        Err(e) => Result::Err(e.into()),
-    }
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_remove_models_to_sync(
-    client: *mut ToriiClient,
-    models: *const ModelKeysClause,
-    models_len: usize,
-) -> Result<bool> {
-    let models = unsafe { std::slice::from_raw_parts(models, models_len).to_vec() };
-
-    let client_future =
-        unsafe { (*client).inner.remove_models_to_sync(models.iter().map(|e| e.into()).collect()) };
-
-    match (*client).runtime.block_on(client_future) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
