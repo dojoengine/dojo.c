@@ -945,14 +945,6 @@ CArray<ModelKeysClause> client_subscribed_models(ToriiClient *client);
 
 WorldMetadata client_metadata(ToriiClient *client);
 
-Result<bool> client_add_models_to_sync(ToriiClient *client,
-                                       const ModelKeysClause *models,
-                                       uintptr_t models_len);
-
-Result<Subscription*> client_on_sync_model_update(ToriiClient *client,
-                                                  ModelKeysClause model,
-                                                  void (*callback)());
-
 Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
                                                     const EntityKeysClause *clauses,
                                                     uintptr_t clauses_len,
@@ -972,10 +964,6 @@ Result<bool> client_update_event_message_subscription(ToriiClient *client,
                                                       Subscription *subscription,
                                                       const EntityKeysClause *clauses,
                                                       uintptr_t clauses_len);
-
-Result<bool> client_remove_models_to_sync(ToriiClient *client,
-                                          const ModelKeysClause *models,
-                                          uintptr_t models_len);
 
 Result<CArray<FieldElement>> bytearray_serialize(const char *str);
 

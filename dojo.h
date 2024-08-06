@@ -461,23 +461,6 @@ typedef struct WorldMetadata {
   struct CArrayCHashItemFieldElementModelMetadata models;
 } WorldMetadata;
 
-typedef enum Resultbool_Tag {
-  Okbool,
-  Errbool,
-} Resultbool_Tag;
-
-typedef struct Resultbool {
-  Resultbool_Tag tag;
-  union {
-    struct {
-      bool ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} Resultbool;
-
 typedef enum ResultSubscription_Tag {
   OkSubscription,
   ErrSubscription,
@@ -511,6 +494,23 @@ typedef struct EntityKeysClause {
     };
   };
 } EntityKeysClause;
+
+typedef enum Resultbool_Tag {
+  Okbool,
+  Errbool,
+} Resultbool_Tag;
+
+typedef struct Resultbool {
+  Resultbool_Tag tag;
+  union {
+    struct {
+      bool ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Resultbool;
 
 typedef enum ResultCArrayFieldElement_Tag {
   OkCArrayFieldElement,
@@ -670,14 +670,6 @@ struct CArrayModelKeysClause client_subscribed_models(struct ToriiClient *client
 
 struct WorldMetadata client_metadata(struct ToriiClient *client);
 
-struct Resultbool client_add_models_to_sync(struct ToriiClient *client,
-                                            const struct ModelKeysClause *models,
-                                            uintptr_t models_len);
-
-struct ResultSubscription client_on_sync_model_update(struct ToriiClient *client,
-                                                      struct ModelKeysClause model,
-                                                      void (*callback)(void));
-
 struct ResultSubscription client_on_entity_state_update(struct ToriiClient *client,
                                                         const struct EntityKeysClause *clauses,
                                                         uintptr_t clauses_len,
@@ -699,10 +691,6 @@ struct Resultbool client_update_event_message_subscription(struct ToriiClient *c
                                                            struct Subscription *subscription,
                                                            const struct EntityKeysClause *clauses,
                                                            uintptr_t clauses_len);
-
-struct Resultbool client_remove_models_to_sync(struct ToriiClient *client,
-                                               const struct ModelKeysClause *models,
-                                               uintptr_t models_len);
 
 struct ResultCArrayFieldElement bytearray_serialize(const char *str);
 
