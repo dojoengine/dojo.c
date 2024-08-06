@@ -9,7 +9,7 @@ use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::types::FunctionCall;
 use starknet::core::utils::{
-    cairo_short_string_to_felt, get_contract_address, get_selector_from_name,
+    get_contract_address, get_selector_from_name,
 };
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
@@ -20,7 +20,7 @@ use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
-use types::{EntityKeysClause, ModelKeysClause, Struct};
+use types::{EntityKeysClause, Struct};
 
 use self::types::{
     BlockId, CArray, Call, Entity, Error, Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
@@ -99,27 +99,6 @@ pub unsafe extern "C" fn client_publish_message(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_model(
-    client: *mut ToriiClient,
-    keys: &ModelKeysClause,
-) -> Result<*mut Ty> {
-    let keys = (&keys.clone()).into();
-    let entity_future = unsafe { (*client).inner.model(&keys) };
-
-    match (*client).runtime.block_on(entity_future) {
-        Ok(ty) => {
-            if let Some(ty) = ty {
-                Result::Ok(Box::into_raw(Box::new((&ty).into())))
-            } else {
-                Result::Ok(std::ptr::null_mut())
-            }
-        }
-        Err(e) => Result::Err(e.into()),
-    }
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_entities(
     client: *mut ToriiClient,
     query: &Query,
@@ -153,17 +132,6 @@ pub unsafe extern "C" fn client_event_messages(
         }
         Err(e) => Result::Err(e.into()),
     }
-}
-
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn client_subscribed_models(
-    client: *mut ToriiClient,
-) -> CArray<ModelKeysClause> {
-    let entities = unsafe { (*client).inner.subscribed_models().clone() };
-    let entities = entities.into_iter().map(|e| (&e).into()).collect::<Vec<ModelKeysClause>>();
-
-    entities.into()
 }
 
 #[no_mangle]

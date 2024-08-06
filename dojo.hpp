@@ -425,17 +425,6 @@ struct Primitive {
   }
 };
 
-struct Member {
-  const char *name;
-  Ty *ty;
-  bool key;
-};
-
-struct Struct {
-  const char *name;
-  CArray<Member> children;
-};
-
 struct EnumOption {
   const char *name;
   Ty *ty;
@@ -558,9 +547,15 @@ struct Ty {
   }
 };
 
-struct ModelKeysClause {
-  CArray<FieldElement> keys;
-  const char *model;
+struct Member {
+  const char *name;
+  Ty *ty;
+  bool key;
+};
+
+struct Struct {
+  const char *name;
+  CArray<Member> children;
 };
 
 struct Entity {
@@ -935,13 +930,9 @@ Result<CArray<uint8_t>> client_publish_message(ToriiClient *client,
                                                const char *message,
                                                Signature signature);
 
-Result<Ty*> client_model(ToriiClient *client, const ModelKeysClause *keys);
-
 Result<CArray<Entity>> client_entities(ToriiClient *client, const Query *query);
 
 Result<CArray<Entity>> client_event_messages(ToriiClient *client, const Query *query);
-
-CArray<ModelKeysClause> client_subscribed_models(ToriiClient *client);
 
 WorldMetadata client_metadata(ToriiClient *client);
 

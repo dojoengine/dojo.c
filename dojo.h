@@ -178,22 +178,6 @@ typedef struct Primitive {
   };
 } Primitive;
 
-typedef struct Member {
-  const char *name;
-  struct Ty *ty;
-  bool key;
-} Member;
-
-typedef struct CArrayMember {
-  struct Member *data;
-  uintptr_t data_len;
-} CArrayMember;
-
-typedef struct Struct {
-  const char *name;
-  struct CArrayMember children;
-} Struct;
-
 typedef struct EnumOption {
   const char *name;
   struct Ty *ty;
@@ -248,32 +232,21 @@ typedef struct Ty {
   };
 } Ty;
 
-typedef enum ResultTy_Tag {
-  OkTy,
-  ErrTy,
-} ResultTy_Tag;
+typedef struct Member {
+  const char *name;
+  struct Ty *ty;
+  bool key;
+} Member;
 
-typedef struct ResultTy {
-  ResultTy_Tag tag;
-  union {
-    struct {
-      struct Ty *ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultTy;
-
-typedef struct CArrayFieldElement {
-  struct FieldElement *data;
+typedef struct CArrayMember {
+  struct Member *data;
   uintptr_t data_len;
-} CArrayFieldElement;
+} CArrayMember;
 
-typedef struct ModelKeysClause {
-  struct CArrayFieldElement keys;
-  const char *model;
-} ModelKeysClause;
+typedef struct Struct {
+  const char *name;
+  struct CArrayMember children;
+} Struct;
 
 typedef struct CArrayStruct {
   struct Struct *data;
@@ -429,10 +402,10 @@ typedef struct Query {
   struct COptionClause clause;
 } Query;
 
-typedef struct CArrayModelKeysClause {
-  struct ModelKeysClause *data;
+typedef struct CArrayFieldElement {
+  struct FieldElement *data;
   uintptr_t data_len;
-} CArrayModelKeysClause;
+} CArrayFieldElement;
 
 typedef struct ModelMetadata {
   struct Ty schema;
@@ -659,14 +632,10 @@ struct ResultCArrayu8 client_publish_message(struct ToriiClient *client,
                                              const char *message,
                                              struct Signature signature);
 
-struct ResultTy client_model(struct ToriiClient *client, const struct ModelKeysClause *keys);
-
 struct ResultCArrayEntity client_entities(struct ToriiClient *client, const struct Query *query);
 
 struct ResultCArrayEntity client_event_messages(struct ToriiClient *client,
                                                 const struct Query *query);
-
-struct CArrayModelKeysClause client_subscribed_models(struct ToriiClient *client);
 
 struct WorldMetadata client_metadata(struct ToriiClient *client);
 
