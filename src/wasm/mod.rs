@@ -13,9 +13,7 @@ use starknet::accounts::{
 };
 use starknet::core::crypto::Signature;
 use starknet::core::types::{Felt, FunctionCall};
-use starknet::core::utils::{
-    get_contract_address, get_selector_from_name,
-};
+use starknet::core::utils::{get_contract_address, get_selector_from_name};
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
