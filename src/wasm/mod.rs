@@ -1,5 +1,6 @@
 mod utils;
 
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -11,7 +12,6 @@ use serde::{Deserialize, Serialize};
 use starknet::accounts::{
     Account as _, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount,
 };
-use starknet::core::crypto::Signature;
 use starknet::core::types::{Felt, FunctionCall};
 use starknet::core::utils::{get_contract_address, get_selector_from_name};
 use starknet::providers::jsonrpc::HttpTransport;
@@ -21,408 +21,16 @@ use starknet_crypto::poseidon_hash_many;
 use stream_cancel::{StreamExt as _, Tripwire};
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
-use tsify::Tsify;
+use tsify_next::Tsify;
 use wasm_bindgen::prelude::*;
 
 use crate::constants;
-use crate::types::{Account, Provider, Subscription};
+use crate::types::{Account, Provider, Subscription, ToriiClient};
 use crate::utils::watch_tx;
-use crate::wasm::utils::parse_entities_as_json_str;
 
-#[derive(Tsify, Serialize, Deserialize)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct ClientConfig {
-    #[serde(rename = "rpcUrl")]
-    pub rpc_url: String,
-    #[serde(rename = "toriiUrl")]
-    pub torii_url: String,
-    #[serde(rename = "relayUrl")]
-    pub relay_url: String,
-    #[serde(rename = "worldAddress")]
-    pub world_address: String,
-}
+mod types;
 
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-
-    #[wasm_bindgen(js_namespace = console)]
-    fn error(s: &str);
-}
-
-#[wasm_bindgen]
-pub struct Client {
-    inner: torii_client::client::Client,
-}
-
-#[derive(Tsify, Serialize, Deserialize)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct JsSignature {
-    pub r: String,
-    pub s: String,
-}
-
-impl From<&Signature> for JsSignature {
-    fn from(value: &Signature) -> Self {
-        Self { r: format!("{:#x}", value.r), s: format!("{:#x}", value.s) }
-    }
-}
-
-impl From<&JsSignature> for Signature {
-    fn from(value: &JsSignature) -> Self {
-        Self {
-            r: Felt::from_str(value.r.as_str()).unwrap(),
-            s: Felt::from_str(value.s.as_str()).unwrap(),
-        }
-    }
-}
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct Calls(Vec<Call>);
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct Call {
-    pub to: String,
-    pub selector: String,
-    pub calldata: Vec<String>,
-}
-
-impl From<&Call> for starknet::accounts::Call {
-    fn from(value: &Call) -> Self {
-        Self {
-            to: Felt::from_str(value.to.as_str()).unwrap(),
-            selector: get_selector_from_name(value.selector.as_str()).unwrap(),
-            calldata: value.calldata.iter().map(|c| Felt::from_str(c.as_str()).unwrap()).collect(),
-        }
-    }
-}
-
-impl From<&Call> for FunctionCall {
-    fn from(value: &Call) -> Self {
-        Self {
-            contract_address: Felt::from_str(value.to.as_str()).unwrap(),
-            entry_point_selector: get_selector_from_name(value.selector.as_str()).unwrap(),
-            calldata: value.calldata.iter().map(|c| Felt::from_str(c.as_str()).unwrap()).collect(),
-        }
-    }
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub enum BlockTag {
-    Latest,
-    Pending,
-}
-
-impl From<&BlockTag> for starknet::core::types::BlockTag {
-    fn from(value: &BlockTag) -> Self {
-        match value {
-            BlockTag::Latest => starknet::core::types::BlockTag::Latest,
-            BlockTag::Pending => starknet::core::types::BlockTag::Pending,
-        }
-    }
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub enum BlockId {
-    Hash(String),
-    Number(u64),
-    BlockTag(BlockTag),
-}
-
-impl From<&BlockId> for starknet::core::types::BlockId {
-    fn from(value: &BlockId) -> Self {
-        match value {
-            BlockId::Hash(hash) => {
-                starknet::core::types::BlockId::Hash(Felt::from_str(hash.as_str()).unwrap())
-            }
-            BlockId::Number(number) => starknet::core::types::BlockId::Number(*number),
-            BlockId::BlockTag(tag) => starknet::core::types::BlockId::Tag(tag.into()),
-        }
-    }
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct Query {
-    pub limit: u32,
-    pub offset: u32,
-    pub clause: Option<Clause>,
-}
-
-impl From<&Query> for torii_grpc::types::Query {
-    fn from(value: &Query) -> Self {
-        Self {
-            limit: value.limit,
-            offset: value.offset,
-            clause: value.clause.as_ref().map(|c| c.into()),
-        }
-    }
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub enum Clause {
-    Keys(KeysClause),
-    Member(MemberClause),
-    Composite(CompositeClause),
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct KeysClauses(pub Vec<EntityKeysClause>);
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct ModelKeysClauses(pub Vec<ModelKeysClause>);
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct ModelKeysClause {
-    pub model: String,
-    pub keys: Vec<String>,
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub enum PatternMatching {
-    FixedLen = 0,
-    VariableLen = 1,
-}
-
-impl From<&PatternMatching> for torii_grpc::types::PatternMatching {
-    fn from(value: &PatternMatching) -> Self {
-        match value {
-            PatternMatching::FixedLen => Self::FixedLen,
-            PatternMatching::VariableLen => Self::VariableLen,
-        }
-    }
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub enum EntityKeysClause {
-    HashedKeys(Vec<String>),
-    Keys(KeysClause),
-}
-
-impl From<&EntityKeysClause> for torii_grpc::types::EntityKeysClause {
-    fn from(value: &EntityKeysClause) -> Self {
-        match value {
-            EntityKeysClause::HashedKeys(keys) => {
-                Self::HashedKeys(keys.iter().map(|k| Felt::from_str(k.as_str()).unwrap()).collect())
-            }
-            EntityKeysClause::Keys(keys) => Self::Keys(keys.into()),
-        }
-    }
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct KeysClause {
-    pub keys: Vec<Option<String>>,
-    pub pattern_matching: PatternMatching,
-    pub models: Vec<String>,
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct MemberClause {
-    pub model: String,
-    pub member: String,
-    pub operator: ComparisonOperator,
-    pub value: Value,
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct CompositeClause {
-    pub operator: LogicalOperator,
-    pub clauses: Vec<Clause>,
-}
-
-impl From<&ModelKeysClause> for torii_grpc::types::ModelKeysClause {
-    fn from(value: &ModelKeysClause) -> Self {
-        Self {
-            model: value.model.to_string(),
-            keys: value.keys.iter().map(|k| Felt::from_str(k.as_str()).unwrap()).collect(),
-        }
-    }
-}
-
-impl From<&KeysClause> for torii_grpc::types::KeysClause {
-    fn from(value: &KeysClause) -> Self {
-        Self {
-            keys: value
-                .keys
-                .iter()
-                .map(|o| o.as_ref().map(|k| Felt::from_str(k.as_str()).unwrap()))
-                .collect(),
-            models: value.models.iter().map(|m| m.to_string()).collect(),
-            pattern_matching: (&value.pattern_matching).into(),
-        }
-    }
-}
-
-impl From<&MemberClause> for torii_grpc::types::MemberClause {
-    fn from(value: &MemberClause) -> Self {
-        Self {
-            model: value.model.to_string(),
-            member: value.member.to_string(),
-            operator: (&value.operator).into(),
-            value: (&value.value).into(),
-        }
-    }
-}
-
-impl From<&CompositeClause> for torii_grpc::types::CompositeClause {
-    fn from(value: &CompositeClause) -> Self {
-        Self {
-            operator: (&value.operator).into(),
-            clauses: value.clauses.iter().map(|c| c.into()).collect(),
-        }
-    }
-}
-
-impl From<&Clause> for torii_grpc::types::Clause {
-    fn from(value: &Clause) -> Self {
-        match value {
-            Clause::Keys(keys) => Self::Keys(keys.into()),
-            Clause::Member(member) => Self::Member(member.into()),
-            Clause::Composite(composite) => Self::Composite(composite.into()),
-        }
-    }
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub enum LogicalOperator {
-    And,
-    Or,
-}
-
-impl From<&LogicalOperator> for torii_grpc::types::LogicalOperator {
-    fn from(value: &LogicalOperator) -> Self {
-        match value {
-            LogicalOperator::And => Self::And,
-            LogicalOperator::Or => Self::Or,
-        }
-    }
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub enum ComparisonOperator {
-    Eq,
-    Neq,
-    Gt,
-    Gte,
-    Lt,
-    Lte,
-}
-
-impl From<&ComparisonOperator> for torii_grpc::types::ComparisonOperator {
-    fn from(value: &ComparisonOperator) -> Self {
-        match value {
-            ComparisonOperator::Eq => Self::Eq,
-            ComparisonOperator::Neq => Self::Neq,
-            ComparisonOperator::Gt => Self::Gt,
-            ComparisonOperator::Gte => Self::Gte,
-            ComparisonOperator::Lt => Self::Lt,
-            ComparisonOperator::Lte => Self::Lte,
-        }
-    }
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct Value {
-    pub primitive_type: Primitive,
-    pub value_type: ValueType,
-}
-
-impl From<&Value> for torii_grpc::types::Value {
-    fn from(value: &Value) -> Self {
-        Self {
-            primitive_type: (&value.primitive_type).into(),
-            value_type: (&value.value_type).into(),
-        }
-    }
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub enum ValueType {
-    String(String),
-    Int(i64),
-    UInt(u64),
-    VBool(bool),
-    Bytes(Vec<u8>),
-}
-
-impl From<&ValueType> for torii_grpc::types::ValueType {
-    fn from(value: &ValueType) -> Self {
-        match &value {
-            ValueType::String(s) => Self::String(s.to_string()),
-            ValueType::Int(i) => Self::Int(*i),
-            ValueType::UInt(u) => Self::UInt(*u),
-            ValueType::VBool(b) => Self::Bool(*b),
-            ValueType::Bytes(b) => Self::Bytes(b.to_vec()),
-        }
-    }
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-pub enum Primitive {
-    I8(Option<i8>),
-    I16(Option<i16>),
-    I32(Option<i32>),
-    I64(Option<i64>),
-    I128(Option<String>),
-    U8(Option<u8>),
-    U16(Option<u16>),
-    U32(Option<u32>),
-    U64(Option<u64>),
-    U128(Option<String>),
-    U256(Option<String>),
-    USize(Option<u32>),
-    Bool(Option<bool>),
-    Felt252(Option<String>),
-    ClassHash(Option<String>),
-    ContractAddress(Option<String>),
-}
-
-impl From<&Primitive> for dojo_types::primitive::Primitive {
-    fn from(value: &Primitive) -> Self {
-        match value {
-            Primitive::I8(Some(value)) => Self::I8(Some(*value)),
-            Primitive::I16(Some(value)) => Self::I16(Some(*value)),
-            Primitive::I32(Some(value)) => Self::I32(Some(*value)),
-            Primitive::I64(Some(value)) => Self::I64(Some(*value)),
-            Primitive::I128(Some(value)) => Self::I128(Some(i128::from_str(value).unwrap())),
-            Primitive::U8(Some(value)) => Self::U8(Some(*value)),
-            Primitive::U16(Some(value)) => Self::U16(Some(*value)),
-            Primitive::U32(Some(value)) => Self::U32(Some(*value)),
-            Primitive::U64(Some(value)) => Self::U64(Some(*value)),
-            Primitive::U128(Some(value)) => Self::U128(Some(u128::from_str(value).unwrap())),
-            Primitive::U256(Some(value)) => Self::U256(Some(U256::from_be_hex(value.as_str()))),
-            Primitive::USize(Some(value)) => Self::USize(Some(*value)),
-            Primitive::Bool(Some(value)) => Self::Bool(Some(*value)),
-            Primitive::Felt252(Some(value)) => Self::Felt252(Some(Felt::from_str(value).unwrap())),
-            Primitive::ClassHash(Some(value)) => {
-                Self::ClassHash(Some(Felt::from_str(value).unwrap()))
-            }
-            Primitive::ContractAddress(Some(value)) => {
-                Self::ContractAddress(Some(Felt::from_str(value).unwrap()))
-            }
-            _ => unimplemented!(),
-        }
-    }
-}
+use types::{BlockId, Call, Calls, ClientConfig, Entities, KeysClauses, Model, Query, Signature};
 
 #[wasm_bindgen(js_name = typedDataEncode)]
 pub fn typed_data_encode(typed_data: &str, address: &str) -> Result<String, JsValue> {
@@ -446,7 +54,7 @@ pub fn signing_key_new() -> String {
 }
 
 #[wasm_bindgen(js_name = signingKeySign)]
-pub fn signing_key_sign(private_key: &str, hash: &str) -> Result<JsSignature, JsValue> {
+pub fn signing_key_sign(private_key: &str, hash: &str) -> Result<Signature, JsValue> {
     let private_key = Felt::from_str(private_key);
     if let Err(e) = private_key {
         return Err(JsValue::from(format!("failed to parse private key: {e}")));
@@ -461,7 +69,7 @@ pub fn signing_key_sign(private_key: &str, hash: &str) -> Result<JsSignature, Js
     let sig = private_key.sign(&hash.unwrap());
 
     match sig {
-        Ok(sig) => Result::Ok(JsSignature::from(&sig)),
+        Ok(sig) => Result::Ok(Signature::from(&sig)),
         Err(e) => Err(JsValue::from(format!("failed to sign: {e}"))),
     }
 }
@@ -482,7 +90,7 @@ pub fn verifying_key_new(signing_key: &str) -> Result<String, JsValue> {
 pub fn verifying_key_verify(
     verifying_key: &str,
     hash: &str,
-    signature: JsSignature,
+    signature: Signature,
 ) -> Result<bool, JsValue> {
     let verifying_key = Felt::from_str(verifying_key);
     if let Err(e) = verifying_key {
@@ -498,7 +106,7 @@ pub fn verifying_key_verify(
 
     let hash = &hash.unwrap();
 
-    let signature = &Signature::from(&signature);
+    let signature = &starknet::core::crypto::Signature::from(&signature);
 
     match verifying_key.verify(hash, signature) {
         Ok(result) => Result::Ok(result),
@@ -613,9 +221,9 @@ impl Account {
 
     #[wasm_bindgen(js_name = executeRaw)]
     pub async unsafe fn execute_raw(&self, calldata: Calls) -> Result<String, JsValue> {
-        let calldata = calldata.0.iter().map(|c| c.into()).collect();
+        let calldata = calldata.iter().map(|c| c.into()).collect();
 
-        let call = self.0.execute_v3(calldata);
+        let call = self.0.execute_v1(calldata);
 
         let result = call.send().await;
 
@@ -649,7 +257,7 @@ impl Account {
             SingleOwnerAccount::new(provider, signer, address, chain_id, ExecutionEncoding::New);
 
         // deploy the burner
-        let exec = self.0.execute_v3(vec![starknet::accounts::Call {
+        let exec = self.0.execute_v1(vec![starknet::accounts::Call {
             to: constants::UDC_ADDRESS,
             calldata: vec![
                 constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
@@ -664,9 +272,7 @@ impl Account {
         let result = exec.send().await;
 
         if let Err(e) = result {
-            return Err(JsValue::from(format!(
-                "failed to start torii client subscription service: {e}"
-            )));
+            return Err(JsValue::from(format!("failed to deploy burner: {e}",)));
         }
 
         let result = result.unwrap();
@@ -747,24 +353,22 @@ pub fn poseidon_hash(inputs: Vec<String>) -> Result<String, JsValue> {
 }
 
 #[wasm_bindgen]
-impl Client {
+impl ToriiClient {
     #[wasm_bindgen(js_name = getEntities)]
-    pub async fn get_entities(&self, query: Query) -> Result<JsValue, JsValue> {
+    pub async fn get_entities(&self, query: Query) -> Result<Entities, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let results = self.inner.entities((&query).into()).await;
 
         match results {
-            Ok(entities) => {
-                Ok(js_sys::JSON::parse(&parse_entities_as_json_str(entities).to_string())?)
-            }
+            Ok(entities) => Ok((&entities).into()),
             Err(err) => Err(JsValue::from(format!("failed to get entities: {err}"))),
         }
     }
 
     #[wasm_bindgen(js_name = getAllEntities)]
-    pub async fn get_all_entities(&self, limit: u32, offset: u32) -> Result<JsValue, JsValue> {
+    pub async fn get_all_entities(&self, limit: u32, offset: u32) -> Result<Entities, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
@@ -772,24 +376,20 @@ impl Client {
             self.inner.entities(torii_grpc::types::Query { limit, offset, clause: None }).await;
 
         match results {
-            Ok(entities) => {
-                Ok(js_sys::JSON::parse(&parse_entities_as_json_str(entities).to_string())?)
-            }
+            Ok(entities) => Ok((&entities).into()),
             Err(err) => Err(JsValue::from(format!("failed to get entities: {err}"))),
         }
     }
 
     #[wasm_bindgen(js_name = getEventMessages)]
-    pub async fn get_event_messages(&self, query: Query) -> Result<JsValue, JsValue> {
+    pub async fn get_event_messages(&self, query: Query) -> Result<Entities, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let results = self.inner.event_messages((&query).into()).await;
 
         match results {
-            Ok(event_messages) => {
-                Ok(js_sys::JSON::parse(&parse_entities_as_json_str(event_messages).to_string())?)
-            }
+            Ok(event_messages) => Ok((&event_messages).into()),
             Err(err) => Err(JsValue::from(format!("failed to get event_messages: {err}"))),
         }
     }
@@ -803,7 +403,7 @@ impl Client {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let clauses = clauses.0.iter().map(|c| c.into()).collect();
+        let clauses = clauses.iter().map(|c| c.into()).collect();
         let mut stream = self.inner.on_entity_updated(clauses).await.unwrap();
 
         let subscription_id = match stream.next().await {
@@ -816,10 +416,12 @@ impl Client {
             let mut stream = stream.take_until_if(tripwire);
 
             while let Some(Ok((_, entity))) = stream.next().await {
-                let json_str = parse_entities_as_json_str(vec![entity]).to_string();
-                let _ = callback.call1(
+                let models = entity.models.iter().map(|m| m.into()).collect::<Vec<Model>>();
+
+                let _ = callback.call2(
                     &JsValue::null(),
-                    &js_sys::JSON::parse(&json_str).expect("json parse failed"),
+                    &JsValue::from_str(&format!("{:#x}", entity.hashed_keys)),
+                    &serde_wasm_bindgen::to_value(&models).unwrap(),
                 );
             }
         });
@@ -833,7 +435,7 @@ impl Client {
         subscription: &Subscription,
         clauses: KeysClauses,
     ) -> Result<(), JsValue> {
-        let clauses = clauses.0.iter().map(|c| c.into()).collect();
+        let clauses = clauses.iter().map(|c| c.into()).collect();
         self.inner
             .update_entity_subscription(subscription.id, clauses)
             .await
@@ -849,7 +451,7 @@ impl Client {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let clauses = clauses.0.iter().map(|c| c.into()).collect();
+        let clauses = clauses.iter().map(|c| c.into()).collect();
         let mut stream = self.inner.on_event_message_updated(clauses).await.unwrap();
 
         let subscription_id = match stream.next().await {
@@ -862,10 +464,12 @@ impl Client {
             let mut stream = stream.take_until_if(tripwire);
 
             while let Some(Ok((_, entity))) = stream.next().await {
-                let json_str = parse_entities_as_json_str(vec![entity]).to_string();
-                let _ = callback.call1(
+                let models = entity.models.iter().map(|m| m.into()).collect::<Vec<Model>>();
+
+                let _ = callback.call2(
                     &JsValue::null(),
-                    &js_sys::JSON::parse(&json_str).expect("json parse failed"),
+                    &JsValue::from_str(&format!("{:#x}", entity.hashed_keys)),
+                    &serde_wasm_bindgen::to_value(&models).unwrap(),
                 );
             }
         });
@@ -879,7 +483,7 @@ impl Client {
         subscription: &Subscription,
         clauses: KeysClauses,
     ) -> Result<(), JsValue> {
-        let clauses = clauses.0.iter().map(|c| c.into()).collect();
+        let clauses = clauses.iter().map(|c| c.into()).collect();
         self.inner
             .update_event_message_subscription(subscription.id, clauses)
             .await
@@ -890,7 +494,7 @@ impl Client {
     pub async fn publish_message(
         &mut self,
         message: &str,
-        signature: JsSignature,
+        signature: Signature,
     ) -> Result<js_sys::Uint8Array, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
@@ -924,7 +528,7 @@ impl Subscription {
 /// Create the a client with the given configurations.
 #[wasm_bindgen(js_name = createClient)]
 #[allow(non_snake_case)]
-pub async fn create_client(config: ClientConfig) -> Result<Client, JsValue> {
+pub async fn create_client(config: ClientConfig) -> Result<ToriiClient, JsValue> {
     #[cfg(feature = "console-error-panic")]
     console_error_panic_hook::set_once();
 
@@ -942,5 +546,5 @@ pub async fn create_client(config: ClientConfig) -> Result<Client, JsValue> {
         relay_runner.lock().await.run().await;
     });
 
-    Ok(Client { inner: client })
+    Ok(ToriiClient { inner: client })
 }

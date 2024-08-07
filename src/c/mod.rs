@@ -482,7 +482,7 @@ pub unsafe extern "C" fn account_deploy_burner(
     );
 
     // deploy the burner
-    let exec = (*master_account).0.execute_v3(vec![starknet::accounts::Call {
+    let exec = (*master_account).0.execute_v1(vec![starknet::accounts::Call {
         to: constants::UDC_ADDRESS,
         calldata: vec![
             constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
@@ -539,7 +539,7 @@ pub unsafe extern "C" fn account_execute_raw(
     let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
     let calldata =
         calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::accounts::Call>>();
-    let call = (*account).0.execute_v3(calldata);
+    let call = (*account).0.execute_v1(calldata);
 
     match tokio::runtime::Runtime::new() {
         Ok(runtime) => match runtime.block_on(call.send()) {
