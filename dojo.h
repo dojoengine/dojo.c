@@ -667,6 +667,14 @@ struct Resultc_char bytearray_deserialize(const struct FieldElement *felts, uint
 
 struct FieldElement poseidon_hash(const struct FieldElement *felts, uintptr_t felts_len);
 
+struct ResultFieldElement get_selector_from_name(const char *name);
+
+struct FieldElement starknet_keccak(const uint8_t *bytes, uintptr_t bytes_len);
+
+struct ResultFieldElement cairo_short_string_to_felt(const char *str);
+
+struct Resultc_char parse_cairo_short_string(struct FieldElement felt);
+
 struct ResultFieldElement typed_data_encode(const char *typed_data, struct FieldElement address);
 
 struct FieldElement signing_key_new(void);

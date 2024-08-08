@@ -962,6 +962,14 @@ Result<const char*> bytearray_deserialize(const FieldElement *felts, uintptr_t f
 
 FieldElement poseidon_hash(const FieldElement *felts, uintptr_t felts_len);
 
+Result<FieldElement> get_selector_from_name(const char *name);
+
+FieldElement starknet_keccak(const uint8_t *bytes, uintptr_t bytes_len);
+
+Result<FieldElement> cairo_short_string_to_felt(const char *str);
+
+Result<const char*> parse_cairo_short_string(FieldElement felt);
+
 Result<FieldElement> typed_data_encode(const char *typed_data, FieldElement address);
 
 FieldElement signing_key_new();
