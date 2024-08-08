@@ -31,7 +31,9 @@ use crate::utils::watch_tx;
 
 mod types;
 
-use types::{BlockId, Call, Calls, ClientConfig, Entities, KeysClauses, Model, Query, Signature};
+use types::{
+    BlockId, Call, Calls, ClientConfig, Entities, Entity, KeysClauses, Model, Query, Signature,
+};
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
     serde_wasm_bindgen::Serializer::json_compatible();
@@ -420,7 +422,7 @@ impl ToriiClient {
             let mut stream = stream.take_until_if(tripwire);
 
             while let Some(Ok((_, entity))) = stream.next().await {
-                let models = entity.models.iter().map(|m| m.into()).collect::<Vec<Model>>();
+                let models: Entity = (&entity).into();
 
                 let _ = callback.call2(
                     &JsValue::null(),
@@ -468,7 +470,7 @@ impl ToriiClient {
             let mut stream = stream.take_until_if(tripwire);
 
             while let Some(Ok((_, entity))) = stream.next().await {
-                let models = entity.models.iter().map(|m| m.into()).collect::<Vec<Model>>();
+                let models: Entity = (&entity).into();
 
                 let _ = callback.call2(
                     &JsValue::null(),

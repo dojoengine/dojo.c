@@ -5,11 +5,10 @@ use crypto_bigint::U256;
 use dojo_types::schema::Struct;
 use serde::{Deserialize, Serialize};
 use serde_wasm_bindgen::to_value;
-use starknet::core::{types::FunctionCall, utils::get_selector_from_name};
+use starknet::core::types::FunctionCall;
+use starknet::core::utils::get_selector_from_name;
 use starknet_crypto::Felt;
-
-use tsify_next::declare;
-use tsify_next::Tsify;
+use tsify_next::{declare, Tsify};
 use wasm_bindgen::prelude::*;
 
 use super::utils::parse_ty_as_json_str;
