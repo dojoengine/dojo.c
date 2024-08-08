@@ -287,6 +287,12 @@ impl Account {
 
         Result::Ok(Account(account))
     }
+
+    #[wasm_bindgen(js_name = nonce)]
+    pub async unsafe fn nonce(&self) -> Result<String, JsValue> {
+        let nonce = self.0.get_nonce().await.map_err(|e| JsValue::from(e.to_string()))?;
+        Ok(format!("{:#x}", nonce))
+    }
 }
 
 #[wasm_bindgen(js_name = hashGetContractAddress)]
