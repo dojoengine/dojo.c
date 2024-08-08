@@ -81,7 +81,7 @@ impl From<&Signature> for starknet::core::crypto::Signature {
 pub type Calls = Vec<Call>;
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
+#[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
 pub struct Model(pub HashMap<String, Ty>);
 
 impl From<&Struct> for Model {
@@ -97,7 +97,7 @@ impl From<&Struct> for Model {
 }
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
+#[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
 pub struct Entity(pub HashMap<String, Model>);
 
 impl From<&torii_grpc::types::schema::Entity> for Entity {
@@ -107,7 +107,7 @@ impl From<&torii_grpc::types::schema::Entity> for Entity {
 }
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
+#[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
 pub struct Entities(pub HashMap<String, Entity>);
 
 impl From<&Vec<torii_grpc::types::schema::Entity>> for Entities {
