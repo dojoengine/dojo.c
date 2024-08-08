@@ -425,6 +425,14 @@ cdef extern from *:
 
   FieldElement poseidon_hash(const FieldElement *felts, uintptr_t felts_len);
 
+  ResultFieldElement get_selector_from_name(const char *name);
+
+  FieldElement starknet_keccak(const uint8_t *bytes, uintptr_t bytes_len);
+
+  ResultFieldElement cairo_short_string_to_felt(const char *str);
+
+  Resultc_char parse_cairo_short_string(FieldElement felt);
+
   ResultFieldElement typed_data_encode(const char *typed_data, FieldElement address);
 
   FieldElement signing_key_new();
@@ -452,6 +460,8 @@ cdef extern from *:
   FieldElement account_chain_id(Account *account);
 
   void account_set_block_id(Account *account, BlockId block_id);
+
+  ResultFieldElement account_nonce(Account *account);
 
   ResultFieldElement account_execute_raw(Account *account,
                                          const Call *calldata,
