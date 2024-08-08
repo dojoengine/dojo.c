@@ -9,6 +9,7 @@ use crypto_bigint::U256;
 use futures::StreamExt;
 use js_sys::Array;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use starknet::accounts::{
     Account as _, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount,
 };
@@ -31,6 +32,9 @@ use crate::utils::watch_tx;
 mod types;
 
 use types::{BlockId, Call, Calls, ClientConfig, Entities, KeysClauses, Model, Query, Signature};
+
+const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
+    serde_wasm_bindgen::Serializer::json_compatible();
 
 #[wasm_bindgen(js_name = typedDataEncode)]
 pub fn typed_data_encode(typed_data: &str, address: &str) -> Result<String, JsValue> {
@@ -421,7 +425,7 @@ impl ToriiClient {
                 let _ = callback.call2(
                     &JsValue::null(),
                     &JsValue::from_str(&format!("{:#x}", entity.hashed_keys)),
-                    &serde_wasm_bindgen::to_value(&models).unwrap(),
+                    &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                 );
             }
         });
@@ -469,7 +473,7 @@ impl ToriiClient {
                 let _ = callback.call2(
                     &JsValue::null(),
                     &JsValue::from_str(&format!("{:#x}", entity.hashed_keys)),
-                    &serde_wasm_bindgen::to_value(&models).unwrap(),
+                    &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                 );
             }
         });
