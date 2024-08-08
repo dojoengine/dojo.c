@@ -13,7 +13,7 @@ use starknet::accounts::{
 };
 use starknet::core::crypto::Signature;
 use starknet::core::types::{Felt, FunctionCall};
-use starknet::core::utils::{get_contract_address, get_selector_from_name};
+use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
@@ -658,7 +658,7 @@ impl Account {
                 Felt::ONE,                            // constructor calldata length (1)
                 verifying_key.scalar(),               // constructor calldata
             ],
-            selector: get_selector_from_name("deployContract").unwrap(),
+            selector: starknet::core::utils::get_selector_from_name("deployContract").unwrap(),
         }]);
 
         let result = exec.send().await;
@@ -744,6 +744,39 @@ pub fn poseidon_hash(inputs: Vec<String>) -> Result<String, JsValue> {
         .map_err(|e| JsValue::from(format!("failed to parse inputs: {e}")))?;
 
     Ok(format!("{:#x}", poseidon_hash_many(&inputs)))
+}
+
+#[wasm_bindgen(js_name = getSelectorFromName)]
+pub fn get_selector_from_name(name: &str) -> Result<String, JsValue> {
+    let selector = starknet::core::utils::get_selector_from_name(name)
+        .map_err(|e| JsValue::from(e.to_string()))?;
+    Ok(format!("{:#x}", selector))
+}
+
+#[wasm_bindgen(js_name = starknetKeccak)]
+pub fn starknet_keccak(inputs: js_sys::Uint8Array) -> Result<String, JsValue> {
+    let inputs = inputs.to_vec();
+
+    let hash = starknet::core::utils::starknet_keccak(&inputs);
+    Ok(format!("{:#x}", hash))
+}
+
+#[wasm_bindgen(js_name = cairoShortStringToFelt)]
+pub fn cairo_short_string_to_felt(str: &str) -> Result<String, JsValue> {
+    let felt = starknet::core::utils::cairo_short_string_to_felt(str)
+        .map_err(|e| JsValue::from(e.to_string()))?;
+
+    Ok(format!("{:#x}", felt))
+}
+
+#[wasm_bindgen(js_name = parseCairoShortString)]
+pub fn parse_cairo_short_string(str: &str) -> Result<String, JsValue> {
+    let felt =
+        Felt::from_str(str).map_err(|e| JsValue::from(format!("failed to parse felt: {e}")))?;
+    let string = starknet::core::utils::parse_cairo_short_string(&felt)
+        .map_err(|e| JsValue::from(format!("failed to parse cairo short string: {e}")))?;
+
+    Ok(string)
 }
 
 #[wasm_bindgen]
