@@ -106,7 +106,7 @@ fn main() {
         .with_crate(crate_dir.clone())
         .generate()
         .expect("Unable to generate bindings")
-        .write_to_file("dojo.hpp");
+        .write_to_file("dojo.pyx");
 
     // NOTE: disable for now. use c2cs to generate csharp bindings
     // generics not supported

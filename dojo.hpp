@@ -1,78 +1,110 @@
-from libc.stdint cimport int8_t, int16_t, int32_t, int64_t, intptr_t
-from libc.stdint cimport uint8_t, uint16_t, uint32_t, uint64_t, uintptr_t
-cdef extern from *:
-  ctypedef bint bool
-  ctypedef struct va_list
+#include <cstdarg>
+#include <cstdint>
+#include <cstdlib>
+#include <ostream>
+#include <new>
 
-cdef extern from *:
+namespace dojo_bindings {
 
-  cdef enum BlockTag:
-    Latest,
-    Pending,
+enum class BlockTag {
+  Latest,
+  Pending,
+};
 
-  cdef enum ComparisonOperator:
-    Eq,
-    Neq,
-    Gt,
-    Gte,
-    Lt,
-    Lte,
+enum class ComparisonOperator {
+  Eq,
+  Neq,
+  Gt,
+  Gte,
+  Lt,
+  Lte,
+};
 
-  cdef enum LogicalOperator:
-    And,
-    Or,
+enum class LogicalOperator {
+  And,
+  Or,
+};
 
-  cdef enum PatternMatching:
-    FixedLen # = 0,
-    VariableLen # = 1,
+enum class PatternMatching {
+  FixedLen = 0,
+  VariableLen = 1,
+};
 
-  cdef struct Account:
-    pass
+struct Account;
 
-  cdef struct Provider:
-    pass
+struct Provider;
 
-  cdef struct Subscription:
-    pass
+struct Subscription;
 
-  cdef struct ToriiClient:
-    pass
+struct ToriiClient;
 
-  cdef struct Error:
-    char *message;
+struct Error {
+  char *message;
+};
 
-  cdef enum ResultToriiClient_Tag:
-    OkToriiClient,
-    ErrToriiClient,
+template<typename T>
+struct Result {
+  enum class Tag {
+    Ok,
+    Err,
+  };
 
-  cdef struct ResultToriiClient:
-    ResultToriiClient_Tag tag;
-    ToriiClient *ok;
-    Error err;
+  struct Ok_Body {
+    T _0;
+  };
 
-  cdef struct FieldElement:
-    uint8_t data[32];
+  struct Err_Body {
+    Error _0;
+  };
 
-  cdef struct CArrayu8:
-    uint8_t *data;
-    uintptr_t data_len;
+  Tag tag;
+  union {
+    Ok_Body ok;
+    Err_Body err;
+  };
 
-  cdef enum ResultCArrayu8_Tag:
-    OkCArrayu8,
-    ErrCArrayu8,
+  static Result Ok(const T &_0) {
+    Result result;
+    ::new (&result.ok._0) (T)(_0);
+    result.tag = Tag::Ok;
+    return result;
+  }
 
-  cdef struct ResultCArrayu8:
-    ResultCArrayu8_Tag tag;
-    CArrayu8 ok;
-    Error err;
+  bool IsOk() const {
+    return tag == Tag::Ok;
+  }
 
-  cdef struct Signature:
-    # The `r` value of a signature
-    FieldElement r;
-    # The `s` value of a signature
-    FieldElement s;
+  static Result Err(const Error &_0) {
+    Result result;
+    ::new (&result.err._0) (Error)(_0);
+    result.tag = Tag::Err;
+    return result;
+  }
 
-  cdef enum Primitive_Tag:
+  bool IsErr() const {
+    return tag == Tag::Err;
+  }
+};
+
+struct FieldElement {
+  uint8_t data[32];
+};
+
+template<typename T>
+struct CArray {
+  T *data;
+  uintptr_t data_len;
+};
+
+struct Signature {
+  /// The `r` value of a signature
+  FieldElement r;
+  /// The `s` value of a signature
+  FieldElement s;
+};
+
+struct Primitive {
+  enum class Tag {
     I8,
     I16,
     I32,
@@ -83,406 +115,915 @@ cdef extern from *:
     U32,
     U64,
     U128,
+#if !defined(TARGET_POINTER_WIDTH_32)
     U256,
+#endif
+#if defined(TARGET_POINTER_WIDTH_32)
     U256,
+#endif
     USize,
     Bool,
     Felt252,
     ClassHash,
     ContractAddress,
+  };
 
-  cdef struct Primitive:
-    Primitive_Tag tag;
-    int8_t i8;
-    int16_t i16;
-    int32_t i32;
-    int64_t i64;
-    uint8_t i128[16];
-    uint8_t u8;
-    uint16_t u16;
-    uint32_t u32;
-    uint64_t u64;
-    uint8_t u128[16];
-    uint64_t u256[4];
-    uint32_t u256[8];
-    uint32_t u_size;
-    bool bool_;
-    FieldElement felt252;
-    FieldElement class_hash;
-    FieldElement contract_address;
+  struct I8_Body {
+    int8_t _0;
+  };
 
-  cdef struct EnumOption:
-    const char *name;
-    Ty *ty;
+  struct I16_Body {
+    int16_t _0;
+  };
 
-  cdef struct CArrayEnumOption:
-    EnumOption *data;
-    uintptr_t data_len;
+  struct I32_Body {
+    int32_t _0;
+  };
 
-  cdef struct Enum:
-    const char *name;
-    uint8_t option;
-    CArrayEnumOption options;
+  struct I64_Body {
+    int64_t _0;
+  };
 
-  cdef struct CArrayTy:
-    Ty *data;
-    uintptr_t data_len;
+  struct I128_Body {
+    uint8_t _0[16];
+  };
 
-  cdef enum Ty_Tag:
+  struct U8_Body {
+    uint8_t _0;
+  };
+
+  struct U16_Body {
+    uint16_t _0;
+  };
+
+  struct U32_Body {
+    uint32_t _0;
+  };
+
+  struct U64_Body {
+    uint64_t _0;
+  };
+
+  struct U128_Body {
+    uint8_t _0[16];
+  };
+
+#if !defined(TARGET_POINTER_WIDTH_32)
+  struct U256_Body {
+    uint64_t _0[4];
+  };
+#endif
+
+#if defined(TARGET_POINTER_WIDTH_32)
+  struct U256_Body {
+    uint32_t _0[8];
+  };
+#endif
+
+  struct USize_Body {
+    uint32_t _0;
+  };
+
+  struct Bool_Body {
+    bool _0;
+  };
+
+  struct Felt252_Body {
+    FieldElement _0;
+  };
+
+  struct ClassHash_Body {
+    FieldElement _0;
+  };
+
+  struct ContractAddress_Body {
+    FieldElement _0;
+  };
+
+  Tag tag;
+  union {
+    I8_Body i8;
+    I16_Body i16;
+    I32_Body i32;
+    I64_Body i64;
+    I128_Body i128;
+    U8_Body u8;
+    U16_Body u16;
+    U32_Body u32;
+    U64_Body u64;
+    U128_Body u128;
+#if !defined(TARGET_POINTER_WIDTH_32)
+    U256_Body u256;
+#endif
+#if defined(TARGET_POINTER_WIDTH_32)
+    U256_Body u256;
+#endif
+    USize_Body u_size;
+    Bool_Body bool_;
+    Felt252_Body felt252;
+    ClassHash_Body class_hash;
+    ContractAddress_Body contract_address;
+  };
+
+  static Primitive I8(const int8_t &_0) {
+    Primitive result;
+    ::new (&result.i8._0) (int8_t)(_0);
+    result.tag = Tag::I8;
+    return result;
+  }
+
+  bool IsI8() const {
+    return tag == Tag::I8;
+  }
+
+  static Primitive I16(const int16_t &_0) {
+    Primitive result;
+    ::new (&result.i16._0) (int16_t)(_0);
+    result.tag = Tag::I16;
+    return result;
+  }
+
+  bool IsI16() const {
+    return tag == Tag::I16;
+  }
+
+  static Primitive I32(const int32_t &_0) {
+    Primitive result;
+    ::new (&result.i32._0) (int32_t)(_0);
+    result.tag = Tag::I32;
+    return result;
+  }
+
+  bool IsI32() const {
+    return tag == Tag::I32;
+  }
+
+  static Primitive I64(const int64_t &_0) {
+    Primitive result;
+    ::new (&result.i64._0) (int64_t)(_0);
+    result.tag = Tag::I64;
+    return result;
+  }
+
+  bool IsI64() const {
+    return tag == Tag::I64;
+  }
+
+  static Primitive I128(const uint8_t (&_0)[16]) {
+    Primitive result;
+    for (int i = 0; i < 16; i++) {
+      ::new (&result.i128._0[i]) (uint8_t)(_0[i]);
+    }
+    result.tag = Tag::I128;
+    return result;
+  }
+
+  bool IsI128() const {
+    return tag == Tag::I128;
+  }
+
+  static Primitive U8(const uint8_t &_0) {
+    Primitive result;
+    ::new (&result.u8._0) (uint8_t)(_0);
+    result.tag = Tag::U8;
+    return result;
+  }
+
+  bool IsU8() const {
+    return tag == Tag::U8;
+  }
+
+  static Primitive U16(const uint16_t &_0) {
+    Primitive result;
+    ::new (&result.u16._0) (uint16_t)(_0);
+    result.tag = Tag::U16;
+    return result;
+  }
+
+  bool IsU16() const {
+    return tag == Tag::U16;
+  }
+
+  static Primitive U32(const uint32_t &_0) {
+    Primitive result;
+    ::new (&result.u32._0) (uint32_t)(_0);
+    result.tag = Tag::U32;
+    return result;
+  }
+
+  bool IsU32() const {
+    return tag == Tag::U32;
+  }
+
+  static Primitive U64(const uint64_t &_0) {
+    Primitive result;
+    ::new (&result.u64._0) (uint64_t)(_0);
+    result.tag = Tag::U64;
+    return result;
+  }
+
+  bool IsU64() const {
+    return tag == Tag::U64;
+  }
+
+  static Primitive U128(const uint8_t (&_0)[16]) {
+    Primitive result;
+    for (int i = 0; i < 16; i++) {
+      ::new (&result.u128._0[i]) (uint8_t)(_0[i]);
+    }
+    result.tag = Tag::U128;
+    return result;
+  }
+
+  bool IsU128() const {
+    return tag == Tag::U128;
+  }
+
+#if !defined(TARGET_POINTER_WIDTH_32)
+  static Primitive U256(const uint64_t (&_0)[4]) {
+    Primitive result;
+    for (int i = 0; i < 4; i++) {
+      ::new (&result.u256._0[i]) (uint64_t)(_0[i]);
+    }
+    result.tag = Tag::U256;
+    return result;
+  }
+
+  bool IsU256() const {
+    return tag == Tag::U256;
+  }
+#endif
+
+#if defined(TARGET_POINTER_WIDTH_32)
+  static Primitive U256(const uint32_t (&_0)[8]) {
+    Primitive result;
+    for (int i = 0; i < 8; i++) {
+      ::new (&result.u256._0[i]) (uint32_t)(_0[i]);
+    }
+    result.tag = Tag::U256;
+    return result;
+  }
+
+  bool IsU256() const {
+    return tag == Tag::U256;
+  }
+#endif
+
+  static Primitive USize(const uint32_t &_0) {
+    Primitive result;
+    ::new (&result.u_size._0) (uint32_t)(_0);
+    result.tag = Tag::USize;
+    return result;
+  }
+
+  bool IsUSize() const {
+    return tag == Tag::USize;
+  }
+
+  static Primitive Bool(const bool &_0) {
+    Primitive result;
+    ::new (&result.bool_._0) (bool)(_0);
+    result.tag = Tag::Bool;
+    return result;
+  }
+
+  bool IsBool() const {
+    return tag == Tag::Bool;
+  }
+
+  static Primitive Felt252(const FieldElement &_0) {
+    Primitive result;
+    ::new (&result.felt252._0) (FieldElement)(_0);
+    result.tag = Tag::Felt252;
+    return result;
+  }
+
+  bool IsFelt252() const {
+    return tag == Tag::Felt252;
+  }
+
+  static Primitive ClassHash(const FieldElement &_0) {
+    Primitive result;
+    ::new (&result.class_hash._0) (FieldElement)(_0);
+    result.tag = Tag::ClassHash;
+    return result;
+  }
+
+  bool IsClassHash() const {
+    return tag == Tag::ClassHash;
+  }
+
+  static Primitive ContractAddress(const FieldElement &_0) {
+    Primitive result;
+    ::new (&result.contract_address._0) (FieldElement)(_0);
+    result.tag = Tag::ContractAddress;
+    return result;
+  }
+
+  bool IsContractAddress() const {
+    return tag == Tag::ContractAddress;
+  }
+};
+
+struct EnumOption {
+  const char *name;
+  Ty *ty;
+};
+
+struct Enum {
+  const char *name;
+  uint8_t option;
+  CArray<EnumOption> options;
+};
+
+struct Ty {
+  enum class Tag {
     Primitive_,
     Struct_,
     Enum_,
     Tuple_,
     Array_,
     ByteArray,
+  };
 
-  cdef struct Ty:
-    Ty_Tag tag;
-    Primitive primitive;
-    Struct struct_;
-    Enum enum_;
-    CArrayTy tuple;
-    CArrayTy array;
-    const char *byte_array;
+  struct Primitive__Body {
+    Primitive _0;
+  };
 
-  cdef struct Member:
-    const char *name;
-    Ty *ty;
-    bool key;
+  struct Struct__Body {
+    Struct _0;
+  };
 
-  cdef struct CArrayMember:
-    Member *data;
-    uintptr_t data_len;
+  struct Enum__Body {
+    Enum _0;
+  };
 
-  cdef struct Struct:
-    const char *name;
-    CArrayMember children;
+  struct Tuple__Body {
+    CArray<Ty> _0;
+  };
 
-  cdef struct CArrayStruct:
-    Struct *data;
-    uintptr_t data_len;
+  struct Array__Body {
+    CArray<Ty> _0;
+  };
 
-  cdef struct Entity:
-    FieldElement hashed_keys;
-    CArrayStruct models;
+  struct ByteArray_Body {
+    const char *_0;
+  };
 
-  cdef struct CArrayEntity:
-    Entity *data;
-    uintptr_t data_len;
+  Tag tag;
+  union {
+    Primitive__Body primitive;
+    Struct__Body struct_;
+    Enum__Body enum_;
+    Tuple__Body tuple;
+    Array__Body array;
+    ByteArray_Body byte_array;
+  };
 
-  cdef enum ResultCArrayEntity_Tag:
-    OkCArrayEntity,
-    ErrCArrayEntity,
+  static Ty Primitive_(const Primitive &_0) {
+    Ty result;
+    ::new (&result.primitive._0) (Primitive)(_0);
+    result.tag = Tag::Primitive_;
+    return result;
+  }
 
-  cdef struct ResultCArrayEntity:
-    ResultCArrayEntity_Tag tag;
-    CArrayEntity ok;
-    Error err;
+  bool IsPrimitive_() const {
+    return tag == Tag::Primitive_;
+  }
 
-  cdef enum COptionFieldElement_Tag:
-    SomeFieldElement,
-    NoneFieldElement,
+  static Ty Struct_(const Struct &_0) {
+    Ty result;
+    ::new (&result.struct_._0) (Struct)(_0);
+    result.tag = Tag::Struct_;
+    return result;
+  }
 
-  cdef struct COptionFieldElement:
-    COptionFieldElement_Tag tag;
-    FieldElement some;
+  bool IsStruct_() const {
+    return tag == Tag::Struct_;
+  }
 
-  cdef struct CArrayCOptionFieldElement:
-    COptionFieldElement *data;
-    uintptr_t data_len;
+  static Ty Enum_(const Enum &_0) {
+    Ty result;
+    ::new (&result.enum_._0) (Enum)(_0);
+    result.tag = Tag::Enum_;
+    return result;
+  }
 
-  cdef struct CArrayc_char:
-    const char **data;
-    uintptr_t data_len;
+  bool IsEnum_() const {
+    return tag == Tag::Enum_;
+  }
 
-  cdef struct KeysClause:
-    CArrayCOptionFieldElement keys;
-    PatternMatching pattern_matching;
-    CArrayc_char models;
+  static Ty Tuple_(const CArray<Ty> &_0) {
+    Ty result;
+    ::new (&result.tuple._0) (CArray<Ty>)(_0);
+    result.tag = Tag::Tuple_;
+    return result;
+  }
 
-  cdef enum ValueType_Tag:
+  bool IsTuple_() const {
+    return tag == Tag::Tuple_;
+  }
+
+  static Ty Array_(const CArray<Ty> &_0) {
+    Ty result;
+    ::new (&result.array._0) (CArray<Ty>)(_0);
+    result.tag = Tag::Array_;
+    return result;
+  }
+
+  bool IsArray_() const {
+    return tag == Tag::Array_;
+  }
+
+  static Ty ByteArray(const char *const &_0) {
+    Ty result;
+    ::new (&result.byte_array._0) (const char*)(_0);
+    result.tag = Tag::ByteArray;
+    return result;
+  }
+
+  bool IsByteArray() const {
+    return tag == Tag::ByteArray;
+  }
+};
+
+struct Member {
+  const char *name;
+  Ty *ty;
+  bool key;
+};
+
+struct Struct {
+  const char *name;
+  CArray<Member> children;
+};
+
+struct Entity {
+  FieldElement hashed_keys;
+  CArray<Struct> models;
+};
+
+template<typename T>
+struct COption {
+  enum class Tag {
+    Some,
+    None,
+  };
+
+  struct Some_Body {
+    T _0;
+  };
+
+  Tag tag;
+  union {
+    Some_Body some;
+  };
+
+  static COption Some(const T &_0) {
+    COption result;
+    ::new (&result.some._0) (T)(_0);
+    result.tag = Tag::Some;
+    return result;
+  }
+
+  bool IsSome() const {
+    return tag == Tag::Some;
+  }
+
+  static COption None() {
+    COption result;
+    result.tag = Tag::None;
+    return result;
+  }
+
+  bool IsNone() const {
+    return tag == Tag::None;
+  }
+};
+
+struct KeysClause {
+  CArray<COption<FieldElement>> keys;
+  PatternMatching pattern_matching;
+  CArray<const char*> models;
+};
+
+struct ValueType {
+  enum class Tag {
     String,
     Int,
     UInt,
     VBool,
     Bytes,
+  };
 
-  cdef struct ValueType:
-    ValueType_Tag tag;
-    const char *string;
-    int64_t int_;
-    uint64_t u_int;
-    bool v_bool;
-    CArrayu8 bytes;
+  struct String_Body {
+    const char *_0;
+  };
 
-  cdef struct Value:
-    Primitive primitive_type;
-    ValueType value_type;
+  struct Int_Body {
+    int64_t _0;
+  };
 
-  cdef struct MemberClause:
-    const char *model;
-    const char *member;
-    ComparisonOperator operator_;
-    Value value;
+  struct UInt_Body {
+    uint64_t _0;
+  };
 
-  cdef struct CArrayClause:
-    Clause *data;
-    uintptr_t data_len;
+  struct VBool_Body {
+    bool _0;
+  };
 
-  cdef struct CompositeClause:
-    LogicalOperator operator_;
-    CArrayClause clauses;
+  struct Bytes_Body {
+    CArray<uint8_t> _0;
+  };
 
-  cdef enum Clause_Tag:
+  Tag tag;
+  union {
+    String_Body string;
+    Int_Body int_;
+    UInt_Body u_int;
+    VBool_Body v_bool;
+    Bytes_Body bytes;
+  };
+
+  static ValueType String(const char *const &_0) {
+    ValueType result;
+    ::new (&result.string._0) (const char*)(_0);
+    result.tag = Tag::String;
+    return result;
+  }
+
+  bool IsString() const {
+    return tag == Tag::String;
+  }
+
+  static ValueType Int(const int64_t &_0) {
+    ValueType result;
+    ::new (&result.int_._0) (int64_t)(_0);
+    result.tag = Tag::Int;
+    return result;
+  }
+
+  bool IsInt() const {
+    return tag == Tag::Int;
+  }
+
+  static ValueType UInt(const uint64_t &_0) {
+    ValueType result;
+    ::new (&result.u_int._0) (uint64_t)(_0);
+    result.tag = Tag::UInt;
+    return result;
+  }
+
+  bool IsUInt() const {
+    return tag == Tag::UInt;
+  }
+
+  static ValueType VBool(const bool &_0) {
+    ValueType result;
+    ::new (&result.v_bool._0) (bool)(_0);
+    result.tag = Tag::VBool;
+    return result;
+  }
+
+  bool IsVBool() const {
+    return tag == Tag::VBool;
+  }
+
+  static ValueType Bytes(const CArray<uint8_t> &_0) {
+    ValueType result;
+    ::new (&result.bytes._0) (CArray<uint8_t>)(_0);
+    result.tag = Tag::Bytes;
+    return result;
+  }
+
+  bool IsBytes() const {
+    return tag == Tag::Bytes;
+  }
+};
+
+struct Value {
+  Primitive primitive_type;
+  ValueType value_type;
+};
+
+struct MemberClause {
+  const char *model;
+  const char *member;
+  ComparisonOperator operator_;
+  Value value;
+};
+
+struct CompositeClause {
+  LogicalOperator operator_;
+  CArray<Clause> clauses;
+};
+
+struct Clause {
+  enum class Tag {
     Keys,
     CMember,
     Composite,
+  };
 
-  cdef struct Clause:
-    Clause_Tag tag;
-    KeysClause keys;
-    MemberClause c_member;
-    CompositeClause composite;
+  struct Keys_Body {
+    KeysClause _0;
+  };
 
-  cdef enum COptionClause_Tag:
-    SomeClause,
-    NoneClause,
+  struct CMember_Body {
+    MemberClause _0;
+  };
 
-  cdef struct COptionClause:
-    COptionClause_Tag tag;
-    Clause some;
+  struct Composite_Body {
+    CompositeClause _0;
+  };
 
-  cdef struct Query:
-    uint32_t limit;
-    uint32_t offset;
-    COptionClause clause;
+  Tag tag;
+  union {
+    Keys_Body keys;
+    CMember_Body c_member;
+    Composite_Body composite;
+  };
 
-  cdef struct CArrayFieldElement:
-    FieldElement *data;
-    uintptr_t data_len;
+  static Clause Keys(const KeysClause &_0) {
+    Clause result;
+    ::new (&result.keys._0) (KeysClause)(_0);
+    result.tag = Tag::Keys;
+    return result;
+  }
 
-  cdef struct ModelMetadata:
-    Ty schema;
-    const char *namespace_;
-    const char *name;
-    uint32_t packed_size;
-    uint32_t unpacked_size;
-    FieldElement class_hash;
-    FieldElement contract_address;
-    CArrayFieldElement layout;
+  bool IsKeys() const {
+    return tag == Tag::Keys;
+  }
 
-  cdef struct CHashItemFieldElementModelMetadata:
-    FieldElement key;
-    ModelMetadata value;
+  static Clause CMember(const MemberClause &_0) {
+    Clause result;
+    ::new (&result.c_member._0) (MemberClause)(_0);
+    result.tag = Tag::CMember;
+    return result;
+  }
 
-  cdef struct CArrayCHashItemFieldElementModelMetadata:
-    CHashItemFieldElementModelMetadata *data;
-    uintptr_t data_len;
+  bool IsCMember() const {
+    return tag == Tag::CMember;
+  }
 
-  cdef struct WorldMetadata:
-    FieldElement world_address;
-    FieldElement world_class_hash;
-    CArrayCHashItemFieldElementModelMetadata models;
+  static Clause Composite(const CompositeClause &_0) {
+    Clause result;
+    ::new (&result.composite._0) (CompositeClause)(_0);
+    result.tag = Tag::Composite;
+    return result;
+  }
 
-  cdef enum ResultSubscription_Tag:
-    OkSubscription,
-    ErrSubscription,
+  bool IsComposite() const {
+    return tag == Tag::Composite;
+  }
+};
 
-  cdef struct ResultSubscription:
-    ResultSubscription_Tag tag;
-    Subscription *ok;
-    Error err;
+struct Query {
+  uint32_t limit;
+  uint32_t offset;
+  COption<Clause> clause;
+};
 
-  cdef enum EntityKeysClause_Tag:
+struct ModelMetadata {
+  Ty schema;
+  const char *namespace_;
+  const char *name;
+  uint32_t packed_size;
+  uint32_t unpacked_size;
+  FieldElement class_hash;
+  FieldElement contract_address;
+  CArray<FieldElement> layout;
+};
+
+template<typename K, typename V>
+struct CHashItem {
+  K key;
+  V value;
+};
+
+struct WorldMetadata {
+  FieldElement world_address;
+  FieldElement world_class_hash;
+  CArray<CHashItem<FieldElement, ModelMetadata>> models;
+};
+
+struct EntityKeysClause {
+  enum class Tag {
     HashedKeys,
     EntityKeys,
+  };
 
-  cdef struct EntityKeysClause:
-    EntityKeysClause_Tag tag;
-    CArrayFieldElement hashed_keys;
-    KeysClause entity_keys;
+  struct HashedKeys_Body {
+    CArray<FieldElement> _0;
+  };
 
-  cdef enum Resultbool_Tag:
-    Okbool,
-    Errbool,
+  struct EntityKeys_Body {
+    KeysClause _0;
+  };
 
-  cdef struct Resultbool:
-    Resultbool_Tag tag;
-    bool ok;
-    Error err;
+  Tag tag;
+  union {
+    HashedKeys_Body hashed_keys;
+    EntityKeys_Body entity_keys;
+  };
 
-  cdef enum ResultCArrayFieldElement_Tag:
-    OkCArrayFieldElement,
-    ErrCArrayFieldElement,
+  static EntityKeysClause HashedKeys(const CArray<FieldElement> &_0) {
+    EntityKeysClause result;
+    ::new (&result.hashed_keys._0) (CArray<FieldElement>)(_0);
+    result.tag = Tag::HashedKeys;
+    return result;
+  }
 
-  cdef struct ResultCArrayFieldElement:
-    ResultCArrayFieldElement_Tag tag;
-    CArrayFieldElement ok;
-    Error err;
+  bool IsHashedKeys() const {
+    return tag == Tag::HashedKeys;
+  }
 
-  cdef enum Resultc_char_Tag:
-    Okc_char,
-    Errc_char,
+  static EntityKeysClause EntityKeys(const KeysClause &_0) {
+    EntityKeysClause result;
+    ::new (&result.entity_keys._0) (KeysClause)(_0);
+    result.tag = Tag::EntityKeys;
+    return result;
+  }
 
-  cdef struct Resultc_char:
-    Resultc_char_Tag tag;
-    const char *ok;
-    Error err;
+  bool IsEntityKeys() const {
+    return tag == Tag::EntityKeys;
+  }
+};
 
-  cdef enum ResultFieldElement_Tag:
-    OkFieldElement,
-    ErrFieldElement,
+struct Call {
+  FieldElement to;
+  const char *selector;
+  CArray<FieldElement> calldata;
+};
 
-  cdef struct ResultFieldElement:
-    ResultFieldElement_Tag tag;
-    FieldElement ok;
-    Error err;
-
-  cdef enum ResultSignature_Tag:
-    OkSignature,
-    ErrSignature,
-
-  cdef struct ResultSignature:
-    ResultSignature_Tag tag;
-    Signature ok;
-    Error err;
-
-  cdef enum ResultProvider_Tag:
-    OkProvider,
-    ErrProvider,
-
-  cdef struct ResultProvider:
-    ResultProvider_Tag tag;
-    Provider *ok;
-    Error err;
-
-  cdef enum ResultAccount_Tag:
-    OkAccount,
-    ErrAccount,
-
-  cdef struct ResultAccount:
-    ResultAccount_Tag tag;
-    Account *ok;
-    Error err;
-
-  cdef struct Call:
-    FieldElement to;
-    const char *selector;
-    CArrayFieldElement calldata;
-
-  # Block hash, number or tag
-  cdef enum BlockId_Tag:
+/// Block hash, number or tag
+struct BlockId {
+  enum class Tag {
     Hash,
     Number,
     BlockTag_,
+  };
 
-  cdef struct BlockId:
-    BlockId_Tag tag;
-    FieldElement hash;
-    uint64_t number;
-    BlockTag block_tag;
+  struct Hash_Body {
+    FieldElement _0;
+  };
 
-  ResultToriiClient client_new(const char *torii_url,
-                               const char *rpc_url,
-                               const char *libp2p_relay_url,
-                               FieldElement world);
+  struct Number_Body {
+    uint64_t _0;
+  };
 
-  void client_set_logger(ToriiClient *client, void (*logger)(const char*));
+  struct BlockTag__Body {
+    BlockTag _0;
+  };
 
-  ResultCArrayu8 client_publish_message(ToriiClient *client,
-                                        const char *message,
-                                        Signature signature);
+  Tag tag;
+  union {
+    Hash_Body hash;
+    Number_Body number;
+    BlockTag__Body block_tag;
+  };
 
-  ResultCArrayEntity client_entities(ToriiClient *client, const Query *query);
+  static BlockId Hash(const FieldElement &_0) {
+    BlockId result;
+    ::new (&result.hash._0) (FieldElement)(_0);
+    result.tag = Tag::Hash;
+    return result;
+  }
 
-  ResultCArrayEntity client_event_messages(ToriiClient *client, const Query *query);
+  bool IsHash() const {
+    return tag == Tag::Hash;
+  }
 
-  WorldMetadata client_metadata(ToriiClient *client);
+  static BlockId Number(const uint64_t &_0) {
+    BlockId result;
+    ::new (&result.number._0) (uint64_t)(_0);
+    result.tag = Tag::Number;
+    return result;
+  }
 
-  ResultSubscription client_on_entity_state_update(ToriiClient *client,
-                                                   const EntityKeysClause *clauses,
-                                                   uintptr_t clauses_len,
-                                                   void (*callback)(FieldElement, CArrayStruct));
+  bool IsNumber() const {
+    return tag == Tag::Number;
+  }
 
-  Resultbool client_update_entity_subscription(ToriiClient *client,
+  static BlockId BlockTag_(const BlockTag &_0) {
+    BlockId result;
+    ::new (&result.block_tag._0) (BlockTag)(_0);
+    result.tag = Tag::BlockTag_;
+    return result;
+  }
+
+  bool IsBlockTag_() const {
+    return tag == Tag::BlockTag_;
+  }
+};
+
+extern "C" {
+
+Result<ToriiClient*> client_new(const char *torii_url,
+                                const char *rpc_url,
+                                const char *libp2p_relay_url,
+                                FieldElement world);
+
+void client_set_logger(ToriiClient *client, void (*logger)(const char*));
+
+Result<CArray<uint8_t>> client_publish_message(ToriiClient *client,
+                                               const char *message,
+                                               Signature signature);
+
+Result<CArray<Entity>> client_entities(ToriiClient *client, const Query *query);
+
+Result<CArray<Entity>> client_event_messages(ToriiClient *client, const Query *query);
+
+WorldMetadata client_metadata(ToriiClient *client);
+
+Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
+                                                    const EntityKeysClause *clauses,
+                                                    uintptr_t clauses_len,
+                                                    void (*callback)(FieldElement, CArray<Struct>));
+
+Result<bool> client_update_entity_subscription(ToriiClient *client,
                                                Subscription *subscription,
                                                const EntityKeysClause *clauses,
                                                uintptr_t clauses_len);
 
-  ResultSubscription client_on_event_message_update(ToriiClient *client,
-                                                    const EntityKeysClause *clauses,
-                                                    uintptr_t clauses_len,
-                                                    void (*callback)(FieldElement, CArrayStruct));
+Result<Subscription*> client_on_event_message_update(ToriiClient *client,
+                                                     const EntityKeysClause *clauses,
+                                                     uintptr_t clauses_len,
+                                                     void (*callback)(FieldElement, CArray<Struct>));
 
-  Resultbool client_update_event_message_subscription(ToriiClient *client,
+Result<bool> client_update_event_message_subscription(ToriiClient *client,
                                                       Subscription *subscription,
                                                       const EntityKeysClause *clauses,
                                                       uintptr_t clauses_len);
 
-  ResultCArrayFieldElement bytearray_serialize(const char *str);
+Result<CArray<FieldElement>> bytearray_serialize(const char *str);
 
-  Resultc_char bytearray_deserialize(const FieldElement *felts, uintptr_t felts_len);
+Result<const char*> bytearray_deserialize(const FieldElement *felts, uintptr_t felts_len);
 
-  FieldElement poseidon_hash(const FieldElement *felts, uintptr_t felts_len);
+FieldElement poseidon_hash(const FieldElement *felts, uintptr_t felts_len);
 
-  ResultFieldElement typed_data_encode(const char *typed_data, FieldElement address);
+Result<FieldElement> typed_data_encode(const char *typed_data, FieldElement address);
 
-  FieldElement signing_key_new();
+FieldElement signing_key_new();
 
-  ResultSignature signing_key_sign(FieldElement private_key, FieldElement hash);
+Result<Signature> signing_key_sign(FieldElement private_key, FieldElement hash);
 
-  FieldElement verifying_key_new(FieldElement signing_key);
+FieldElement verifying_key_new(FieldElement signing_key);
 
-  Resultbool verifying_key_verify(FieldElement verifying_key,
+Result<bool> verifying_key_verify(FieldElement verifying_key,
                                   FieldElement hash,
                                   Signature signature);
 
-  ResultProvider provider_new(const char *rpc_url);
+Result<Provider*> provider_new(const char *rpc_url);
 
-  ResultAccount account_new(Provider *rpc, FieldElement private_key, const char *address);
+Result<Account*> account_new(Provider *rpc, FieldElement private_key, const char *address);
 
-  ResultCArrayFieldElement starknet_call(Provider *provider, Call call, BlockId block_id);
+Result<CArray<FieldElement>> starknet_call(Provider *provider, Call call, BlockId block_id);
 
-  ResultAccount account_deploy_burner(Provider *provider,
-                                      Account *master_account,
-                                      FieldElement signing_key);
+Result<Account*> account_deploy_burner(Provider *provider,
+                                       Account *master_account,
+                                       FieldElement signing_key);
 
-  FieldElement account_address(Account *account);
+FieldElement account_address(Account *account);
 
-  FieldElement account_chain_id(Account *account);
+FieldElement account_chain_id(Account *account);
 
-  void account_set_block_id(Account *account, BlockId block_id);
+void account_set_block_id(Account *account, BlockId block_id);
 
-  ResultFieldElement account_execute_raw(Account *account,
+Result<FieldElement> account_execute_raw(Account *account,
                                          const Call *calldata,
                                          uintptr_t calldata_len);
 
-  Resultbool wait_for_transaction(Provider *rpc, FieldElement txn_hash);
+Result<bool> wait_for_transaction(Provider *rpc, FieldElement txn_hash);
 
-  FieldElement hash_get_contract_address(FieldElement class_hash,
-                                         FieldElement salt,
-                                         const FieldElement *constructor_calldata,
-                                         uintptr_t constructor_calldata_len,
-                                         FieldElement deployer_address);
+FieldElement hash_get_contract_address(FieldElement class_hash,
+                                       FieldElement salt,
+                                       const FieldElement *constructor_calldata,
+                                       uintptr_t constructor_calldata_len,
+                                       FieldElement deployer_address);
 
-  void subscription_cancel(Subscription *subscription);
+void subscription_cancel(Subscription *subscription);
 
-  void client_free(ToriiClient *t);
+void client_free(ToriiClient *t);
 
-  void provider_free(Provider *rpc);
+void provider_free(Provider *rpc);
 
-  void model_free(Struct *model);
+void model_free(Struct *model);
 
-  void account_free(Account *account);
+void account_free(Account *account);
 
-  void ty_free(Ty *ty);
+void ty_free(Ty *ty);
 
-  void entity_free(Entity *entity);
+void entity_free(Entity *entity);
 
-  void error_free(Error *error);
+void error_free(Error *error);
 
-  void world_metadata_free(WorldMetadata *metadata);
+void world_metadata_free(WorldMetadata *metadata);
 
-  void carray_free(void *data, uintptr_t data_len);
+void carray_free(void *data, uintptr_t data_len);
 
-  void string_free(char *string);
+void string_free(char *string);
+
+} // extern "C"
+
+} // namespace dojo_bindings
