@@ -45,7 +45,7 @@ web-sys = { version = "0.3.4", features = [
     'console',
 ] }
 crypto-bigint = "0.5.5"
-tsify-next = "0.5.4"
+tsify-next = { version = "0.5.4", features = ["js"] }
 
 [build-dependencies]
 cbindgen = "0.26.0"
