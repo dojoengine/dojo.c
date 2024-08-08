@@ -8,7 +8,7 @@ use std::sync::Arc;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
 use starknet::core::types::FunctionCall;
-use starknet::core::utils::{get_contract_address, get_selector_from_name};
+use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
@@ -309,6 +309,60 @@ pub unsafe extern "C" fn poseidon_hash(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn get_selector_from_name(
+    name: *const c_char,
+) -> Result<types::FieldElement> {
+    let name = unsafe { CStr::from_ptr(name).to_string_lossy().into_owned() };
+    let selector = match starknet::core::utils::get_selector_from_name(name.as_str()) {
+        Ok(selector) => selector,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    Result::Ok((&selector).into())
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn starknet_keccak(
+    bytes: *const u8,
+    bytes_len: usize,
+) -> types::FieldElement {
+    let bytes = unsafe { std::slice::from_raw_parts(bytes, bytes_len) };
+    let hash = starknet::core::utils::starknet_keccak(bytes);
+
+    (&hash).into()
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn cairo_short_string_to_felt(
+    str: *const c_char,
+) -> Result<types::FieldElement> {
+    let str = unsafe { CStr::from_ptr(str).to_string_lossy().into_owned() };
+    let felt = match starknet::core::utils::cairo_short_string_to_felt(str.as_str()) {
+        Ok(felt) => felt,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    Result::Ok((&felt).into())
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn parse_cairo_short_string(
+    felt: types::FieldElement,
+) -> Result<*const c_char> {
+    let felt = (&felt).into();
+    let str = match starknet::core::utils::parse_cairo_short_string(&felt) {
+        Ok(str) => str,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    Result::Ok(CString::new(str).unwrap().into_raw())
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn typed_data_encode(
     typed_data: *const c_char,
     address: types::FieldElement,
@@ -491,7 +545,7 @@ pub unsafe extern "C" fn account_deploy_burner(
             Felt::ONE,                            // constructor calldata length (1)
             verifying_key.scalar(),               // constructor calldata
         ],
-        selector: get_selector_from_name("deployContract").unwrap(),
+        selector: starknet::core::utils::get_selector_from_name("deployContract").unwrap(),
     }]);
 
     let runtime = match tokio::runtime::Runtime::new() {
