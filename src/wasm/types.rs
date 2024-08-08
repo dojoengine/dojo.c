@@ -4,6 +4,7 @@ use std::str::FromStr;
 use crypto_bigint::U256;
 use dojo_types::schema::Struct;
 use serde::{Deserialize, Serialize};
+use serde_wasm_bindgen::to_value;
 use starknet::core::{types::FunctionCall, utils::get_selector_from_name};
 use starknet_crypto::Felt;
 
@@ -38,10 +39,12 @@ extern "C" {
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Ty {
+    #[tsify(type = r#""primitive" | "struct" | "enum" | "array" | "tuple" | "bytearray""#)]
     pub r#type: String,
     pub type_name: String,
-    #[tsify(type = "any")]
-    pub value: serde_json::Value,
+    #[serde(with = "serde_wasm_bindgen::preserve")]
+    #[tsify(type = "boolean | number | string | Ty | null")]
+    pub value: JsValue,
     pub key: bool,
 }
 
