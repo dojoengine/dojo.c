@@ -6,7 +6,9 @@ use std::os::raw::c_char;
 use std::sync::Arc;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
-use starknet::accounts::{Account as StarknetAccount, ExecutionEncoding, SingleOwnerAccount};
+use starknet::accounts::{
+    Account as StarknetAccount, ConnectedAccount, ExecutionEncoding, SingleOwnerAccount,
+};
 use starknet::core::types::FunctionCall;
 use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
@@ -581,6 +583,17 @@ pub unsafe extern "C" fn account_chain_id(account: *mut Account) -> types::Field
 pub unsafe extern "C" fn account_set_block_id(account: *mut Account, block_id: BlockId) {
     let block_id = (&block_id).into();
     (*account).0.set_block_id(block_id);
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn account_nonce(account: *mut Account) -> Result<types::FieldElement> {
+    let nonce = match tokio::runtime::Runtime::new().unwrap().block_on((*account).0.get_nonce()) {
+        Ok(nonce) => nonce,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    Result::Ok((&nonce).into())
 }
 
 #[no_mangle]

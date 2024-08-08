@@ -998,6 +998,8 @@ FieldElement account_chain_id(Account *account);
 
 void account_set_block_id(Account *account, BlockId block_id);
 
+Result<FieldElement> account_nonce(Account *account);
+
 Result<FieldElement> account_execute_raw(Account *account,
                                          const Call *calldata,
                                          uintptr_t calldata_len);
