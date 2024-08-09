@@ -669,6 +669,8 @@ struct FieldElement poseidon_hash(const struct FieldElement *felts, uintptr_t fe
 
 struct ResultFieldElement get_selector_from_name(const char *name);
 
+struct FieldElement get_selector_from_tag(const char *tag);
+
 struct FieldElement starknet_keccak(const uint8_t *bytes, uintptr_t bytes_len);
 
 struct ResultFieldElement cairo_short_string_to_felt(const char *str);

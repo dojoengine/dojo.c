@@ -8,6 +8,7 @@ crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
 dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "1c0e8cc17e0c6e3fd4cc0d3e0826f19cff674740" }
+dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "1c0e8cc17e0c6e3fd4cc0d3e0826f19cff674740" }
 torii-client = { git = "https://github.com/dojoengine/dojo", rev = "1c0e8cc17e0c6e3fd4cc0d3e0826f19cff674740" }
 torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
     "client",
