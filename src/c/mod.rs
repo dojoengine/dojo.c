@@ -6,6 +6,7 @@ use std::os::raw::c_char;
 use std::sync::Arc;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
+use dojo_world::contracts::naming::compute_selector_from_tag;
 use starknet::accounts::{
     Account as StarknetAccount, ConnectedAccount, ExecutionEncoding, SingleOwnerAccount,
 };
@@ -321,6 +322,15 @@ pub unsafe extern "C" fn get_selector_from_name(
     };
 
     Result::Ok((&selector).into())
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn get_selector_from_tag(tag: *const c_char) -> types::FieldElement {
+    let tag = unsafe { CStr::from_ptr(tag).to_string_lossy().into_owned() };
+    let selector = compute_selector_from_tag(tag.as_str());
+
+    (&selector).into()
 }
 
 #[no_mangle]
