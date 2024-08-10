@@ -13,7 +13,6 @@ torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
     "client",
 ], rev = "998c68011c09b4351badc3b58d47a766d6341935" }
 torii-relay = { git = "https://github.com/dojoengine/dojo", rev = "998c68011c09b4351badc3b58d47a766d6341935" }
-dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "998c68011c09b4351badc3b58d47a766d6341935" }
 
 
 starknet = "0.11.0"

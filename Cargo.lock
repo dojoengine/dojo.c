@@ -2300,7 +2300,6 @@ dependencies = [
  "cbindgen",
  "crypto-bigint",
  "dojo-types",
- "dojo-world",
  "futures",
  "futures-channel",
  "js-sys",
