@@ -200,30 +200,11 @@ cdef extern from *:
     PatternMatching pattern_matching;
     CArrayc_char models;
 
-  cdef enum ValueType_Tag:
-    String,
-    Int,
-    UInt,
-    VBool,
-    Bytes,
-
-  cdef struct ValueType:
-    ValueType_Tag tag;
-    const char *string;
-    int64_t int_;
-    uint64_t u_int;
-    bool v_bool;
-    CArrayu8 bytes;
-
-  cdef struct Value:
-    Primitive primitive_type;
-    ValueType value_type;
-
   cdef struct MemberClause:
     const char *model;
     const char *member;
     ComparisonOperator operator_;
-    Value value;
+    Primitive value;
 
   cdef struct CArrayClause:
     Clause *data;
