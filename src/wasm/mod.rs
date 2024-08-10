@@ -38,6 +38,15 @@ use types::{
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
     serde_wasm_bindgen::Serializer::json_compatible();
 
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+
+    #[wasm_bindgen(js_namespace = console)]
+    fn error(s: &str);
+}
+
 #[wasm_bindgen(js_name = typedDataEncode)]
 pub fn typed_data_encode(typed_data: &str, address: &str) -> Result<String, JsValue> {
     let typed_data = serde_json::from_str::<TypedData>(&typed_data)
