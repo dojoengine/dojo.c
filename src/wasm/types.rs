@@ -26,15 +26,6 @@ pub struct ClientConfig {
     pub world_address: String,
 }
 
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-
-    #[wasm_bindgen(js_namespace = console)]
-    fn error(s: &str);
-}
-
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Ty {
@@ -266,7 +257,7 @@ pub struct MemberClause {
     pub model: String,
     pub member: String,
     pub operator: ComparisonOperator,
-    pub value: Value,
+    pub value: Primitive,
 }
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
