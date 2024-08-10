@@ -310,45 +310,11 @@ typedef struct KeysClause {
   struct CArrayc_char models;
 } KeysClause;
 
-typedef enum ValueType_Tag {
-  String,
-  Int,
-  UInt,
-  VBool,
-  Bytes,
-} ValueType_Tag;
-
-typedef struct ValueType {
-  ValueType_Tag tag;
-  union {
-    struct {
-      const char *string;
-    };
-    struct {
-      int64_t int_;
-    };
-    struct {
-      uint64_t u_int;
-    };
-    struct {
-      bool v_bool;
-    };
-    struct {
-      struct CArrayu8 bytes;
-    };
-  };
-} ValueType;
-
-typedef struct Value {
-  struct Primitive primitive_type;
-  struct ValueType value_type;
-} Value;
-
 typedef struct MemberClause {
   const char *model;
   const char *member;
   enum ComparisonOperator operator_;
-  struct Value value;
+  struct Primitive value;
 } MemberClause;
 
 typedef struct CArrayClause {

@@ -267,7 +267,7 @@ pub struct MemberClause {
     pub model: *const c_char,
     pub member: *const c_char,
     pub operator: ComparisonOperator,
-    pub value: Value,
+    pub value: Primitive,
 }
 
 #[derive(Clone, Debug)]

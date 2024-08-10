@@ -607,110 +607,11 @@ struct KeysClause {
   CArray<const char*> models;
 };
 
-struct ValueType {
-  enum class Tag {
-    String,
-    Int,
-    UInt,
-    VBool,
-    Bytes,
-  };
-
-  struct String_Body {
-    const char *_0;
-  };
-
-  struct Int_Body {
-    int64_t _0;
-  };
-
-  struct UInt_Body {
-    uint64_t _0;
-  };
-
-  struct VBool_Body {
-    bool _0;
-  };
-
-  struct Bytes_Body {
-    CArray<uint8_t> _0;
-  };
-
-  Tag tag;
-  union {
-    String_Body string;
-    Int_Body int_;
-    UInt_Body u_int;
-    VBool_Body v_bool;
-    Bytes_Body bytes;
-  };
-
-  static ValueType String(const char *const &_0) {
-    ValueType result;
-    ::new (&result.string._0) (const char*)(_0);
-    result.tag = Tag::String;
-    return result;
-  }
-
-  bool IsString() const {
-    return tag == Tag::String;
-  }
-
-  static ValueType Int(const int64_t &_0) {
-    ValueType result;
-    ::new (&result.int_._0) (int64_t)(_0);
-    result.tag = Tag::Int;
-    return result;
-  }
-
-  bool IsInt() const {
-    return tag == Tag::Int;
-  }
-
-  static ValueType UInt(const uint64_t &_0) {
-    ValueType result;
-    ::new (&result.u_int._0) (uint64_t)(_0);
-    result.tag = Tag::UInt;
-    return result;
-  }
-
-  bool IsUInt() const {
-    return tag == Tag::UInt;
-  }
-
-  static ValueType VBool(const bool &_0) {
-    ValueType result;
-    ::new (&result.v_bool._0) (bool)(_0);
-    result.tag = Tag::VBool;
-    return result;
-  }
-
-  bool IsVBool() const {
-    return tag == Tag::VBool;
-  }
-
-  static ValueType Bytes(const CArray<uint8_t> &_0) {
-    ValueType result;
-    ::new (&result.bytes._0) (CArray<uint8_t>)(_0);
-    result.tag = Tag::Bytes;
-    return result;
-  }
-
-  bool IsBytes() const {
-    return tag == Tag::Bytes;
-  }
-};
-
-struct Value {
-  Primitive primitive_type;
-  ValueType value_type;
-};
-
 struct MemberClause {
   const char *model;
   const char *member;
   ComparisonOperator operator_;
-  Value value;
+  Primitive value;
 };
 
 struct CompositeClause {
