@@ -408,7 +408,7 @@ cdef extern from *:
 
   ResultFieldElement get_selector_from_name(const char *name);
 
-  ResultFieldElement get_selector_from_tag(const char *tag);
+  FieldElement get_selector_from_tag(const char *tag);
 
   FieldElement starknet_keccak(const uint8_t *bytes, uintptr_t bytes_len);
 
