@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use crypto_bigint::U256;
+use dojo_world::contracts::naming::compute_selector_from_tag;
 use futures::StreamExt;
 use js_sys::Array;
 use serde::{Deserialize, Serialize};
@@ -330,6 +331,12 @@ pub fn hash_get_contract_address(
     let address = get_contract_address(salt, class_hash, &constructor_calldata, deployer_address);
 
     Ok(format!("{:#x}", address))
+}
+
+#[wasm_bindgen(js_name = getSelectorFromTag)]
+pub fn get_selector_from_tag(tag: &str) -> String {
+    let selector = compute_selector_from_tag(tag);
+    format!("{:#x}", selector)
 }
 
 #[wasm_bindgen(js_name = byteArraySerialize)]

@@ -408,6 +408,8 @@ cdef extern from *:
 
   ResultFieldElement get_selector_from_name(const char *name);
 
+  FieldElement get_selector_from_tag(const char *tag);
+
   FieldElement starknet_keccak(const uint8_t *bytes, uintptr_t bytes_len);
 
   ResultFieldElement cairo_short_string_to_felt(const char *str);

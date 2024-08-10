@@ -865,6 +865,8 @@ FieldElement poseidon_hash(const FieldElement *felts, uintptr_t felts_len);
 
 Result<FieldElement> get_selector_from_name(const char *name);
 
+FieldElement get_selector_from_tag(const char *tag);
+
 FieldElement starknet_keccak(const uint8_t *bytes, uintptr_t bytes_len);
 
 Result<FieldElement> cairo_short_string_to_felt(const char *str);
