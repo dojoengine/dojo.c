@@ -555,23 +555,22 @@ impl ToriiClient {
     pub async fn publish_message(
         &mut self,
         message: &str,
-        signature: Signature,
+        felts: Vec<String>,
     ) -> Result<js_sys::Uint8Array, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let message = serde_json::from_str(message)
             .map_err(|err| JsValue::from(format!("failed to parse message: {err}")))?;
+        let felts = felts
+            .into_iter()
+            .map(|f| Felt::from_str(f.as_str()))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| JsValue::from(format!("failed to parse felts: {e}")))?;
 
         let message_id = self
             .inner
-            .publish_message(Message {
-                message,
-                signature_r: Felt::from_str(signature.r.as_str())
-                    .map_err(|err| JsValue::from(err.to_string()))?,
-                signature_s: Felt::from_str(signature.s.as_str())
-                    .map_err(|err| JsValue::from(err.to_string()))?,
-            })
+            .publish_message(Message { message, signature: felts })
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
 
