@@ -76,7 +76,8 @@ pub unsafe extern "C" fn client_publish_message(
     client: *mut ToriiClient,
     // A json string representing the typed data message
     message: *const c_char,
-    signature: types::Signature,
+    signature_felts: *const types::FieldElement,
+    signature_felts_len: usize,
 ) -> Result<CArray<u8>> {
     let message = unsafe { CStr::from_ptr(message).to_string_lossy().into_owned() };
     let message = match serde_json::from_str::<TypedData>(message.as_str()) {
@@ -84,11 +85,13 @@ pub unsafe extern "C" fn client_publish_message(
         Err(e) => return Result::Err(e.into()),
     };
 
+    let signature_felts =
+        unsafe { std::slice::from_raw_parts(signature_felts, signature_felts_len) };
+
     let client_future = unsafe {
         (*client).inner.publish_message(Message {
             message,
-            signature_r: (&signature.r).into(),
-            signature_s: (&signature.s).into(),
+            signature: signature_felts.iter().map(|f| (&f.clone()).into()).collect(),
         })
     };
 

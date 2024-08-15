@@ -968,7 +968,6 @@ impl From<&torii_grpc::types::Value> for Value {
 #[repr(C)]
 pub struct WorldMetadata {
     pub world_address: FieldElement,
-    pub world_class_hash: FieldElement,
     pub models: CArray<CHashItem<FieldElement, ModelMetadata>>,
 }
 
@@ -982,7 +981,6 @@ impl From<&dojo_types::WorldMetadata> for WorldMetadata {
 
         WorldMetadata {
             world_address: (&value.world_address.clone()).into(),
-            world_class_hash: (&value.world_class_hash.clone()).into(),
             models: models.into(),
         }
     }
@@ -1001,11 +999,7 @@ impl From<&WorldMetadata> for dojo_types::WorldMetadata {
             })
             .collect();
 
-        dojo_types::WorldMetadata {
-            world_address: (&value.world_address.clone()).into(),
-            world_class_hash: (&value.world_class_hash.clone()).into(),
-            models,
-        }
+        dojo_types::WorldMetadata { world_address: (&value.world_address.clone()).into(), models }
     }
 }
 
