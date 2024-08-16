@@ -82,17 +82,6 @@ typedef struct ResultCArrayu8 {
   };
 } ResultCArrayu8;
 
-typedef struct Signature {
-  /**
-   * The `r` value of a signature
-   */
-  struct FieldElement r;
-  /**
-   * The `s` value of a signature
-   */
-  struct FieldElement s;
-} Signature;
-
 typedef enum Primitive_Tag {
   I8,
   I16,
@@ -396,7 +385,6 @@ typedef struct CArrayCHashItemFieldElementModelMetadata {
 
 typedef struct WorldMetadata {
   struct FieldElement world_address;
-  struct FieldElement world_class_hash;
   struct CArrayCHashItemFieldElementModelMetadata models;
 } WorldMetadata;
 
@@ -502,6 +490,17 @@ typedef struct ResultFieldElement {
   };
 } ResultFieldElement;
 
+typedef struct Signature {
+  /**
+   * The `r` value of a signature
+   */
+  struct FieldElement r;
+  /**
+   * The `s` value of a signature
+   */
+  struct FieldElement s;
+} Signature;
+
 typedef enum ResultSignature_Tag {
   OkSignature,
   ErrSignature,
@@ -596,7 +595,8 @@ void client_set_logger(struct ToriiClient *client, void (*logger)(const char*));
 
 struct ResultCArrayu8 client_publish_message(struct ToriiClient *client,
                                              const char *message,
-                                             struct Signature signature);
+                                             const struct FieldElement *signature_felts,
+                                             uintptr_t signature_felts_len);
 
 struct ResultCArrayEntity client_entities(struct ToriiClient *client, const struct Query *query);
 
