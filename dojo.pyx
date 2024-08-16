@@ -66,12 +66,6 @@ cdef extern from *:
     CArrayu8 ok;
     Error err;
 
-  cdef struct Signature:
-    # The `r` value of a signature
-    FieldElement r;
-    # The `s` value of a signature
-    FieldElement s;
-
   cdef enum Primitive_Tag:
     I8,
     I16,
@@ -262,7 +256,6 @@ cdef extern from *:
 
   cdef struct WorldMetadata:
     FieldElement world_address;
-    FieldElement world_class_hash;
     CArrayCHashItemFieldElementModelMetadata models;
 
   cdef enum ResultSubscription_Tag:
@@ -319,6 +312,12 @@ cdef extern from *:
     FieldElement ok;
     Error err;
 
+  cdef struct Signature:
+    # The `r` value of a signature
+    FieldElement r;
+    # The `s` value of a signature
+    FieldElement s;
+
   cdef enum ResultSignature_Tag:
     OkSignature,
     ErrSignature,
@@ -372,7 +371,8 @@ cdef extern from *:
 
   ResultCArrayu8 client_publish_message(ToriiClient *client,
                                         const char *message,
-                                        Signature signature);
+                                        const FieldElement *signature_felts,
+                                        uintptr_t signature_felts_len);
 
   ResultCArrayEntity client_entities(ToriiClient *client, const Query *query);
 

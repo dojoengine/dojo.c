@@ -96,13 +96,6 @@ struct CArray {
   uintptr_t data_len;
 };
 
-struct Signature {
-  /// The `r` value of a signature
-  FieldElement r;
-  /// The `s` value of a signature
-  FieldElement s;
-};
-
 struct Primitive {
   enum class Tag {
     I8,
@@ -704,7 +697,6 @@ struct CHashItem {
 
 struct WorldMetadata {
   FieldElement world_address;
-  FieldElement world_class_hash;
   CArray<CHashItem<FieldElement, ModelMetadata>> models;
 };
 
@@ -749,6 +741,13 @@ struct EntityKeysClause {
   bool IsEntityKeys() const {
     return tag == Tag::EntityKeys;
   }
+};
+
+struct Signature {
+  /// The `r` value of a signature
+  FieldElement r;
+  /// The `s` value of a signature
+  FieldElement s;
 };
 
 struct Call {
@@ -829,7 +828,8 @@ void client_set_logger(ToriiClient *client, void (*logger)(const char*));
 
 Result<CArray<uint8_t>> client_publish_message(ToriiClient *client,
                                                const char *message,
-                                               Signature signature);
+                                               const FieldElement *signature_felts,
+                                               uintptr_t signature_felts_len);
 
 Result<CArray<Entity>> client_entities(ToriiClient *client, const Query *query);
 
