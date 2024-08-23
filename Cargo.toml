@@ -7,20 +7,20 @@ version = "1.0.0-alpha.5"
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
-dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "ede7930735c708572af8a87f81bb76354a401b3a" }
-torii-client = { git = "https://github.com/dojoengine/dojo", rev = "ede7930735c708572af8a87f81bb76354a401b3a" }
-torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
+dojo-types = { git = "https://github.com/Larkooo/dojo", branch = "fix-empty-array-client" }
+torii-client = { git = "https://github.com/Larkooo/dojo", branch = "fix-empty-array-client" }
+torii-grpc = { git = "https://github.com/Larkooo/dojo", features = [
     "client",
-], rev = "ede7930735c708572af8a87f81bb76354a401b3a" }
-torii-relay = { git = "https://github.com/dojoengine/dojo", rev = "ede7930735c708572af8a87f81bb76354a401b3a" }
-dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "ede7930735c708572af8a87f81bb76354a401b3a" }
+], branch = "fix-empty-array-client" }
+torii-relay = { git = "https://github.com/Larkooo/dojo", branch = "fix-empty-array-client" }
+dojo-world = { git = "https://github.com/Larkooo/dojo", branch = "fix-empty-array-client" }
 
 
 starknet = "0.11.0"
 starknet-crypto = "0.7.0"
 
 parking_lot = "0.12.1"
-tokio = { version = "1.32.0", default-features = false, features = ["rt"] }
+tokio = { version = "1.39.2", default-features = false, features = ["rt"] }
 url = "2.5.0"
 anyhow = "1.0.76"
 serde = { version = "1.0.193", features = ["derive"] }

@@ -2260,8 +2260,8 @@ dependencies = [
 
 [[package]]
 name = "dojo-lang"
-version = "1.0.0-alpha.6"
-source = "git+https://github.com/dojoengine/dojo?rev=ede7930735c708572af8a87f81bb76354a401b3a#ede7930735c708572af8a87f81bb76354a401b3a"
+version = "1.0.0-alpha.7"
+source = "git+https://github.com/Larkooo/dojo?branch=fix-empty-array-client#f1169dd82cd0db52e7169b971fe0d2f23ef45b9f"
 dependencies = [
  "anyhow",
  "cainome",
@@ -2311,8 +2311,8 @@ dependencies = [
 
 [[package]]
 name = "dojo-types"
-version = "1.0.0-alpha.6"
-source = "git+https://github.com/dojoengine/dojo?rev=ede7930735c708572af8a87f81bb76354a401b3a#ede7930735c708572af8a87f81bb76354a401b3a"
+version = "1.0.0-alpha.7"
+source = "git+https://github.com/Larkooo/dojo?branch=fix-empty-array-client#f1169dd82cd0db52e7169b971fe0d2f23ef45b9f"
 dependencies = [
  "cainome",
  "crypto-bigint",
@@ -2328,9 +2328,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "dojo-utils"
+version = "1.0.0-alpha.7"
+source = "git+https://github.com/Larkooo/dojo?branch=fix-empty-array-client#f1169dd82cd0db52e7169b971fe0d2f23ef45b9f"
+dependencies = [
+ "anyhow",
+ "futures",
+ "reqwest 0.12.5",
+ "starknet",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "dojo-world"
-version = "1.0.0-alpha.6"
-source = "git+https://github.com/dojoengine/dojo?rev=ede7930735c708572af8a87f81bb76354a401b3a#ede7930735c708572af8a87f81bb76354a401b3a"
+version = "1.0.0-alpha.7"
+source = "git+https://github.com/Larkooo/dojo?branch=fix-empty-array-client#f1169dd82cd0db52e7169b971fe0d2f23ef45b9f"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2342,7 +2355,7 @@ dependencies = [
  "camino",
  "convert_case",
  "dojo-types",
- "futures",
+ "dojo-utils",
  "http 0.2.12",
  "ipfs-api-backend-hyper",
  "num-traits 0.2.19",
@@ -5602,13 +5615,14 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "0.8.11"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4a650543ca06a924e8b371db273b2756685faae30f8487da1b56505a8f78b0c"
+checksum = "80e04d1dcff3aae0704555fe5fee3bcfaf3d1fdf8a7e521d5b9d2b42acb52cec"
 dependencies = [
+ "hermit-abi 0.3.9",
  "libc",
  "wasi",
- "windows-sys 0.48.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -8130,8 +8144,8 @@ dependencies = [
 
 [[package]]
 name = "sozo-ops"
-version = "1.0.0-alpha.6"
-source = "git+https://github.com/dojoengine/dojo?rev=ede7930735c708572af8a87f81bb76354a401b3a#ede7930735c708572af8a87f81bb76354a401b3a"
+version = "1.0.0-alpha.7"
+source = "git+https://github.com/Larkooo/dojo?branch=fix-empty-array-client#f1169dd82cd0db52e7169b971fe0d2f23ef45b9f"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8155,6 +8169,7 @@ dependencies = [
  "console",
  "dojo-lang",
  "dojo-types",
+ "dojo-utils",
  "dojo-world",
  "futures",
  "itertools 0.12.1",
@@ -8970,21 +8985,20 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.38.1"
+version = "1.39.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb2caba9f80616f438e09748d5acda951967e1ea58508ef53d9c6402485a46df"
+checksum = "9babc99b9923bfa4804bd74722ff02c0381021eafa4db9949217e3be8e84fff5"
 dependencies = [
  "backtrace",
  "bytes",
  "libc",
  "mio",
- "num_cpus",
  "parking_lot 0.12.3",
  "pin-project-lite",
  "signal-hook-registry",
  "socket2 0.5.7",
  "tokio-macros",
- "windows-sys 0.48.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -8999,9 +9013,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-macros"
-version = "2.3.0"
+version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f5ae998a069d4b5aba8ee9dad856af7d520c3699e6159b185c2acd48155d39a"
+checksum = "693d596312e88961bc67d7f1f97af8a70227d9f90c31bba5806eec004978d752"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9285,8 +9299,8 @@ checksum = "ea68304e134ecd095ac6c3574494fc62b909f416c4fca77e440530221e549d3d"
 
 [[package]]
 name = "torii-client"
-version = "1.0.0-alpha.6"
-source = "git+https://github.com/dojoengine/dojo?rev=ede7930735c708572af8a87f81bb76354a401b3a#ede7930735c708572af8a87f81bb76354a401b3a"
+version = "1.0.0-alpha.7"
+source = "git+https://github.com/Larkooo/dojo?branch=fix-empty-array-client#f1169dd82cd0db52e7169b971fe0d2f23ef45b9f"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -9314,8 +9328,8 @@ dependencies = [
 
 [[package]]
 name = "torii-core"
-version = "1.0.0-alpha.6"
-source = "git+https://github.com/dojoengine/dojo?rev=ede7930735c708572af8a87f81bb76354a401b3a#ede7930735c708572af8a87f81bb76354a401b3a"
+version = "1.0.0-alpha.7"
+source = "git+https://github.com/Larkooo/dojo?branch=fix-empty-array-client#f1169dd82cd0db52e7169b971fe0d2f23ef45b9f"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -9350,8 +9364,8 @@ dependencies = [
 
 [[package]]
 name = "torii-grpc"
-version = "1.0.0-alpha.6"
-source = "git+https://github.com/dojoengine/dojo?rev=ede7930735c708572af8a87f81bb76354a401b3a#ede7930735c708572af8a87f81bb76354a401b3a"
+version = "1.0.0-alpha.7"
+source = "git+https://github.com/Larkooo/dojo?branch=fix-empty-array-client#f1169dd82cd0db52e7169b971fe0d2f23ef45b9f"
 dependencies = [
  "bytes",
  "crypto-bigint",
@@ -9391,8 +9405,8 @@ dependencies = [
 
 [[package]]
 name = "torii-relay"
-version = "1.0.0-alpha.6"
-source = "git+https://github.com/dojoengine/dojo?rev=ede7930735c708572af8a87f81bb76354a401b3a#ede7930735c708572af8a87f81bb76354a401b3a"
+version = "1.0.0-alpha.7"
+source = "git+https://github.com/Larkooo/dojo?branch=fix-empty-array-client#f1169dd82cd0db52e7169b971fe0d2f23ef45b9f"
 dependencies = [
  "anyhow",
  "async-trait",
