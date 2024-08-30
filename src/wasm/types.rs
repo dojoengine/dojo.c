@@ -33,7 +33,8 @@ pub struct Ty {
     pub r#type: String,
     pub type_name: String,
     #[serde(with = "serde_wasm_bindgen::preserve")]
-    #[tsify(type = "boolean | number | string | Ty | Record<string, Ty> | Array<Ty> | { option: string, value: Ty } | null")]
+    #[tsify(type = "boolean | number | string | Ty | Record<string, Ty> | Array<Ty> | { option: \
+                    string, value: Ty } | null")]
     pub value: JsValue,
     pub key: bool,
 }
