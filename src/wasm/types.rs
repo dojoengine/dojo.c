@@ -27,13 +27,13 @@ pub struct ClientConfig {
 }
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
+#[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
 pub struct Ty {
     #[tsify(type = r#""primitive" | "struct" | "enum" | "array" | "tuple" | "bytearray""#)]
     pub r#type: String,
     pub type_name: String,
     #[serde(with = "serde_wasm_bindgen::preserve")]
-    #[tsify(type = "boolean | number | string | Ty | null")]
+    #[tsify(type = "boolean | number | string | Ty | Record<string, Ty> | Array<Ty> | { option: string, value: Ty } | null")]
     pub value: JsValue,
     pub key: bool,
 }
