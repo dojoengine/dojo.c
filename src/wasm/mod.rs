@@ -30,6 +30,9 @@ use crate::constants;
 use crate::types::{Account, Provider, Subscription, ToriiClient};
 use crate::utils::watch_tx;
 
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::Duration;
+
 mod types;
 
 use types::{
@@ -464,30 +467,72 @@ impl ToriiClient {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let clauses = clauses.iter().map(|c| c.into()).collect();
-        let mut stream = self.inner.on_entity_updated(clauses).await.unwrap();
+        let clauses: Vec<_> = clauses.iter().map(|c| c.into()).collect();
+        let subscription_id = Arc::new(AtomicU64::new(0));
+        let (trigger, tripwire) = Tripwire::new();
 
-        let subscription_id = match stream.next().await {
-            Some(Ok((subscription_id, _))) => subscription_id,
-            _ => return Err(JsValue::from("failed to get subscription id")),
+        let subscription = Subscription {
+            id: Arc::clone(&subscription_id),
+            trigger,
         };
 
-        let (trigger, tripwire) = Tripwire::new();
+        // Create the first subscription and get the ID on the main thread
+        let mut stream = self.inner.on_entity_updated(clauses.clone()).await
+            .map_err(|err| JsValue::from(format!("failed to create subscription: {err}")))?;
+
+        match stream.next().await {
+            Some(Ok((id, _))) => {
+                subscription_id.store(id, Ordering::SeqCst);
+            }
+            _ => return Err(JsValue::from("failed to get initial subscription id")),
+        }
+
+        // Spawn a new task to handle the stream and reconnections
+        let client = self.inner.clone();
+        let subscription_id_clone = Arc::clone(&subscription_id);
         wasm_bindgen_futures::spawn_local(async move {
-            let mut stream = stream.take_until_if(tripwire);
+            let mut backoff = 1000;
+            let max_backoff = 60000;
 
-            while let Some(Ok((_, entity))) = stream.next().await {
-                let models: Entity = (&entity).into();
+            loop {
+                let stream = client.on_entity_updated(clauses.clone()).await;
+                
+                match stream {
+                    Ok(stream) => {
+                        backoff = 1000; // Reset backoff on successful connection
+                        
+                        let mut stream = stream.take_until_if(tripwire.clone());
 
-                let _ = callback.call2(
-                    &JsValue::null(),
-                    &JsValue::from_str(&format!("{:#x}", entity.hashed_keys)),
-                    &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
-                );
+                        while let Some(Ok((id, entity))) = stream.next().await {
+                            subscription_id_clone.store(id, Ordering::SeqCst);
+                            let models: Entity = (&entity).into();
+
+                            let _ = callback.call2(
+                                &JsValue::null(),
+                                &JsValue::from_str(&format!("{:#x}", entity.hashed_keys)),
+                                &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
+                        }
+                    },
+                    Err(_) => {
+                        // Check if the tripwire has been triggered before attempting to reconnect
+                        if tripwire.clone().await {
+                            break; // Exit the loop if the subscription has been cancelled
+                        }
+                    }
+                }
+
+                // If we've reached this point, the stream has ended (possibly due to disconnection)
+                // We'll try to reconnect after a delay, unless the tripwire has been triggered
+                if tripwire.clone().await {
+                    break; // Exit the loop if the subscription has been cancelled
+                }
+                gloo_timers::future::TimeoutFuture::new(backoff).await;
+                backoff = std::cmp::min(backoff * 2, max_backoff);
             }
         });
 
-        Ok(Subscription { id: subscription_id, trigger })
+        Ok(subscription)
     }
 
     #[wasm_bindgen(js_name = updateEntitySubscription)]
@@ -498,7 +543,7 @@ impl ToriiClient {
     ) -> Result<(), JsValue> {
         let clauses = clauses.iter().map(|c| c.into()).collect();
         self.inner
-            .update_entity_subscription(subscription.id, clauses)
+            .update_entity_subscription(subscription.id.load(Ordering::SeqCst), clauses)
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }
@@ -512,30 +557,72 @@ impl ToriiClient {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let clauses = clauses.iter().map(|c| c.into()).collect();
-        let mut stream = self.inner.on_event_message_updated(clauses).await.unwrap();
+        let clauses: Vec<_> = clauses.iter().map(|c| c.into()).collect();
+        let subscription_id = Arc::new(AtomicU64::new(0));
+        let (trigger, tripwire) = Tripwire::new();
 
-        let subscription_id = match stream.next().await {
-            Some(Ok((subscription_id, _))) => subscription_id,
-            _ => return Err(JsValue::from("failed to get subscription id")),
+        let subscription = Subscription {
+            id: Arc::clone(&subscription_id),
+            trigger,
         };
 
-        let (trigger, tripwire) = Tripwire::new();
+        // Create the first subscription and get the ID on the main thread
+        let mut stream = self.inner.on_event_message_updated(clauses.clone()).await
+            .map_err(|err| JsValue::from(format!("failed to create subscription: {err}")))?;
+
+        match stream.next().await {
+            Some(Ok((id, _))) => {
+                subscription_id.store(id, Ordering::SeqCst);
+            }
+            _ => return Err(JsValue::from("failed to get initial subscription id")),
+        }
+
+        // Spawn a new task to handle the stream and reconnections
+        let client = self.inner.clone();
+        let subscription_id_clone = Arc::clone(&subscription_id);
         wasm_bindgen_futures::spawn_local(async move {
-            let mut stream = stream.take_until_if(tripwire);
+            let mut backoff = 1000;
+            let max_backoff = 60000;
 
-            while let Some(Ok((_, entity))) = stream.next().await {
-                let models: Entity = (&entity).into();
+            loop {
+                let stream = client.on_event_message_updated(clauses.clone()).await;
+                
+                match stream {
+                    Ok(stream) => {
+                        backoff = 1000; // Reset backoff on successful connection
+                        
+                        let mut stream = stream.take_until_if(tripwire.clone());
 
-                let _ = callback.call2(
-                    &JsValue::null(),
-                    &JsValue::from_str(&format!("{:#x}", entity.hashed_keys)),
-                    &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
-                );
+                        while let Some(Ok((id, entity))) = stream.next().await {
+                            subscription_id_clone.store(id, Ordering::SeqCst);
+                            let models: Entity = (&entity).into();
+
+                            let _ = callback.call2(
+                                &JsValue::null(),
+                                &JsValue::from_str(&format!("{:#x}", entity.hashed_keys)),
+                                &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
+                        }
+                    },
+                    Err(_) => {
+                        // Check if the tripwire has been triggered before attempting to reconnect
+                        if tripwire.clone().await {
+                            break; // Exit the loop if the subscription has been cancelled
+                        }
+                    }
+                }
+
+                // If we've reached this point, the stream has ended (possibly due to disconnection)
+                // We'll try to reconnect after a delay, unless the tripwire has been triggered
+                if tripwire.clone().await {
+                    break; // Exit the loop if the subscription has been cancelled
+                }
+                gloo_timers::future::TimeoutFuture::new(backoff).await;
+                backoff = std::cmp::min(backoff * 2, max_backoff);
             }
         });
 
-        Ok(Subscription { id: subscription_id, trigger })
+        Ok(subscription)
     }
 
     #[wasm_bindgen(js_name = updateEventMessageSubscription)]
@@ -546,7 +633,7 @@ impl ToriiClient {
     ) -> Result<(), JsValue> {
         let clauses = clauses.iter().map(|c| c.into()).collect();
         self.inner
-            .update_event_message_subscription(subscription.id, clauses)
+            .update_event_message_subscription(subscription.id.load(Ordering::SeqCst), clauses)
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }
@@ -607,5 +694,5 @@ pub async fn create_client(config: ClientConfig) -> Result<ToriiClient, JsValue>
         relay_runner.lock().await.run().await;
     });
 
-    Ok(ToriiClient { inner: client })
+    Ok(ToriiClient { inner: Arc::new(client) })
 }
