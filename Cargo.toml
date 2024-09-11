@@ -1,19 +1,19 @@
 [package]
 edition = "2021"
 name = "dojo-c"
-version = "1.0.0-alpha.5"
+version = "1.0.0-alpha.11"
 
 [lib]
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
-dojo-types = { git = "https://github.com/Larkooo/dojo", branch = "fix-empty-array-client" }
-torii-client = { git = "https://github.com/Larkooo/dojo", branch = "fix-empty-array-client" }
+dojo-types = { git = "https://github.com/Larkooo/dojo", rev = "80d18277d84a50c015decbbc9958fc2e4b90a072" }
+torii-client = { git = "https://github.com/Larkooo/dojo", rev = "80d18277d84a50c015decbbc9958fc2e4b90a072" }
 torii-grpc = { git = "https://github.com/Larkooo/dojo", features = [
     "client",
-], branch = "fix-empty-array-client" }
-torii-relay = { git = "https://github.com/Larkooo/dojo", branch = "fix-empty-array-client" }
-dojo-world = { git = "https://github.com/Larkooo/dojo", branch = "fix-empty-array-client" }
+], rev = "80d18277d84a50c015decbbc9958fc2e4b90a072" }
+torii-relay = { git = "https://github.com/Larkooo/dojo", rev = "80d18277d84a50c015decbbc9958fc2e4b90a072" }
+dojo-world = { git = "https://github.com/Larkooo/dojo", rev = "80d18277d84a50c015decbbc9958fc2e4b90a072" }
 
 
 starknet = "0.11.0"
