@@ -9,7 +9,6 @@ use std::time::Duration;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use dojo_world::contracts::naming::compute_selector_from_tag;
-use futures::FutureExt;
 use starknet::accounts::{
     Account as StarknetAccount, ConnectedAccount, ExecutionEncoding, SingleOwnerAccount,
 };
