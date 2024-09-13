@@ -2,7 +2,9 @@ mod utils;
 
 use std::collections::HashMap;
 use std::str::FromStr;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use crypto_bigint::U256;
@@ -29,9 +31,6 @@ use wasm_bindgen::prelude::*;
 use crate::constants;
 use crate::types::{Account, Provider, Subscription, ToriiClient};
 use crate::utils::watch_tx;
-
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::Duration;
 
 mod types;
 
@@ -471,13 +470,13 @@ impl ToriiClient {
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
 
-        let subscription = Subscription {
-            id: Arc::clone(&subscription_id),
-            trigger,
-        };
+        let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
         // Create the first subscription and get the ID on the main thread
-        let mut stream = self.inner.on_entity_updated(clauses.clone()).await
+        let mut stream = self
+            .inner
+            .on_entity_updated(clauses.clone())
+            .await
             .map_err(|err| JsValue::from(format!("failed to create subscription: {err}")))?;
 
         match stream.next().await {
@@ -496,11 +495,11 @@ impl ToriiClient {
 
             loop {
                 let stream = client.on_entity_updated(clauses.clone()).await;
-                
+
                 match stream {
                     Ok(stream) => {
                         backoff = 1000; // Reset backoff on successful connection
-                        
+
                         let mut stream = stream.take_until_if(tripwire.clone());
 
                         while let Some(Ok((id, entity))) = stream.next().await {
@@ -513,7 +512,7 @@ impl ToriiClient {
                                 &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                             );
                         }
-                    },
+                    }
                     Err(_) => {
                         // Check if the tripwire has been triggered before attempting to reconnect
                         if tripwire.clone().await {
@@ -561,13 +560,13 @@ impl ToriiClient {
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
 
-        let subscription = Subscription {
-            id: Arc::clone(&subscription_id),
-            trigger,
-        };
+        let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
         // Create the first subscription and get the ID on the main thread
-        let mut stream = self.inner.on_event_message_updated(clauses.clone()).await
+        let mut stream = self
+            .inner
+            .on_event_message_updated(clauses.clone())
+            .await
             .map_err(|err| JsValue::from(format!("failed to create subscription: {err}")))?;
 
         match stream.next().await {
@@ -586,11 +585,11 @@ impl ToriiClient {
 
             loop {
                 let stream = client.on_event_message_updated(clauses.clone()).await;
-                
+
                 match stream {
                     Ok(stream) => {
                         backoff = 1000; // Reset backoff on successful connection
-                        
+
                         let mut stream = stream.take_until_if(tripwire.clone());
 
                         while let Some(Ok((id, entity))) = stream.next().await {
@@ -603,7 +602,7 @@ impl ToriiClient {
                                 &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                             );
                         }
-                    },
+                    }
                     Err(_) => {
                         // Check if the tripwire has been triggered before attempting to reconnect
                         if tripwire.clone().await {

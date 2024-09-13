@@ -158,10 +158,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     let subscription_id = Arc::new(AtomicU64::new(0));
     let (trigger, tripwire) = Tripwire::new();
 
-    let subscription = Subscription {
-        id: Arc::clone(&subscription_id),
-        trigger,
-    };
+    let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
     // Create the first subscription and get the ID on the main thread
     let entity_stream = client.inner.on_entity_updated(clauses.clone());
@@ -190,20 +187,21 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 
         loop {
             let rcv = client_clone.inner.on_entity_updated(clauses.clone()).await;
-            
+
             match rcv {
                 Ok(rcv) => {
                     backoff = Duration::from_secs(1); // Reset backoff on successful connection
-                    
+
                     let mut rcv = rcv.take_until_if(tripwire.clone());
 
                     while let Some(Ok((id, entity))) = rcv.next().await {
                         subscription_id_clone.store(id, Ordering::SeqCst);
                         let key: types::FieldElement = (&entity.hashed_keys).into();
-                        let models: Vec<Struct> = entity.models.into_iter().map(|e| (&e).into()).collect();
+                        let models: Vec<Struct> =
+                            entity.models.into_iter().map(|e| (&e).into()).collect();
                         callback(key, models.into());
                     }
-                },
+                }
                 Err(_) => {
                     // Check if the tripwire has been triggered before attempting to reconnect
                     if tripwire.clone().await {
@@ -236,10 +234,11 @@ pub unsafe extern "C" fn client_update_entity_subscription(
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
-    match (*client)
-        .runtime
-        .block_on((*client).inner.update_entity_subscription((*subscription).id.load(Ordering::SeqCst), clauses))
-    {
+    match (*client).runtime.block_on(
+        (*client)
+            .inner
+            .update_entity_subscription((*subscription).id.load(Ordering::SeqCst), clauses),
+    ) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
@@ -260,10 +259,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
     let subscription_id = Arc::new(AtomicU64::new(0));
     let (trigger, tripwire) = Tripwire::new();
 
-    let subscription = Subscription {
-        id: Arc::clone(&subscription_id),
-        trigger,
-    };
+    let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
     // Create the first subscription and get the ID on the main thread
     let entity_stream = client.inner.on_event_message_updated(clauses.clone());
@@ -292,20 +288,21 @@ pub unsafe extern "C" fn client_on_event_message_update(
 
         loop {
             let rcv = client_clone.inner.on_event_message_updated(clauses.clone()).await;
-            
+
             match rcv {
                 Ok(rcv) => {
                     backoff = Duration::from_secs(1); // Reset backoff on successful connection
-                    
+
                     let mut rcv = rcv.take_until_if(tripwire.clone());
 
                     while let Some(Ok((id, entity))) = rcv.next().await {
                         subscription_id_clone.store(id, Ordering::SeqCst);
                         let key: types::FieldElement = (&entity.hashed_keys).into();
-                        let models: Vec<Struct> = entity.models.into_iter().map(|e| (&e).into()).collect();
+                        let models: Vec<Struct> =
+                            entity.models.into_iter().map(|e| (&e).into()).collect();
                         callback(key, models.into());
                     }
-                },
+                }
                 Err(_) => {
                     // Check if the tripwire has been triggered before attempting to reconnect
                     if tripwire.clone().await {
@@ -338,10 +335,11 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
-    match (*client)
-        .runtime
-        .block_on((*client).inner.update_event_message_subscription((*subscription).id.load(Ordering::SeqCst), clauses))
-    {
+    match (*client).runtime.block_on(
+        (*client)
+            .inner
+            .update_event_message_subscription((*subscription).id.load(Ordering::SeqCst), clauses),
+    ) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
