@@ -2227,6 +2227,7 @@ dependencies = [
  "dojo-world",
  "futures",
  "futures-channel",
+ "gloo-timers 0.3.0",
  "instant",
  "js-sys",
  "parking_lot 0.12.3",

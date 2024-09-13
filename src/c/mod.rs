@@ -3,7 +3,9 @@ mod types;
 use std::ffi::{c_void, CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use dojo_world::contracts::naming::compute_selector_from_tag;
@@ -17,6 +19,7 @@ use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
 use starknet_crypto::{poseidon_hash_many, Felt};
 use stream_cancel::{StreamExt as _, Tripwire};
+use tokio::time::sleep;
 use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
@@ -147,36 +150,76 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     clauses_len: usize,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
+    let client = Arc::from_raw(client);
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
-    let entity_stream = unsafe { (*client).inner.on_entity_updated(clauses) };
-    let mut rcv = match (*client).runtime.block_on(entity_stream) {
+    let subscription_id = Arc::new(AtomicU64::new(0));
+    let (trigger, tripwire) = Tripwire::new();
+
+    let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
+
+    // Create the first subscription and get the ID on the main thread
+    let entity_stream = client.inner.on_entity_updated(clauses.clone());
+    let mut rcv = match client.runtime.block_on(entity_stream) {
         Ok(rcv) => rcv,
         Err(e) => return Result::Err(e.into()),
     };
 
-    let subscription_id = match (*client).runtime.block_on(rcv.next()) {
-        Some(Ok((subscription_id, _))) => subscription_id,
+    match client.runtime.block_on(rcv.next()) {
+        Some(Ok((id, _))) => {
+            subscription_id.store(id, Ordering::SeqCst);
+        }
         _ => {
             return Result::Err(Error {
-                message: CString::new("failed to get subscription id").unwrap().into_raw(),
+                message: CString::new("failed to get initial subscription id").unwrap().into_raw(),
             });
         }
-    };
+    }
 
-    let (trigger, tripwire) = Tripwire::new();
-    (*client).runtime.spawn(async move {
-        let mut rcv = rcv.take_until_if(tripwire);
+    // Spawn a new thread to handle the stream and reconnections
+    let client_clone = client.clone();
+    let subscription_id_clone = Arc::clone(&subscription_id);
+    client.runtime.spawn(async move {
+        let mut backoff = Duration::from_secs(1);
+        let max_backoff = Duration::from_secs(60);
 
-        while let Some(Ok((_, entity))) = rcv.next().await {
-            let key: types::FieldElement = (&entity.hashed_keys).into();
-            let models: Vec<Struct> = entity.models.into_iter().map(|e| (&e).into()).collect();
-            callback(key, models.into());
+        loop {
+            let rcv = client_clone.inner.on_entity_updated(clauses.clone()).await;
+
+            match rcv {
+                Ok(rcv) => {
+                    backoff = Duration::from_secs(1); // Reset backoff on successful connection
+
+                    let mut rcv = rcv.take_until_if(tripwire.clone());
+
+                    while let Some(Ok((id, entity))) = rcv.next().await {
+                        subscription_id_clone.store(id, Ordering::SeqCst);
+                        let key: types::FieldElement = (&entity.hashed_keys).into();
+                        let models: Vec<Struct> =
+                            entity.models.into_iter().map(|e| (&e).into()).collect();
+                        callback(key, models.into());
+                    }
+                }
+                Err(_) => {
+                    // Check if the tripwire has been triggered before attempting to reconnect
+                    if tripwire.clone().await {
+                        break; // Exit the loop if the subscription has been cancelled
+                    }
+                }
+            }
+
+            // If we've reached this point, the stream has ended (possibly due to disconnection)
+            // We'll try to reconnect after a delay, unless the tripwire has been triggered
+            if tripwire.clone().await {
+                break; // Exit the loop if the subscription has been cancelled
+            }
+            sleep(backoff).await;
+            backoff = std::cmp::min(backoff * 2, max_backoff);
         }
     });
 
-    Result::Ok(Box::into_raw(Box::new(Subscription { id: subscription_id, trigger })))
+    Result::Ok(Box::into_raw(Box::new(subscription)))
 }
 
 #[no_mangle]
@@ -190,10 +233,11 @@ pub unsafe extern "C" fn client_update_entity_subscription(
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
-    match (*client)
-        .runtime
-        .block_on((*client).inner.update_entity_subscription((*subscription).id, clauses))
-    {
+    match (*client).runtime.block_on(
+        (*client)
+            .inner
+            .update_entity_subscription((*subscription).id.load(Ordering::SeqCst), clauses),
+    ) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
@@ -207,36 +251,76 @@ pub unsafe extern "C" fn client_on_event_message_update(
     clauses_len: usize,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
+    let client = Arc::from_raw(client);
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
-    let entity_stream = unsafe { (*client).inner.on_event_message_updated(clauses) };
-    let mut rcv = match (*client).runtime.block_on(entity_stream) {
+    let subscription_id = Arc::new(AtomicU64::new(0));
+    let (trigger, tripwire) = Tripwire::new();
+
+    let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
+
+    // Create the first subscription and get the ID on the main thread
+    let entity_stream = client.inner.on_event_message_updated(clauses.clone());
+    let mut rcv = match client.runtime.block_on(entity_stream) {
         Ok(rcv) => rcv,
         Err(e) => return Result::Err(e.into()),
     };
 
-    let subscription_id = match (*client).runtime.block_on(rcv.next()) {
-        Some(Ok((subscription_id, _))) => subscription_id,
+    match client.runtime.block_on(rcv.next()) {
+        Some(Ok((id, _))) => {
+            subscription_id.store(id, Ordering::SeqCst);
+        }
         _ => {
             return Result::Err(Error {
-                message: CString::new("faild to get subscription id").unwrap().into_raw(),
+                message: CString::new("failed to get initial subscription id").unwrap().into_raw(),
             });
         }
-    };
+    }
 
-    let (trigger, tripwire) = Tripwire::new();
-    (*client).runtime.spawn(async move {
-        let mut rcv = rcv.take_until_if(tripwire);
+    // Spawn a new thread to handle the stream and reconnections
+    let client_clone = client.clone();
+    let subscription_id_clone = Arc::clone(&subscription_id);
+    client.runtime.spawn(async move {
+        let mut backoff = Duration::from_secs(1);
+        let max_backoff = Duration::from_secs(60);
 
-        while let Some(Ok((_, entity))) = rcv.next().await {
-            let key: types::FieldElement = (&entity.hashed_keys).into();
-            let models: Vec<Struct> = entity.models.into_iter().map(|e| (&e).into()).collect();
-            callback(key, models.into());
+        loop {
+            let rcv = client_clone.inner.on_event_message_updated(clauses.clone()).await;
+
+            match rcv {
+                Ok(rcv) => {
+                    backoff = Duration::from_secs(1); // Reset backoff on successful connection
+
+                    let mut rcv = rcv.take_until_if(tripwire.clone());
+
+                    while let Some(Ok((id, entity))) = rcv.next().await {
+                        subscription_id_clone.store(id, Ordering::SeqCst);
+                        let key: types::FieldElement = (&entity.hashed_keys).into();
+                        let models: Vec<Struct> =
+                            entity.models.into_iter().map(|e| (&e).into()).collect();
+                        callback(key, models.into());
+                    }
+                }
+                Err(_) => {
+                    // Check if the tripwire has been triggered before attempting to reconnect
+                    if tripwire.clone().await {
+                        break; // Exit the loop if the subscription has been cancelled
+                    }
+                }
+            }
+
+            // If we've reached this point, the stream has ended (possibly due to disconnection)
+            // We'll try to reconnect after a delay, unless the tripwire has been triggered
+            if tripwire.clone().await {
+                break; // Exit the loop if the subscription has been cancelled
+            }
+            sleep(backoff).await;
+            backoff = std::cmp::min(backoff * 2, max_backoff);
         }
     });
 
-    Result::Ok(Box::into_raw(Box::new(Subscription { id: subscription_id, trigger })))
+    Result::Ok(Box::into_raw(Box::new(subscription)))
 }
 
 #[no_mangle]
@@ -250,10 +334,11 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
-    match (*client)
-        .runtime
-        .block_on((*client).inner.update_event_message_subscription((*subscription).id, clauses))
-    {
+    match (*client).runtime.block_on(
+        (*client)
+            .inner
+            .update_event_message_subscription((*subscription).id.load(Ordering::SeqCst), clauses),
+    ) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }

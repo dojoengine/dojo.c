@@ -1,4 +1,5 @@
 use std::ffi::c_char;
+use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 
 use starknet::accounts::SingleOwnerAccount;
@@ -12,7 +13,11 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 pub struct ToriiClient {
     #[wasm_bindgen(skip)]
+    #[cfg(not(target_arch = "wasm32"))]
     pub inner: Client,
+    #[wasm_bindgen(skip)]
+    #[cfg(target_arch = "wasm32")]
+    pub inner: Arc<Client>,
     #[cfg(not(target_arch = "wasm32"))]
     #[wasm_bindgen(skip)]
     pub runtime: tokio::runtime::Runtime,
@@ -26,6 +31,6 @@ pub struct Provider(pub(crate) Arc<JsonRpcClient<HttpTransport>>);
 pub struct Account(pub(crate) SingleOwnerAccount<Arc<JsonRpcClient<HttpTransport>>, LocalWallet>);
 #[wasm_bindgen]
 pub struct Subscription {
-    pub id: u64,
+    pub(crate) id: Arc<AtomicU64>,
     pub(crate) trigger: Trigger,
 }
