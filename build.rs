@@ -108,7 +108,7 @@ fn main() {
         .expect("Unable to generate bindings")
         .write_to_file("dojo.pyx");
 
-        cbindgen::Builder::new()
+    cbindgen::Builder::new()
         .with_config({
             let mut config = cbindgen::Config::default();
 
