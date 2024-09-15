@@ -980,6 +980,6 @@ void carray_free(void *data, uintptr_t data_len);
 
 void string_free(char *string);
 
-} // extern "C"
+}  // extern "C"
 
-} // namespace dojo_bindings
+}  // namespace dojo_bindings
