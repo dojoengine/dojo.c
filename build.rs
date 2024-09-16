@@ -111,7 +111,7 @@ fn main() {
     cbindgen::Builder::new()
         .with_config({
             let mut config = cbindgen::Config::default();
-            
+
             config.language = cbindgen::Language::JavaJna;
             config.braces = cbindgen::Braces::SameLine;
             config.style = cbindgen::Style::Both;

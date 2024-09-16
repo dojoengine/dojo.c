@@ -1505,7 +1505,7 @@ dependencies = [
 [[package]]
 name = "cbindgen"
 version = "0.27.0"
-source = "git+https://github.com/Larkooo/cbindgen?branch=java-jna-backend#2ef65faa30c7637e57f8eb14e365f970d8dce4c3"
+source = "git+https://github.com/Larkooo/cbindgen?branch=java-jna-backend#605c5fdfe60c0a6c612f24ef8337546bfdaa4a10"
 dependencies = [
  "clap",
  "heck 0.4.1",

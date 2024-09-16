@@ -363,7 +363,7 @@ interface Bindings extends Library {
       super(p);
     }
 
-    public byte[] data;
+    public byte[] data = new byte[32];
 
   }
 
@@ -377,7 +377,7 @@ interface Bindings extends Library {
       super(p);
     }
 
-    public byte[] data;
+    public byte[] data = new byte[32];
 
   }
 
@@ -572,13 +572,13 @@ interface Bindings extends Library {
     public short i16;
     public int i32;
     public long i64;
-    public byte[] i128;
+    public byte[] i128; = new byte[16];
     public byte u8;
     public short u16;
     public int u32;
     public long u64;
-    public byte[] u128;
-    public long[] u256;
+    public byte[] u128; = new byte[16];
+    public long[] u256; = new long[4];
     public int usize;
     public _Boolean bool;
     public FieldElement felt252;
@@ -618,13 +618,13 @@ interface Bindings extends Library {
     public short i16;
     public int i32;
     public long i64;
-    public byte[] i128;
+    public byte[] i128; = new byte[16];
     public byte u8;
     public short u16;
     public int u32;
     public long u64;
-    public byte[] u128;
-    public long[] u256;
+    public byte[] u128; = new byte[16];
+    public long[] u256; = new long[4];
     public int usize;
     public _Boolean bool;
     public FieldElement felt252;
