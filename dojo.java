@@ -22,8 +22,8 @@ interface Bindings extends Library {
     public BlockTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final BlockTag Latest = new BlockTag(1);
-    public static final BlockTag Pending = new BlockTag(2);
+    public static final BlockTag Latest = new BlockTag(0);
+    public static final BlockTag Pending = new BlockTag(1);
 
   }
 
@@ -63,12 +63,12 @@ interface Bindings extends Library {
     public ComparisonOperator(Pointer p) {
       this(p.getLong(0));
     }
-    public static final ComparisonOperator Eq = new ComparisonOperator(1);
-    public static final ComparisonOperator Neq = new ComparisonOperator(2);
-    public static final ComparisonOperator Gt = new ComparisonOperator(3);
-    public static final ComparisonOperator Gte = new ComparisonOperator(4);
-    public static final ComparisonOperator Lt = new ComparisonOperator(5);
-    public static final ComparisonOperator Lte = new ComparisonOperator(6);
+    public static final ComparisonOperator Eq = new ComparisonOperator(0);
+    public static final ComparisonOperator Neq = new ComparisonOperator(1);
+    public static final ComparisonOperator Gt = new ComparisonOperator(2);
+    public static final ComparisonOperator Gte = new ComparisonOperator(3);
+    public static final ComparisonOperator Lt = new ComparisonOperator(4);
+    public static final ComparisonOperator Lte = new ComparisonOperator(5);
 
   }
 
@@ -108,8 +108,8 @@ interface Bindings extends Library {
     public LogicalOperator(Pointer p) {
       this(p.getLong(0));
     }
-    public static final LogicalOperator And = new LogicalOperator(1);
-    public static final LogicalOperator Or = new LogicalOperator(2);
+    public static final LogicalOperator And = new LogicalOperator(0);
+    public static final LogicalOperator Or = new LogicalOperator(1);
 
   }
 
@@ -292,8 +292,8 @@ interface Bindings extends Library {
     public ResultToriiClientTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final ResultToriiClientTag OkToriiClient = new ResultToriiClientTag(1);
-    public static final ResultToriiClientTag ErrToriiClient = new ResultToriiClientTag(2);
+    public static final ResultToriiClientTag OkToriiClient = new ResultToriiClientTag(0);
+    public static final ResultToriiClientTag ErrToriiClient = new ResultToriiClientTag(1);
 
   }
 
@@ -427,8 +427,8 @@ interface Bindings extends Library {
     public ResultCArrayu8Tag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final ResultCArrayu8Tag OkCArrayu8 = new ResultCArrayu8Tag(1);
-    public static final ResultCArrayu8Tag ErrCArrayu8 = new ResultCArrayu8Tag(2);
+    public static final ResultCArrayu8Tag OkCArrayu8 = new ResultCArrayu8Tag(0);
+    public static final ResultCArrayu8Tag ErrCArrayu8 = new ResultCArrayu8Tag(1);
 
   }
 
@@ -500,22 +500,22 @@ interface Bindings extends Library {
     public PrimitiveTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final PrimitiveTag I8 = new PrimitiveTag(1);
-    public static final PrimitiveTag I16 = new PrimitiveTag(2);
-    public static final PrimitiveTag I32 = new PrimitiveTag(3);
-    public static final PrimitiveTag I64 = new PrimitiveTag(4);
-    public static final PrimitiveTag I128 = new PrimitiveTag(5);
-    public static final PrimitiveTag U8 = new PrimitiveTag(6);
-    public static final PrimitiveTag U16 = new PrimitiveTag(7);
-    public static final PrimitiveTag U32 = new PrimitiveTag(8);
-    public static final PrimitiveTag U64 = new PrimitiveTag(9);
-    public static final PrimitiveTag U128 = new PrimitiveTag(10);
-    public static final PrimitiveTag U256 = new PrimitiveTag(11);
-    public static final PrimitiveTag USize = new PrimitiveTag(12);
-    public static final PrimitiveTag Bool = new PrimitiveTag(13);
-    public static final PrimitiveTag Felt252 = new PrimitiveTag(14);
-    public static final PrimitiveTag ClassHash = new PrimitiveTag(15);
-    public static final PrimitiveTag ContractAddress = new PrimitiveTag(16);
+    public static final PrimitiveTag I8 = new PrimitiveTag(0);
+    public static final PrimitiveTag I16 = new PrimitiveTag(1);
+    public static final PrimitiveTag I32 = new PrimitiveTag(2);
+    public static final PrimitiveTag I64 = new PrimitiveTag(3);
+    public static final PrimitiveTag I128 = new PrimitiveTag(4);
+    public static final PrimitiveTag U8 = new PrimitiveTag(5);
+    public static final PrimitiveTag U16 = new PrimitiveTag(6);
+    public static final PrimitiveTag U32 = new PrimitiveTag(7);
+    public static final PrimitiveTag U64 = new PrimitiveTag(8);
+    public static final PrimitiveTag U128 = new PrimitiveTag(9);
+    public static final PrimitiveTag U256 = new PrimitiveTag(10);
+    public static final PrimitiveTag USize = new PrimitiveTag(11);
+    public static final PrimitiveTag Bool = new PrimitiveTag(12);
+    public static final PrimitiveTag Felt252 = new PrimitiveTag(13);
+    public static final PrimitiveTag ClassHash = new PrimitiveTag(14);
+    public static final PrimitiveTag ContractAddress = new PrimitiveTag(15);
 
   }
 
@@ -777,12 +777,12 @@ interface Bindings extends Library {
     public TyTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final TyTag Primitive_ = new TyTag(1);
-    public static final TyTag Struct_ = new TyTag(2);
-    public static final TyTag Enum_ = new TyTag(3);
-    public static final TyTag Tuple_ = new TyTag(4);
-    public static final TyTag Array_ = new TyTag(5);
-    public static final TyTag ByteArray = new TyTag(6);
+    public static final TyTag Primitive_ = new TyTag(0);
+    public static final TyTag Struct_ = new TyTag(1);
+    public static final TyTag Enum_ = new TyTag(2);
+    public static final TyTag Tuple_ = new TyTag(3);
+    public static final TyTag Array_ = new TyTag(4);
+    public static final TyTag ByteArray = new TyTag(5);
 
   }
 
@@ -1056,8 +1056,8 @@ interface Bindings extends Library {
     public ResultCArrayEntityTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final ResultCArrayEntityTag OkCArrayEntity = new ResultCArrayEntityTag(1);
-    public static final ResultCArrayEntityTag ErrCArrayEntity = new ResultCArrayEntityTag(2);
+    public static final ResultCArrayEntityTag OkCArrayEntity = new ResultCArrayEntityTag(0);
+    public static final ResultCArrayEntityTag ErrCArrayEntity = new ResultCArrayEntityTag(1);
 
   }
 
@@ -1129,8 +1129,8 @@ interface Bindings extends Library {
     public COptionFieldElementTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final COptionFieldElementTag SomeFieldElement = new COptionFieldElementTag(1);
-    public static final COptionFieldElementTag NoneFieldElement = new COptionFieldElementTag(2);
+    public static final COptionFieldElementTag SomeFieldElement = new COptionFieldElementTag(0);
+    public static final COptionFieldElementTag NoneFieldElement = new COptionFieldElementTag(1);
 
   }
 
@@ -1398,9 +1398,9 @@ interface Bindings extends Library {
     public ClauseTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final ClauseTag Keys = new ClauseTag(1);
-    public static final ClauseTag CMember = new ClauseTag(2);
-    public static final ClauseTag Composite = new ClauseTag(3);
+    public static final ClauseTag Keys = new ClauseTag(0);
+    public static final ClauseTag CMember = new ClauseTag(1);
+    public static final ClauseTag Composite = new ClauseTag(2);
 
   }
 
@@ -1474,8 +1474,8 @@ interface Bindings extends Library {
     public COptionClauseTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final COptionClauseTag SomeClause = new COptionClauseTag(1);
-    public static final COptionClauseTag NoneClause = new COptionClauseTag(2);
+    public static final COptionClauseTag SomeClause = new COptionClauseTag(0);
+    public static final COptionClauseTag NoneClause = new COptionClauseTag(1);
 
   }
 
@@ -1765,8 +1765,8 @@ interface Bindings extends Library {
     public ResultSubscriptionTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final ResultSubscriptionTag OkSubscription = new ResultSubscriptionTag(1);
-    public static final ResultSubscriptionTag ErrSubscription = new ResultSubscriptionTag(2);
+    public static final ResultSubscriptionTag OkSubscription = new ResultSubscriptionTag(0);
+    public static final ResultSubscriptionTag ErrSubscription = new ResultSubscriptionTag(1);
 
   }
 
@@ -1838,8 +1838,8 @@ interface Bindings extends Library {
     public EntityKeysClauseTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final EntityKeysClauseTag HashedKeys = new EntityKeysClauseTag(1);
-    public static final EntityKeysClauseTag EntityKeys = new EntityKeysClauseTag(2);
+    public static final EntityKeysClauseTag HashedKeys = new EntityKeysClauseTag(0);
+    public static final EntityKeysClauseTag EntityKeys = new EntityKeysClauseTag(1);
 
   }
 
@@ -1911,8 +1911,8 @@ interface Bindings extends Library {
     public ResultboolTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final ResultboolTag Okbool = new ResultboolTag(1);
-    public static final ResultboolTag Errbool = new ResultboolTag(2);
+    public static final ResultboolTag Okbool = new ResultboolTag(0);
+    public static final ResultboolTag Errbool = new ResultboolTag(1);
 
   }
 
@@ -1984,8 +1984,8 @@ interface Bindings extends Library {
     public ResultCArrayFieldElementTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final ResultCArrayFieldElementTag OkCArrayFieldElement = new ResultCArrayFieldElementTag(1);
-    public static final ResultCArrayFieldElementTag ErrCArrayFieldElement = new ResultCArrayFieldElementTag(2);
+    public static final ResultCArrayFieldElementTag OkCArrayFieldElement = new ResultCArrayFieldElementTag(0);
+    public static final ResultCArrayFieldElementTag ErrCArrayFieldElement = new ResultCArrayFieldElementTag(1);
 
   }
 
@@ -2057,8 +2057,8 @@ interface Bindings extends Library {
     public Resultc_charTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final Resultc_charTag Okc_char = new Resultc_charTag(1);
-    public static final Resultc_charTag Errc_char = new Resultc_charTag(2);
+    public static final Resultc_charTag Okc_char = new Resultc_charTag(0);
+    public static final Resultc_charTag Errc_char = new Resultc_charTag(1);
 
   }
 
@@ -2130,8 +2130,8 @@ interface Bindings extends Library {
     public ResultFieldElementTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final ResultFieldElementTag OkFieldElement = new ResultFieldElementTag(1);
-    public static final ResultFieldElementTag ErrFieldElement = new ResultFieldElementTag(2);
+    public static final ResultFieldElementTag OkFieldElement = new ResultFieldElementTag(0);
+    public static final ResultFieldElementTag ErrFieldElement = new ResultFieldElementTag(1);
 
   }
 
@@ -2251,8 +2251,8 @@ interface Bindings extends Library {
     public ResultSignatureTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final ResultSignatureTag OkSignature = new ResultSignatureTag(1);
-    public static final ResultSignatureTag ErrSignature = new ResultSignatureTag(2);
+    public static final ResultSignatureTag OkSignature = new ResultSignatureTag(0);
+    public static final ResultSignatureTag ErrSignature = new ResultSignatureTag(1);
 
   }
 
@@ -2324,8 +2324,8 @@ interface Bindings extends Library {
     public ResultProviderTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final ResultProviderTag OkProvider = new ResultProviderTag(1);
-    public static final ResultProviderTag ErrProvider = new ResultProviderTag(2);
+    public static final ResultProviderTag OkProvider = new ResultProviderTag(0);
+    public static final ResultProviderTag ErrProvider = new ResultProviderTag(1);
 
   }
 
@@ -2397,8 +2397,8 @@ interface Bindings extends Library {
     public ResultAccountTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final ResultAccountTag OkAccount = new ResultAccountTag(1);
-    public static final ResultAccountTag ErrAccount = new ResultAccountTag(2);
+    public static final ResultAccountTag OkAccount = new ResultAccountTag(0);
+    public static final ResultAccountTag ErrAccount = new ResultAccountTag(1);
 
   }
 
@@ -2508,9 +2508,9 @@ interface Bindings extends Library {
     public BlockIdTag(Pointer p) {
       this(p.getLong(0));
     }
-    public static final BlockIdTag Hash = new BlockIdTag(1);
-    public static final BlockIdTag Number = new BlockIdTag(2);
-    public static final BlockIdTag BlockTag_ = new BlockIdTag(3);
+    public static final BlockIdTag Hash = new BlockIdTag(0);
+    public static final BlockIdTag Number = new BlockIdTag(1);
+    public static final BlockIdTag BlockTag_ = new BlockIdTag(2);
 
   }
 
