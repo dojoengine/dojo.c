@@ -3,7 +3,7 @@ import com.sun.jna.ptr.*;
 
 enum BindingsSingleton {
   INSTANCE;
-  final Bindings lib = Native.load("dojo-c", Bindings.class);
+  final Bindings lib = Native.load("dojo_c", Bindings.class);
 }
 
 interface Bindings extends Library {
@@ -12,15 +12,15 @@ interface Bindings extends Library {
 
   class BlockTag extends IntegerType {
     public BlockTag() {
-      super(4, true);
+      super(8, true);
     }
 
     public BlockTag(long value) {
-      super(4, value, true);
+      super(8, value, true);
     }
 
     public BlockTag(Pointer p) {
-      this(p.getInt(0));
+      this(p.getLong(0));
     }
     public static final BlockTag Latest = new BlockTag(1);
     public static final BlockTag Pending = new BlockTag(2);
@@ -29,22 +29,22 @@ interface Bindings extends Library {
 
   class BlockTagByReference extends ByReference {
     public BlockTagByReference() {
-      super(4);
+      super(8);
     }
 
     public BlockTagByReference(Pointer p) {
-      super(4);
+      super(8);
       setPointer(p);
     }
 
     public BlockTag getValue() {
       Pointer p = getPointer();
-      return new BlockTag(p.getInt(0));
+      return new BlockTag(p.getLong(0));
     }
 
     public void setValue(BlockTag value) {
       Pointer p = getPointer();
-      p.setInt(0, value.intValue());
+      p.setLong(0, value.longValue());
     }
 
   }
@@ -53,15 +53,15 @@ interface Bindings extends Library {
 
   class ComparisonOperator extends IntegerType {
     public ComparisonOperator() {
-      super(4, true);
+      super(8, true);
     }
 
     public ComparisonOperator(long value) {
-      super(4, value, true);
+      super(8, value, true);
     }
 
     public ComparisonOperator(Pointer p) {
-      this(p.getInt(0));
+      this(p.getLong(0));
     }
     public static final ComparisonOperator Eq = new ComparisonOperator(1);
     public static final ComparisonOperator Neq = new ComparisonOperator(2);
@@ -74,22 +74,22 @@ interface Bindings extends Library {
 
   class ComparisonOperatorByReference extends ByReference {
     public ComparisonOperatorByReference() {
-      super(4);
+      super(8);
     }
 
     public ComparisonOperatorByReference(Pointer p) {
-      super(4);
+      super(8);
       setPointer(p);
     }
 
     public ComparisonOperator getValue() {
       Pointer p = getPointer();
-      return new ComparisonOperator(p.getInt(0));
+      return new ComparisonOperator(p.getLong(0));
     }
 
     public void setValue(ComparisonOperator value) {
       Pointer p = getPointer();
-      p.setInt(0, value.intValue());
+      p.setLong(0, value.longValue());
     }
 
   }
@@ -98,15 +98,15 @@ interface Bindings extends Library {
 
   class LogicalOperator extends IntegerType {
     public LogicalOperator() {
-      super(4, true);
+      super(8, true);
     }
 
     public LogicalOperator(long value) {
-      super(4, value, true);
+      super(8, value, true);
     }
 
     public LogicalOperator(Pointer p) {
-      this(p.getInt(0));
+      this(p.getLong(0));
     }
     public static final LogicalOperator And = new LogicalOperator(1);
     public static final LogicalOperator Or = new LogicalOperator(2);
@@ -115,22 +115,22 @@ interface Bindings extends Library {
 
   class LogicalOperatorByReference extends ByReference {
     public LogicalOperatorByReference() {
-      super(4);
+      super(8);
     }
 
     public LogicalOperatorByReference(Pointer p) {
-      super(4);
+      super(8);
       setPointer(p);
     }
 
     public LogicalOperator getValue() {
       Pointer p = getPointer();
-      return new LogicalOperator(p.getInt(0));
+      return new LogicalOperator(p.getLong(0));
     }
 
     public void setValue(LogicalOperator value) {
       Pointer p = getPointer();
-      p.setInt(0, value.intValue());
+      p.setLong(0, value.longValue());
     }
 
   }
@@ -139,15 +139,15 @@ interface Bindings extends Library {
 
   class PatternMatching extends IntegerType {
     public PatternMatching() {
-      super(4, true);
+      super(8, true);
     }
 
     public PatternMatching(long value) {
-      super(4, value, true);
+      super(8, value, true);
     }
 
     public PatternMatching(Pointer p) {
-      this(p.getInt(0));
+      this(p.getLong(0));
     }
     public static final PatternMatching FixedLen = new PatternMatching(0);
     public static final PatternMatching VariableLen = new PatternMatching(1);
@@ -156,22 +156,22 @@ interface Bindings extends Library {
 
   class PatternMatchingByReference extends ByReference {
     public PatternMatchingByReference() {
-      super(4);
+      super(8);
     }
 
     public PatternMatchingByReference(Pointer p) {
-      super(4);
+      super(8);
       setPointer(p);
     }
 
     public PatternMatching getValue() {
       Pointer p = getPointer();
-      return new PatternMatching(p.getInt(0));
+      return new PatternMatching(p.getLong(0));
     }
 
     public void setValue(PatternMatching value) {
       Pointer p = getPointer();
-      p.setInt(0, value.intValue());
+      p.setLong(0, value.longValue());
     }
 
   }
@@ -280,42 +280,74 @@ interface Bindings extends Library {
 
 
 
-  class ResultToriiClient extends IntegerType {
-    public ResultToriiClient() {
-      super(4, true);
+  class ResultToriiClientTag extends IntegerType {
+    public ResultToriiClientTag() {
+      super(8, true);
     }
 
-    public ResultToriiClient(long value) {
-      super(4, value, true);
+    public ResultToriiClientTag(long value) {
+      super(8, value, true);
     }
 
-    public ResultToriiClient(Pointer p) {
-      this(p.getInt(0));
+    public ResultToriiClientTag(Pointer p) {
+      this(p.getLong(0));
     }
-    public static final ResultToriiClient OkToriiClient = new ResultToriiClient(1);
-    public static final ResultToriiClient ErrToriiClient = new ResultToriiClient(2);
+    public static final ResultToriiClientTag OkToriiClient = new ResultToriiClientTag(1);
+    public static final ResultToriiClientTag ErrToriiClient = new ResultToriiClientTag(2);
 
   }
 
-  class ResultToriiClientByReference extends ByReference {
-    public ResultToriiClientByReference() {
-      super(4);
+  class ResultToriiClientTagByReference extends ByReference {
+    public ResultToriiClientTagByReference() {
+      super(8);
     }
 
-    public ResultToriiClientByReference(Pointer p) {
-      super(4);
+    public ResultToriiClientTagByReference(Pointer p) {
+      super(8);
       setPointer(p);
     }
 
-    public ResultToriiClient getValue() {
+    public ResultToriiClientTag getValue() {
       Pointer p = getPointer();
-      return new ResultToriiClient(p.getInt(0));
+      return new ResultToriiClientTag(p.getLong(0));
     }
 
-    public void setValue(ResultToriiClient value) {
+    public void setValue(ResultToriiClientTag value) {
       Pointer p = getPointer();
-      p.setInt(0, value.intValue());
+      p.setLong(0, value.longValue());
     }
+
+  }
+
+  @Structure.FieldOrder({"tag", "oktoriiclient", "errtoriiclient"})
+  class ResultToriiClient extends Structure implements Structure.ByValue {
+    public ResultToriiClient() {
+      super();
+    }
+
+    public ResultToriiClient(Pointer p) {
+      super(p);
+    }
+
+    public ResultToriiClientTag tag;
+    public ToriiClientByReference oktoriiclient;
+    public Error errtoriiclient;
+
+  }
+
+  @Structure.FieldOrder({"tag", "oktoriiclient", "errtoriiclient"})
+  class ResultToriiClientByReference extends Structure implements Structure.ByReference {
+    public ResultToriiClientByReference() {
+      super();
+    }
+
+    public ResultToriiClientByReference(Pointer p) {
+      super(p);
+    }
+
+    public ResultToriiClientTag tag;
+    public ToriiClientByReference oktoriiclient;
+    public Error errtoriiclient;
 
   }
 
@@ -383,98 +415,221 @@ interface Bindings extends Library {
 
 
 
-  class ResultCArrayu8 extends IntegerType {
-    public ResultCArrayu8() {
-      super(4, true);
+  class ResultCArrayu8Tag extends IntegerType {
+    public ResultCArrayu8Tag() {
+      super(8, true);
     }
 
-    public ResultCArrayu8(long value) {
-      super(4, value, true);
+    public ResultCArrayu8Tag(long value) {
+      super(8, value, true);
+    }
+
+    public ResultCArrayu8Tag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final ResultCArrayu8Tag OkCArrayu8 = new ResultCArrayu8Tag(1);
+    public static final ResultCArrayu8Tag ErrCArrayu8 = new ResultCArrayu8Tag(2);
+
+  }
+
+  class ResultCArrayu8TagByReference extends ByReference {
+    public ResultCArrayu8TagByReference() {
+      super(8);
+    }
+
+    public ResultCArrayu8TagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public ResultCArrayu8Tag getValue() {
+      Pointer p = getPointer();
+      return new ResultCArrayu8Tag(p.getLong(0));
+    }
+
+    public void setValue(ResultCArrayu8Tag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "okcarrayu8", "errcarrayu8"})
+  class ResultCArrayu8 extends Structure implements Structure.ByValue {
+    public ResultCArrayu8() {
+      super();
     }
 
     public ResultCArrayu8(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final ResultCArrayu8 OkCArrayu8 = new ResultCArrayu8(1);
-    public static final ResultCArrayu8 ErrCArrayu8 = new ResultCArrayu8(2);
+
+    public ResultCArrayu8Tag tag;
+    public CArrayu8 okcarrayu8;
+    public Error errcarrayu8;
 
   }
 
-  class ResultCArrayu8ByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "okcarrayu8", "errcarrayu8"})
+  class ResultCArrayu8ByReference extends Structure implements Structure.ByReference {
     public ResultCArrayu8ByReference() {
-      super(4);
+      super();
     }
 
     public ResultCArrayu8ByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public ResultCArrayu8 getValue() {
-      Pointer p = getPointer();
-      return new ResultCArrayu8(p.getInt(0));
-    }
-
-    public void setValue(ResultCArrayu8 value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public ResultCArrayu8Tag tag;
+    public CArrayu8 okcarrayu8;
+    public Error errcarrayu8;
 
   }
 
 
 
-  class Primitive extends IntegerType {
-    public Primitive() {
-      super(4, true);
+  class PrimitiveTag extends IntegerType {
+    public PrimitiveTag() {
+      super(8, true);
     }
 
-    public Primitive(long value) {
-      super(4, value, true);
+    public PrimitiveTag(long value) {
+      super(8, value, true);
+    }
+
+    public PrimitiveTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final PrimitiveTag I8 = new PrimitiveTag(1);
+    public static final PrimitiveTag I16 = new PrimitiveTag(2);
+    public static final PrimitiveTag I32 = new PrimitiveTag(3);
+    public static final PrimitiveTag I64 = new PrimitiveTag(4);
+    public static final PrimitiveTag I128 = new PrimitiveTag(5);
+    public static final PrimitiveTag U8 = new PrimitiveTag(6);
+    public static final PrimitiveTag U16 = new PrimitiveTag(7);
+    public static final PrimitiveTag U32 = new PrimitiveTag(8);
+    public static final PrimitiveTag U64 = new PrimitiveTag(9);
+    public static final PrimitiveTag U128 = new PrimitiveTag(10);
+    public static final PrimitiveTag U256 = new PrimitiveTag(11);
+    public static final PrimitiveTag USize = new PrimitiveTag(12);
+    public static final PrimitiveTag Bool = new PrimitiveTag(13);
+    public static final PrimitiveTag Felt252 = new PrimitiveTag(14);
+    public static final PrimitiveTag ClassHash = new PrimitiveTag(15);
+    public static final PrimitiveTag ContractAddress = new PrimitiveTag(16);
+
+  }
+
+  class PrimitiveTagByReference extends ByReference {
+    public PrimitiveTagByReference() {
+      super(8);
+    }
+
+    public PrimitiveTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public PrimitiveTag getValue() {
+      Pointer p = getPointer();
+      return new PrimitiveTag(p.getLong(0));
+    }
+
+    public void setValue(PrimitiveTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag",
+                         "i8",
+                         "i16",
+                         "i32",
+                         "i64",
+                         "i128",
+                         "u8",
+                         "u16",
+                         "u32",
+                         "u64",
+                         "u128",
+                         "u256",
+                         "usize",
+                         "bool",
+                         "felt252",
+                         "classhash",
+                         "contractaddress"})
+  class Primitive extends Structure implements Structure.ByValue {
+    public Primitive() {
+      super();
     }
 
     public Primitive(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final Primitive I8 = new Primitive(1);
-    public static final Primitive I16 = new Primitive(2);
-    public static final Primitive I32 = new Primitive(3);
-    public static final Primitive I64 = new Primitive(4);
-    public static final Primitive I128 = new Primitive(5);
-    public static final Primitive U8 = new Primitive(6);
-    public static final Primitive U16 = new Primitive(7);
-    public static final Primitive U32 = new Primitive(8);
-    public static final Primitive U64 = new Primitive(9);
-    public static final Primitive U128 = new Primitive(10);
-    public static final Primitive U256 = new Primitive(11);
-    public static final Primitive U256 = new Primitive(12);
-    public static final Primitive USize = new Primitive(13);
-    public static final Primitive Bool = new Primitive(14);
-    public static final Primitive Felt252 = new Primitive(15);
-    public static final Primitive ClassHash = new Primitive(16);
-    public static final Primitive ContractAddress = new Primitive(17);
+
+    public PrimitiveTag tag;
+    public byte i8;
+    public short i16;
+    public int i32;
+    public long i64;
+    public byte[] i128;
+    public byte u8;
+    public short u16;
+    public int u32;
+    public long u64;
+    public byte[] u128;
+    public long[] u256;
+    public int usize;
+    public _Boolean bool;
+    public FieldElement felt252;
+    public FieldElement classhash;
+    public FieldElement contractaddress;
 
   }
 
-  class PrimitiveByReference extends ByReference {
+  @Structure.FieldOrder({"tag",
+                         "i8",
+                         "i16",
+                         "i32",
+                         "i64",
+                         "i128",
+                         "u8",
+                         "u16",
+                         "u32",
+                         "u64",
+                         "u128",
+                         "u256",
+                         "usize",
+                         "bool",
+                         "felt252",
+                         "classhash",
+                         "contractaddress"})
+  class PrimitiveByReference extends Structure implements Structure.ByReference {
     public PrimitiveByReference() {
-      super(4);
+      super();
     }
 
     public PrimitiveByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public Primitive getValue() {
-      Pointer p = getPointer();
-      return new Primitive(p.getInt(0));
-    }
-
-    public void setValue(Primitive value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public PrimitiveTag tag;
+    public byte i8;
+    public short i16;
+    public int i32;
+    public long i64;
+    public byte[] i128;
+    public byte u8;
+    public short u16;
+    public int u32;
+    public long u64;
+    public byte[] u128;
+    public long[] u256;
+    public int usize;
+    public _Boolean bool;
+    public FieldElement felt252;
+    public FieldElement classhash;
+    public FieldElement contractaddress;
 
   }
 
@@ -610,46 +765,86 @@ interface Bindings extends Library {
 
 
 
-  class Ty extends IntegerType {
-    public Ty() {
-      super(4, true);
+  class TyTag extends IntegerType {
+    public TyTag() {
+      super(8, true);
     }
 
-    public Ty(long value) {
-      super(4, value, true);
+    public TyTag(long value) {
+      super(8, value, true);
     }
 
-    public Ty(Pointer p) {
-      this(p.getInt(0));
+    public TyTag(Pointer p) {
+      this(p.getLong(0));
     }
-    public static final Ty Primitive_ = new Ty(1);
-    public static final Ty Struct_ = new Ty(2);
-    public static final Ty Enum_ = new Ty(3);
-    public static final Ty Tuple_ = new Ty(4);
-    public static final Ty Array_ = new Ty(5);
-    public static final Ty ByteArray = new Ty(6);
+    public static final TyTag Primitive_ = new TyTag(1);
+    public static final TyTag Struct_ = new TyTag(2);
+    public static final TyTag Enum_ = new TyTag(3);
+    public static final TyTag Tuple_ = new TyTag(4);
+    public static final TyTag Array_ = new TyTag(5);
+    public static final TyTag ByteArray = new TyTag(6);
 
   }
 
-  class TyByReference extends ByReference {
-    public TyByReference() {
-      super(4);
+  class TyTagByReference extends ByReference {
+    public TyTagByReference() {
+      super(8);
     }
 
-    public TyByReference(Pointer p) {
-      super(4);
+    public TyTagByReference(Pointer p) {
+      super(8);
       setPointer(p);
     }
 
-    public Ty getValue() {
+    public TyTag getValue() {
       Pointer p = getPointer();
-      return new Ty(p.getInt(0));
+      return new TyTag(p.getLong(0));
     }
 
-    public void setValue(Ty value) {
+    public void setValue(TyTag value) {
       Pointer p = getPointer();
-      p.setInt(0, value.intValue());
+      p.setLong(0, value.longValue());
     }
+
+  }
+
+  @Structure.FieldOrder({"tag", "primitive_", "struct_", "enum_", "tuple_", "array_", "bytearray"})
+  class Ty extends Structure implements Structure.ByValue {
+    public Ty() {
+      super();
+    }
+
+    public Ty(Pointer p) {
+      super(p);
+    }
+
+    public TyTag tag;
+    public Primitive primitive_;
+    public Struct struct_;
+    public Enum enum_;
+    public CArrayTy tuple_;
+    public CArrayTy array_;
+    public ByteByReference bytearray;
+
+  }
+
+  @Structure.FieldOrder({"tag", "primitive_", "struct_", "enum_", "tuple_", "array_", "bytearray"})
+  class TyByReference extends Structure implements Structure.ByReference {
+    public TyByReference() {
+      super();
+    }
+
+    public TyByReference(Pointer p) {
+      super(p);
+    }
+
+    public TyTag tag;
+    public Primitive primitive_;
+    public Struct struct_;
+    public Enum enum_;
+    public CArrayTy tuple_;
+    public CArrayTy array_;
+    public ByteByReference bytearray;
 
   }
 
@@ -849,83 +1044,145 @@ interface Bindings extends Library {
 
 
 
-  class ResultCArrayEntity extends IntegerType {
-    public ResultCArrayEntity() {
-      super(4, true);
+  class ResultCArrayEntityTag extends IntegerType {
+    public ResultCArrayEntityTag() {
+      super(8, true);
     }
 
-    public ResultCArrayEntity(long value) {
-      super(4, value, true);
+    public ResultCArrayEntityTag(long value) {
+      super(8, value, true);
+    }
+
+    public ResultCArrayEntityTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final ResultCArrayEntityTag OkCArrayEntity = new ResultCArrayEntityTag(1);
+    public static final ResultCArrayEntityTag ErrCArrayEntity = new ResultCArrayEntityTag(2);
+
+  }
+
+  class ResultCArrayEntityTagByReference extends ByReference {
+    public ResultCArrayEntityTagByReference() {
+      super(8);
+    }
+
+    public ResultCArrayEntityTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public ResultCArrayEntityTag getValue() {
+      Pointer p = getPointer();
+      return new ResultCArrayEntityTag(p.getLong(0));
+    }
+
+    public void setValue(ResultCArrayEntityTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "okcarrayentity", "errcarrayentity"})
+  class ResultCArrayEntity extends Structure implements Structure.ByValue {
+    public ResultCArrayEntity() {
+      super();
     }
 
     public ResultCArrayEntity(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final ResultCArrayEntity OkCArrayEntity = new ResultCArrayEntity(1);
-    public static final ResultCArrayEntity ErrCArrayEntity = new ResultCArrayEntity(2);
+
+    public ResultCArrayEntityTag tag;
+    public CArrayEntity okcarrayentity;
+    public Error errcarrayentity;
 
   }
 
-  class ResultCArrayEntityByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "okcarrayentity", "errcarrayentity"})
+  class ResultCArrayEntityByReference extends Structure implements Structure.ByReference {
     public ResultCArrayEntityByReference() {
-      super(4);
+      super();
     }
 
     public ResultCArrayEntityByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public ResultCArrayEntity getValue() {
-      Pointer p = getPointer();
-      return new ResultCArrayEntity(p.getInt(0));
-    }
-
-    public void setValue(ResultCArrayEntity value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public ResultCArrayEntityTag tag;
+    public CArrayEntity okcarrayentity;
+    public Error errcarrayentity;
 
   }
 
 
 
-  class COptionFieldElement extends IntegerType {
-    public COptionFieldElement() {
-      super(4, true);
+  class COptionFieldElementTag extends IntegerType {
+    public COptionFieldElementTag() {
+      super(8, true);
     }
 
-    public COptionFieldElement(long value) {
-      super(4, value, true);
+    public COptionFieldElementTag(long value) {
+      super(8, value, true);
+    }
+
+    public COptionFieldElementTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final COptionFieldElementTag SomeFieldElement = new COptionFieldElementTag(1);
+    public static final COptionFieldElementTag NoneFieldElement = new COptionFieldElementTag(2);
+
+  }
+
+  class COptionFieldElementTagByReference extends ByReference {
+    public COptionFieldElementTagByReference() {
+      super(8);
+    }
+
+    public COptionFieldElementTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public COptionFieldElementTag getValue() {
+      Pointer p = getPointer();
+      return new COptionFieldElementTag(p.getLong(0));
+    }
+
+    public void setValue(COptionFieldElementTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "somefieldelement"})
+  class COptionFieldElement extends Structure implements Structure.ByValue {
+    public COptionFieldElement() {
+      super();
     }
 
     public COptionFieldElement(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final COptionFieldElement SomeFieldElement = new COptionFieldElement(1);
-    public static final COptionFieldElement NoneFieldElement = new COptionFieldElement(2);
+
+    public COptionFieldElementTag tag;
+    public FieldElement somefieldelement;
 
   }
 
-  class COptionFieldElementByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "somefieldelement"})
+  class COptionFieldElementByReference extends Structure implements Structure.ByReference {
     public COptionFieldElementByReference() {
-      super(4);
+      super();
     }
 
     public COptionFieldElementByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public COptionFieldElement getValue() {
-      Pointer p = getPointer();
-      return new COptionFieldElement(p.getInt(0));
-    }
-
-    public void setValue(COptionFieldElement value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public COptionFieldElementTag tag;
+    public FieldElement somefieldelement;
 
   }
 
@@ -1129,84 +1386,148 @@ interface Bindings extends Library {
 
 
 
-  class Clause extends IntegerType {
-    public Clause() {
-      super(4, true);
+  class ClauseTag extends IntegerType {
+    public ClauseTag() {
+      super(8, true);
     }
 
-    public Clause(long value) {
-      super(4, value, true);
+    public ClauseTag(long value) {
+      super(8, value, true);
+    }
+
+    public ClauseTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final ClauseTag Keys = new ClauseTag(1);
+    public static final ClauseTag CMember = new ClauseTag(2);
+    public static final ClauseTag Composite = new ClauseTag(3);
+
+  }
+
+  class ClauseTagByReference extends ByReference {
+    public ClauseTagByReference() {
+      super(8);
+    }
+
+    public ClauseTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public ClauseTag getValue() {
+      Pointer p = getPointer();
+      return new ClauseTag(p.getLong(0));
+    }
+
+    public void setValue(ClauseTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "keys", "cmember", "composite"})
+  class Clause extends Structure implements Structure.ByValue {
+    public Clause() {
+      super();
     }
 
     public Clause(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final Clause Keys = new Clause(1);
-    public static final Clause CMember = new Clause(2);
-    public static final Clause Composite = new Clause(3);
+
+    public ClauseTag tag;
+    public KeysClause keys;
+    public MemberClause cmember;
+    public CompositeClause composite;
 
   }
 
-  class ClauseByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "keys", "cmember", "composite"})
+  class ClauseByReference extends Structure implements Structure.ByReference {
     public ClauseByReference() {
-      super(4);
+      super();
     }
 
     public ClauseByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public Clause getValue() {
-      Pointer p = getPointer();
-      return new Clause(p.getInt(0));
-    }
-
-    public void setValue(Clause value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public ClauseTag tag;
+    public KeysClause keys;
+    public MemberClause cmember;
+    public CompositeClause composite;
 
   }
 
 
 
-  class COptionClause extends IntegerType {
-    public COptionClause() {
-      super(4, true);
+  class COptionClauseTag extends IntegerType {
+    public COptionClauseTag() {
+      super(8, true);
     }
 
-    public COptionClause(long value) {
-      super(4, value, true);
+    public COptionClauseTag(long value) {
+      super(8, value, true);
+    }
+
+    public COptionClauseTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final COptionClauseTag SomeClause = new COptionClauseTag(1);
+    public static final COptionClauseTag NoneClause = new COptionClauseTag(2);
+
+  }
+
+  class COptionClauseTagByReference extends ByReference {
+    public COptionClauseTagByReference() {
+      super(8);
+    }
+
+    public COptionClauseTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public COptionClauseTag getValue() {
+      Pointer p = getPointer();
+      return new COptionClauseTag(p.getLong(0));
+    }
+
+    public void setValue(COptionClauseTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "someclause"})
+  class COptionClause extends Structure implements Structure.ByValue {
+    public COptionClause() {
+      super();
     }
 
     public COptionClause(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final COptionClause SomeClause = new COptionClause(1);
-    public static final COptionClause NoneClause = new COptionClause(2);
+
+    public COptionClauseTag tag;
+    public Clause someclause;
 
   }
 
-  class COptionClauseByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "someclause"})
+  class COptionClauseByReference extends Structure implements Structure.ByReference {
     public COptionClauseByReference() {
-      super(4);
+      super();
     }
 
     public COptionClauseByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public COptionClause getValue() {
-      Pointer p = getPointer();
-      return new COptionClause(p.getInt(0));
-    }
-
-    public void setValue(COptionClause value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public COptionClauseTag tag;
+    public Clause someclause;
 
   }
 
@@ -1432,247 +1753,439 @@ interface Bindings extends Library {
 
 
 
-  class ResultSubscription extends IntegerType {
-    public ResultSubscription() {
-      super(4, true);
+  class ResultSubscriptionTag extends IntegerType {
+    public ResultSubscriptionTag() {
+      super(8, true);
     }
 
-    public ResultSubscription(long value) {
-      super(4, value, true);
+    public ResultSubscriptionTag(long value) {
+      super(8, value, true);
+    }
+
+    public ResultSubscriptionTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final ResultSubscriptionTag OkSubscription = new ResultSubscriptionTag(1);
+    public static final ResultSubscriptionTag ErrSubscription = new ResultSubscriptionTag(2);
+
+  }
+
+  class ResultSubscriptionTagByReference extends ByReference {
+    public ResultSubscriptionTagByReference() {
+      super(8);
+    }
+
+    public ResultSubscriptionTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public ResultSubscriptionTag getValue() {
+      Pointer p = getPointer();
+      return new ResultSubscriptionTag(p.getLong(0));
+    }
+
+    public void setValue(ResultSubscriptionTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "oksubscription", "errsubscription"})
+  class ResultSubscription extends Structure implements Structure.ByValue {
+    public ResultSubscription() {
+      super();
     }
 
     public ResultSubscription(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final ResultSubscription OkSubscription = new ResultSubscription(1);
-    public static final ResultSubscription ErrSubscription = new ResultSubscription(2);
+
+    public ResultSubscriptionTag tag;
+    public SubscriptionByReference oksubscription;
+    public Error errsubscription;
 
   }
 
-  class ResultSubscriptionByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "oksubscription", "errsubscription"})
+  class ResultSubscriptionByReference extends Structure implements Structure.ByReference {
     public ResultSubscriptionByReference() {
-      super(4);
+      super();
     }
 
     public ResultSubscriptionByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public ResultSubscription getValue() {
-      Pointer p = getPointer();
-      return new ResultSubscription(p.getInt(0));
-    }
-
-    public void setValue(ResultSubscription value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public ResultSubscriptionTag tag;
+    public SubscriptionByReference oksubscription;
+    public Error errsubscription;
 
   }
 
 
 
-  class EntityKeysClause extends IntegerType {
-    public EntityKeysClause() {
-      super(4, true);
+  class EntityKeysClauseTag extends IntegerType {
+    public EntityKeysClauseTag() {
+      super(8, true);
     }
 
-    public EntityKeysClause(long value) {
-      super(4, value, true);
+    public EntityKeysClauseTag(long value) {
+      super(8, value, true);
+    }
+
+    public EntityKeysClauseTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final EntityKeysClauseTag HashedKeys = new EntityKeysClauseTag(1);
+    public static final EntityKeysClauseTag EntityKeys = new EntityKeysClauseTag(2);
+
+  }
+
+  class EntityKeysClauseTagByReference extends ByReference {
+    public EntityKeysClauseTagByReference() {
+      super(8);
+    }
+
+    public EntityKeysClauseTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public EntityKeysClauseTag getValue() {
+      Pointer p = getPointer();
+      return new EntityKeysClauseTag(p.getLong(0));
+    }
+
+    public void setValue(EntityKeysClauseTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "hashedkeys", "entitykeys"})
+  class EntityKeysClause extends Structure implements Structure.ByValue {
+    public EntityKeysClause() {
+      super();
     }
 
     public EntityKeysClause(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final EntityKeysClause HashedKeys = new EntityKeysClause(1);
-    public static final EntityKeysClause EntityKeys = new EntityKeysClause(2);
+
+    public EntityKeysClauseTag tag;
+    public CArrayFieldElement hashedkeys;
+    public KeysClause entitykeys;
 
   }
 
-  class EntityKeysClauseByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "hashedkeys", "entitykeys"})
+  class EntityKeysClauseByReference extends Structure implements Structure.ByReference {
     public EntityKeysClauseByReference() {
-      super(4);
+      super();
     }
 
     public EntityKeysClauseByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public EntityKeysClause getValue() {
-      Pointer p = getPointer();
-      return new EntityKeysClause(p.getInt(0));
-    }
-
-    public void setValue(EntityKeysClause value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public EntityKeysClauseTag tag;
+    public CArrayFieldElement hashedkeys;
+    public KeysClause entitykeys;
 
   }
 
 
 
-  class Resultbool extends IntegerType {
-    public Resultbool() {
-      super(4, true);
+  class ResultboolTag extends IntegerType {
+    public ResultboolTag() {
+      super(8, true);
     }
 
-    public Resultbool(long value) {
-      super(4, value, true);
+    public ResultboolTag(long value) {
+      super(8, value, true);
+    }
+
+    public ResultboolTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final ResultboolTag Okbool = new ResultboolTag(1);
+    public static final ResultboolTag Errbool = new ResultboolTag(2);
+
+  }
+
+  class ResultboolTagByReference extends ByReference {
+    public ResultboolTagByReference() {
+      super(8);
+    }
+
+    public ResultboolTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public ResultboolTag getValue() {
+      Pointer p = getPointer();
+      return new ResultboolTag(p.getLong(0));
+    }
+
+    public void setValue(ResultboolTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "okbool", "errbool"})
+  class Resultbool extends Structure implements Structure.ByValue {
+    public Resultbool() {
+      super();
     }
 
     public Resultbool(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final Resultbool Okbool = new Resultbool(1);
-    public static final Resultbool Errbool = new Resultbool(2);
+
+    public ResultboolTag tag;
+    public _Boolean okbool;
+    public Error errbool;
 
   }
 
-  class ResultboolByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "okbool", "errbool"})
+  class ResultboolByReference extends Structure implements Structure.ByReference {
     public ResultboolByReference() {
-      super(4);
+      super();
     }
 
     public ResultboolByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public Resultbool getValue() {
-      Pointer p = getPointer();
-      return new Resultbool(p.getInt(0));
-    }
-
-    public void setValue(Resultbool value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public ResultboolTag tag;
+    public _Boolean okbool;
+    public Error errbool;
 
   }
 
 
 
-  class ResultCArrayFieldElement extends IntegerType {
-    public ResultCArrayFieldElement() {
-      super(4, true);
+  class ResultCArrayFieldElementTag extends IntegerType {
+    public ResultCArrayFieldElementTag() {
+      super(8, true);
     }
 
-    public ResultCArrayFieldElement(long value) {
-      super(4, value, true);
+    public ResultCArrayFieldElementTag(long value) {
+      super(8, value, true);
+    }
+
+    public ResultCArrayFieldElementTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final ResultCArrayFieldElementTag OkCArrayFieldElement = new ResultCArrayFieldElementTag(1);
+    public static final ResultCArrayFieldElementTag ErrCArrayFieldElement = new ResultCArrayFieldElementTag(2);
+
+  }
+
+  class ResultCArrayFieldElementTagByReference extends ByReference {
+    public ResultCArrayFieldElementTagByReference() {
+      super(8);
+    }
+
+    public ResultCArrayFieldElementTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public ResultCArrayFieldElementTag getValue() {
+      Pointer p = getPointer();
+      return new ResultCArrayFieldElementTag(p.getLong(0));
+    }
+
+    public void setValue(ResultCArrayFieldElementTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "okcarrayfieldelement", "errcarrayfieldelement"})
+  class ResultCArrayFieldElement extends Structure implements Structure.ByValue {
+    public ResultCArrayFieldElement() {
+      super();
     }
 
     public ResultCArrayFieldElement(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final ResultCArrayFieldElement OkCArrayFieldElement = new ResultCArrayFieldElement(1);
-    public static final ResultCArrayFieldElement ErrCArrayFieldElement = new ResultCArrayFieldElement(2);
+
+    public ResultCArrayFieldElementTag tag;
+    public CArrayFieldElement okcarrayfieldelement;
+    public Error errcarrayfieldelement;
 
   }
 
-  class ResultCArrayFieldElementByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "okcarrayfieldelement", "errcarrayfieldelement"})
+  class ResultCArrayFieldElementByReference extends Structure implements Structure.ByReference {
     public ResultCArrayFieldElementByReference() {
-      super(4);
+      super();
     }
 
     public ResultCArrayFieldElementByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public ResultCArrayFieldElement getValue() {
-      Pointer p = getPointer();
-      return new ResultCArrayFieldElement(p.getInt(0));
-    }
-
-    public void setValue(ResultCArrayFieldElement value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public ResultCArrayFieldElementTag tag;
+    public CArrayFieldElement okcarrayfieldelement;
+    public Error errcarrayfieldelement;
 
   }
 
 
 
-  class Resultc_char extends IntegerType {
-    public Resultc_char() {
-      super(4, true);
+  class Resultc_charTag extends IntegerType {
+    public Resultc_charTag() {
+      super(8, true);
     }
 
-    public Resultc_char(long value) {
-      super(4, value, true);
+    public Resultc_charTag(long value) {
+      super(8, value, true);
+    }
+
+    public Resultc_charTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final Resultc_charTag Okc_char = new Resultc_charTag(1);
+    public static final Resultc_charTag Errc_char = new Resultc_charTag(2);
+
+  }
+
+  class Resultc_charTagByReference extends ByReference {
+    public Resultc_charTagByReference() {
+      super(8);
+    }
+
+    public Resultc_charTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public Resultc_charTag getValue() {
+      Pointer p = getPointer();
+      return new Resultc_charTag(p.getLong(0));
+    }
+
+    public void setValue(Resultc_charTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "okc_char", "errc_char"})
+  class Resultc_char extends Structure implements Structure.ByValue {
+    public Resultc_char() {
+      super();
     }
 
     public Resultc_char(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final Resultc_char Okc_char = new Resultc_char(1);
-    public static final Resultc_char Errc_char = new Resultc_char(2);
+
+    public Resultc_charTag tag;
+    public ByteByReference okc_char;
+    public Error errc_char;
 
   }
 
-  class Resultc_charByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "okc_char", "errc_char"})
+  class Resultc_charByReference extends Structure implements Structure.ByReference {
     public Resultc_charByReference() {
-      super(4);
+      super();
     }
 
     public Resultc_charByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public Resultc_char getValue() {
-      Pointer p = getPointer();
-      return new Resultc_char(p.getInt(0));
-    }
-
-    public void setValue(Resultc_char value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public Resultc_charTag tag;
+    public ByteByReference okc_char;
+    public Error errc_char;
 
   }
 
 
 
-  class ResultFieldElement extends IntegerType {
-    public ResultFieldElement() {
-      super(4, true);
+  class ResultFieldElementTag extends IntegerType {
+    public ResultFieldElementTag() {
+      super(8, true);
     }
 
-    public ResultFieldElement(long value) {
-      super(4, value, true);
+    public ResultFieldElementTag(long value) {
+      super(8, value, true);
+    }
+
+    public ResultFieldElementTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final ResultFieldElementTag OkFieldElement = new ResultFieldElementTag(1);
+    public static final ResultFieldElementTag ErrFieldElement = new ResultFieldElementTag(2);
+
+  }
+
+  class ResultFieldElementTagByReference extends ByReference {
+    public ResultFieldElementTagByReference() {
+      super(8);
+    }
+
+    public ResultFieldElementTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public ResultFieldElementTag getValue() {
+      Pointer p = getPointer();
+      return new ResultFieldElementTag(p.getLong(0));
+    }
+
+    public void setValue(ResultFieldElementTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "okfieldelement", "errfieldelement"})
+  class ResultFieldElement extends Structure implements Structure.ByValue {
+    public ResultFieldElement() {
+      super();
     }
 
     public ResultFieldElement(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final ResultFieldElement OkFieldElement = new ResultFieldElement(1);
-    public static final ResultFieldElement ErrFieldElement = new ResultFieldElement(2);
+
+    public ResultFieldElementTag tag;
+    public FieldElement okfieldelement;
+    public Error errfieldelement;
 
   }
 
-  class ResultFieldElementByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "okfieldelement", "errfieldelement"})
+  class ResultFieldElementByReference extends Structure implements Structure.ByReference {
     public ResultFieldElementByReference() {
-      super(4);
+      super();
     }
 
     public ResultFieldElementByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public ResultFieldElement getValue() {
-      Pointer p = getPointer();
-      return new ResultFieldElement(p.getInt(0));
-    }
-
-    public void setValue(ResultFieldElement value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public ResultFieldElementTag tag;
+    public FieldElement okfieldelement;
+    public Error errfieldelement;
 
   }
 
@@ -1726,124 +2239,220 @@ interface Bindings extends Library {
 
 
 
-  class ResultSignature extends IntegerType {
-    public ResultSignature() {
-      super(4, true);
+  class ResultSignatureTag extends IntegerType {
+    public ResultSignatureTag() {
+      super(8, true);
     }
 
-    public ResultSignature(long value) {
-      super(4, value, true);
+    public ResultSignatureTag(long value) {
+      super(8, value, true);
+    }
+
+    public ResultSignatureTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final ResultSignatureTag OkSignature = new ResultSignatureTag(1);
+    public static final ResultSignatureTag ErrSignature = new ResultSignatureTag(2);
+
+  }
+
+  class ResultSignatureTagByReference extends ByReference {
+    public ResultSignatureTagByReference() {
+      super(8);
+    }
+
+    public ResultSignatureTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public ResultSignatureTag getValue() {
+      Pointer p = getPointer();
+      return new ResultSignatureTag(p.getLong(0));
+    }
+
+    public void setValue(ResultSignatureTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "oksignature", "errsignature"})
+  class ResultSignature extends Structure implements Structure.ByValue {
+    public ResultSignature() {
+      super();
     }
 
     public ResultSignature(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final ResultSignature OkSignature = new ResultSignature(1);
-    public static final ResultSignature ErrSignature = new ResultSignature(2);
+
+    public ResultSignatureTag tag;
+    public Signature oksignature;
+    public Error errsignature;
 
   }
 
-  class ResultSignatureByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "oksignature", "errsignature"})
+  class ResultSignatureByReference extends Structure implements Structure.ByReference {
     public ResultSignatureByReference() {
-      super(4);
+      super();
     }
 
     public ResultSignatureByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public ResultSignature getValue() {
-      Pointer p = getPointer();
-      return new ResultSignature(p.getInt(0));
-    }
-
-    public void setValue(ResultSignature value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public ResultSignatureTag tag;
+    public Signature oksignature;
+    public Error errsignature;
 
   }
 
 
 
-  class ResultProvider extends IntegerType {
-    public ResultProvider() {
-      super(4, true);
+  class ResultProviderTag extends IntegerType {
+    public ResultProviderTag() {
+      super(8, true);
     }
 
-    public ResultProvider(long value) {
-      super(4, value, true);
+    public ResultProviderTag(long value) {
+      super(8, value, true);
+    }
+
+    public ResultProviderTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final ResultProviderTag OkProvider = new ResultProviderTag(1);
+    public static final ResultProviderTag ErrProvider = new ResultProviderTag(2);
+
+  }
+
+  class ResultProviderTagByReference extends ByReference {
+    public ResultProviderTagByReference() {
+      super(8);
+    }
+
+    public ResultProviderTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public ResultProviderTag getValue() {
+      Pointer p = getPointer();
+      return new ResultProviderTag(p.getLong(0));
+    }
+
+    public void setValue(ResultProviderTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "okprovider", "errprovider"})
+  class ResultProvider extends Structure implements Structure.ByValue {
+    public ResultProvider() {
+      super();
     }
 
     public ResultProvider(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final ResultProvider OkProvider = new ResultProvider(1);
-    public static final ResultProvider ErrProvider = new ResultProvider(2);
+
+    public ResultProviderTag tag;
+    public ProviderByReference okprovider;
+    public Error errprovider;
 
   }
 
-  class ResultProviderByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "okprovider", "errprovider"})
+  class ResultProviderByReference extends Structure implements Structure.ByReference {
     public ResultProviderByReference() {
-      super(4);
+      super();
     }
 
     public ResultProviderByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public ResultProvider getValue() {
-      Pointer p = getPointer();
-      return new ResultProvider(p.getInt(0));
-    }
-
-    public void setValue(ResultProvider value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public ResultProviderTag tag;
+    public ProviderByReference okprovider;
+    public Error errprovider;
 
   }
 
 
 
-  class ResultAccount extends IntegerType {
-    public ResultAccount() {
-      super(4, true);
+  class ResultAccountTag extends IntegerType {
+    public ResultAccountTag() {
+      super(8, true);
     }
 
-    public ResultAccount(long value) {
-      super(4, value, true);
+    public ResultAccountTag(long value) {
+      super(8, value, true);
+    }
+
+    public ResultAccountTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final ResultAccountTag OkAccount = new ResultAccountTag(1);
+    public static final ResultAccountTag ErrAccount = new ResultAccountTag(2);
+
+  }
+
+  class ResultAccountTagByReference extends ByReference {
+    public ResultAccountTagByReference() {
+      super(8);
+    }
+
+    public ResultAccountTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public ResultAccountTag getValue() {
+      Pointer p = getPointer();
+      return new ResultAccountTag(p.getLong(0));
+    }
+
+    public void setValue(ResultAccountTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "okaccount", "erraccount"})
+  class ResultAccount extends Structure implements Structure.ByValue {
+    public ResultAccount() {
+      super();
     }
 
     public ResultAccount(Pointer p) {
-      this(p.getInt(0));
+      super(p);
     }
-    public static final ResultAccount OkAccount = new ResultAccount(1);
-    public static final ResultAccount ErrAccount = new ResultAccount(2);
+
+    public ResultAccountTag tag;
+    public AccountByReference okaccount;
+    public Error erraccount;
 
   }
 
-  class ResultAccountByReference extends ByReference {
+  @Structure.FieldOrder({"tag", "okaccount", "erraccount"})
+  class ResultAccountByReference extends Structure implements Structure.ByReference {
     public ResultAccountByReference() {
-      super(4);
+      super();
     }
 
     public ResultAccountByReference(Pointer p) {
-      super(4);
-      setPointer(p);
+      super(p);
     }
 
-    public ResultAccount getValue() {
-      Pointer p = getPointer();
-      return new ResultAccount(p.getInt(0));
-    }
-
-    public void setValue(ResultAccount value) {
-      Pointer p = getPointer();
-      p.setInt(0, value.intValue());
-    }
+    public ResultAccountTag tag;
+    public AccountByReference okaccount;
+    public Error erraccount;
 
   }
 
@@ -1887,43 +2496,77 @@ interface Bindings extends Library {
   /**
    * Block hash, number or tag
    */
-  class BlockId extends IntegerType {
-    public BlockId() {
-      super(4, true);
+  class BlockIdTag extends IntegerType {
+    public BlockIdTag() {
+      super(8, true);
     }
 
-    public BlockId(long value) {
-      super(4, value, true);
+    public BlockIdTag(long value) {
+      super(8, value, true);
     }
 
-    public BlockId(Pointer p) {
-      this(p.getInt(0));
+    public BlockIdTag(Pointer p) {
+      this(p.getLong(0));
     }
-    public static final BlockId Hash = new BlockId(1);
-    public static final BlockId Number = new BlockId(2);
-    public static final BlockId BlockTag_ = new BlockId(3);
+    public static final BlockIdTag Hash = new BlockIdTag(1);
+    public static final BlockIdTag Number = new BlockIdTag(2);
+    public static final BlockIdTag BlockTag_ = new BlockIdTag(3);
 
   }
 
-  class BlockIdByReference extends ByReference {
-    public BlockIdByReference() {
-      super(4);
+  class BlockIdTagByReference extends ByReference {
+    public BlockIdTagByReference() {
+      super(8);
     }
 
-    public BlockIdByReference(Pointer p) {
-      super(4);
+    public BlockIdTagByReference(Pointer p) {
+      super(8);
       setPointer(p);
     }
 
-    public BlockId getValue() {
+    public BlockIdTag getValue() {
       Pointer p = getPointer();
-      return new BlockId(p.getInt(0));
+      return new BlockIdTag(p.getLong(0));
     }
 
-    public void setValue(BlockId value) {
+    public void setValue(BlockIdTag value) {
       Pointer p = getPointer();
-      p.setInt(0, value.intValue());
+      p.setLong(0, value.longValue());
     }
+
+  }
+
+  @Structure.FieldOrder({"tag", "hash", "number", "blocktag_"})
+  class BlockId extends Structure implements Structure.ByValue {
+    public BlockId() {
+      super();
+    }
+
+    public BlockId(Pointer p) {
+      super(p);
+    }
+
+    public BlockIdTag tag;
+    public FieldElement hash;
+    public long number;
+    public BlockTag blocktag_;
+
+  }
+
+  @Structure.FieldOrder({"tag", "hash", "number", "blocktag_"})
+  class BlockIdByReference extends Structure implements Structure.ByReference {
+    public BlockIdByReference() {
+      super();
+    }
+
+    public BlockIdByReference(Pointer p) {
+      super(p);
+    }
+
+    public BlockIdTag tag;
+    public FieldElement hash;
+    public long number;
+    public BlockTag blocktag_;
 
   }
 

@@ -108,12 +108,7 @@ struct Primitive {
     U32,
     U64,
     U128,
-#if !defined(TARGET_POINTER_WIDTH_32)
     U256,
-#endif
-#if defined(TARGET_POINTER_WIDTH_32)
-    U256,
-#endif
     USize,
     Bool,
     Felt252,
@@ -161,17 +156,9 @@ struct Primitive {
     uint8_t _0[16];
   };
 
-#if !defined(TARGET_POINTER_WIDTH_32)
   struct U256_Body {
     uint64_t _0[4];
   };
-#endif
-
-#if defined(TARGET_POINTER_WIDTH_32)
-  struct U256_Body {
-    uint32_t _0[8];
-  };
-#endif
 
   struct USize_Body {
     uint32_t _0;
@@ -205,12 +192,7 @@ struct Primitive {
     U32_Body u32;
     U64_Body u64;
     U128_Body u128;
-#if !defined(TARGET_POINTER_WIDTH_32)
     U256_Body u256;
-#endif
-#if defined(TARGET_POINTER_WIDTH_32)
-    U256_Body u256;
-#endif
     USize_Body u_size;
     Bool_Body bool_;
     Felt252_Body felt252;
@@ -332,7 +314,6 @@ struct Primitive {
     return tag == Tag::U128;
   }
 
-#if !defined(TARGET_POINTER_WIDTH_32)
   static Primitive U256(const uint64_t (&_0)[4]) {
     Primitive result;
     for (int i = 0; i < 4; i++) {
@@ -345,22 +326,6 @@ struct Primitive {
   bool IsU256() const {
     return tag == Tag::U256;
   }
-#endif
-
-#if defined(TARGET_POINTER_WIDTH_32)
-  static Primitive U256(const uint32_t (&_0)[8]) {
-    Primitive result;
-    for (int i = 0; i < 8; i++) {
-      ::new (&result.u256._0[i]) (uint32_t)(_0[i]);
-    }
-    result.tag = Tag::U256;
-    return result;
-  }
-
-  bool IsU256() const {
-    return tag == Tag::U256;
-  }
-#endif
 
   static Primitive USize(const uint32_t &_0) {
     Primitive result;

@@ -78,7 +78,6 @@ cdef extern from *:
     U64,
     U128,
     U256,
-    U256,
     USize,
     Bool,
     Felt252,
@@ -98,7 +97,6 @@ cdef extern from *:
     uint64_t u64;
     uint8_t u128[16];
     uint64_t u256[4];
-    uint32_t u256[8];
     uint32_t u_size;
     bool bool_;
     FieldElement felt252;

@@ -609,10 +609,7 @@ pub enum Primitive {
     U64(u64),
     // TODO: better way?
     U128([u8; 16]),
-    #[cfg(not(target_pointer_width = "32"))]
     U256([u64; 4]),
-    #[cfg(target_pointer_width = "32")]
-    U256([u32; 8]),
     USize(u32),
     Bool(bool),
     Felt252(FieldElement),
