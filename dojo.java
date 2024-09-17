@@ -1286,6 +1286,79 @@ interface Bindings extends Library {
 
 
 
+  class MemberValueTag extends IntegerType {
+    public MemberValueTag() {
+      super(8, true);
+    }
+
+    public MemberValueTag(long value) {
+      super(8, value, true);
+    }
+
+    public MemberValueTag(Pointer p) {
+      this(p.getLong(0));
+    }
+    public static final MemberValueTag Primitive = new MemberValueTag(0);
+    public static final MemberValueTag String = new MemberValueTag(1);
+
+  }
+
+  class MemberValueTagByReference extends ByReference {
+    public MemberValueTagByReference() {
+      super(8);
+    }
+
+    public MemberValueTagByReference(Pointer p) {
+      super(8);
+      setPointer(p);
+    }
+
+    public MemberValueTag getValue() {
+      Pointer p = getPointer();
+      return new MemberValueTag(p.getLong(0));
+    }
+
+    public void setValue(MemberValueTag value) {
+      Pointer p = getPointer();
+      p.setLong(0, value.longValue());
+    }
+
+  }
+
+  @Structure.FieldOrder({"tag", "primitive", "string"})
+  class MemberValue extends Structure implements Structure.ByValue {
+    public MemberValue() {
+      super();
+    }
+
+    public MemberValue(Pointer p) {
+      super(p);
+    }
+
+    public MemberValueTag tag;
+    public Primitive primitive;
+    public ByteByReference string;
+
+  }
+
+  @Structure.FieldOrder({"tag", "primitive", "string"})
+  class MemberValueByReference extends Structure implements Structure.ByReference {
+    public MemberValueByReference() {
+      super();
+    }
+
+    public MemberValueByReference(Pointer p) {
+      super(p);
+    }
+
+    public MemberValueTag tag;
+    public Primitive primitive;
+    public ByteByReference string;
+
+  }
+
+
+
   @Structure.FieldOrder({"model", "member", "operator_", "value"})
   class MemberClause extends Structure implements Structure.ByValue {
     public MemberClause() {
@@ -1299,7 +1372,7 @@ interface Bindings extends Library {
     public ByteByReference model;
     public ByteByReference member;
     public ComparisonOperator operator_;
-    public Primitive value;
+    public MemberValue value;
 
   }
 
@@ -1316,7 +1389,7 @@ interface Bindings extends Library {
     public ByteByReference model;
     public ByteByReference member;
     public ComparisonOperator operator_;
-    public Primitive value;
+    public MemberValue value;
 
   }
 
