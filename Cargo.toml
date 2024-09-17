@@ -7,17 +7,17 @@ version = "1.0.0-alpha.11"
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
-dojo-types = { git = "https://github.com/dojoengine/dojo", branch = "Larkooo-patch-1" }
-torii-client = { git = "https://github.com/dojoengine/dojo", branch = "Larkooo-patch-1" }
+dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "91a0fd0eecf02227528a74df4eae3e9e0458338e" }
+torii-client = { git = "https://github.com/dojoengine/dojo", rev = "91a0fd0eecf02227528a74df4eae3e9e0458338e" }
 torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
     "client",
-], branch = "Larkooo-patch-1" }
-torii-relay = { git = "https://github.com/dojoengine/dojo", branch = "Larkooo-patch-1" }
-dojo-world = { git = "https://github.com/dojoengine/dojo", branch = "Larkooo-patch-1" }
+], rev = "91a0fd0eecf02227528a74df4eae3e9e0458338e" }
+torii-relay = { git = "https://github.com/dojoengine/dojo", rev = "91a0fd0eecf02227528a74df4eae3e9e0458338e" }
+dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "91a0fd0eecf02227528a74df4eae3e9e0458338e" }
 
 
 starknet = "0.11.0"
-starknet-crypto = "0.7.0"
+starknet-crypto = "0.7.1"
 
 parking_lot = "0.12.1"
 tokio = { version = "1.39.2", default-features = false, features = ["rt"] }
@@ -53,9 +53,5 @@ gloo-timers = { version = "0.3.0", features = ["futures"] }
 cbindgen = "0.26.0"
 
 [patch.crates-io]
-# Remove this patch once the following PR is merged: <https://github.com/xJonathanLEI/starknet-rs/pull/615>
-#
-# To enable std feature on `starknet-types-core`.
-# To re-export the entire `felt` module from `starknet-types-core`.
-starknet-core = { git = "https://github.com/kariy/starknet-rs", branch = "dojo-patch" }
-starknet-types-core = { git = "https://github.com/dojoengine/types-rs", rev = "289e2f0" }
+# Matching the same rev that `cainome` is using. Mainly because `starknet-rs` hasn't create a new release yet.
+starknet = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "2ddc694" }

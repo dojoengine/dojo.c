@@ -600,11 +600,54 @@ struct KeysClause {
   CArray<const char*> models;
 };
 
+struct MemberValue {
+  enum class Tag {
+    Primitive,
+    String,
+  };
+
+  struct Primitive_Body {
+    Primitive _0;
+  };
+
+  struct String_Body {
+    const char *_0;
+  };
+
+  Tag tag;
+  union {
+    Primitive_Body primitive;
+    String_Body string;
+  };
+
+  static MemberValue Primitive(const Primitive &_0) {
+    MemberValue result;
+    ::new (&result.primitive._0) (Primitive)(_0);
+    result.tag = Tag::Primitive;
+    return result;
+  }
+
+  bool IsPrimitive() const {
+    return tag == Tag::Primitive;
+  }
+
+  static MemberValue String(const char *const &_0) {
+    MemberValue result;
+    ::new (&result.string._0) (const char*)(_0);
+    result.tag = Tag::String;
+    return result;
+  }
+
+  bool IsString() const {
+    return tag == Tag::String;
+  }
+};
+
 struct MemberClause {
   const char *model;
   const char *member;
   ComparisonOperator operator_;
-  Primitive value;
+  MemberValue value;
 };
 
 struct CompositeClause {

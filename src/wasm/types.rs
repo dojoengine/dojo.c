@@ -115,7 +115,7 @@ pub struct Call {
     pub calldata: Vec<String>,
 }
 
-impl From<&Call> for starknet::accounts::Call {
+impl From<&Call> for starknet::core::types::Call {
     fn from(value: &Call) -> Self {
         Self {
             to: Felt::from_str(value.to.as_str()).unwrap(),
@@ -254,11 +254,27 @@ pub struct KeysClause {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum MemberValue {
+    Primitive(Primitive),
+    String(String),
+}
+
+impl From<&MemberValue> for torii_grpc::types::MemberValue {
+    fn from(value: &MemberValue) -> Self {
+        match value {
+            MemberValue::Primitive(primitive) => torii_grpc::types::MemberValue::Primitive(primitive.into()),
+            MemberValue::String(string) => torii_grpc::types::MemberValue::String(string.clone()),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct MemberClause {
     pub model: String,
     pub member: String,
     pub operator: ComparisonOperator,
-    pub value: Primitive,
+    pub value: MemberValue,
 }
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
