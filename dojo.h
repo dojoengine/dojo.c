@@ -93,12 +93,7 @@ typedef enum Primitive_Tag {
   U32,
   U64,
   U128,
-#if !defined(TARGET_POINTER_WIDTH_32)
   U256,
-#endif
-#if defined(TARGET_POINTER_WIDTH_32)
-  U256,
-#endif
   USize,
   Bool,
   Felt252,
@@ -139,16 +134,9 @@ typedef struct Primitive {
     struct {
       uint8_t u128[16];
     };
-#if !defined(TARGET_POINTER_WIDTH_32)
     struct {
       uint64_t u256[4];
     };
-#endif
-#if defined(TARGET_POINTER_WIDTH_32)
-    struct {
-      uint32_t u256[8];
-    };
-#endif
     struct {
       uint32_t u_size;
     };
@@ -729,5 +717,5 @@ void carray_free(void *data, uintptr_t data_len);
 void string_free(char *string);
 
 #ifdef __cplusplus
-} // extern "C"
-#endif // __cplusplus
+}  // extern "C"
+#endif  // __cplusplus
