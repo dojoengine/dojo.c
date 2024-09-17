@@ -275,7 +275,7 @@ impl Account {
             SingleOwnerAccount::new(provider, signer, address, chain_id, ExecutionEncoding::New);
 
         // deploy the burner
-        let exec = self.0.execute_v1(vec![starknet::accounts::Call {
+        let exec = self.0.execute_v1(vec![starknet::core::types::Call {
             to: constants::UDC_ADDRESS,
             calldata: vec![
                 constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash

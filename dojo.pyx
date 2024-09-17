@@ -194,11 +194,20 @@ cdef extern from *:
     PatternMatching pattern_matching;
     CArrayc_char models;
 
+  cdef enum MemberValue_Tag:
+    Primitive,
+    String,
+
+  cdef struct MemberValue:
+    MemberValue_Tag tag;
+    Primitive primitive;
+    const char *string;
+
   cdef struct MemberClause:
     const char *model;
     const char *member;
     ComparisonOperator operator_;
-    Primitive value;
+    MemberValue value;
 
   cdef struct CArrayClause:
     Clause *data;

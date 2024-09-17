@@ -299,11 +299,28 @@ typedef struct KeysClause {
   struct CArrayc_char models;
 } KeysClause;
 
+typedef enum MemberValue_Tag {
+  Primitive,
+  String,
+} MemberValue_Tag;
+
+typedef struct MemberValue {
+  MemberValue_Tag tag;
+  union {
+    struct {
+      struct Primitive primitive;
+    };
+    struct {
+      const char *string;
+    };
+  };
+} MemberValue;
+
 typedef struct MemberClause {
   const char *model;
   const char *member;
   enum ComparisonOperator operator_;
-  struct Primitive value;
+  struct MemberValue value;
 } MemberClause;
 
 typedef struct CArrayClause {
