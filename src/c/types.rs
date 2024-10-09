@@ -1,4 +1,4 @@
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{CStr, CString, c_char};
 
 use starknet::core::utils::get_selector_from_name;
 use torii_client::client::Client;
@@ -47,6 +47,37 @@ impl<T> From<COption<T>> for Option<T> {
         match val {
             COption::Some(v) => Some(v),
             COption::None => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct IndexerUpdate {
+    pub head: i64,
+    pub tps: i64,
+    pub last_block_timestamp: i64,
+    pub contract_address: FieldElement,
+}
+
+impl From<&IndexerUpdate> for torii_grpc::types::IndexerUpdate {
+    fn from(val: &IndexerUpdate) -> Self {
+        torii_grpc::types::IndexerUpdate {
+            head: val.head,
+            tps: val.tps,
+            last_block_timestamp: val.last_block_timestamp,
+            contract_address: (&val.contract_address).into(),
+        }
+    }
+}
+
+impl From<&torii_grpc::types::IndexerUpdate> for IndexerUpdate {
+    fn from(val: &torii_grpc::types::IndexerUpdate) -> Self {
+        IndexerUpdate {
+            head: val.head,
+            tps: val.tps,
+            last_block_timestamp: val.last_block_timestamp,
+            contract_address: (&val.contract_address).into(),
         }
     }
 }
@@ -271,8 +302,12 @@ pub enum MemberValue {
 impl From<&MemberValue> for torii_grpc::types::MemberValue {
     fn from(val: &MemberValue) -> Self {
         match val {
-            MemberValue::Primitive(primitive) => torii_grpc::types::MemberValue::Primitive((&primitive.clone()).into()),
-            MemberValue::String(string) => torii_grpc::types::MemberValue::String(unsafe { CStr::from_ptr(*string).to_string_lossy().to_string() }),
+            MemberValue::Primitive(primitive) => {
+                torii_grpc::types::MemberValue::Primitive((&primitive.clone()).into())
+            }
+            MemberValue::String(string) => torii_grpc::types::MemberValue::String(unsafe {
+                CStr::from_ptr(*string).to_string_lossy().to_string()
+            }),
         }
     }
 }
@@ -280,13 +315,15 @@ impl From<&MemberValue> for torii_grpc::types::MemberValue {
 impl From<&torii_grpc::types::MemberValue> for MemberValue {
     fn from(val: &torii_grpc::types::MemberValue) -> Self {
         match val {
-            torii_grpc::types::MemberValue::Primitive(primitive) => MemberValue::Primitive((&primitive.clone()).into()),
-            torii_grpc::types::MemberValue::String(string) => MemberValue::String(CString::new(string.clone()).unwrap().into_raw()),
+            torii_grpc::types::MemberValue::Primitive(primitive) => {
+                MemberValue::Primitive((&primitive.clone()).into())
+            }
+            torii_grpc::types::MemberValue::String(string) => {
+                MemberValue::String(CString::new(string.clone()).unwrap().into_raw())
+            }
         }
     }
 }
-
-
 
 #[derive(Clone, Debug)]
 #[repr(C)]
