@@ -456,6 +456,13 @@ typedef struct Resultbool {
   };
 } Resultbool;
 
+typedef struct IndexerUpdate {
+  int64_t head;
+  int64_t tps;
+  int64_t last_block_timestamp;
+  struct FieldElement contract_address;
+} IndexerUpdate;
+
 typedef enum ResultCArrayFieldElement_Tag {
   OkCArrayFieldElement,
   ErrCArrayFieldElement,
@@ -643,6 +650,10 @@ struct Resultbool client_update_event_message_subscription(struct ToriiClient *c
                                                            struct Subscription *subscription,
                                                            const struct EntityKeysClause *clauses,
                                                            uintptr_t clauses_len);
+
+struct ResultSubscription on_indexer_update(struct ToriiClient *client,
+                                            const struct FieldElement *contract_address,
+                                            void (*callback)(struct IndexerUpdate));
 
 struct ResultCArrayFieldElement bytearray_serialize(const char *str);
 

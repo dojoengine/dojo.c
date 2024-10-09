@@ -1,23 +1,24 @@
 [package]
 edition = "2021"
 name = "dojo-c"
-version = "1.0.0-alpha.11"
+version = "1.0.0-alpha.14"
 
 [lib]
 crate-type = ["cdylib", "rlib", "staticlib"]
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "d039c6d46f819edc3f2161c0520b8c8fecec0092", features = ["metadata"]}
+
 [dependencies]
-dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "91a0fd0eecf02227528a74df4eae3e9e0458338e" }
-torii-client = { git = "https://github.com/dojoengine/dojo", rev = "91a0fd0eecf02227528a74df4eae3e9e0458338e" }
+dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "d039c6d46f819edc3f2161c0520b8c8fecec0092" }
+torii-client = { git = "https://github.com/dojoengine/dojo", rev = "d039c6d46f819edc3f2161c0520b8c8fecec0092" }
 torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
     "client",
-], rev = "91a0fd0eecf02227528a74df4eae3e9e0458338e" }
-torii-relay = { git = "https://github.com/dojoengine/dojo", rev = "91a0fd0eecf02227528a74df4eae3e9e0458338e" }
-dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "91a0fd0eecf02227528a74df4eae3e9e0458338e" }
-
+], rev = "d039c6d46f819edc3f2161c0520b8c8fecec0092" }
+torii-relay = { git = "https://github.com/dojoengine/dojo", rev = "d039c6d46f819edc3f2161c0520b8c8fecec0092" }
 
 starknet = "0.11.0"
-starknet-crypto = "0.7.1"
+starknet-crypto = "0.7.2"
 
 parking_lot = "0.12.1"
 tokio = { version = "1.39.2", default-features = false, features = ["rt"] }
@@ -34,6 +35,7 @@ cainome = { git = "https://github.com/cartridge-gg/cainome", tag = "v0.3.2" }
 
 # WASM
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "d039c6d46f819edc3f2161c0520b8c8fecec0092", features = []}
 serde-wasm-bindgen = "0.6.3"
 wasm-bindgen-futures = "0.4.39"
 js-sys = "0.3.70"

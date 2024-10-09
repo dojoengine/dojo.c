@@ -786,6 +786,13 @@ struct EntityKeysClause {
   }
 };
 
+struct IndexerUpdate {
+  int64_t head;
+  int64_t tps;
+  int64_t last_block_timestamp;
+  FieldElement contract_address;
+};
+
 struct Signature {
   /// The `r` value of a signature
   FieldElement r;
@@ -899,6 +906,10 @@ Result<bool> client_update_event_message_subscription(ToriiClient *client,
                                                       Subscription *subscription,
                                                       const EntityKeysClause *clauses,
                                                       uintptr_t clauses_len);
+
+Result<Subscription*> on_indexer_update(ToriiClient *client,
+                                        const FieldElement *contract_address,
+                                        void (*callback)(IndexerUpdate));
 
 Result<CArray<FieldElement>> bytearray_serialize(const char *str);
 

@@ -294,6 +294,12 @@ cdef extern from *:
     bool ok;
     Error err;
 
+  cdef struct IndexerUpdate:
+    int64_t head;
+    int64_t tps;
+    int64_t last_block_timestamp;
+    FieldElement contract_address;
+
   cdef enum ResultCArrayFieldElement_Tag:
     OkCArrayFieldElement,
     ErrCArrayFieldElement,
@@ -408,6 +414,10 @@ cdef extern from *:
                                                       Subscription *subscription,
                                                       const EntityKeysClause *clauses,
                                                       uintptr_t clauses_len);
+
+  ResultSubscription on_indexer_update(ToriiClient *client,
+                                       const FieldElement *contract_address,
+                                       void (*callback)(IndexerUpdate));
 
   ResultCArrayFieldElement bytearray_serialize(const char *str);
 

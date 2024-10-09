@@ -15,6 +15,37 @@ use super::utils::parse_ty_as_json_str;
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct IndexerUpdate {
+    pub head: i64,
+    pub tps: i64,
+    pub last_block_timestamp: i64,
+    pub contract_address: String,
+}
+
+impl From<&IndexerUpdate> for torii_grpc::types::IndexerUpdate {
+    fn from(value: &IndexerUpdate) -> Self {
+        Self {
+            head: value.head,
+            tps: value.tps,
+            last_block_timestamp: value.last_block_timestamp,
+            contract_address: Felt::from_str(value.contract_address.as_str()).unwrap(),
+        }
+    }
+}
+
+impl From<&torii_grpc::types::IndexerUpdate> for IndexerUpdate {
+    fn from(value: &torii_grpc::types::IndexerUpdate) -> Self {
+        Self {
+            head: value.head,
+            tps: value.tps,
+            last_block_timestamp: value.last_block_timestamp,
+            contract_address: format!("{:#x}", value.contract_address),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct ClientConfig {
     #[serde(rename = "rpcUrl")]
     pub rpc_url: String,
@@ -262,7 +293,9 @@ pub enum MemberValue {
 impl From<&MemberValue> for torii_grpc::types::MemberValue {
     fn from(value: &MemberValue) -> Self {
         match value {
-            MemberValue::Primitive(primitive) => torii_grpc::types::MemberValue::Primitive(primitive.into()),
+            MemberValue::Primitive(primitive) => {
+                torii_grpc::types::MemberValue::Primitive(primitive.into())
+            }
             MemberValue::String(string) => torii_grpc::types::MemberValue::String(string.clone()),
         }
     }
