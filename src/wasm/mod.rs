@@ -620,7 +620,11 @@ impl ToriiClient {
         console_error_panic_hook::set_once();
 
         let contract_address = contract_address
-            .map(|c| Felt::from_str(c.as_str()).map_err(|err| JsValue::from(format!("failed to parse contract address: {err}"))))
+            .map(|c| {
+                Felt::from_str(c.as_str()).map_err(|err| {
+                    JsValue::from(format!("failed to parse contract address: {err}"))
+                })
+            })
             .transpose()?;
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
