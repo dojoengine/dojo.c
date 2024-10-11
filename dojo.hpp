@@ -800,6 +800,12 @@ struct Signature {
   FieldElement s;
 };
 
+struct Policy {
+  FieldElement target;
+  const char *method;
+  const char *description;
+};
+
 struct Call {
   FieldElement to;
   const char *selector;
@@ -940,6 +946,12 @@ Result<bool> verifying_key_verify(FieldElement verifying_key,
                                   Signature signature);
 
 Result<Provider*> provider_new(const char *rpc_url);
+
+Result<bool> controller_connect(const char *rpc_url,
+                                const char *chain_id,
+                                const Policy *policies,
+                                uintptr_t policies_len,
+                                void (*callback)(Account*));
 
 Result<Account*> account_new(Provider *rpc, FieldElement private_key, const char *address);
 

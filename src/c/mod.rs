@@ -7,6 +7,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
+use account_sdk::account::session::SessionAccount;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use dojo_world::contracts::naming::compute_selector_from_tag;
 use starknet::accounts::{
@@ -24,7 +25,7 @@ use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
-use types::{EntityKeysClause, IndexerUpdate, Struct};
+use types::{EntityKeysClause, IndexerUpdate, Policy, Struct};
 
 use self::types::{
     BlockId, CArray, Call, Entity, Error, Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
@@ -566,6 +567,38 @@ pub unsafe extern "C" fn provider_new(rpc_url: *const c_char) -> Result<*mut Pro
     let rpc = JsonRpcClient::new(HttpTransport::new(rpc_url));
 
     Result::Ok(Box::into_raw(Box::new(Provider(Arc::new(rpc)))))
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn controller_connect(
+    rpc_url: *const c_char,
+    chain_id: *const c_char,
+    policies: *const Policy,
+    policies_len: usize,
+    callback: unsafe extern "C" fn(*mut Account),
+) -> Result<bool> {
+    let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy() };
+    let chain_id = unsafe { CStr::from_ptr(chain_id).to_string_lossy() };
+    let policies = unsafe { std::slice::from_raw_parts(policies, policies_len).to_vec() };
+    let policies: Vec<crate::types::Policy> = policies.iter().map(|p| p.into()).collect::<Vec<_>>();
+
+    let signing_key = SigningKey::from_random();
+    let verifying_key = signing_key.verifying_key();
+
+    let callback_uri = "http://localhost:8534/callback";
+    let url = format!(
+        "https://x.cartridge.gg/session?rpc_url={}&policies={}&public_key={}&callback_uri={}",
+        rpc_url,
+        match serde_json::to_string(&policies) {
+            Ok(policies) => policies,
+            Err(e) => return Result::Err(e.into()),
+        },
+        format!("{:#x}", verifying_key.scalar()),
+        callback_uri
+    );
+
+    Result::Ok(true)
 }
 
 #[no_mangle]
