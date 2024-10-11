@@ -559,6 +559,12 @@ typedef struct ResultProvider {
   };
 } ResultProvider;
 
+typedef struct Policy {
+  struct FieldElement target;
+  const char *method;
+  const char *description;
+} Policy;
+
 typedef enum ResultAccount_Tag {
   OkAccount,
   ErrAccount,
@@ -684,6 +690,12 @@ struct Resultbool verifying_key_verify(struct FieldElement verifying_key,
                                        struct Signature signature);
 
 struct ResultProvider provider_new(const char *rpc_url);
+
+struct Resultbool controller_connect(const char *rpc_url,
+                                     const char *chain_id,
+                                     const struct Policy *policies,
+                                     uintptr_t policies_len,
+                                     void (*callback)(struct Account*));
 
 struct ResultAccount account_new(struct Provider *rpc,
                                  struct FieldElement private_key,

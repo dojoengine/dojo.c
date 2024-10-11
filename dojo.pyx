@@ -351,6 +351,11 @@ cdef extern from *:
     Provider *ok;
     Error err;
 
+  cdef struct Policy:
+    FieldElement target;
+    const char *method;
+    const char *description;
+
   cdef enum ResultAccount_Tag:
     OkAccount,
     ErrAccount,
@@ -448,6 +453,12 @@ cdef extern from *:
                                   Signature signature);
 
   ResultProvider provider_new(const char *rpc_url);
+
+  Resultbool controller_connect(const char *rpc_url,
+                                const char *chain_id,
+                                const Policy *policies,
+                                uintptr_t policies_len,
+                                void (*callback)(Account*));
 
   ResultAccount account_new(Provider *rpc, FieldElement private_key, const char *address);
 

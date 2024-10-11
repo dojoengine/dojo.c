@@ -2,13 +2,26 @@ use std::ffi::c_char;
 use std::sync::Arc;
 use std::sync::atomic::AtomicU64;
 
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 use starknet::accounts::SingleOwnerAccount;
 use starknet::providers::JsonRpcClient;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::signers::LocalWallet;
+use starknet_crypto::Felt;
 use stream_cancel::Trigger;
 use torii_client::client::Client;
 use wasm_bindgen::prelude::*;
+use starknet::core::serde::unsigned_field_element::UfeHex;
+
+#[serde_as]
+#[derive(Serialize, Deserialize)]
+pub struct Policy {
+    #[serde_as(as = "UfeHex")]
+    pub target: Felt,
+    pub method: String,
+    pub description: String,
+}
 
 #[wasm_bindgen]
 pub struct ToriiClient {
