@@ -299,11 +299,28 @@ typedef struct KeysClause {
   struct CArrayc_char models;
 } KeysClause;
 
+typedef enum MemberValue_Tag {
+  Primitive,
+  String,
+} MemberValue_Tag;
+
+typedef struct MemberValue {
+  MemberValue_Tag tag;
+  union {
+    struct {
+      struct Primitive primitive;
+    };
+    struct {
+      const char *string;
+    };
+  };
+} MemberValue;
+
 typedef struct MemberClause {
   const char *model;
   const char *member;
   enum ComparisonOperator operator_;
-  struct Primitive value;
+  struct MemberValue value;
 } MemberClause;
 
 typedef struct CArrayClause {
@@ -355,6 +372,7 @@ typedef struct Query {
   uint32_t limit;
   uint32_t offset;
   struct COptionClause clause;
+  bool dont_include_hashed_keys;
 } Query;
 
 typedef struct CArrayFieldElement {
@@ -438,6 +456,13 @@ typedef struct Resultbool {
     };
   };
 } Resultbool;
+
+typedef struct IndexerUpdate {
+  int64_t head;
+  int64_t tps;
+  int64_t last_block_timestamp;
+  struct FieldElement contract_address;
+} IndexerUpdate;
 
 typedef enum ResultCArrayFieldElement_Tag {
   OkCArrayFieldElement,
@@ -626,6 +651,10 @@ struct Resultbool client_update_event_message_subscription(struct ToriiClient *c
                                                            struct Subscription *subscription,
                                                            const struct EntityKeysClause *clauses,
                                                            uintptr_t clauses_len);
+
+struct ResultSubscription on_indexer_update(struct ToriiClient *client,
+                                            const struct FieldElement *contract_address,
+                                            void (*callback)(struct IndexerUpdate));
 
 struct ResultCArrayFieldElement bytearray_serialize(const char *str);
 

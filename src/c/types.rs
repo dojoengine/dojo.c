@@ -53,6 +53,37 @@ impl<T> From<COption<T>> for Option<T> {
 
 #[derive(Debug, Clone)]
 #[repr(C)]
+pub struct IndexerUpdate {
+    pub head: i64,
+    pub tps: i64,
+    pub last_block_timestamp: i64,
+    pub contract_address: FieldElement,
+}
+
+impl From<&IndexerUpdate> for torii_grpc::types::IndexerUpdate {
+    fn from(val: &IndexerUpdate) -> Self {
+        torii_grpc::types::IndexerUpdate {
+            head: val.head,
+            tps: val.tps,
+            last_block_timestamp: val.last_block_timestamp,
+            contract_address: (&val.contract_address).into(),
+        }
+    }
+}
+
+impl From<&torii_grpc::types::IndexerUpdate> for IndexerUpdate {
+    fn from(val: &torii_grpc::types::IndexerUpdate) -> Self {
+        IndexerUpdate {
+            head: val.head,
+            tps: val.tps,
+            last_block_timestamp: val.last_block_timestamp,
+            contract_address: (&val.contract_address).into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
 pub struct Signature {
     /// The `r` value of a signature
     pub r: FieldElement,
@@ -115,7 +146,7 @@ impl From<&BlockTag> for starknet::core::types::BlockTag {
     }
 }
 
-impl From<&Call> for starknet::accounts::Call {
+impl From<&Call> for starknet::core::types::Call {
     fn from(val: &Call) -> Self {
         let selector = unsafe { CStr::from_ptr(val.selector).to_string_lossy().to_string() };
 
@@ -123,7 +154,7 @@ impl From<&Call> for starknet::accounts::Call {
         let calldata = std::mem::ManuallyDrop::new(calldata);
         let calldata = calldata.iter().map(|c| (&c.clone()).into()).collect();
 
-        starknet::accounts::Call {
+        starknet::core::types::Call {
             to: (&val.to).into(),
             selector: get_selector_from_name(&selector).unwrap(),
             calldata,
@@ -222,6 +253,7 @@ pub struct Query {
     pub limit: u32,
     pub offset: u32,
     pub clause: COption<Clause>,
+    pub dont_include_hashed_keys: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -263,11 +295,44 @@ pub struct ModelKeysClause {
 
 #[derive(Clone, Debug)]
 #[repr(C)]
+pub enum MemberValue {
+    Primitive(Primitive),
+    String(*const c_char),
+}
+
+impl From<&MemberValue> for torii_grpc::types::MemberValue {
+    fn from(val: &MemberValue) -> Self {
+        match val {
+            MemberValue::Primitive(primitive) => {
+                torii_grpc::types::MemberValue::Primitive((&primitive.clone()).into())
+            }
+            MemberValue::String(string) => torii_grpc::types::MemberValue::String(unsafe {
+                CStr::from_ptr(*string).to_string_lossy().to_string()
+            }),
+        }
+    }
+}
+
+impl From<&torii_grpc::types::MemberValue> for MemberValue {
+    fn from(val: &torii_grpc::types::MemberValue) -> Self {
+        match val {
+            torii_grpc::types::MemberValue::Primitive(primitive) => {
+                MemberValue::Primitive((&primitive.clone()).into())
+            }
+            torii_grpc::types::MemberValue::String(string) => {
+                MemberValue::String(CString::new(string.clone()).unwrap().into_raw())
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
 pub struct MemberClause {
     pub model: *const c_char,
     pub member: *const c_char,
     pub operator: ComparisonOperator,
-    pub value: Primitive,
+    pub value: MemberValue,
 }
 
 #[derive(Clone, Debug)]
@@ -697,12 +762,14 @@ impl From<&Query> for torii_grpc::types::Query {
                     limit: val.limit,
                     offset: val.offset,
                     clause: Option::Some(clause),
+                    dont_include_hashed_keys: val.dont_include_hashed_keys,
                 }
             }
             COption::None => torii_grpc::types::Query {
                 limit: val.limit,
                 offset: val.offset,
                 clause: Option::None,
+                dont_include_hashed_keys: val.dont_include_hashed_keys,
             },
         }
     }
@@ -713,9 +780,19 @@ impl From<&torii_grpc::types::Query> for Query {
         match &val.clause {
             Option::Some(clause) => {
                 let clause = (&clause.clone()).into();
-                Query { limit: val.limit, offset: val.offset, clause: COption::Some(clause) }
+                Query {
+                    limit: val.limit,
+                    offset: val.offset,
+                    clause: COption::Some(clause),
+                    dont_include_hashed_keys: val.dont_include_hashed_keys,
+                }
             }
-            Option::None => Query { limit: val.limit, offset: val.offset, clause: COption::None },
+            Option::None => Query {
+                limit: val.limit,
+                offset: val.offset,
+                clause: COption::None,
+                dont_include_hashed_keys: val.dont_include_hashed_keys,
+            },
         }
     }
 }

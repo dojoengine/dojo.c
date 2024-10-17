@@ -1,10 +1,10 @@
 mod types;
 
-use std::ffi::{c_void, CStr, CString};
+use std::ffi::{CStr, CString, c_void};
 use std::ops::Deref;
 use std::os::raw::c_char;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
@@ -17,14 +17,14 @@ use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::{poseidon_hash_many, Felt};
+use starknet_crypto::{Felt, poseidon_hash_many};
 use stream_cancel::{StreamExt as _, Tripwire};
 use tokio::time::sleep;
 use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
-use types::{EntityKeysClause, Struct};
+use types::{EntityKeysClause, IndexerUpdate, Struct};
 
 use self::types::{
     BlockId, CArray, Call, Entity, Error, Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
@@ -159,24 +159,6 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 
     let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
-    // Create the first subscription and get the ID on the main thread
-    let entity_stream = client.inner.on_entity_updated(clauses.clone());
-    let mut rcv = match client.runtime.block_on(entity_stream) {
-        Ok(rcv) => rcv,
-        Err(e) => return Result::Err(e.into()),
-    };
-
-    match client.runtime.block_on(rcv.next()) {
-        Some(Ok((id, _))) => {
-            subscription_id.store(id, Ordering::SeqCst);
-        }
-        _ => {
-            return Result::Err(Error {
-                message: CString::new("failed to get initial subscription id").unwrap().into_raw(),
-            });
-        }
-    }
-
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
     let subscription_id_clone = Arc::clone(&subscription_id);
@@ -260,24 +242,6 @@ pub unsafe extern "C" fn client_on_event_message_update(
 
     let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
-    // Create the first subscription and get the ID on the main thread
-    let entity_stream = client.inner.on_event_message_updated(clauses.clone());
-    let mut rcv = match client.runtime.block_on(entity_stream) {
-        Ok(rcv) => rcv,
-        Err(e) => return Result::Err(e.into()),
-    };
-
-    match client.runtime.block_on(rcv.next()) {
-        Some(Ok((id, _))) => {
-            subscription_id.store(id, Ordering::SeqCst);
-        }
-        _ => {
-            return Result::Err(Error {
-                message: CString::new("failed to get initial subscription id").unwrap().into_raw(),
-            });
-        }
-    }
-
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
     let subscription_id_clone = Arc::clone(&subscription_id);
@@ -342,6 +306,65 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn on_indexer_update(
+    client: *mut ToriiClient,
+    contract_address: *const types::FieldElement,
+    callback: unsafe extern "C" fn(IndexerUpdate),
+) -> Result<*mut Subscription> {
+    let client = Arc::from_raw(client);
+    let contract_address = if contract_address.is_null() {
+        None
+    } else {
+        Some(unsafe { (&*contract_address).into() })
+    };
+
+    let subscription_id = Arc::new(AtomicU64::new(0));
+    let (trigger, tripwire) = Tripwire::new();
+
+    let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
+
+    // Spawn a new thread to handle the stream and reconnections
+    let client_clone = client.clone();
+    client.runtime.spawn(async move {
+        let mut backoff = Duration::from_secs(1);
+        let max_backoff = Duration::from_secs(60);
+
+        loop {
+            let rcv = client_clone.inner.on_indexer_updated(contract_address).await;
+
+            match rcv {
+                Ok(rcv) => {
+                    backoff = Duration::from_secs(1); // Reset backoff on successful connection
+
+                    let mut rcv = rcv.take_until_if(tripwire.clone());
+
+                    while let Some(Ok(update)) = rcv.next().await {
+                        callback((&update).into());
+                    }
+                }
+                Err(_) => {
+                    // Check if the tripwire has been triggered before attempting to reconnect
+                    if tripwire.clone().await {
+                        break; // Exit the loop if the subscription has been cancelled
+                    }
+                }
+            }
+
+            // If we've reached this point, the stream has ended (possibly due to disconnection)
+            // We'll try to reconnect after a delay, unless the tripwire has been triggered
+            if tripwire.clone().await {
+                break; // Exit the loop if the subscription has been cancelled
+            }
+            sleep(backoff).await;
+            backoff = std::cmp::min(backoff * 2, max_backoff);
+        }
+    });
+
+    Result::Ok(Box::into_raw(Box::new(subscription)))
 }
 
 #[no_mangle]
@@ -631,7 +654,7 @@ pub unsafe extern "C" fn account_deploy_burner(
     );
 
     // deploy the burner
-    let exec = (*master_account).0.execute_v1(vec![starknet::accounts::Call {
+    let exec = (*master_account).0.execute_v1(vec![starknet::core::types::Call {
         to: constants::UDC_ADDRESS,
         calldata: vec![
             constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
@@ -698,7 +721,7 @@ pub unsafe extern "C" fn account_execute_raw(
 ) -> Result<types::FieldElement> {
     let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
     let calldata =
-        calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::accounts::Call>>();
+        calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::core::types::Call>>();
     let call = (*account).0.execute_v1(calldata);
 
     match tokio::runtime::Runtime::new() {

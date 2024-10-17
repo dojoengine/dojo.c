@@ -600,11 +600,54 @@ struct KeysClause {
   CArray<const char*> models;
 };
 
+struct MemberValue {
+  enum class Tag {
+    Primitive,
+    String,
+  };
+
+  struct Primitive_Body {
+    Primitive _0;
+  };
+
+  struct String_Body {
+    const char *_0;
+  };
+
+  Tag tag;
+  union {
+    Primitive_Body primitive;
+    String_Body string;
+  };
+
+  static MemberValue Primitive(const Primitive &_0) {
+    MemberValue result;
+    ::new (&result.primitive._0) (Primitive)(_0);
+    result.tag = Tag::Primitive;
+    return result;
+  }
+
+  bool IsPrimitive() const {
+    return tag == Tag::Primitive;
+  }
+
+  static MemberValue String(const char *const &_0) {
+    MemberValue result;
+    ::new (&result.string._0) (const char*)(_0);
+    result.tag = Tag::String;
+    return result;
+  }
+
+  bool IsString() const {
+    return tag == Tag::String;
+  }
+};
+
 struct MemberClause {
   const char *model;
   const char *member;
   ComparisonOperator operator_;
-  Primitive value;
+  MemberValue value;
 };
 
 struct CompositeClause {
@@ -676,6 +719,7 @@ struct Query {
   uint32_t limit;
   uint32_t offset;
   COption<Clause> clause;
+  bool dont_include_hashed_keys;
 };
 
 struct ModelMetadata {
@@ -741,6 +785,13 @@ struct EntityKeysClause {
   bool IsEntityKeys() const {
     return tag == Tag::EntityKeys;
   }
+};
+
+struct IndexerUpdate {
+  int64_t head;
+  int64_t tps;
+  int64_t last_block_timestamp;
+  FieldElement contract_address;
 };
 
 struct Signature {
@@ -856,6 +907,10 @@ Result<bool> client_update_event_message_subscription(ToriiClient *client,
                                                       Subscription *subscription,
                                                       const EntityKeysClause *clauses,
                                                       uintptr_t clauses_len);
+
+Result<Subscription*> on_indexer_update(ToriiClient *client,
+                                        const FieldElement *contract_address,
+                                        void (*callback)(IndexerUpdate));
 
 Result<CArray<FieldElement>> bytearray_serialize(const char *str);
 

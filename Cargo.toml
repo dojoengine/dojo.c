@@ -1,28 +1,31 @@
 [package]
 edition = "2021"
 name = "dojo-c"
-version = "1.0.0-alpha.11"
+version = "1.0.0-alpha.14"
 
 [lib]
 crate-type = ["cdylib", "rlib", "staticlib"]
 
-[dependencies]
-dojo-types = { git = "https://github.com/dojoengine/dojo", branch = "Larkooo-patch-1" }
-torii-client = { git = "https://github.com/dojoengine/dojo", branch = "Larkooo-patch-1" }
-torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
-    "client",
-], branch = "Larkooo-patch-1" }
-torii-relay = { git = "https://github.com/dojoengine/dojo", branch = "Larkooo-patch-1" }
-dojo-world = { git = "https://github.com/dojoengine/dojo", branch = "Larkooo-patch-1" }
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+dojo-world = { git = "https://github.com/Larkooo/dojo", branch = "grpc-queries", features = [
+    "metadata",
+] }
 
+[dependencies]
+dojo-types = { git = "https://github.com/Larkooo/dojo", branch = "grpc-queries" }
+torii-client = { git = "https://github.com/Larkooo/dojo", branch = "grpc-queries" }
+torii-grpc = { git = "https://github.com/Larkooo/dojo", features = [
+    "client",
+], branch = "grpc-queries" }
+torii-relay = { git = "https://github.com/Larkooo/dojo", branch = "grpc-queries" }
 
 starknet = "0.11.0"
-starknet-crypto = "0.7.0"
+starknet-crypto = "0.7.2"
 
 parking_lot = "0.12.1"
 tokio = { version = "1.39.2", default-features = false, features = ["rt"] }
 url = "2.5.0"
-anyhow = "1.0.76"
+anyhow = "1.0.89"
 serde = { version = "1.0.193", features = ["derive"] }
 serde_json = "1.0.115"
 tokio-stream = "0.1.14"
@@ -34,6 +37,8 @@ cainome = { git = "https://github.com/cartridge-gg/cainome", tag = "v0.3.2" }
 
 # WASM
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+dojo-world = { git = "https://github.com/Larkooo/dojo", branch = "grpc-queries", features = [
+] }
 serde-wasm-bindgen = "0.6.3"
 wasm-bindgen-futures = "0.4.39"
 js-sys = "0.3.70"
@@ -53,9 +58,5 @@ gloo-timers = { version = "0.3.0", features = ["futures"] }
 cbindgen = "0.26.0"
 
 [patch.crates-io]
-# Remove this patch once the following PR is merged: <https://github.com/xJonathanLEI/starknet-rs/pull/615>
-#
-# To enable std feature on `starknet-types-core`.
-# To re-export the entire `felt` module from `starknet-types-core`.
-starknet-core = { git = "https://github.com/kariy/starknet-rs", branch = "dojo-patch" }
-starknet-types-core = { git = "https://github.com/dojoengine/types-rs", rev = "289e2f0" }
+# Matching the same rev that `cainome` is using. Mainly because `starknet-rs` hasn't create a new release yet.
+starknet = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "2ddc694" }

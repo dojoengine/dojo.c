@@ -194,11 +194,20 @@ cdef extern from *:
     PatternMatching pattern_matching;
     CArrayc_char models;
 
+  cdef enum MemberValue_Tag:
+    Primitive,
+    String,
+
+  cdef struct MemberValue:
+    MemberValue_Tag tag;
+    Primitive primitive;
+    const char *string;
+
   cdef struct MemberClause:
     const char *model;
     const char *member;
     ComparisonOperator operator_;
-    Primitive value;
+    MemberValue value;
 
   cdef struct CArrayClause:
     Clause *data;
@@ -231,6 +240,7 @@ cdef extern from *:
     uint32_t limit;
     uint32_t offset;
     COptionClause clause;
+    bool dont_include_hashed_keys;
 
   cdef struct CArrayFieldElement:
     FieldElement *data;
@@ -284,6 +294,12 @@ cdef extern from *:
     Resultbool_Tag tag;
     bool ok;
     Error err;
+
+  cdef struct IndexerUpdate:
+    int64_t head;
+    int64_t tps;
+    int64_t last_block_timestamp;
+    FieldElement contract_address;
 
   cdef enum ResultCArrayFieldElement_Tag:
     OkCArrayFieldElement,
@@ -399,6 +415,10 @@ cdef extern from *:
                                                       Subscription *subscription,
                                                       const EntityKeysClause *clauses,
                                                       uintptr_t clauses_len);
+
+  ResultSubscription on_indexer_update(ToriiClient *client,
+                                       const FieldElement *contract_address,
+                                       void (*callback)(IndexerUpdate));
 
   ResultCArrayFieldElement bytearray_serialize(const char *str);
 
