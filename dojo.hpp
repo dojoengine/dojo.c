@@ -786,6 +786,12 @@ struct EntityKeysClause {
   }
 };
 
+struct Event {
+  CArray<FieldElement> keys;
+  CArray<FieldElement> data;
+  FieldElement transaction_hash;
+};
+
 struct IndexerUpdate {
   int64_t head;
   int64_t tps;
@@ -906,6 +912,11 @@ Result<bool> client_update_event_message_subscription(ToriiClient *client,
                                                       Subscription *subscription,
                                                       const EntityKeysClause *clauses,
                                                       uintptr_t clauses_len);
+
+Result<Subscription*> client_on_starknet_event(ToriiClient *client,
+                                               const EntityKeysClause *clauses,
+                                               uintptr_t clauses_len,
+                                               void (*callback)(CArray<Event>));
 
 Result<Subscription*> on_indexer_update(ToriiClient *client,
                                         const FieldElement *contract_address,

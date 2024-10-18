@@ -2,8 +2,8 @@ mod utils;
 
 use std::collections::HashMap;
 use std::str::FromStr;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
@@ -35,8 +35,8 @@ use crate::utils::watch_tx;
 mod types;
 
 use types::{
-    BlockId, Call, Calls, ClientConfig, Entities, Entity, IndexerUpdate, KeysClauses, Model, Query,
-    Signature,
+    BlockId, Call, Calls, ClientConfig, Entities, Entity, IndexerUpdate, KeysClause, KeysClauses,
+    Model, Query, Signature,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -608,6 +608,64 @@ impl ToriiClient {
             .update_event_message_subscription(subscription.id.load(Ordering::SeqCst), clauses)
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
+    }
+
+    #[wasm_bindgen(js_name = onStarknetEvent)]
+    pub async fn on_starknet_event(
+        &self,
+        clauses: KeysClauses,
+        callback: js_sys::Function,
+    ) -> Result<Subscription, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        let clauses: Vec<_> = clauses.iter().map(|c| c.into()).collect();
+        let subscription_id = Arc::new(AtomicU64::new(0));
+        let (trigger, tripwire) = Tripwire::new();
+
+        let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
+
+        // Spawn a new task to handle the stream and reconnections
+        let client = self.inner.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let mut backoff = 1000;
+            let max_backoff = 60000;
+
+            loop {
+                let stream = client.on_starknet_event(clauses.clone()).await;
+
+                match stream {
+                    Ok(stream) => {
+                        backoff = 1000; // Reset backoff on successful connection
+
+                        let mut stream = stream.take_until_if(tripwire.clone());
+
+                        while let Some(Ok(event)) = stream.next().await {
+                            let _ = callback.call1(
+                                &JsValue::null(),
+                                &event.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
+                        }
+                    }
+                    Err(_) => {
+                        // Check if the tripwire has been triggered before attempting to reconnect
+                        if tripwire.clone().await {
+                            break; // Exit the loop if the subscription has been cancelled
+                        }
+                    }
+                }
+
+                // If we've reached this point, the stream has ended (possibly due to disconnection)
+                // We'll try to reconnect after a delay, unless the tripwire has been triggered
+                if tripwire.clone().await {
+                    break; // Exit the loop if the subscription has been cancelled
+                }
+                gloo_timers::future::TimeoutFuture::new(backoff).await;
+                backoff = std::cmp::min(backoff * 2, max_backoff);
+            }
+        });
+
+        Ok(subscription)
     }
 
     #[wasm_bindgen(js_name = onIndexerUpdated)]

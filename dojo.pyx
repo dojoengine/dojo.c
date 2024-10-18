@@ -294,6 +294,15 @@ cdef extern from *:
     bool ok;
     Error err;
 
+  cdef struct Event:
+    CArrayFieldElement keys;
+    CArrayFieldElement data;
+    FieldElement transaction_hash;
+
+  cdef struct CArrayEvent:
+    Event *data;
+    uintptr_t data_len;
+
   cdef struct IndexerUpdate:
     int64_t head;
     int64_t tps;
@@ -414,6 +423,11 @@ cdef extern from *:
                                                       Subscription *subscription,
                                                       const EntityKeysClause *clauses,
                                                       uintptr_t clauses_len);
+
+  ResultSubscription client_on_starknet_event(ToriiClient *client,
+                                              const EntityKeysClause *clauses,
+                                              uintptr_t clauses_len,
+                                              void (*callback)(CArrayEvent));
 
   ResultSubscription on_indexer_update(ToriiClient *client,
                                        const FieldElement *contract_address,

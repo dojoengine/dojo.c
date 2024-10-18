@@ -24,7 +24,7 @@ use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
-use types::{EntityKeysClause, IndexerUpdate, Struct};
+use types::{EntityKeysClause, Event, IndexerUpdate, Struct};
 
 use self::types::{
     BlockId, CArray, Call, Entity, Error, Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
@@ -306,6 +306,65 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_on_starknet_event(
+    client: *mut ToriiClient,
+    clauses: *const EntityKeysClause,
+    clauses_len: usize,
+    callback: unsafe extern "C" fn(CArray<Event>),
+) -> Result<*mut Subscription> {
+    let client = Arc::from_raw(client);
+    let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
+    let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
+
+    let subscription_id = Arc::new(AtomicU64::new(0));
+    let (trigger, tripwire) = Tripwire::new();
+
+    let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
+
+    // Spawn a new thread to handle the stream and reconnections
+    let client_clone = client.clone();
+    client.runtime.spawn(async move {
+        let mut backoff = Duration::from_secs(1);
+        let max_backoff = Duration::from_secs(60);
+
+        loop {
+            let rcv = client_clone.inner.on_starknet_event(clauses.clone()).await;
+
+            match rcv {
+                Ok(rcv) => {
+                    backoff = Duration::from_secs(1); // Reset backoff on successful connection
+
+                    let mut rcv = rcv.take_until_if(tripwire.clone());
+
+                    while let Some(Ok(event)) = rcv.next().await {
+                        let events: Vec<Event> =
+                            vec![event].into_iter().map(|e| (&e).into()).collect();
+                        callback(events.into());
+                    }
+                }
+                Err(_) => {
+                    // Check if the tripwire has been triggered before attempting to reconnect
+                    if tripwire.clone().await {
+                        break; // Exit the loop if the subscription has been cancelled
+                    }
+                }
+            }
+
+            // If we've reached this point, the stream has ended (possibly due to disconnection)
+            // We'll try to reconnect after a delay, unless the tripwire has been triggered
+            if tripwire.clone().await {
+                break; // Exit the loop if the subscription has been cancelled
+            }
+            sleep(backoff).await;
+            backoff = std::cmp::min(backoff * 2, max_backoff);
+        }
+    });
+
+    Result::Ok(Box::into_raw(Box::new(subscription)))
 }
 
 #[no_mangle]

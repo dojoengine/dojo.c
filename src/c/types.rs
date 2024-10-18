@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString, c_char};
+use std::ffi::{c_char, CStr, CString};
 
 use starknet::core::utils::get_selector_from_name;
 use torii_client::client::Client;
@@ -1119,3 +1119,41 @@ impl From<&ModelMetadata> for dojo_types::schema::ModelMetadata {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct Event {
+    pub keys: CArray<FieldElement>,
+    pub data: CArray<FieldElement>,
+    pub transaction_hash: FieldElement,
+}
+
+impl From<&Event> for torii_grpc::types::Event {
+    fn from(val: &Event) -> Self {
+        let keys: Vec<FieldElement> = (&val.keys).into();
+        let keys = std::mem::ManuallyDrop::new(keys);
+
+        let data: Vec<FieldElement> = (&val.data).into();
+        let data = std::mem::ManuallyDrop::new(data);
+
+        torii_grpc::types::Event {
+            keys: keys.iter().map(Into::into).collect(),
+            data: data.iter().map(Into::into).collect(),
+            transaction_hash: (&val.transaction_hash).into(),
+        }
+    }
+}
+
+impl From<&torii_grpc::types::Event> for Event {
+    fn from(val: &torii_grpc::types::Event) -> Self {
+        let keys = val.keys.iter().map(|k| k.into()).collect::<Vec<FieldElement>>();
+        let data = val.data.iter().map(|k| k.into()).collect::<Vec<FieldElement>>();
+
+        Event {
+            keys: keys.into(),
+            data: data.into(),
+            transaction_hash: (&val.transaction_hash).into(),
+        }
+    }
+}
+
