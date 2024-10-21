@@ -134,7 +134,22 @@ pub struct Entities(pub HashMap<String, Entity>);
 
 impl From<&Vec<torii_grpc::types::schema::Entity>> for Entities {
     fn from(value: &Vec<torii_grpc::types::schema::Entity>) -> Self {
-        Self(value.iter().map(|e| (format!("{:#x}", e.hashed_keys), e.into())).collect())
+        Self(
+            value
+                .iter()
+                .enumerate()
+                .map(|(i, e)| {
+                    (
+                        if e.hashed_keys != Felt::ZERO {
+                            format!("{:#x}", e.hashed_keys)
+                        } else {
+                            format!("{:#x}", i)
+                        },
+                        e.into(),
+                    )
+                })
+                .collect(),
+        )
     }
 }
 
@@ -208,6 +223,7 @@ pub struct Query {
     pub limit: u32,
     pub offset: u32,
     pub clause: Option<Clause>,
+    pub dont_include_hashed_keys: bool,
 }
 
 impl From<&Query> for torii_grpc::types::Query {
@@ -216,6 +232,7 @@ impl From<&Query> for torii_grpc::types::Query {
             limit: value.limit,
             offset: value.offset,
             clause: value.clause.as_ref().map(|c| c.into()),
+            dont_include_hashed_keys: value.dont_include_hashed_keys,
         }
     }
 }

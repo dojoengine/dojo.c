@@ -719,6 +719,7 @@ struct Query {
   uint32_t limit;
   uint32_t offset;
   COption<Clause> clause;
+  bool dont_include_hashed_keys;
 };
 
 struct ModelMetadata {

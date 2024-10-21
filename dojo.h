@@ -372,6 +372,7 @@ typedef struct Query {
   uint32_t limit;
   uint32_t offset;
   struct COptionClause clause;
+  bool dont_include_hashed_keys;
 } Query;
 
 typedef struct CArrayFieldElement {

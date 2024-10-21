@@ -436,8 +436,15 @@ impl ToriiClient {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let results =
-            self.inner.entities(torii_grpc::types::Query { limit, offset, clause: None }).await;
+        let results = self
+            .inner
+            .entities(torii_grpc::types::Query {
+                limit,
+                offset,
+                clause: None,
+                dont_include_hashed_keys: false,
+            })
+            .await;
 
         match results {
             Ok(entities) => Ok((&entities).into()),

@@ -240,6 +240,7 @@ cdef extern from *:
     uint32_t limit;
     uint32_t offset;
     COptionClause clause;
+    bool dont_include_hashed_keys;
 
   cdef struct CArrayFieldElement:
     FieldElement *data;

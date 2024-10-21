@@ -253,6 +253,7 @@ pub struct Query {
     pub limit: u32,
     pub offset: u32,
     pub clause: COption<Clause>,
+    pub dont_include_hashed_keys: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -761,12 +762,14 @@ impl From<&Query> for torii_grpc::types::Query {
                     limit: val.limit,
                     offset: val.offset,
                     clause: Option::Some(clause),
+                    dont_include_hashed_keys: val.dont_include_hashed_keys,
                 }
             }
             COption::None => torii_grpc::types::Query {
                 limit: val.limit,
                 offset: val.offset,
                 clause: Option::None,
+                dont_include_hashed_keys: val.dont_include_hashed_keys,
             },
         }
     }
@@ -777,9 +780,19 @@ impl From<&torii_grpc::types::Query> for Query {
         match &val.clause {
             Option::Some(clause) => {
                 let clause = (&clause.clone()).into();
-                Query { limit: val.limit, offset: val.offset, clause: COption::Some(clause) }
+                Query {
+                    limit: val.limit,
+                    offset: val.offset,
+                    clause: COption::Some(clause),
+                    dont_include_hashed_keys: val.dont_include_hashed_keys,
+                }
             }
-            Option::None => Query { limit: val.limit, offset: val.offset, clause: COption::None },
+            Option::None => Query {
+                limit: val.limit,
+                offset: val.offset,
+                clause: COption::None,
+                dont_include_hashed_keys: val.dont_include_hashed_keys,
+            },
         }
     }
 }
