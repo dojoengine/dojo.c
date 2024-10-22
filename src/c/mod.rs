@@ -1,14 +1,15 @@
 mod types;
 
-use std::ffi::{c_void, CStr, CString};
+use std::ffi::{CStr, CString, c_void};
 use std::ops::Deref;
 use std::os::raw::c_char;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use dojo_world::contracts::naming::compute_selector_from_tag;
+use futures::FutureExt;
 use starknet::accounts::{
     Account as StarknetAccount, ConnectedAccount, ExecutionEncoding, SingleOwnerAccount,
 };
@@ -17,7 +18,7 @@ use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::{poseidon_hash_many, Felt};
+use starknet_crypto::{Felt, poseidon_hash_many};
 use stream_cancel::{StreamExt as _, Tripwire};
 use tokio::time::sleep;
 use tokio_stream::StreamExt;
@@ -168,26 +169,17 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 
         loop {
             let rcv = client_clone.inner.on_entity_updated(clauses.clone()).await;
+            if let Ok(rcv) = rcv {
+                backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
-            match rcv {
-                Ok(rcv) => {
-                    backoff = Duration::from_secs(1); // Reset backoff on successful connection
+                let mut rcv = rcv.take_until_if(tripwire.clone());
 
-                    let mut rcv = rcv.take_until_if(tripwire.clone());
-
-                    while let Some(Ok((id, entity))) = rcv.next().await {
-                        subscription_id_clone.store(id, Ordering::SeqCst);
-                        let key: types::FieldElement = (&entity.hashed_keys).into();
-                        let models: Vec<Struct> =
-                            entity.models.into_iter().map(|e| (&e).into()).collect();
-                        callback(key, models.into());
-                    }
-                }
-                Err(_) => {
-                    // Check if the tripwire has been triggered before attempting to reconnect
-                    if tripwire.clone().now_or_never().unwrap_or_default() {
-                        break; // Exit the loop if the subscription has been cancelled
-                    }
+                while let Some(Ok((id, entity))) = rcv.next().await {
+                    subscription_id_clone.store(id, Ordering::SeqCst);
+                    let key: types::FieldElement = (&entity.hashed_keys).into();
+                    let models: Vec<Struct> =
+                        entity.models.into_iter().map(|e| (&e).into()).collect();
+                    callback(key, models.into());
                 }
             }
 
@@ -251,26 +243,17 @@ pub unsafe extern "C" fn client_on_event_message_update(
 
         loop {
             let rcv = client_clone.inner.on_event_message_updated(clauses.clone()).await;
+            if let Ok(rcv) = rcv {
+                backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
-            match rcv {
-                Ok(rcv) => {
-                    backoff = Duration::from_secs(1); // Reset backoff on successful connection
+                let mut rcv = rcv.take_until_if(tripwire.clone());
 
-                    let mut rcv = rcv.take_until_if(tripwire.clone());
-
-                    while let Some(Ok((id, entity))) = rcv.next().await {
-                        subscription_id_clone.store(id, Ordering::SeqCst);
-                        let key: types::FieldElement = (&entity.hashed_keys).into();
-                        let models: Vec<Struct> =
-                            entity.models.into_iter().map(|e| (&e).into()).collect();
-                        callback(key, models.into());
-                    }
-                }
-                Err(_) => {
-                    // Check if the tripwire has been triggered before attempting to reconnect
-                    if tripwire.clone().now_or_never().unwrap_or_default() {
-                        break; // Exit the loop if the subscription has been cancelled
-                    }
+                while let Some(Ok((id, entity))) = rcv.next().await {
+                    subscription_id_clone.store(id, Ordering::SeqCst);
+                    let key: types::FieldElement = (&entity.hashed_keys).into();
+                    let models: Vec<Struct> =
+                        entity.models.into_iter().map(|e| (&e).into()).collect();
+                    callback(key, models.into());
                 }
             }
 
@@ -335,22 +318,13 @@ pub unsafe extern "C" fn on_indexer_update(
 
         loop {
             let rcv = client_clone.inner.on_indexer_updated(contract_address).await;
+            if let Ok(rcv) = rcv {
+                backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
-            match rcv {
-                Ok(rcv) => {
-                    backoff = Duration::from_secs(1); // Reset backoff on successful connection
+                let mut rcv = rcv.take_until_if(tripwire.clone());
 
-                    let mut rcv = rcv.take_until_if(tripwire.clone());
-
-                    while let Some(Ok(update)) = rcv.next().await {
-                        callback((&update).into());
-                    }
-                }
-                Err(_) => {
-                    // Check if the tripwire has been triggered before attempting to reconnect
-                    if tripwire.clone().now_or_never().unwrap_or_default() {
-                        break; // Exit the loop if the subscription has been cancelled
-                    }
+                while let Some(Ok(update)) = rcv.next().await {
+                    callback((&update).into());
                 }
             }
 

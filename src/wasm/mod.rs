@@ -554,30 +554,20 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                let stream = client.on_event_message_updated(clauses.clone()).await;
+                if let Ok(stream) = client.on_event_message_updated(clauses.clone()).await {
+                    backoff = 1000; // Reset backoff on successful connection
 
-                match stream {
-                    Ok(stream) => {
-                        backoff = 1000; // Reset backoff on successful connection
+                    let mut stream = stream.take_until_if(tripwire.clone());
 
-                        let mut stream = stream.take_until_if(tripwire.clone());
+                    while let Some(Ok((id, entity))) = stream.next().await {
+                        subscription_id_clone.store(id, Ordering::SeqCst);
+                        let models: Entity = (&entity).into();
 
-                        while let Some(Ok((id, entity))) = stream.next().await {
-                            subscription_id_clone.store(id, Ordering::SeqCst);
-                            let models: Entity = (&entity).into();
-
-                            let _ = callback.call2(
-                                &JsValue::null(),
-                                &JsValue::from_str(&format!("{:#x}", entity.hashed_keys)),
-                                &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
-                            );
-                        }
-                    }
-                    Err(_) => {
-                        // Check if the tripwire has been triggered before attempting to reconnect
-                        if tripwire.clone().now_or_never().unwrap_or_default() {
-                            break; // Exit the loop if the subscription has been cancelled
-                        }
+                        let _ = callback.call2(
+                            &JsValue::null(),
+                            &JsValue::from_str(&format!("{:#x}", entity.hashed_keys)),
+                            &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                        );
                     }
                 }
 
@@ -636,28 +626,18 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                let stream = client.on_indexer_updated(contract_address).await;
+                if let Ok(stream) = client.on_indexer_updated(contract_address).await {
+                    backoff = 1000; // Reset backoff on successful connection
 
-                match stream {
-                    Ok(stream) => {
-                        backoff = 1000; // Reset backoff on successful connection
+                    let mut stream = stream.take_until_if(tripwire.clone());
 
-                        let mut stream = stream.take_until_if(tripwire.clone());
+                    while let Some(Ok(update)) = stream.next().await {
+                        let update: IndexerUpdate = (&update).into();
 
-                        while let Some(Ok(update)) = stream.next().await {
-                            let update: IndexerUpdate = (&update).into();
-
-                            let _ = callback.call1(
-                                &JsValue::null(),
-                                &update.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
-                            );
-                        }
-                    }
-                    Err(_) => {
-                        // Check if the tripwire has been triggered before attempting to reconnect
-                        if tripwire.clone().now_or_never().unwrap_or_default() {
-                            break; // Exit the loop if the subscription has been cancelled
-                        }
+                        let _ = callback.call1(
+                            &JsValue::null(),
+                            &update.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                        );
                     }
                 }
 
