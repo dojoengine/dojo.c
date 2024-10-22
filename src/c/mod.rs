@@ -9,6 +9,7 @@ use std::time::Duration;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use dojo_world::contracts::naming::compute_selector_from_tag;
+use futures::FutureExt;
 use starknet::accounts::{
     Account as StarknetAccount, ConnectedAccount, ExecutionEncoding, SingleOwnerAccount,
 };
@@ -168,32 +169,23 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 
         loop {
             let rcv = client_clone.inner.on_entity_updated(clauses.clone()).await;
+            if let Ok(rcv) = rcv {
+                backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
-            match rcv {
-                Ok(rcv) => {
-                    backoff = Duration::from_secs(1); // Reset backoff on successful connection
+                let mut rcv = rcv.take_until_if(tripwire.clone());
 
-                    let mut rcv = rcv.take_until_if(tripwire.clone());
-
-                    while let Some(Ok((id, entity))) = rcv.next().await {
-                        subscription_id_clone.store(id, Ordering::SeqCst);
-                        let key: types::FieldElement = (&entity.hashed_keys).into();
-                        let models: Vec<Struct> =
-                            entity.models.into_iter().map(|e| (&e).into()).collect();
-                        callback(key, models.into());
-                    }
-                }
-                Err(_) => {
-                    // Check if the tripwire has been triggered before attempting to reconnect
-                    if tripwire.clone().await {
-                        break; // Exit the loop if the subscription has been cancelled
-                    }
+                while let Some(Ok((id, entity))) = rcv.next().await {
+                    subscription_id_clone.store(id, Ordering::SeqCst);
+                    let key: types::FieldElement = (&entity.hashed_keys).into();
+                    let models: Vec<Struct> =
+                        entity.models.into_iter().map(|e| (&e).into()).collect();
+                    callback(key, models.into());
                 }
             }
 
             // If we've reached this point, the stream has ended (possibly due to disconnection)
             // We'll try to reconnect after a delay, unless the tripwire has been triggered
-            if tripwire.clone().await {
+            if tripwire.clone().now_or_never().unwrap_or_default() {
                 break; // Exit the loop if the subscription has been cancelled
             }
             sleep(backoff).await;
@@ -251,32 +243,23 @@ pub unsafe extern "C" fn client_on_event_message_update(
 
         loop {
             let rcv = client_clone.inner.on_event_message_updated(clauses.clone()).await;
+            if let Ok(rcv) = rcv {
+                backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
-            match rcv {
-                Ok(rcv) => {
-                    backoff = Duration::from_secs(1); // Reset backoff on successful connection
+                let mut rcv = rcv.take_until_if(tripwire.clone());
 
-                    let mut rcv = rcv.take_until_if(tripwire.clone());
-
-                    while let Some(Ok((id, entity))) = rcv.next().await {
-                        subscription_id_clone.store(id, Ordering::SeqCst);
-                        let key: types::FieldElement = (&entity.hashed_keys).into();
-                        let models: Vec<Struct> =
-                            entity.models.into_iter().map(|e| (&e).into()).collect();
-                        callback(key, models.into());
-                    }
-                }
-                Err(_) => {
-                    // Check if the tripwire has been triggered before attempting to reconnect
-                    if tripwire.clone().await {
-                        break; // Exit the loop if the subscription has been cancelled
-                    }
+                while let Some(Ok((id, entity))) = rcv.next().await {
+                    subscription_id_clone.store(id, Ordering::SeqCst);
+                    let key: types::FieldElement = (&entity.hashed_keys).into();
+                    let models: Vec<Struct> =
+                        entity.models.into_iter().map(|e| (&e).into()).collect();
+                    callback(key, models.into());
                 }
             }
 
             // If we've reached this point, the stream has ended (possibly due to disconnection)
             // We'll try to reconnect after a delay, unless the tripwire has been triggered
-            if tripwire.clone().await {
+            if tripwire.clone().now_or_never().unwrap_or_default() {
                 break; // Exit the loop if the subscription has been cancelled
             }
             sleep(backoff).await;
@@ -335,28 +318,19 @@ pub unsafe extern "C" fn on_indexer_update(
 
         loop {
             let rcv = client_clone.inner.on_indexer_updated(contract_address).await;
+            if let Ok(rcv) = rcv {
+                backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
-            match rcv {
-                Ok(rcv) => {
-                    backoff = Duration::from_secs(1); // Reset backoff on successful connection
+                let mut rcv = rcv.take_until_if(tripwire.clone());
 
-                    let mut rcv = rcv.take_until_if(tripwire.clone());
-
-                    while let Some(Ok(update)) = rcv.next().await {
-                        callback((&update).into());
-                    }
-                }
-                Err(_) => {
-                    // Check if the tripwire has been triggered before attempting to reconnect
-                    if tripwire.clone().await {
-                        break; // Exit the loop if the subscription has been cancelled
-                    }
+                while let Some(Ok(update)) = rcv.next().await {
+                    callback((&update).into());
                 }
             }
 
             // If we've reached this point, the stream has ended (possibly due to disconnection)
             // We'll try to reconnect after a delay, unless the tripwire has been triggered
-            if tripwire.clone().await {
+            if tripwire.clone().now_or_never().unwrap_or_default() {
                 break; // Exit the loop if the subscription has been cancelled
             }
             sleep(backoff).await;
