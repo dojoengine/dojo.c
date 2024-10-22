@@ -1,10 +1,10 @@
 mod types;
 
-use std::ffi::{CStr, CString, c_void};
+use std::ffi::{c_void, CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
@@ -17,7 +17,7 @@ use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::{Felt, poseidon_hash_many};
+use starknet_crypto::{poseidon_hash_many, Felt};
 use stream_cancel::{StreamExt as _, Tripwire};
 use tokio::time::sleep;
 use tokio_stream::StreamExt;
@@ -185,7 +185,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
                 }
                 Err(_) => {
                     // Check if the tripwire has been triggered before attempting to reconnect
-                    if tripwire.clone().await {
+                    if tripwire.clone().now_or_never().unwrap_or_default() {
                         break; // Exit the loop if the subscription has been cancelled
                     }
                 }
@@ -193,7 +193,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 
             // If we've reached this point, the stream has ended (possibly due to disconnection)
             // We'll try to reconnect after a delay, unless the tripwire has been triggered
-            if tripwire.clone().await {
+            if tripwire.clone().now_or_never().unwrap_or_default() {
                 break; // Exit the loop if the subscription has been cancelled
             }
             sleep(backoff).await;
@@ -268,7 +268,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
                 }
                 Err(_) => {
                     // Check if the tripwire has been triggered before attempting to reconnect
-                    if tripwire.clone().await {
+                    if tripwire.clone().now_or_never().unwrap_or_default() {
                         break; // Exit the loop if the subscription has been cancelled
                     }
                 }
@@ -276,7 +276,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
 
             // If we've reached this point, the stream has ended (possibly due to disconnection)
             // We'll try to reconnect after a delay, unless the tripwire has been triggered
-            if tripwire.clone().await {
+            if tripwire.clone().now_or_never().unwrap_or_default() {
                 break; // Exit the loop if the subscription has been cancelled
             }
             sleep(backoff).await;
@@ -348,7 +348,7 @@ pub unsafe extern "C" fn on_indexer_update(
                 }
                 Err(_) => {
                     // Check if the tripwire has been triggered before attempting to reconnect
-                    if tripwire.clone().await {
+                    if tripwire.clone().now_or_never().unwrap_or_default() {
                         break; // Exit the loop if the subscription has been cancelled
                     }
                 }
@@ -356,7 +356,7 @@ pub unsafe extern "C" fn on_indexer_update(
 
             // If we've reached this point, the stream has ended (possibly due to disconnection)
             // We'll try to reconnect after a delay, unless the tripwire has been triggered
-            if tripwire.clone().await {
+            if tripwire.clone().now_or_never().unwrap_or_default() {
                 break; // Exit the loop if the subscription has been cancelled
             }
             sleep(backoff).await;
