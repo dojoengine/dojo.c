@@ -513,3 +513,13 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
         }
     }
 }
+
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Event {
+    pub keys: Vec<String>,
+    pub data: Vec<String>,
+    pub transaction_hash: String,
+}
+
