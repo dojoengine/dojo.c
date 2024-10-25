@@ -8,7 +8,7 @@ use serde_wasm_bindgen::to_value;
 use starknet::core::types::FunctionCall;
 use starknet::core::utils::get_selector_from_name;
 use starknet_crypto::Felt;
-use tsify_next::{Tsify, declare};
+use tsify_next::{declare, Tsify};
 use wasm_bindgen::prelude::*;
 
 use super::utils::parse_ty_as_json_str;
@@ -514,7 +514,6 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
     }
 }
 
-
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Event {
@@ -522,4 +521,3 @@ pub struct Event {
     pub data: Vec<String>,
     pub transaction_hash: String,
 }
-

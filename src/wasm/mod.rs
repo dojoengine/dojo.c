@@ -619,32 +619,22 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                let stream = client.on_starknet_event(clauses.clone()).await;
+                if let Ok(stream) = client.on_starknet_event(clauses.clone()).await {
+                    backoff = 1000; // Reset backoff on successful connection
 
-                match stream {
-                    Ok(stream) => {
-                        backoff = 1000; // Reset backoff on successful connection
+                    let mut stream = stream.take_until_if(tripwire.clone());
 
-                        let mut stream = stream.take_until_if(tripwire.clone());
-
-                        while let Some(Ok(event)) = stream.next().await {
-                            let _ = callback.call1(
-                                &JsValue::null(),
-                                &event.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
-                            );
-                        }
-                    }
-                    Err(_) => {
-                        // Check if the tripwire has been triggered before attempting to reconnect
-                        if tripwire.clone().await {
-                            break; // Exit the loop if the subscription has been cancelled
-                        }
+                    while let Some(Ok(event)) = stream.next().await {
+                        let _ = callback.call1(
+                            &JsValue::null(),
+                            &event.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                        );
                     }
                 }
 
                 // If we've reached this point, the stream has ended (possibly due to disconnection)
                 // We'll try to reconnect after a delay, unless the tripwire has been triggered
-                if tripwire.clone().await {
+                if tripwire.clone().now_or_never().unwrap_or_default() {
                     break; // Exit the loop if the subscription has been cancelled
                 }
                 gloo_timers::future::TimeoutFuture::new(backoff).await;

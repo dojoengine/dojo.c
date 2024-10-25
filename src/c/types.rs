@@ -1169,4 +1169,3 @@ impl From<&torii_grpc::types::Event> for Event {
         }
     }
 }
-
