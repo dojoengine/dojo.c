@@ -1,10 +1,10 @@
 use std::ffi::c_char;
-use std::sync::Arc;
 use std::sync::atomic::AtomicU64;
+use std::sync::Arc;
 
 use starknet::accounts::SingleOwnerAccount;
-use starknet::providers::JsonRpcClient;
 use starknet::providers::jsonrpc::HttpTransport;
+use starknet::providers::JsonRpcClient;
 use starknet::signers::LocalWallet;
 use stream_cancel::Trigger;
 use torii_client::client::Client;
