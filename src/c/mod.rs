@@ -297,7 +297,7 @@ pub unsafe extern "C" fn client_on_starknet_event(
     client: *mut ToriiClient,
     clauses: *const EntityKeysClause,
     clauses_len: usize,
-    callback: unsafe extern "C" fn(CArray<Event>),
+    callback: unsafe extern "C" fn(Event),
 ) -> Result<*mut Subscription> {
     let client = Arc::from_raw(client);
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
@@ -323,8 +323,7 @@ pub unsafe extern "C" fn client_on_starknet_event(
                 let mut rcv = rcv.take_until_if(tripwire.clone());
 
                 while let Some(Ok(event)) = rcv.next().await {
-                    let events: Vec<Event> = vec![event].into_iter().map(|e| (&e).into()).collect();
-                    callback(events.into());
+                    callback((&event).into());
                 }
             }
 

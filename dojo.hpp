@@ -917,7 +917,7 @@ Result<bool> client_update_event_message_subscription(ToriiClient *client,
 Result<Subscription*> client_on_starknet_event(ToriiClient *client,
                                                const EntityKeysClause *clauses,
                                                uintptr_t clauses_len,
-                                               void (*callback)(CArray<Event>));
+                                               void (*callback)(Event));
 
 Result<Subscription*> on_indexer_update(ToriiClient *client,
                                         const FieldElement *contract_address,

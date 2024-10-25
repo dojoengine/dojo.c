@@ -463,11 +463,6 @@ typedef struct Event {
   struct FieldElement transaction_hash;
 } Event;
 
-typedef struct CArrayEvent {
-  struct Event *data;
-  uintptr_t data_len;
-} CArrayEvent;
-
 typedef struct IndexerUpdate {
   int64_t head;
   int64_t tps;
@@ -666,7 +661,7 @@ struct Resultbool client_update_event_message_subscription(struct ToriiClient *c
 struct ResultSubscription client_on_starknet_event(struct ToriiClient *client,
                                                    const struct EntityKeysClause *clauses,
                                                    uintptr_t clauses_len,
-                                                   void (*callback)(struct CArrayEvent));
+                                                   void (*callback)(struct Event));
 
 struct ResultSubscription on_indexer_update(struct ToriiClient *client,
                                             const struct FieldElement *contract_address,
