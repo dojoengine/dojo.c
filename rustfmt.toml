@@ -16,7 +16,7 @@ imports_granularity = "Module"
 normalize_comments = true
 normalize_doc_attributes = true
 unstable_features = true
-style_edition = "2024"
+version = "Two"
 wrap_comments = true
 
 # To use these settings in vscode, add the following line to your settings.json file:
