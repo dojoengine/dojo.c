@@ -124,7 +124,17 @@ pub struct Entity(pub HashMap<String, Model>);
 
 impl From<&torii_grpc::types::schema::Entity> for Entity {
     fn from(value: &torii_grpc::types::schema::Entity) -> Self {
-        Self(value.models.iter().map(|m| (m.name.clone(), m.into())).collect())
+        let mut seen_models = HashMap::new();
+        Self(value.models.iter().map(|m| {
+            let count = seen_models.entry(m.name.clone()).or_insert(0);
+            let name = if *count == 0 {
+                m.name.clone()
+            } else {
+                format!("{}-{}", m.name, count)
+            };
+            *count += 1;
+            (name, m.into())
+        }).collect())
     }
 }
 
