@@ -890,7 +890,9 @@ Result<CArray<uint8_t>> client_publish_message(ToriiClient *client,
 
 Result<CArray<Entity>> client_entities(ToriiClient *client, const Query *query);
 
-Result<CArray<Entity>> client_event_messages(ToriiClient *client, const Query *query);
+Result<CArray<Entity>> client_event_messages(ToriiClient *client,
+                                             const Query *query,
+                                             bool historical);
 
 WorldMetadata client_metadata(ToriiClient *client);
 
@@ -907,12 +909,14 @@ Result<bool> client_update_entity_subscription(ToriiClient *client,
 Result<Subscription*> client_on_event_message_update(ToriiClient *client,
                                                      const EntityKeysClause *clauses,
                                                      uintptr_t clauses_len,
+                                                     bool historical,
                                                      void (*callback)(FieldElement, CArray<Struct>));
 
 Result<bool> client_update_event_message_subscription(ToriiClient *client,
                                                       Subscription *subscription,
                                                       const EntityKeysClause *clauses,
-                                                      uintptr_t clauses_len);
+                                                      uintptr_t clauses_len,
+                                                      bool historical);
 
 Result<Subscription*> client_on_starknet_event(ToriiClient *client,
                                                const EntityKeysClause *clauses,

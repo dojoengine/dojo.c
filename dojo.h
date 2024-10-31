@@ -197,6 +197,22 @@ typedef enum Ty_Tag {
   ByteArray,
 } Ty_Tag;
 
+typedef struct Member {
+  const char *name;
+  struct Ty *ty;
+  bool key;
+} Member;
+
+typedef struct CArrayMember {
+  struct Member *data;
+  uintptr_t data_len;
+} CArrayMember;
+
+typedef struct Struct {
+  const char *name;
+  struct CArrayMember children;
+} Struct;
+
 typedef struct Ty {
   Ty_Tag tag;
   union {
@@ -220,22 +236,6 @@ typedef struct Ty {
     };
   };
 } Ty;
-
-typedef struct Member {
-  const char *name;
-  struct Ty *ty;
-  bool key;
-} Member;
-
-typedef struct CArrayMember {
-  struct Member *data;
-  uintptr_t data_len;
-} CArrayMember;
-
-typedef struct Struct {
-  const char *name;
-  struct CArrayMember children;
-} Struct;
 
 typedef struct CArrayStruct {
   struct Struct *data;
@@ -300,7 +300,7 @@ typedef struct KeysClause {
 } KeysClause;
 
 typedef enum MemberValue_Tag {
-  Primitive,
+  // Primitive,
   String,
 } MemberValue_Tag;
 
@@ -632,7 +632,8 @@ struct ResultCArrayu8 client_publish_message(struct ToriiClient *client,
 struct ResultCArrayEntity client_entities(struct ToriiClient *client, const struct Query *query);
 
 struct ResultCArrayEntity client_event_messages(struct ToriiClient *client,
-                                                const struct Query *query);
+                                                const struct Query *query,
+                                                bool historical);
 
 struct WorldMetadata client_metadata(struct ToriiClient *client);
 
@@ -650,13 +651,15 @@ struct Resultbool client_update_entity_subscription(struct ToriiClient *client,
 struct ResultSubscription client_on_event_message_update(struct ToriiClient *client,
                                                          const struct EntityKeysClause *clauses,
                                                          uintptr_t clauses_len,
+                                                         bool historical,
                                                          void (*callback)(struct FieldElement,
                                                                           struct CArrayStruct));
 
 struct Resultbool client_update_event_message_subscription(struct ToriiClient *client,
                                                            struct Subscription *subscription,
                                                            const struct EntityKeysClause *clauses,
-                                                           uintptr_t clauses_len);
+                                                           uintptr_t clauses_len,
+                                                           bool historical);
 
 struct ResultSubscription client_on_starknet_event(struct ToriiClient *client,
                                                    const struct EntityKeysClause *clauses,

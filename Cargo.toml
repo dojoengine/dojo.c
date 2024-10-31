@@ -1,23 +1,23 @@
 [package]
 edition = "2021"
 name = "dojo-c"
-version = "1.0.0-alpha.18"
+version = "1.0.0-rc.0"
 
 [lib]
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-dojo-world = { git = "https://github.com/dojoengine/dojo", tag = "v1.0.0-alpha.18", features = [
+dojo-world = { git = "https://github.com/dojoengine/dojo", tag = "v1.0.0-rc.0", features = [
     "metadata",
 ] }
 
 [dependencies]
-dojo-types = { git = "https://github.com/dojoengine/dojo", tag = "v1.0.0-alpha.18" }
-torii-client = { git = "https://github.com/dojoengine/dojo", tag = "v1.0.0-alpha.18" }
+dojo-types = { git = "https://github.com/dojoengine/dojo", tag = "v1.0.0-rc.0" }
+torii-client = { git = "https://github.com/dojoengine/dojo", tag = "v1.0.0-rc.0" }
 torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
     "client",
-], tag = "v1.0.0-alpha.18" }
-torii-relay = { git = "https://github.com/dojoengine/dojo", tag = "v1.0.0-alpha.18" }
+], tag = "v1.0.0-rc.0" }
+torii-relay = { git = "https://github.com/dojoengine/dojo", tag = "v1.0.0-rc.0" }
 
 starknet = "0.11.0"
 starknet-crypto = "0.7.2"
@@ -33,11 +33,11 @@ futures = "0.3.30"
 futures-channel = "0.3.30"
 wasm-bindgen = "0.2.92"
 stream-cancel = "0.8.2"
-cainome = { git = "https://github.com/cartridge-gg/cainome", tag = "v0.3.2" }
+cainome = { git = "https://github.com/cartridge-gg/cainome", tag = "v0.4.6" }
 
 # WASM
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-dojo-world = { git = "https://github.com/dojoengine/dojo", tag = "v1.0.0-alpha.18", features = [
+dojo-world = { git = "https://github.com/dojoengine/dojo", tag = "v1.0.0-rc.0", features = [
 ] }
 serde-wasm-bindgen = "0.6.3"
 wasm-bindgen-futures = "0.4.39"
