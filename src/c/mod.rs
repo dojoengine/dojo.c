@@ -123,8 +123,9 @@ pub unsafe extern "C" fn client_entities(
 pub unsafe extern "C" fn client_event_messages(
     client: *mut ToriiClient,
     query: &Query,
+    historical: bool,
 ) -> Result<CArray<Entity>> {
-    let event_messages_future = unsafe { (*client).inner.event_messages(query.into()) };
+    let event_messages_future = unsafe { (*client).inner.event_messages(query.into(), historical) };
 
     match (*client).runtime.block_on(event_messages_future) {
         Ok(event_messages) => {
@@ -168,7 +169,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv = client_clone.inner.on_entity_updated(clauses.clone()).await;
+            let rcv = client_clone.inner.on_entity_updated(clauses.clone(), historical).await;
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
@@ -223,6 +224,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
     client: *mut ToriiClient,
     clauses: *const EntityKeysClause,
     clauses_len: usize,
+    historical: bool,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
     let client = Arc::from_raw(client);
@@ -242,7 +244,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv = client_clone.inner.on_event_message_updated(clauses.clone()).await;
+            let rcv = client_clone.inner.on_event_message_updated(clauses.clone(), historical).await;
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
