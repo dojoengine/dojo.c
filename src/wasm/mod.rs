@@ -590,10 +590,11 @@ impl ToriiClient {
         &self,
         subscription: &Subscription,
         clauses: KeysClauses,
+        historical: bool,
     ) -> Result<(), JsValue> {
         let clauses = clauses.iter().map(|c| c.into()).collect();
         self.inner
-            .update_event_message_subscription(subscription.id.load(Ordering::SeqCst), clauses)
+            .update_event_message_subscription(subscription.id.load(Ordering::SeqCst), clauses, historical)
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }

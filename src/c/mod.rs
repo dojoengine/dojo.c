@@ -169,7 +169,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv = client_clone.inner.on_entity_updated(clauses.clone(), historical).await;
+            let rcv = client_clone.inner.on_entity_updated(clauses.clone()).await;
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
@@ -279,6 +279,7 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
     subscription: *mut Subscription,
     clauses: *const EntityKeysClause,
     clauses_len: usize,
+    historical: bool,
 ) -> Result<bool> {
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
@@ -286,7 +287,7 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
     match (*client).runtime.block_on(
         (*client)
             .inner
-            .update_event_message_subscription((*subscription).id.load(Ordering::SeqCst), clauses),
+            .update_event_message_subscription((*subscription).id.load(Ordering::SeqCst), clauses, historical),
     ) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
