@@ -453,11 +453,15 @@ impl ToriiClient {
     }
 
     #[wasm_bindgen(js_name = getEventMessages)]
-    pub async fn get_event_messages(&self, query: Query) -> Result<Entities, JsValue> {
+    pub async fn get_event_messages(
+        &self,
+        query: Query,
+        historical: bool,
+    ) -> Result<Entities, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let results = self.inner.event_messages((&query).into()).await;
+        let results = self.inner.event_messages((&query).into(), historical).await;
 
         match results {
             Ok(event_messages) => Ok((&event_messages).into()),
@@ -535,6 +539,7 @@ impl ToriiClient {
     pub async fn on_event_message_updated(
         &self,
         clauses: KeysClauses,
+        historical: bool,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
@@ -554,7 +559,9 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                if let Ok(stream) = client.on_event_message_updated(clauses.clone()).await {
+                if let Ok(stream) =
+                    client.on_event_message_updated(clauses.clone(), historical).await
+                {
                     backoff = 1000; // Reset backoff on successful connection
 
                     let mut stream = stream.take_until_if(tripwire.clone());
@@ -589,10 +596,15 @@ impl ToriiClient {
         &self,
         subscription: &Subscription,
         clauses: KeysClauses,
+        historical: bool,
     ) -> Result<(), JsValue> {
         let clauses = clauses.iter().map(|c| c.into()).collect();
         self.inner
-            .update_event_message_subscription(subscription.id.load(Ordering::SeqCst), clauses)
+            .update_event_message_subscription(
+                subscription.id.load(Ordering::SeqCst),
+                clauses,
+                historical,
+            )
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }

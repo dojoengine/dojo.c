@@ -397,7 +397,9 @@ cdef extern from *:
 
   ResultCArrayEntity client_entities(ToriiClient *client, const Query *query);
 
-  ResultCArrayEntity client_event_messages(ToriiClient *client, const Query *query);
+  ResultCArrayEntity client_event_messages(ToriiClient *client,
+                                           const Query *query,
+                                           bool historical);
 
   WorldMetadata client_metadata(ToriiClient *client);
 
@@ -414,12 +416,14 @@ cdef extern from *:
   ResultSubscription client_on_event_message_update(ToriiClient *client,
                                                     const EntityKeysClause *clauses,
                                                     uintptr_t clauses_len,
+                                                    bool historical,
                                                     void (*callback)(FieldElement, CArrayStruct));
 
   Resultbool client_update_event_message_subscription(ToriiClient *client,
                                                       Subscription *subscription,
                                                       const EntityKeysClause *clauses,
-                                                      uintptr_t clauses_len);
+                                                      uintptr_t clauses_len,
+                                                      bool historical);
 
   ResultSubscription client_on_starknet_event(ToriiClient *client,
                                               const EntityKeysClause *clauses,
