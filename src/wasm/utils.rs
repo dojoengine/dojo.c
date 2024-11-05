@@ -26,15 +26,16 @@ pub fn parse_ty_as_json_str(ty: &dojo_types::schema::Ty, key: bool) -> Ty {
                         (child.name.to_owned(), parse_ty_as_json_str(&child.ty, child.key))
                     })
                     .collect::<HashMap<String, Ty>>();
-                
+
                 // Convert to JsValue as an object instead of a Map
                 let js_obj = js_sys::Object::new();
                 for (key, value) in map {
                     js_sys::Reflect::set(
                         &js_obj,
                         &JsValue::from_str(&key),
-                        &serde_wasm_bindgen::to_value(&value).unwrap()
-                    ).unwrap();
+                        &serde_wasm_bindgen::to_value(&value).unwrap(),
+                    )
+                    .unwrap();
                 }
                 JsValue::from(js_obj)
             },
