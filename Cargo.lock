@@ -1635,7 +1635,7 @@ dependencies = [
 
 [[package]]
 name = "dojo-c"
-version = "1.0.0-rc.0"
+version = "1.0.0-rc.2"
 dependencies = [
  "anyhow",
  "cainome 0.2.3",
