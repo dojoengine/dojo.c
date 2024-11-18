@@ -346,6 +346,14 @@ pub unsafe extern "C" fn client_on_starknet_event(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe fn extern "C" fn client_tokens(
+    client: *mut ToriiClient,
+    contract_addresses: *const types::FieldElement,
+    contract_addresses_len: usize
+) -> Result<
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn on_indexer_update(
     client: *mut ToriiClient,
     contract_address: *const types::FieldElement,

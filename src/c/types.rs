@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString, c_char};
+use std::ffi::{c_char, CStr, CString};
 
 use starknet::core::utils::get_selector_from_name;
 use torii_client::client::Client;
@@ -51,6 +51,23 @@ impl<T> From<COption<T>> for Option<T> {
     }
 }
 
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct Token {
+    pub contract_address: FieldElement,
+    pub name: *const c_char,
+    pub symbol: *const c_char,
+    pub decimals: u8,
+    pub metadata: *const c_char,
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct TokenBalance {
+    
+}
+
+#[repr(C)]
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub struct IndexerUpdate {
