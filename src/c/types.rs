@@ -61,10 +61,39 @@ pub struct Token {
     pub metadata: *const c_char,
 }
 
+impl From<&torii_grpc::types::Token> for Token {
+    fn from(val: &torii_grpc::types::Token) -> Self {
+        Token {
+            contract_address: (&val.contract_address).into(),
+            name: CString::new(val.name.clone()).unwrap().into_raw(),
+            symbol: CString::new(val.symbol.clone()).unwrap().into_raw(),
+            decimals: val.decimals as u8,
+            metadata: CString::new(val.metadata.clone()).unwrap().into_raw(),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub struct TokenBalance {
-    
+    #[cfg(target_pointer_width = "64")]
+    pub balance: [u64; 4],
+    #[cfg(target_pointer_width = "32")]
+    pub balance: [u32; 8],
+    pub account_address: FieldElement,
+    pub contract_address: FieldElement,
+    pub token_id: *const c_char,
+}
+
+impl From<&torii_grpc::types::TokenBalance> for TokenBalance {
+    fn from(val: &torii_grpc::types::TokenBalance) -> Self {
+        TokenBalance {
+            balance: val.balance.to_words(),
+            account_address: (&val.account_address).into(),
+            contract_address: (&val.contract_address).into(),
+            token_id: CString::new(val.token_id.clone()).unwrap().into_raw(),
+        }
+    }
 }
 
 #[repr(C)]
@@ -664,7 +693,7 @@ pub enum Primitive {
     U64(u64),
     // TODO: better way?
     U128([u8; 16]),
-    #[cfg(not(target_pointer_width = "32"))]
+    #[cfg(target_pointer_width = "64")]
     U256([u64; 4]),
     #[cfg(target_pointer_width = "32")]
     U256([u32; 8]),
@@ -737,7 +766,7 @@ impl From<&dojo_types::primitive::Primitive> for Primitive {
                 if let Some(v) = v {
                     Primitive::U256(v.to_words())
                 } else {
-                    #[cfg(not(target_pointer_width = "32"))]
+                    #[cfg(target_pointer_width = "64")]
                     return Primitive::U256([0; 4]);
                     #[cfg(target_pointer_width = "32")]
                     return Primitive::U256([0; 8]);

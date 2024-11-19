@@ -93,9 +93,7 @@ typedef enum Primitive_Tag {
   U32,
   U64,
   U128,
-#if !defined(TARGET_POINTER_WIDTH_32)
   U256,
-#endif
 #if defined(TARGET_POINTER_WIDTH_32)
   U256,
 #endif
@@ -139,11 +137,9 @@ typedef struct Primitive {
     struct {
       uint8_t u128[16];
     };
-#if !defined(TARGET_POINTER_WIDTH_32)
     struct {
       uint64_t u256[4];
     };
-#endif
 #if defined(TARGET_POINTER_WIDTH_32)
     struct {
       uint32_t u256[8];
@@ -463,6 +459,69 @@ typedef struct Event {
   struct FieldElement transaction_hash;
 } Event;
 
+typedef struct Token {
+  struct FieldElement contract_address;
+  const char *name;
+  const char *symbol;
+  uint8_t decimals;
+  const char *metadata;
+} Token;
+
+typedef struct CArrayToken {
+  struct Token *data;
+  uintptr_t data_len;
+} CArrayToken;
+
+typedef enum ResultCArrayToken_Tag {
+  OkCArrayToken,
+  ErrCArrayToken,
+} ResultCArrayToken_Tag;
+
+typedef struct ResultCArrayToken {
+  ResultCArrayToken_Tag tag;
+  union {
+    struct {
+      struct CArrayToken ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultCArrayToken;
+
+typedef struct TokenBalance {
+  uint64_t balance[4];
+#if defined(TARGET_POINTER_WIDTH_32)
+  uint32_t balance[8]
+#endif
+  ;
+  struct FieldElement account_address;
+  struct FieldElement contract_address;
+  const char *token_id;
+} TokenBalance;
+
+typedef struct CArrayTokenBalance {
+  struct TokenBalance *data;
+  uintptr_t data_len;
+} CArrayTokenBalance;
+
+typedef enum ResultCArrayTokenBalance_Tag {
+  OkCArrayTokenBalance,
+  ErrCArrayTokenBalance,
+} ResultCArrayTokenBalance_Tag;
+
+typedef struct ResultCArrayTokenBalance {
+  ResultCArrayTokenBalance_Tag tag;
+  union {
+    struct {
+      struct CArrayTokenBalance ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultCArrayTokenBalance;
+
 typedef struct IndexerUpdate {
   int64_t head;
   int64_t tps;
@@ -627,7 +686,8 @@ void client_set_logger(struct ToriiClient *client, void (*logger)(const char*));
 struct ResultCArrayu8 client_publish_message(struct ToriiClient *client,
                                              const char *message,
                                              const struct FieldElement *signature_felts,
-                                             uintptr_t signature_felts_len);
+                                             uintptr_t signature_felts_len,
+                                             bool is_session_signature);
 
 struct ResultCArrayEntity client_entities(struct ToriiClient *client, const struct Query *query);
 
@@ -665,6 +725,16 @@ struct ResultSubscription client_on_starknet_event(struct ToriiClient *client,
                                                    const struct EntityKeysClause *clauses,
                                                    uintptr_t clauses_len,
                                                    void (*callback)(struct Event));
+
+struct ResultCArrayToken client_tokens(struct ToriiClient *client,
+                                       const struct FieldElement *contract_addresses,
+                                       uintptr_t contract_addresses_len);
+
+struct ResultCArrayTokenBalance client_token_balances(struct ToriiClient *client,
+                                                      const struct FieldElement *account_addresses,
+                                                      uintptr_t account_addresses_len,
+                                                      const struct FieldElement *contract_addresses,
+                                                      uintptr_t contract_addresses_len);
 
 struct ResultSubscription on_indexer_update(struct ToriiClient *client,
                                             const struct FieldElement *contract_address,

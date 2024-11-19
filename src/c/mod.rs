@@ -1,10 +1,10 @@
 mod types;
 
-use std::ffi::{CStr, CString, c_void};
+use std::ffi::{c_void, CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
@@ -18,14 +18,14 @@ use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::{Felt, poseidon_hash_many};
+use starknet_crypto::{poseidon_hash_many, Felt};
 use stream_cancel::{StreamExt as _, Tripwire};
 use tokio::time::sleep;
 use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
-use types::{EntityKeysClause, Event, IndexerUpdate, Struct};
+use types::{EntityKeysClause, Event, IndexerUpdate, Struct, Token, TokenBalance};
 
 use self::types::{
     BlockId, CArray, Call, Entity, Error, Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
@@ -82,6 +82,7 @@ pub unsafe extern "C" fn client_publish_message(
     message: *const c_char,
     signature_felts: *const types::FieldElement,
     signature_felts_len: usize,
+    is_session_signature: bool,
 ) -> Result<CArray<u8>> {
     let message = unsafe { CStr::from_ptr(message).to_string_lossy().into_owned() };
     let message = match serde_json::from_str::<TypedData>(message.as_str()) {
@@ -92,7 +93,15 @@ pub unsafe extern "C" fn client_publish_message(
     let signature = unsafe { std::slice::from_raw_parts(signature_felts, signature_felts_len) };
     let signature = signature.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
 
-    let client_future = unsafe { (*client).inner.publish_message(Message { message, signature }) };
+    let client_future = unsafe {
+        (*client).inner.publish_message(Message {
+            message,
+            signature: match is_session_signature {
+                true => torii_relay::types::Signature::Session(signature),
+                false => torii_relay::types::Signature::Account(signature),
+            },
+        })
+    };
 
     match (*client).runtime.block_on(client_future) {
         Ok(data) => Result::Ok(data.into()),
@@ -346,11 +355,54 @@ pub unsafe extern "C" fn client_on_starknet_event(
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn extern "C" fn client_tokens(
+pub unsafe extern "C" fn client_tokens(
     client: *mut ToriiClient,
     contract_addresses: *const types::FieldElement,
-    contract_addresses_len: usize
-) -> Result<
+    contract_addresses_len: usize,
+) -> Result<CArray<Token>> {
+    let contract_addresses =
+        unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+    let contract_addresses =
+        contract_addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
+    let tokens = match (*client).runtime.block_on((*client).inner.tokens(contract_addresses)) {
+        Ok(tokens) => tokens,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    let tokens = tokens.iter().map(|t| t.into()).collect::<Vec<Token>>();
+    Result::Ok(tokens.into())
+}
+
+#[no_mangle]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe extern "C" fn client_token_balances(
+    client: *mut ToriiClient,
+    account_addresses: *const types::FieldElement,
+    account_addresses_len: usize,
+    contract_addresses: *const types::FieldElement,
+    contract_addresses_len: usize,
+) -> Result<CArray<TokenBalance>> {
+    let account_addresses =
+        unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
+    let account_addresses =
+        account_addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
+
+    let contract_addresses =
+        unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+    let contract_addresses =
+        contract_addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
+
+    let token_balances = match (*client)
+        .runtime
+        .block_on((*client).inner.token_balances(account_addresses, contract_addresses))
+    {
+        Ok(balances) => balances,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    let token_balances = token_balances.iter().map(|t| t.into()).collect::<Vec<TokenBalance>>();
+    Result::Ok(token_balances.into())
+}
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]

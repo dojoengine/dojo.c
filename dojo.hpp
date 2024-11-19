@@ -108,9 +108,7 @@ struct Primitive {
     U32,
     U64,
     U128,
-#if !defined(TARGET_POINTER_WIDTH_32)
     U256,
-#endif
 #if defined(TARGET_POINTER_WIDTH_32)
     U256,
 #endif
@@ -161,11 +159,9 @@ struct Primitive {
     uint8_t _0[16];
   };
 
-#if !defined(TARGET_POINTER_WIDTH_32)
   struct U256_Body {
     uint64_t _0[4];
   };
-#endif
 
 #if defined(TARGET_POINTER_WIDTH_32)
   struct U256_Body {
@@ -205,9 +201,7 @@ struct Primitive {
     U32_Body u32;
     U64_Body u64;
     U128_Body u128;
-#if !defined(TARGET_POINTER_WIDTH_32)
     U256_Body u256;
-#endif
 #if defined(TARGET_POINTER_WIDTH_32)
     U256_Body u256;
 #endif
@@ -332,7 +326,6 @@ struct Primitive {
     return tag == Tag::U128;
   }
 
-#if !defined(TARGET_POINTER_WIDTH_32)
   static Primitive U256(const uint64_t (&_0)[4]) {
     Primitive result;
     for (int i = 0; i < 4; i++) {
@@ -345,7 +338,6 @@ struct Primitive {
   bool IsU256() const {
     return tag == Tag::U256;
   }
-#endif
 
 #if defined(TARGET_POINTER_WIDTH_32)
   static Primitive U256(const uint32_t (&_0)[8]) {
@@ -793,6 +785,25 @@ struct Event {
   FieldElement transaction_hash;
 };
 
+struct Token {
+  FieldElement contract_address;
+  const char *name;
+  const char *symbol;
+  uint8_t decimals;
+  const char *metadata;
+};
+
+struct TokenBalance {
+  uint64_t balance[4];
+#if defined(TARGET_POINTER_WIDTH_32)
+  uint32_t balance[8]
+#endif
+  ;
+  FieldElement account_address;
+  FieldElement contract_address;
+  const char *token_id;
+};
+
 struct IndexerUpdate {
   int64_t head;
   int64_t tps;
@@ -886,7 +897,8 @@ void client_set_logger(ToriiClient *client, void (*logger)(const char*));
 Result<CArray<uint8_t>> client_publish_message(ToriiClient *client,
                                                const char *message,
                                                const FieldElement *signature_felts,
-                                               uintptr_t signature_felts_len);
+                                               uintptr_t signature_felts_len,
+                                               bool is_session_signature);
 
 Result<CArray<Entity>> client_entities(ToriiClient *client, const Query *query);
 
@@ -922,6 +934,16 @@ Result<Subscription*> client_on_starknet_event(ToriiClient *client,
                                                const EntityKeysClause *clauses,
                                                uintptr_t clauses_len,
                                                void (*callback)(Event));
+
+Result<CArray<Token>> client_tokens(ToriiClient *client,
+                                    const FieldElement *contract_addresses,
+                                    uintptr_t contract_addresses_len);
+
+Result<CArray<TokenBalance>> client_token_balances(ToriiClient *client,
+                                                   const FieldElement *account_addresses,
+                                                   uintptr_t account_addresses_len,
+                                                   const FieldElement *contract_addresses,
+                                                   uintptr_t contract_addresses_len);
 
 Result<Subscription*> on_indexer_update(ToriiClient *client,
                                         const FieldElement *contract_address,
