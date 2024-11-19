@@ -67,7 +67,7 @@ impl From<&torii_grpc::types::Token> for Token {
             contract_address: (&val.contract_address).into(),
             name: CString::new(val.name.clone()).unwrap().into_raw(),
             symbol: CString::new(val.symbol.clone()).unwrap().into_raw(),
-            decimals: val.decimals as u8,
+            decimals: val.decimals,
             metadata: CString::new(val.metadata.clone()).unwrap().into_raw(),
         }
     }
@@ -98,7 +98,6 @@ impl From<&torii_grpc::types::TokenBalance> for TokenBalance {
 
 #[repr(C)]
 #[derive(Debug, Clone)]
-#[repr(C)]
 pub struct IndexerUpdate {
     pub head: i64,
     pub tps: i64,
