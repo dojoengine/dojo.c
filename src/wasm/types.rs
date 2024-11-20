@@ -15,6 +15,56 @@ use super::utils::parse_ty_as_json_str;
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Tokens(pub Vec<Token>);
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TokenBalances(pub Vec<TokenBalance>);
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Token {
+    pub contract_address: String,
+    pub name: String,
+    pub symbol: String,
+    pub decimals: u8,
+    pub metadata: String,
+}
+
+impl From<&torii_grpc::types::Token> for Token {
+    fn from(value: &torii_grpc::types::Token) -> Self {
+        Self {
+            contract_address: format!("{:#x}", value.contract_address),
+            name: value.name.clone(),
+            symbol: value.symbol.clone(),
+            decimals: value.decimals,
+            metadata: value.metadata.clone(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TokenBalance {
+    pub balance: String,
+    pub account_address: String,
+    pub contract_address: String,
+    pub token_id: String,
+}
+
+impl From<&torii_grpc::types::TokenBalance> for TokenBalance {
+    fn from(value: &torii_grpc::types::TokenBalance) -> Self {
+        Self {
+            balance: format!("0x{:x}", value.balance),
+            account_address: format!("{:#x}", value.account_address),
+            contract_address: format!("{:#x}", value.contract_address),
+            token_id: value.token_id.to_string(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct IndexerUpdate {
     pub head: i64,
     pub tps: i64,

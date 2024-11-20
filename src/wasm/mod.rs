@@ -36,7 +36,7 @@ mod types;
 
 use types::{
     BlockId, Call, Calls, ClientConfig, Entities, Entity, IndexerUpdate, KeysClause, KeysClauses,
-    Model, Query, Signature,
+    Model, Query, Signature, Token, TokenBalance, TokenBalances, Tokens,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -418,6 +418,50 @@ pub fn parse_cairo_short_string(str: &str) -> Result<String, JsValue> {
 
 #[wasm_bindgen]
 impl ToriiClient {
+    #[wasm_bindgen(js_name = getTokens)]
+    pub async fn get_tokens(&self, contract_addresses: Vec<String>) -> Result<Tokens, JsValue> {
+        let contract_addresses = contract_addresses
+            .into_iter()
+            .map(|c| Felt::from_str(&c))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
+
+        let tokens = self
+            .inner
+            .tokens(contract_addresses)
+            .await
+            .map_err(|e| JsValue::from(format!("failed to get tokens: {e}")))?;
+
+        Ok(Tokens(tokens.iter().map(|t| t.into()).collect()))
+    }
+
+    #[wasm_bindgen(js_name = getTokenBalances)]
+    pub async fn get_token_balances(
+        &self,
+        account_addresses: Vec<String>,
+        contract_addresses: Vec<String>,
+    ) -> Result<TokenBalances, JsValue> {
+        let account_addresses = account_addresses
+            .into_iter()
+            .map(|a| Felt::from_str(&a))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| JsValue::from(format!("failed to parse account addresses: {e}")))?;
+
+        let contract_addresses = contract_addresses
+            .into_iter()
+            .map(|c| Felt::from_str(&c))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
+
+        let token_balances = self
+            .inner
+            .token_balances(account_addresses, contract_addresses)
+            .await
+            .map_err(|e| JsValue::from(format!("failed to get token balances: {e}")))?;
+
+        Ok(TokenBalances(token_balances.iter().map(|t| t.into()).collect()))
+    }
+
     #[wasm_bindgen(js_name = getEntities)]
     pub async fn get_entities(&self, query: Query) -> Result<Entities, JsValue> {
         #[cfg(feature = "console-error-panic")]
@@ -719,6 +763,7 @@ impl ToriiClient {
         &mut self,
         message: &str,
         signature: Vec<String>,
+        is_session_signature: bool,
     ) -> Result<js_sys::Uint8Array, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
@@ -734,7 +779,13 @@ impl ToriiClient {
 
         let message_id = self
             .inner
-            .publish_message(Message { message, signature })
+            .publish_message(Message {
+                message,
+                signature: match is_session_signature {
+                    true => torii_relay::types::Signature::Session(signature),
+                    false => torii_relay::types::Signature::Account(signature),
+                },
+            })
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
 

@@ -300,6 +300,46 @@ cdef extern from *:
     CArrayFieldElement data;
     FieldElement transaction_hash;
 
+  cdef struct Token:
+    FieldElement contract_address;
+    const char *name;
+    const char *symbol;
+    uint8_t decimals;
+    const char *metadata;
+
+  cdef struct CArrayToken:
+    Token *data;
+    uintptr_t data_len;
+
+  cdef enum ResultCArrayToken_Tag:
+    OkCArrayToken,
+    ErrCArrayToken,
+
+  cdef struct ResultCArrayToken:
+    ResultCArrayToken_Tag tag;
+    CArrayToken ok;
+    Error err;
+
+  cdef struct TokenBalance:
+    uint64_t balance[4];
+    uint32_t balance[8];
+    FieldElement account_address;
+    FieldElement contract_address;
+    const char *token_id;
+
+  cdef struct CArrayTokenBalance:
+    TokenBalance *data;
+    uintptr_t data_len;
+
+  cdef enum ResultCArrayTokenBalance_Tag:
+    OkCArrayTokenBalance,
+    ErrCArrayTokenBalance,
+
+  cdef struct ResultCArrayTokenBalance:
+    ResultCArrayTokenBalance_Tag tag;
+    CArrayTokenBalance ok;
+    Error err;
+
   cdef struct IndexerUpdate:
     int64_t head;
     int64_t tps;
@@ -393,7 +433,8 @@ cdef extern from *:
   ResultCArrayu8 client_publish_message(ToriiClient *client,
                                         const char *message,
                                         const FieldElement *signature_felts,
-                                        uintptr_t signature_felts_len);
+                                        uintptr_t signature_felts_len,
+                                        bool is_session_signature);
 
   ResultCArrayEntity client_entities(ToriiClient *client, const Query *query);
 
@@ -429,6 +470,16 @@ cdef extern from *:
                                               const EntityKeysClause *clauses,
                                               uintptr_t clauses_len,
                                               void (*callback)(Event));
+
+  ResultCArrayToken client_tokens(ToriiClient *client,
+                                  const FieldElement *contract_addresses,
+                                  uintptr_t contract_addresses_len);
+
+  ResultCArrayTokenBalance client_token_balances(ToriiClient *client,
+                                                 const FieldElement *account_addresses,
+                                                 uintptr_t account_addresses_len,
+                                                 const FieldElement *contract_addresses,
+                                                 uintptr_t contract_addresses_len);
 
   ResultSubscription on_indexer_update(ToriiClient *client,
                                        const FieldElement *contract_address,
