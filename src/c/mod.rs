@@ -34,6 +34,29 @@ use crate::constants;
 use crate::types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
 
+fn client_causes_validator(
+    client: *mut ToriiClient,
+    clauses: *const EntityKeysClause,
+    clauses_len: usize,
+) -> Result<bool> {
+    if client.is_null() {
+        return Result::Err(Error {
+            message: CString::new("Invalid client pointer").unwrap().into_raw(),
+        });
+    }
+    if clauses.is_null() {
+        return Result::Err(Error {
+            message: CString::new("Invalid clauses pointer").unwrap().into_raw(),
+        });
+    }
+    if clauses_len == 0 {
+        return Result::Err(Error {
+            message: CString::new("Clauses length cannot be zero").unwrap().into_raw(),
+        });
+    }
+    return Result::Ok(true);
+}
+
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn client_new(
@@ -161,6 +184,12 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     clauses_len: usize,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
+    // Input validation for null pointers and invalid sizes
+    match client_causes_validator(client, clauses, clauses_len) {
+        Result::Ok(_) => {},
+        Result::Err(e) => return Result::Err(e.into()),
+    }
+
     let client = Arc::from_raw(client);
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
@@ -214,6 +243,12 @@ pub unsafe extern "C" fn client_update_entity_subscription(
     clauses: *const EntityKeysClause,
     clauses_len: usize,
 ) -> Result<bool> {
+    // Input validation for null pointers and invalid sizes
+    match client_causes_validator(client, clauses, clauses_len) {
+        Result::Ok(_) => {},
+        Result::Err(e) => return Result::Err(e.into()),
+    }
+
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
@@ -236,6 +271,12 @@ pub unsafe extern "C" fn client_on_event_message_update(
     historical: bool,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
+    // Input validation for null pointers and invalid sizes
+    match client_causes_validator(client, clauses, clauses_len) {
+        Result::Ok(_) => {},
+        Result::Err(e) => return Result::Err(e.into()),
+    }
+
     let client = Arc::from_raw(client);
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
@@ -291,6 +332,12 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
     clauses_len: usize,
     historical: bool,
 ) -> Result<bool> {
+    // Input validation for null pointers and invalid sizes
+    match client_causes_validator(client, clauses, clauses_len) {
+        Result::Ok(_) => {},
+        Result::Err(e) => return Result::Err(e.into()),
+    }
+
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
@@ -312,6 +359,12 @@ pub unsafe extern "C" fn client_on_starknet_event(
     clauses_len: usize,
     callback: unsafe extern "C" fn(Event),
 ) -> Result<*mut Subscription> {
+    // Input validation for null pointers and invalid sizes
+    match client_causes_validator(client, clauses, clauses_len) {
+        Result::Ok(_) => {},
+        Result::Err(e) => return Result::Err(e.into()),
+    }
+    
     let client = Arc::from_raw(client);
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
