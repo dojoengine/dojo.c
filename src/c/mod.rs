@@ -34,7 +34,7 @@ use crate::constants;
 use crate::types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
 
-fn client_causes_validator(
+fn client_clauses_validator(
     client: *mut ToriiClient,
     clauses: *const EntityKeysClause,
     clauses_len: usize,
@@ -185,7 +185,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
     // Input validation for null pointers and invalid sizes
-    match client_causes_validator(client, clauses, clauses_len) {
+    match client_clauses_validator(client, clauses, clauses_len) {
         Result::Ok(_) => {},
         Result::Err(e) => return Result::Err(e.into()),
     }
@@ -244,7 +244,7 @@ pub unsafe extern "C" fn client_update_entity_subscription(
     clauses_len: usize,
 ) -> Result<bool> {
     // Input validation for null pointers and invalid sizes
-    match client_causes_validator(client, clauses, clauses_len) {
+    match client_clauses_validator(client, clauses, clauses_len) {
         Result::Ok(_) => {},
         Result::Err(e) => return Result::Err(e.into()),
     }
@@ -272,7 +272,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
     // Input validation for null pointers and invalid sizes
-    match client_causes_validator(client, clauses, clauses_len) {
+    match client_clauses_validator(client, clauses, clauses_len) {
         Result::Ok(_) => {},
         Result::Err(e) => return Result::Err(e.into()),
     }
@@ -333,7 +333,7 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
     historical: bool,
 ) -> Result<bool> {
     // Input validation for null pointers and invalid sizes
-    match client_causes_validator(client, clauses, clauses_len) {
+    match client_clauses_validator(client, clauses, clauses_len) {
         Result::Ok(_) => {},
         Result::Err(e) => return Result::Err(e.into()),
     }
@@ -360,7 +360,7 @@ pub unsafe extern "C" fn client_on_starknet_event(
     callback: unsafe extern "C" fn(Event),
 ) -> Result<*mut Subscription> {
     // Input validation for null pointers and invalid sizes
-    match client_causes_validator(client, clauses, clauses_len) {
+    match client_clauses_validator(client, clauses, clauses_len) {
         Result::Ok(_) => {},
         Result::Err(e) => return Result::Err(e.into()),
     }
