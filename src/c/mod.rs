@@ -161,7 +161,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     clauses_len: usize,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
-    let client = Arc::from_raw(client);
+    let client = Arc::new(unsafe { &*client });
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
@@ -236,7 +236,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
     historical: bool,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
-    let client = Arc::from_raw(client);
+    let client = Arc::new(unsafe { &*client });
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
