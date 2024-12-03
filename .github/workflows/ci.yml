@@ -25,7 +25,7 @@ jobs:
       - name: Install nextest test runner
         uses: taiki-e/install-action@nextest
       - run: |
-          cargo nextest run --all-features --no-tests
+          cargo nextest run --all-features --no-tests=pass
 
   clippy:
     runs-on: ubuntu-latest
