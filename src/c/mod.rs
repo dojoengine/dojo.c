@@ -312,7 +312,7 @@ pub unsafe extern "C" fn client_on_starknet_event(
     clauses_len: usize,
     callback: unsafe extern "C" fn(Event),
 ) -> Result<*mut Subscription> {
-    let client = Arc::from_raw(client);
+    let client = Arc::new(unsafe { &*client });
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
@@ -411,7 +411,7 @@ pub unsafe extern "C" fn on_indexer_update(
     contract_address: *const types::FieldElement,
     callback: unsafe extern "C" fn(IndexerUpdate),
 ) -> Result<*mut Subscription> {
-    let client = Arc::from_raw(client);
+    let client = Arc::new(unsafe { &*client });
     let contract_address = if contract_address.is_null() {
         None
     } else {
