@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString, c_char};
+use std::ffi::{c_char, CStr, CString};
 
 use starknet::core::utils::get_selector_from_name;
 use torii_client::client::Client;
@@ -299,6 +299,60 @@ pub struct Query {
     pub offset: u32,
     pub clause: COption<Clause>,
     pub dont_include_hashed_keys: bool,
+    pub order_by: CArray<OrderBy>,
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct OrderBy {
+    pub model: *const c_char,
+    pub member: *const c_char,
+    pub direction: OrderDirection,
+}
+
+impl From<&OrderBy> for torii_grpc::types::OrderBy {
+    fn from(val: &OrderBy) -> Self {
+        torii_grpc::types::OrderBy {
+            model: unsafe { CStr::from_ptr(val.model).to_string_lossy().to_string() },
+            member: unsafe { CStr::from_ptr(val.member).to_string_lossy().to_string() },
+            direction: (&val.direction).into(),
+        }
+    }
+}
+
+impl From<&torii_grpc::types::OrderBy> for OrderBy {
+    fn from(val: &torii_grpc::types::OrderBy) -> Self {
+        OrderBy {
+            model: CString::new(val.model.clone()).unwrap().into_raw(),
+            member: CString::new(val.member.clone()).unwrap().into_raw(),
+            direction: (&val.direction).into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub enum OrderDirection {
+    Asc,
+    Desc,
+}
+
+impl From<&OrderDirection> for torii_grpc::types::OrderDirection {
+    fn from(val: &OrderDirection) -> Self {
+        match val {
+            OrderDirection::Asc => torii_grpc::types::OrderDirection::Asc,
+            OrderDirection::Desc => torii_grpc::types::OrderDirection::Desc,
+        }
+    }
+}
+
+impl From<&torii_grpc::types::OrderDirection> for OrderDirection {
+    fn from(val: &torii_grpc::types::OrderDirection) -> Self {
+        match val {
+            torii_grpc::types::OrderDirection::Asc => OrderDirection::Asc,
+            torii_grpc::types::OrderDirection::Desc => OrderDirection::Desc,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -800,6 +854,9 @@ impl From<&dojo_types::primitive::Primitive> for Primitive {
 
 impl From<&Query> for torii_grpc::types::Query {
     fn from(val: &Query) -> Self {
+        let order_by: Vec<OrderBy> = (&val.order_by).into();
+        let order_by = order_by.iter().map(|o| o.into()).collect();
+
         match &val.clause {
             COption::Some(clause) => {
                 let clause = (&clause.clone()).into();
@@ -808,6 +865,7 @@ impl From<&Query> for torii_grpc::types::Query {
                     offset: val.offset,
                     clause: Option::Some(clause),
                     dont_include_hashed_keys: val.dont_include_hashed_keys,
+                    order_by,
                 }
             }
             COption::None => torii_grpc::types::Query {
@@ -815,6 +873,7 @@ impl From<&Query> for torii_grpc::types::Query {
                 offset: val.offset,
                 clause: Option::None,
                 dont_include_hashed_keys: val.dont_include_hashed_keys,
+                order_by,
             },
         }
     }
@@ -822,6 +881,8 @@ impl From<&Query> for torii_grpc::types::Query {
 
 impl From<&torii_grpc::types::Query> for Query {
     fn from(val: &torii_grpc::types::Query) -> Self {
+        let order_by = val.order_by.iter().map(|o| o.into()).collect::<Vec<OrderBy>>();
+
         match &val.clause {
             Option::Some(clause) => {
                 let clause = (&clause.clone()).into();
@@ -830,6 +891,7 @@ impl From<&torii_grpc::types::Query> for Query {
                     offset: val.offset,
                     clause: COption::Some(clause),
                     dont_include_hashed_keys: val.dont_include_hashed_keys,
+                    order_by: order_by.into(),
                 }
             }
             Option::None => Query {
@@ -837,6 +899,7 @@ impl From<&torii_grpc::types::Query> for Query {
                 offset: val.offset,
                 clause: COption::None,
                 dont_include_hashed_keys: val.dont_include_hashed_keys,
+                order_by: order_by.into(),
             },
         }
     }

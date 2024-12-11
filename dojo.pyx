@@ -22,6 +22,10 @@ cdef extern from *:
     And,
     Or,
 
+  cdef enum OrderDirection:
+    Asc,
+    Desc,
+
   cdef enum PatternMatching:
     FixedLen # = 0,
     VariableLen # = 1,
@@ -236,11 +240,21 @@ cdef extern from *:
     COptionClause_Tag tag;
     Clause some;
 
+  cdef struct OrderBy:
+    const char *model;
+    const char *member;
+    OrderDirection direction;
+
+  cdef struct CArrayOrderBy:
+    OrderBy *data;
+    uintptr_t data_len;
+
   cdef struct Query:
     uint32_t limit;
     uint32_t offset;
     COptionClause clause;
     bool dont_include_hashed_keys;
+    CArrayOrderBy order_by;
 
   cdef struct CArrayFieldElement:
     FieldElement *data;

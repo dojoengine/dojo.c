@@ -22,6 +22,11 @@ typedef enum LogicalOperator {
   Or,
 } LogicalOperator;
 
+typedef enum OrderDirection {
+  Asc,
+  Desc,
+} OrderDirection;
+
 typedef enum PatternMatching {
   FixedLen = 0,
   VariableLen = 1,
@@ -364,11 +369,23 @@ typedef struct COptionClause {
   };
 } COptionClause;
 
+typedef struct OrderBy {
+  const char *model;
+  const char *member;
+  enum OrderDirection direction;
+} OrderBy;
+
+typedef struct CArrayOrderBy {
+  struct OrderBy *data;
+  uintptr_t data_len;
+} CArrayOrderBy;
+
 typedef struct Query {
   uint32_t limit;
   uint32_t offset;
   struct COptionClause clause;
   bool dont_include_hashed_keys;
+  struct CArrayOrderBy order_by;
 } Query;
 
 typedef struct CArrayFieldElement {
