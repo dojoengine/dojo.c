@@ -1,9 +1,8 @@
 /// WASM bindings for Dojo client functionality
-/// 
+///
 /// # Description
 /// Provides interfaces for Starknet operations, cryptographic functions,
 /// and Torii client interactions
-
 mod utils;
 
 use std::collections::HashMap;
@@ -58,11 +57,11 @@ extern "C" {
 }
 
 /// Encodes typed data according to Starknet's typed data specification
-/// 
+///
 /// # Parameters
 /// * `typed_data` - JSON string containing the typed data
 /// * `address` - Address as hex string
-/// 
+///
 /// # Returns
 /// Result containing encoded data as hex string or error
 #[wasm_bindgen(js_name = typedDataEncode)]
@@ -80,7 +79,7 @@ pub fn typed_data_encode(typed_data: &str, address: &str) -> Result<String, JsVa
 }
 
 /// Generates a new random signing key
-/// 
+///
 /// # Returns
 /// Private key as hex string
 #[wasm_bindgen(js_name = signingKeyNew)]
@@ -91,11 +90,11 @@ pub fn signing_key_new() -> String {
 }
 
 /// Signs a message hash with a private key
-/// 
+///
 /// # Parameters
 /// * `private_key` - Private key as hex string
 /// * `hash` - Message hash as hex string
-/// 
+///
 /// # Returns
 /// Result containing signature or error
 #[wasm_bindgen(js_name = signingKeySign)]
@@ -120,10 +119,10 @@ pub fn signing_key_sign(private_key: &str, hash: &str) -> Result<Signature, JsVa
 }
 
 /// Derives a verifying (public) key from a signing (private) key
-/// 
+///
 /// # Parameters
 /// * `signing_key` - Signing key as hex string
-/// 
+///
 /// # Returns
 /// Result containing verifying key as hex string or error
 #[wasm_bindgen(js_name = verifyingKeyNew)]
@@ -139,12 +138,12 @@ pub fn verifying_key_new(signing_key: &str) -> Result<String, JsValue> {
 }
 
 /// Verifies a signature against a message hash using a verifying key
-/// 
+///
 /// # Parameters
 /// * `verifying_key` - Verifying key as hex string
 /// * `hash` - Message hash as hex string
 /// * `signature` - Signature to verify
-/// 
+///
 /// # Returns
 /// Result containing verification success boolean or error
 #[wasm_bindgen(js_name = verifyingKeyVerify)]
@@ -176,10 +175,10 @@ pub fn verifying_key_verify(
 }
 
 /// Creates a new Starknet provider instance for a given RPC URL
-/// 
+///
 /// # Parameters
 /// * `rpc_url` - URL of the RPC endpoint
-/// 
+///
 /// # Returns
 /// Result containing Provider instance or error
 #[wasm_bindgen(js_name = createProvider)]
@@ -198,11 +197,11 @@ pub unsafe fn create_provider(rpc_url: &str) -> Result<Provider, JsValue> {
 #[wasm_bindgen]
 impl Provider {
     /// Creates a new account instance with the given private key and address
-    /// 
+    ///
     /// # Parameters
     /// * `private_key` - Private key as hex string
     /// * `address` - Account address as hex string
-    /// 
+    ///
     /// # Returns
     /// Result containing Account instance or error
     #[wasm_bindgen(js_name = createAccount)]
@@ -245,11 +244,11 @@ impl Provider {
     }
 
     /// Calls a Starknet contract view function
-    /// 
+    ///
     /// # Parameters
     /// * `call` - Call parameters including contract address and function
     /// * `block_id` - Block identifier for the call
-    /// 
+    ///
     /// # Returns
     /// Result containing array of field elements or error
     #[wasm_bindgen(js_name = call)]
@@ -269,10 +268,10 @@ impl Provider {
     }
 
     /// Waits for a transaction to be confirmed
-    /// 
+    ///
     /// # Parameters
     /// * `txn_hash` - Transaction hash as hex string
-    /// 
+    ///
     /// # Returns
     /// Result containing success boolean or error
     #[wasm_bindgen(js_name = waitForTransaction)]
@@ -291,7 +290,7 @@ impl Provider {
 #[wasm_bindgen]
 impl Account {
     /// Returns the account's address
-    /// 
+    ///
     /// # Returns
     /// Result containing address as hex string or error
     #[wasm_bindgen(js_name = address)]
@@ -301,7 +300,7 @@ impl Account {
     }
 
     /// Returns the account's chain ID
-    /// 
+    ///
     /// # Returns
     /// Result containing chain ID as hex string or error
     #[wasm_bindgen(js_name = chainId)]
@@ -311,10 +310,10 @@ impl Account {
     }
 
     /// Sets the block ID for subsequent operations
-    /// 
+    ///
     /// # Parameters
     /// * `block_id` - Block ID as hex string
-    /// 
+    ///
     /// # Returns
     /// Result containing unit or error
     #[wasm_bindgen(js_name = setBlockId)]
@@ -326,10 +325,10 @@ impl Account {
     }
 
     /// Executes a raw transaction
-    /// 
+    ///
     /// # Parameters
     /// * `calldata` - Array of contract calls to execute
-    /// 
+    ///
     /// # Returns
     /// Result containing transaction hash as hex string or error
     #[wasm_bindgen(js_name = executeRaw)]
@@ -347,10 +346,10 @@ impl Account {
     }
 
     /// Deploys a burner wallet
-    /// 
+    ///
     /// # Parameters
     /// * `private_key` - Private key for the burner wallet as hex string
-    /// 
+    ///
     /// # Returns
     /// Result containing new Account instance or error
     #[wasm_bindgen(js_name = deployBurner)]
@@ -403,7 +402,7 @@ impl Account {
     }
 
     /// Gets the current nonce for the account
-    /// 
+    ///
     /// # Returns
     /// Result containing nonce as hex string or error
     #[wasm_bindgen(js_name = nonce)]
@@ -414,13 +413,13 @@ impl Account {
 }
 
 /// Computes a contract address from deployment parameters
-/// 
+///
 /// # Parameters
 /// * `class_hash` - Contract class hash as hex string
 /// * `salt` - Salt value as hex string
 /// * `constructor_calldata` - Array of constructor parameters as hex strings
 /// * `deployer_address` - Address of deployer as hex string
-/// 
+///
 /// # Returns
 /// Result containing computed contract address as hex string or error
 #[wasm_bindgen(js_name = hashGetContractAddress)]
@@ -452,10 +451,10 @@ pub fn hash_get_contract_address(
 }
 
 /// Computes a selector from a tag string
-/// 
+///
 /// # Parameters
 /// * `tag` - Tag string to compute selector from
-/// 
+///
 /// # Returns
 /// Selector as hex string
 #[wasm_bindgen(js_name = getSelectorFromTag)]
@@ -465,10 +464,10 @@ pub fn get_selector_from_tag(tag: &str) -> String {
 }
 
 /// Serializes a string into a Cairo byte array
-/// 
+///
 /// # Parameters
 /// * `str` - String to serialize
-/// 
+///
 /// # Returns
 /// Result containing array of field elements as hex strings or error
 #[wasm_bindgen(js_name = byteArraySerialize)]
@@ -483,10 +482,10 @@ pub fn bytearray_serialize(str: &str) -> Result<Vec<String>, JsValue> {
 }
 
 /// Deserializes a Cairo byte array into a string
-/// 
+///
 /// # Parameters
 /// * `felts` - Array of field elements as hex strings
-/// 
+///
 /// # Returns
 /// Result containing deserialized string or error
 #[wasm_bindgen(js_name = byteArrayDeserialize)]
@@ -509,10 +508,10 @@ pub fn bytearray_deserialize(felts: Vec<String>) -> Result<String, JsValue> {
 }
 
 /// Computes a Poseidon hash of the inputs
-/// 
+///
 /// # Parameters
 /// * `inputs` - Array of field elements as hex strings
-/// 
+///
 /// # Returns
 /// Result containing hash as hex string or error
 #[wasm_bindgen(js_name = poseidonHash)]
@@ -527,10 +526,10 @@ pub fn poseidon_hash(inputs: Vec<String>) -> Result<String, JsValue> {
 }
 
 /// Gets a selector from a function name
-/// 
+///
 /// # Parameters
 /// * `name` - Function name to compute selector from
-/// 
+///
 /// # Returns
 /// Result containing selector as hex string or error
 #[wasm_bindgen(js_name = getSelectorFromName)]
@@ -541,10 +540,10 @@ pub fn get_selector_from_name(name: &str) -> Result<String, JsValue> {
 }
 
 /// Computes the Starknet variant of Keccak hash
-/// 
+///
 /// # Parameters
 /// * `inputs` - Byte array to hash
-/// 
+///
 /// # Returns
 /// Result containing hash as hex string or error
 #[wasm_bindgen(js_name = starknetKeccak)]
@@ -556,10 +555,10 @@ pub fn starknet_keccak(inputs: js_sys::Uint8Array) -> Result<String, JsValue> {
 }
 
 /// Converts a short string to a Cairo field element
-/// 
+///
 /// # Parameters
 /// * `str` - String to convert
-/// 
+///
 /// # Returns
 /// Result containing field element as hex string or error
 #[wasm_bindgen(js_name = cairoShortStringToFelt)]
@@ -571,10 +570,10 @@ pub fn cairo_short_string_to_felt(str: &str) -> Result<String, JsValue> {
 }
 
 /// Parses a Cairo field element into a short string
-/// 
+///
 /// # Parameters
 /// * `str` - Field element as hex string
-/// 
+///
 /// # Returns
 /// Result containing parsed string or error
 #[wasm_bindgen(js_name = parseCairoShortString)]
@@ -590,10 +589,10 @@ pub fn parse_cairo_short_string(str: &str) -> Result<String, JsValue> {
 #[wasm_bindgen]
 impl ToriiClient {
     /// Gets token information for the given contract addresses
-    /// 
+    ///
     /// # Parameters
     /// * `contract_addresses` - Array of contract addresses as hex strings
-    /// 
+    ///
     /// # Returns
     /// Result containing token information or error
     #[wasm_bindgen(js_name = getTokens)]
@@ -614,11 +613,11 @@ impl ToriiClient {
     }
 
     /// Gets token balances for given accounts and contracts
-    /// 
+    ///
     /// # Parameters
     /// * `account_addresses` - Array of account addresses as hex strings
     /// * `contract_addresses` - Array of contract addresses as hex strings
-    /// 
+    ///
     /// # Returns
     /// Result containing token balances or error
     #[wasm_bindgen(js_name = getTokenBalances)]
@@ -649,10 +648,10 @@ impl ToriiClient {
     }
 
     /// Queries entities based on the provided query parameters
-    /// 
+    ///
     /// # Parameters
     /// * `query` - Query parameters for filtering entities
-    /// 
+    ///
     /// # Returns
     /// Result containing matching entities or error
     #[wasm_bindgen(js_name = getEntities)]
@@ -669,11 +668,11 @@ impl ToriiClient {
     }
 
     /// Gets all entities with pagination
-    /// 
+    ///
     /// # Parameters
     /// * `limit` - Maximum number of entities to return
     /// * `offset` - Number of entities to skip
-    /// 
+    ///
     /// # Returns
     /// Result containing paginated entities or error
     #[wasm_bindgen(js_name = getAllEntities)]
@@ -699,11 +698,11 @@ impl ToriiClient {
     }
 
     /// Gets event messages based on query parameters
-    /// 
+    ///
     /// # Parameters
     /// * `query` - Query parameters for filtering messages
     /// * `historical` - Whether to include historical messages
-    /// 
+    ///
     /// # Returns
     /// Result containing matching event messages or error
     #[wasm_bindgen(js_name = getEventMessages)]
@@ -724,11 +723,11 @@ impl ToriiClient {
     }
 
     /// Subscribes to entity updates
-    /// 
+    ///
     /// # Parameters
     /// * `clauses` - Array of key clauses for filtering updates
     /// * `callback` - JavaScript function to call on updates
-    /// 
+    ///
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onEntityUpdated)]
@@ -785,11 +784,11 @@ impl ToriiClient {
     }
 
     /// Updates an existing entity subscription
-    /// 
+    ///
     /// # Parameters
     /// * `subscription` - Existing subscription to update
     /// * `clauses` - New array of key clauses for filtering
-    /// 
+    ///
     /// # Returns
     /// Result containing unit or error
     #[wasm_bindgen(js_name = updateEntitySubscription)]
@@ -806,12 +805,12 @@ impl ToriiClient {
     }
 
     /// Subscribes to event message updates
-    /// 
+    ///
     /// # Parameters
     /// * `clauses` - Array of key clauses for filtering updates
     /// * `historical` - Whether to include historical messages
     /// * `callback` - JavaScript function to call on updates
-    /// 
+    ///
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onEventMessageUpdated)]
@@ -871,12 +870,12 @@ impl ToriiClient {
     }
 
     /// Updates an existing event message subscription
-    /// 
+    ///
     /// # Parameters
     /// * `subscription` - Existing subscription to update
     /// * `clauses` - New array of key clauses for filtering
     /// * `historical` - Whether to include historical messages
-    /// 
+    ///
     /// # Returns
     /// Result containing unit or error
     #[wasm_bindgen(js_name = updateEventMessageSubscription)]
@@ -898,11 +897,11 @@ impl ToriiClient {
     }
 
     /// Subscribes to Starknet events
-    /// 
+    ///
     /// # Parameters
     /// * `clauses` - Array of key clauses for filtering events
     /// * `callback` - JavaScript function to call on events
-    /// 
+    ///
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onStarknetEvent)]
@@ -954,11 +953,11 @@ impl ToriiClient {
     }
 
     /// Subscribes to indexer updates
-    /// 
+    ///
     /// # Parameters
     /// * `contract_address` - Optional contract address to filter updates
     /// * `callback` - JavaScript function to call on updates
-    /// 
+    ///
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onIndexerUpdated)]
@@ -1019,11 +1018,11 @@ impl ToriiClient {
     }
 
     /// Publishes a message to the network
-    /// 
+    ///
     /// # Parameters
     /// * `message` - Message to publish as JSON string
     /// * `signature` - Array of signature field elements as hex strings
-    /// 
+    ///
     /// # Returns
     /// Result containing message ID as byte array or error
     #[wasm_bindgen(js_name = publishMessage)]
@@ -1063,10 +1062,10 @@ impl Subscription {
 }
 
 /// Creates a new Torii client with the given configuration
-/// 
+///
 /// # Parameters
 /// * `config` - Client configuration including URLs and world address
-/// 
+///
 /// # Returns
 /// Result containing ToriiClient instance or error
 #[wasm_bindgen(js_name = createClient)]

@@ -35,13 +35,13 @@ use crate::types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
 
 /// Creates a new Torii client instance
-/// 
+///
 /// # Parameters
 /// * `torii_url` - URL of the Torii server
 /// * `rpc_url` - URL of the Starknet RPC endpoint
 /// * `libp2p_relay_url` - URL of the libp2p relay server
 /// * `world` - World address as a FieldElement
-/// 
+///
 /// # Returns
 /// Result containing pointer to new ToriiClient instance or error
 #[no_mangle]
@@ -73,7 +73,7 @@ pub unsafe extern "C" fn client_new(
 }
 
 /// Sets a logger callback function for the client
-/// 
+///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
 /// * `logger` - Callback function that takes a C string parameter
@@ -88,13 +88,13 @@ pub unsafe extern "C" fn client_set_logger(
 }
 
 /// Publishes a message to the network
-/// 
+///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
 /// * `message` - JSON string containing typed data message
 /// * `signature_felts` - Array of field elements containing signature
 /// * `signature_felts_len` - Length of signature array
-/// 
+///
 /// # Returns
 /// Result containing byte array or error
 #[no_mangle]
@@ -123,11 +123,11 @@ pub unsafe extern "C" fn client_publish_message(
 }
 
 /// Queries entities matching given criteria
-/// 
+///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
 /// * `query` - Query parameters
-/// 
+///
 /// # Returns
 /// Result containing array of matching entities or error
 #[no_mangle]
@@ -148,12 +148,12 @@ pub unsafe extern "C" fn client_entities(
 }
 
 /// Retrieves event messages matching the given query
-/// 
+///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
 /// * `query` - Query parameters
 /// * `historical` - Whether to include historical messages
-/// 
+///
 /// # Returns
 /// Result containing array of matching event message entities or error
 #[no_mangle]
@@ -176,10 +176,10 @@ pub unsafe extern "C" fn client_event_messages(
 }
 
 /// Gets the world metadata for the client
-/// 
+///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
-/// 
+///
 /// # Returns
 /// WorldMetadata structure containing world information
 #[no_mangle]
@@ -188,13 +188,13 @@ pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetad
 }
 
 /// Subscribes to entity state updates
-/// 
+///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
 /// * `clauses` - Array of entity key clauses to filter updates
 /// * `clauses_len` - Length of clauses array
 /// * `callback` - Function called when updates occur
-/// 
+///
 /// # Returns
 /// Result containing pointer to Subscription or error
 #[no_mangle]
@@ -250,13 +250,13 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 }
 
 /// Updates an existing entity subscription with new clauses
-/// 
+///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
 /// * `subscription` - Pointer to existing Subscription
 /// * `clauses` - New array of entity key clauses
 /// * `clauses_len` - Length of new clauses array
-/// 
+///
 /// # Returns
 /// Result containing success boolean or error
 #[no_mangle]
@@ -280,14 +280,14 @@ pub unsafe extern "C" fn client_update_entity_subscription(
 }
 
 /// Subscribes to event message updates
-/// 
+///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
 /// * `clauses` - Array of entity key clauses to filter updates
 /// * `clauses_len` - Length of clauses array
 /// * `historical` - Whether to include historical messages
 /// * `callback` - Function called when updates occur
-/// 
+///
 /// # Returns
 /// Result containing pointer to Subscription or error
 #[no_mangle]
@@ -345,14 +345,14 @@ pub unsafe extern "C" fn client_on_event_message_update(
 }
 
 /// Updates an existing event message subscription
-/// 
+///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
 /// * `subscription` - Pointer to existing Subscription
 /// * `clauses` - New array of entity key clauses
 /// * `clauses_len` - Length of new clauses array
 /// * `historical` - Whether to include historical messages
-/// 
+///
 /// # Returns
 /// Result containing success boolean or error
 #[no_mangle]
@@ -377,13 +377,13 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
 }
 
 /// Subscribes to Starknet events
-/// 
+///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
 /// * `clauses` - Array of entity key clauses to filter events
 /// * `clauses_len` - Length of clauses array
 /// * `callback` - Function called when events occur
-/// 
+///
 /// # Returns
 /// Result containing pointer to Subscription or error
 #[no_mangle]
@@ -435,12 +435,12 @@ pub unsafe extern "C" fn client_on_starknet_event(
 }
 
 /// Retrieves token information for given contract addresses
-/// 
+///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
 /// * `contract_addresses` - Array of contract addresses
 /// * `contract_addresses_len` - Length of addresses array
-/// 
+///
 /// # Returns
 /// Result containing array of Token information or error
 #[no_mangle]
@@ -463,14 +463,14 @@ pub unsafe extern "C" fn client_tokens(
 }
 
 /// Gets token balances for given accounts and contracts
-/// 
+///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
 /// * `account_addresses` - Array of account addresses
 /// * `account_addresses_len` - Length of account addresses array
 /// * `contract_addresses` - Array of contract addresses
 /// * `contract_addresses_len` - Length of contract addresses array
-/// 
+///
 /// # Returns
 /// Result containing array of TokenBalance information or error
 #[no_mangle]
@@ -504,12 +504,12 @@ pub unsafe extern "C" fn client_token_balances(
 }
 
 /// Subscribes to indexer updates
-/// 
+///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
 /// * `contract_address` - Optional contract address to filter updates
 /// * `callback` - Function called when updates occur
-/// 
+///
 /// # Returns
 /// Result containing pointer to Subscription or error
 #[no_mangle]
@@ -562,10 +562,10 @@ pub unsafe extern "C" fn on_indexer_update(
 }
 
 /// Serializes a string into a byte array
-/// 
+///
 /// # Parameters
 /// * `str` - String to serialize
-/// 
+///
 /// # Returns
 /// Result containing array of FieldElements or error
 #[no_mangle]
@@ -584,11 +584,11 @@ pub unsafe extern "C" fn bytearray_serialize(
 }
 
 /// Deserializes field elements into a string
-/// 
+///
 /// # Parameters
 /// * `felts` - Array of field elements
 /// * `felts_len` - Length of field elements array
-/// 
+///
 /// # Returns
 /// Result containing pointer to C string or error
 #[no_mangle]
@@ -612,11 +612,11 @@ pub unsafe extern "C" fn bytearray_deserialize(
 }
 
 /// Computes Poseidon hash of field elements
-/// 
+///
 /// # Parameters
 /// * `felts` - Array of field elements
 /// * `felts_len` - Length of array
-/// 
+///
 /// # Returns
 /// FieldElement containing the hash result
 #[no_mangle]
@@ -631,10 +631,10 @@ pub unsafe extern "C" fn poseidon_hash(
 }
 
 /// Gets selector from name string
-/// 
+///
 /// # Parameters
 /// * `name` - Name to compute selector from
-/// 
+///
 /// # Returns
 /// Result containing FieldElement selector or error
 #[no_mangle]
@@ -651,10 +651,10 @@ pub unsafe extern "C" fn get_selector_from_name(
 }
 
 /// Gets selector from tag string
-/// 
+///
 /// # Parameters
 /// * `tag` - Tag to compute selector from
-/// 
+///
 /// # Returns
 /// FieldElement containing the computed selector
 #[no_mangle]
@@ -666,11 +666,11 @@ pub unsafe extern "C" fn get_selector_from_tag(tag: *const c_char) -> types::Fie
 }
 
 /// Computes Starknet keccak hash of bytes
-/// 
+///
 /// # Parameters
 /// * `bytes` - Byte array to hash
 /// * `bytes_len` - Length of byte array
-/// 
+///
 /// # Returns
 /// FieldElement containing the hash result
 #[no_mangle]
@@ -685,10 +685,10 @@ pub unsafe extern "C" fn starknet_keccak(
 }
 
 /// Converts a short string to field element
-/// 
+///
 /// # Parameters
 /// * `str` - String to convert
-/// 
+///
 /// # Returns
 /// Result containing FieldElement or error
 #[no_mangle]
@@ -705,10 +705,10 @@ pub unsafe extern "C" fn cairo_short_string_to_felt(
 }
 
 /// Parses a field element into a short string
-/// 
+///
 /// # Parameters
 /// * `felt` - FieldElement to parse
-/// 
+///
 /// # Returns
 /// Result containing pointer to C string or error
 #[no_mangle]
@@ -725,11 +725,11 @@ pub unsafe extern "C" fn parse_cairo_short_string(
 }
 
 /// Encodes typed data
-/// 
+///
 /// # Parameters
 /// * `typed_data` - JSON string of typed data
 /// * `address` - Address as FieldElement
-/// 
+///
 /// # Returns
 /// Result containing encoded FieldElement or error
 #[no_mangle]
@@ -757,7 +757,7 @@ pub unsafe extern "C" fn typed_data_encode(
 }
 
 /// Generates a new signing key
-/// 
+///
 /// # Returns
 /// FieldElement containing the new private key
 #[no_mangle]
@@ -767,11 +767,11 @@ pub unsafe extern "C" fn signing_key_new() -> types::FieldElement {
 }
 
 /// Signs a hash with a private key
-/// 
+///
 /// # Parameters
 /// * `private_key` - Private key as FieldElement
 /// * `hash` - Hash to sign as FieldElement
-/// 
+///
 /// # Returns
 /// Result containing Signature or error
 #[no_mangle]
@@ -789,10 +789,10 @@ pub unsafe extern "C" fn signing_key_sign(
 }
 
 /// Creates a verifying key from a signing key
-/// 
+///
 /// # Parameters
 /// * `signing_key` - Signing key as FieldElement
-/// 
+///
 /// # Returns
 /// FieldElement containing the verifying key
 #[no_mangle]
@@ -806,12 +806,12 @@ pub unsafe extern "C" fn verifying_key_new(
 }
 
 /// Verifies a signature
-/// 
+///
 /// # Parameters
 /// * `verifying_key` - Verifying key as FieldElement
 /// * `hash` - Hash that was signed
 /// * `signature` - Signature to verify
-/// 
+///
 /// # Returns
 /// Result containing verification success boolean or error
 #[no_mangle]
@@ -831,10 +831,10 @@ pub unsafe extern "C" fn verifying_key_verify(
 }
 
 /// Creates a new provider instance
-/// 
+///
 /// # Parameters
 /// * `rpc_url` - URL of the RPC endpoint
-/// 
+///
 /// # Returns
 /// Result containing pointer to Provider or error
 #[no_mangle]
@@ -851,12 +851,12 @@ pub unsafe extern "C" fn provider_new(rpc_url: *const c_char) -> Result<*mut Pro
 }
 
 /// Creates a new account instance
-/// 
+///
 /// # Parameters
 /// * `rpc` - Pointer to Provider
 /// * `private_key` - Private key as FieldElement
 /// * `address` - Account address as string
-/// 
+///
 /// # Returns
 /// Result containing pointer to Account or error
 #[no_mangle]
@@ -893,12 +893,12 @@ pub unsafe extern "C" fn account_new(
 }
 
 /// Makes a Starknet call
-/// 
+///
 /// # Parameters
 /// * `provider` - Pointer to Provider
 /// * `call` - Call parameters
 /// * `block_id` - Block identifier
-/// 
+///
 /// # Returns
 /// Result containing array of FieldElements or error
 #[no_mangle]
@@ -925,12 +925,12 @@ pub unsafe extern "C" fn starknet_call(
 }
 
 /// Deploys a burner account
-/// 
+///
 /// # Parameters
 /// * `provider` - Pointer to Provider
 /// * `master_account` - Pointer to master Account
 /// * `signing_key` - Signing key for new account
-/// 
+///
 /// # Returns
 /// Result containing pointer to new Account or error
 #[no_mangle]
@@ -989,10 +989,10 @@ pub unsafe extern "C" fn account_deploy_burner(
 }
 
 /// Gets account address
-/// 
+///
 /// # Parameters
 /// * `account` - Pointer to Account
-/// 
+///
 /// # Returns
 /// FieldElement containing the account address
 #[no_mangle]
@@ -1001,10 +1001,10 @@ pub unsafe extern "C" fn account_address(account: *mut Account) -> types::FieldE
 }
 
 /// Gets account chain ID
-/// 
+///
 /// # Parameters
 /// * `account` - Pointer to Account
-/// 
+///
 /// # Returns
 /// FieldElement containing the chain ID
 #[no_mangle]
@@ -1013,7 +1013,7 @@ pub unsafe extern "C" fn account_chain_id(account: *mut Account) -> types::Field
 }
 
 /// Sets block ID for account
-/// 
+///
 /// # Parameters
 /// * `account` - Pointer to Account
 /// * `block_id` - New block ID
@@ -1024,10 +1024,10 @@ pub unsafe extern "C" fn account_set_block_id(account: *mut Account, block_id: B
 }
 
 /// Gets account nonce
-/// 
+///
 /// # Parameters
 /// * `account` - Pointer to Account
-/// 
+///
 /// # Returns
 /// Result containing FieldElement nonce or error
 #[no_mangle]
@@ -1041,12 +1041,12 @@ pub unsafe extern "C" fn account_nonce(account: *mut Account) -> Result<types::F
 }
 
 /// Executes raw transaction
-/// 
+///
 /// # Parameters
 /// * `account` - Pointer to Account
 /// * `calldata` - Array of Call structs
 /// * `calldata_len` - Length of calldata array
-/// 
+///
 /// # Returns
 /// Result containing transaction hash as FieldElement or error
 #[no_mangle]
@@ -1070,11 +1070,11 @@ pub unsafe extern "C" fn account_execute_raw(
 }
 
 /// Waits for transaction completion
-/// 
+///
 /// # Parameters
 /// * `rpc` - Pointer to Provider
 /// * `txn_hash` - Transaction hash as FieldElement
-/// 
+///
 /// # Returns
 /// Result containing success boolean or error
 #[no_mangle]
@@ -1095,14 +1095,14 @@ pub unsafe extern "C" fn wait_for_transaction(
 }
 
 /// Computes contract address
-/// 
+///
 /// # Parameters
 /// * `class_hash` - Class hash as FieldElement
 /// * `salt` - Salt as FieldElement
 /// * `constructor_calldata` - Array of constructor parameters
 /// * `constructor_calldata_len` - Length of constructor parameters
 /// * `deployer_address` - Deployer address as FieldElement
-/// 
+///
 /// # Returns
 /// FieldElement containing computed contract address
 #[no_mangle]
@@ -1128,7 +1128,7 @@ pub unsafe extern "C" fn hash_get_contract_address(
 }
 
 /// Cancels a subscription
-/// 
+///
 /// # Parameters
 /// * `subscription` - Pointer to Subscription to cancel
 #[no_mangle]
@@ -1142,7 +1142,7 @@ pub unsafe extern "C" fn subscription_cancel(subscription: *mut Subscription) {
 }
 
 /// Frees a ToriiClient instance
-/// 
+///
 /// # Parameters
 /// * `t` - Pointer to ToriiClient to free
 #[no_mangle]
@@ -1156,7 +1156,7 @@ pub unsafe extern "C" fn client_free(t: *mut ToriiClient) {
 }
 
 /// Frees a Provider instance
-/// 
+///
 /// # Parameters
 /// * `rpc` - Pointer to Provider to free
 #[no_mangle]
@@ -1169,7 +1169,7 @@ pub unsafe extern "C" fn provider_free(rpc: *mut Provider) {
 }
 
 /// Frees a Model instance
-/// 
+///
 /// # Parameters
 /// * `model` - Pointer to Model to free
 #[no_mangle]
@@ -1180,7 +1180,7 @@ pub unsafe extern "C" fn model_free(model: *mut Struct) {
 }
 
 /// Frees an Account instance
-/// 
+///
 /// # Parameters
 /// * `account` - Pointer to Account to free
 #[no_mangle]
@@ -1193,7 +1193,7 @@ pub unsafe extern "C" fn account_free(account: *mut Account) {
 }
 
 /// Frees a Type instance
-/// 
+///
 /// # Parameters
 /// * `ty` - Pointer to Type to free
 #[no_mangle]
@@ -1204,7 +1204,7 @@ pub unsafe extern "C" fn ty_free(ty: *mut Ty) {
 }
 
 /// Frees an Entity instance
-/// 
+///
 /// # Parameters
 /// * `entity` - Pointer to Entity to free
 #[no_mangle]
@@ -1215,7 +1215,7 @@ pub unsafe extern "C" fn entity_free(entity: *mut Entity) {
 }
 
 /// Frees an Error instance
-/// 
+///
 /// # Parameters
 /// * `error` - Pointer to Error to free
 #[no_mangle]
@@ -1226,7 +1226,7 @@ pub unsafe extern "C" fn error_free(error: *mut Error) {
 }
 
 /// Frees a WorldMetadata instance
-/// 
+///
 /// # Parameters
 /// * `metadata` - Pointer to WorldMetadata to free
 #[no_mangle]
@@ -1237,7 +1237,7 @@ pub unsafe extern "C" fn world_metadata_free(metadata: *mut WorldMetadata) {
 }
 
 /// Frees a CArray instance
-/// 
+///
 /// # Parameters
 /// * `data` - Pointer to array data
 /// * `data_len` - Length of array
@@ -1249,7 +1249,7 @@ pub unsafe extern "C" fn carray_free(data: *mut c_void, data_len: usize) {
 }
 
 /// Frees a string
-/// 
+///
 /// # Parameters
 /// * `string` - Pointer to string to free
 #[no_mangle]
