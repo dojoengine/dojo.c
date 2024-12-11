@@ -763,7 +763,6 @@ impl ToriiClient {
         &mut self,
         message: &str,
         signature: Vec<String>,
-        is_session_signature: bool,
     ) -> Result<js_sys::Uint8Array, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
@@ -779,13 +778,7 @@ impl ToriiClient {
 
         let message_id = self
             .inner
-            .publish_message(Message {
-                message,
-                signature: match is_session_signature {
-                    true => torii_relay::types::Signature::Session(signature),
-                    false => torii_relay::types::Signature::Account(signature),
-                },
-            })
+            .publish_message(Message { message, signature })
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
 

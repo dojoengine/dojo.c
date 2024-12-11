@@ -82,7 +82,6 @@ pub unsafe extern "C" fn client_publish_message(
     message: *const c_char,
     signature_felts: *const types::FieldElement,
     signature_felts_len: usize,
-    is_session_signature: bool,
 ) -> Result<CArray<u8>> {
     let message = unsafe { CStr::from_ptr(message).to_string_lossy().into_owned() };
     let message = match serde_json::from_str::<TypedData>(message.as_str()) {
@@ -93,15 +92,7 @@ pub unsafe extern "C" fn client_publish_message(
     let signature = unsafe { std::slice::from_raw_parts(signature_felts, signature_felts_len) };
     let signature = signature.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
 
-    let client_future = unsafe {
-        (*client).inner.publish_message(Message {
-            message,
-            signature: match is_session_signature {
-                true => torii_relay::types::Signature::Session(signature),
-                false => torii_relay::types::Signature::Account(signature),
-            },
-        })
-    };
+    let client_future = unsafe { (*client).inner.publish_message(Message { message, signature }) };
 
     match (*client).runtime.block_on(client_future) {
         Ok(data) => Result::Ok(data.into()),
