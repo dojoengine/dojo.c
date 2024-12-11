@@ -298,11 +298,30 @@ pub struct OrderBy {
     pub direction: OrderDirection,
 }
 
+impl From<&OrderBy> for torii_grpc::types::OrderBy {
+    fn from(value: &OrderBy) -> Self {
+        Self {
+            model: value.model.clone(),
+            member: value.member.clone(),
+            direction: (&value.direction).into(),
+        }
+    }
+}
+
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub enum OrderDirection {
     Asc,
     Desc,
+}
+
+impl From<&OrderDirection> for torii_grpc::types::OrderDirection {
+    fn from(value: &OrderDirection) -> Self {
+        match value {
+            OrderDirection::Asc => Self::Asc,
+            OrderDirection::Desc => Self::Desc,
+        }
+    }
 }
 
 impl From<&Query> for torii_grpc::types::Query {

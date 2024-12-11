@@ -487,6 +487,7 @@ impl ToriiClient {
                 offset,
                 clause: None,
                 dont_include_hashed_keys: false,
+                order_by: vec![],
             })
             .await;
 
