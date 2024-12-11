@@ -92,12 +92,7 @@ pub unsafe extern "C" fn client_publish_message(
     let signature = unsafe { std::slice::from_raw_parts(signature_felts, signature_felts_len) };
     let signature = signature.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
 
-    let client_future = unsafe {
-        (*client).inner.publish_message(Message {
-            message,
-            signature
-        })
-    };
+    let client_future = unsafe { (*client).inner.publish_message(Message { message, signature }) };
 
     match (*client).runtime.block_on(client_future) {
         Ok(data) => Result::Ok(data.into()),

@@ -686,8 +686,7 @@ void client_set_logger(struct ToriiClient *client, void (*logger)(const char*));
 struct ResultCArrayu8 client_publish_message(struct ToriiClient *client,
                                              const char *message,
                                              const struct FieldElement *signature_felts,
-                                             uintptr_t signature_felts_len,
-                                             bool is_session_signature);
+                                             uintptr_t signature_felts_len);
 
 struct ResultCArrayEntity client_entities(struct ToriiClient *client, const struct Query *query);
 

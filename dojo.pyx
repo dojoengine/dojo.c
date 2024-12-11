@@ -433,8 +433,7 @@ cdef extern from *:
   ResultCArrayu8 client_publish_message(ToriiClient *client,
                                         const char *message,
                                         const FieldElement *signature_felts,
-                                        uintptr_t signature_felts_len,
-                                        bool is_session_signature);
+                                        uintptr_t signature_felts_len);
 
   ResultCArrayEntity client_entities(ToriiClient *client, const Query *query);
 

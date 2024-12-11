@@ -778,10 +778,7 @@ impl ToriiClient {
 
         let message_id = self
             .inner
-            .publish_message(Message {
-                message,
-                signature
-            })
+            .publish_message(Message { message, signature })
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
 

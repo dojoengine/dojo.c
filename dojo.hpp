@@ -897,8 +897,7 @@ void client_set_logger(ToriiClient *client, void (*logger)(const char*));
 Result<CArray<uint8_t>> client_publish_message(ToriiClient *client,
                                                const char *message,
                                                const FieldElement *signature_felts,
-                                               uintptr_t signature_felts_len,
-                                               bool is_session_signature);
+                                               uintptr_t signature_felts_len);
 
 Result<CArray<Entity>> client_entities(ToriiClient *client, const Query *query);
 
