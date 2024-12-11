@@ -25,6 +25,11 @@ enum class LogicalOperator {
   Or,
 };
 
+enum class OrderDirection {
+  Asc,
+  Desc,
+};
+
 enum class PatternMatching {
   FixedLen = 0,
   VariableLen = 1,
@@ -707,11 +712,18 @@ struct Clause {
   }
 };
 
+struct OrderBy {
+  const char *model;
+  const char *member;
+  OrderDirection direction;
+};
+
 struct Query {
   uint32_t limit;
   uint32_t offset;
   COption<Clause> clause;
   bool dont_include_hashed_keys;
+  CArray<OrderBy> order_by;
 };
 
 struct ModelMetadata {

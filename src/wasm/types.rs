@@ -287,6 +287,41 @@ pub struct Query {
     pub offset: u32,
     pub clause: Option<Clause>,
     pub dont_include_hashed_keys: bool,
+    pub order_by: Vec<OrderBy>,
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct OrderBy {
+    pub model: String,
+    pub member: String,
+    pub direction: OrderDirection,
+}
+
+impl From<&OrderBy> for torii_grpc::types::OrderBy {
+    fn from(value: &OrderBy) -> Self {
+        Self {
+            model: value.model.clone(),
+            member: value.member.clone(),
+            direction: (&value.direction).into(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum OrderDirection {
+    Asc,
+    Desc,
+}
+
+impl From<&OrderDirection> for torii_grpc::types::OrderDirection {
+    fn from(value: &OrderDirection) -> Self {
+        match value {
+            OrderDirection::Asc => Self::Asc,
+            OrderDirection::Desc => Self::Desc,
+        }
+    }
 }
 
 impl From<&Query> for torii_grpc::types::Query {
@@ -296,6 +331,7 @@ impl From<&Query> for torii_grpc::types::Query {
             offset: value.offset,
             clause: value.clause.as_ref().map(|c| c.into()),
             dont_include_hashed_keys: value.dont_include_hashed_keys,
+            order_by: value.order_by.iter().map(|o| o.into()).collect(),
         }
     }
 }
