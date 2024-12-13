@@ -724,6 +724,7 @@ struct Query {
   COption<Clause> clause;
   bool dont_include_hashed_keys;
   CArray<OrderBy> order_by;
+  CArray<const char*> entity_models;
 };
 
 struct ModelMetadata {

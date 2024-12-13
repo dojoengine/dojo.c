@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString, c_char};
+use std::ffi::{c_char, CStr, CString};
 
 use starknet::core::utils::get_selector_from_name;
 use torii_client::client::Client;
@@ -251,6 +251,31 @@ impl<T> From<&CArray<T>> for Vec<T> {
     }
 }
 
+impl From<&CArray<*const c_char>> for Vec<String> {
+    fn from(val: &CArray<*const c_char>) -> Self {
+        let mut strings = Vec::with_capacity(val.data_len);
+        for i in 0..val.data_len {
+            let c_str = unsafe { CStr::from_ptr(val.data.wrapping_add(i).read()) };
+            strings.push(c_str.to_string_lossy().into_owned());
+        }
+        strings
+    }
+}
+
+impl From<Vec<String>> for CArray<*const c_char> {
+    fn from(val: Vec<String>) -> Self {
+        let c_strings: Vec<*const c_char> =
+            val.into_iter().map(|s| CString::new(s).unwrap().into_raw() as *const c_char).collect();
+
+        let data = c_strings.as_ptr() as *mut *const c_char;
+        let data_len = c_strings.len();
+
+        std::mem::forget(c_strings);
+
+        CArray { data, data_len }
+    }
+}
+
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct CHashItem<K, V> {
@@ -300,6 +325,7 @@ pub struct Query {
     pub clause: COption<Clause>,
     pub dont_include_hashed_keys: bool,
     pub order_by: CArray<OrderBy>,
+    pub entity_models: CArray<*const c_char>,
 }
 
 #[derive(Clone, Debug)]
@@ -857,6 +883,8 @@ impl From<&Query> for torii_grpc::types::Query {
         let order_by: Vec<OrderBy> = (&val.order_by).into();
         let order_by = order_by.iter().map(|o| o.into()).collect();
 
+        let entity_models: Vec<String> = (&val.entity_models).into();
+
         match &val.clause {
             COption::Some(clause) => {
                 let clause = (&clause.clone()).into();
@@ -866,6 +894,7 @@ impl From<&Query> for torii_grpc::types::Query {
                     clause: Option::Some(clause),
                     dont_include_hashed_keys: val.dont_include_hashed_keys,
                     order_by,
+                    entity_models,
                 }
             }
             COption::None => torii_grpc::types::Query {
@@ -874,6 +903,7 @@ impl From<&Query> for torii_grpc::types::Query {
                 clause: Option::None,
                 dont_include_hashed_keys: val.dont_include_hashed_keys,
                 order_by,
+                entity_models,
             },
         }
     }
@@ -882,6 +912,7 @@ impl From<&Query> for torii_grpc::types::Query {
 impl From<&torii_grpc::types::Query> for Query {
     fn from(val: &torii_grpc::types::Query) -> Self {
         let order_by = val.order_by.iter().map(|o| o.into()).collect::<Vec<OrderBy>>();
+        let entity_models = val.clone().entity_models.into();
 
         match &val.clause {
             Option::Some(clause) => {
@@ -892,6 +923,7 @@ impl From<&torii_grpc::types::Query> for Query {
                     clause: COption::Some(clause),
                     dont_include_hashed_keys: val.dont_include_hashed_keys,
                     order_by: order_by.into(),
+                    entity_models,
                 }
             }
             Option::None => Query {
@@ -900,6 +932,7 @@ impl From<&torii_grpc::types::Query> for Query {
                 clause: COption::None,
                 dont_include_hashed_keys: val.dont_include_hashed_keys,
                 order_by: order_by.into(),
+                entity_models,
             },
         }
     }
