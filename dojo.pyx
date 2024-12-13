@@ -255,6 +255,7 @@ cdef extern from *:
     COptionClause clause;
     bool dont_include_hashed_keys;
     CArrayOrderBy order_by;
+    CArrayc_char entity_models;
 
   cdef struct CArrayFieldElement:
     FieldElement *data;
