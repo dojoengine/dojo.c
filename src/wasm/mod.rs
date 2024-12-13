@@ -688,6 +688,7 @@ impl ToriiClient {
                 clause: None,
                 dont_include_hashed_keys: false,
                 order_by: vec![],
+                entity_models: vec![],
             })
             .await;
 
