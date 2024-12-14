@@ -47,6 +47,11 @@ torii-relay = { git = "https://github.com/dojoengine/dojo", rev = "180c6d2" }
 ```
 
 ```bash
+# Ensure you have bunx installed:
+https://bun.sh/docs/cli/bunx
+```
+
+```bash
 # Build the wasm module for the browser.
 bash scripts/build_wasm_web.sh
 ```
