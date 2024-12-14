@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString, c_char};
+use std::ffi::{c_char, CStr, CString};
 
 use starknet::core::utils::get_selector_from_name;
 use torii_client::client::Client;
@@ -326,6 +326,7 @@ pub struct Query {
     pub dont_include_hashed_keys: bool,
     pub order_by: CArray<OrderBy>,
     pub entity_models: CArray<*const c_char>,
+    pub internal_updated_at: u64,
 }
 
 #[derive(Clone, Debug)]
@@ -895,6 +896,7 @@ impl From<&Query> for torii_grpc::types::Query {
                     dont_include_hashed_keys: val.dont_include_hashed_keys,
                     order_by,
                     entity_models,
+                    internal_updated_at: val.internal_updated_at,
                 }
             }
             COption::None => torii_grpc::types::Query {
@@ -904,6 +906,7 @@ impl From<&Query> for torii_grpc::types::Query {
                 dont_include_hashed_keys: val.dont_include_hashed_keys,
                 order_by,
                 entity_models,
+                internal_updated_at: val.internal_updated_at,
             },
         }
     }
@@ -924,6 +927,7 @@ impl From<&torii_grpc::types::Query> for Query {
                     dont_include_hashed_keys: val.dont_include_hashed_keys,
                     order_by: order_by.into(),
                     entity_models,
+                    internal_updated_at: val.internal_updated_at,
                 }
             }
             Option::None => Query {
@@ -933,6 +937,7 @@ impl From<&torii_grpc::types::Query> for Query {
                 dont_include_hashed_keys: val.dont_include_hashed_keys,
                 order_by: order_by.into(),
                 entity_models,
+                internal_updated_at: val.internal_updated_at,
             },
         }
     }
