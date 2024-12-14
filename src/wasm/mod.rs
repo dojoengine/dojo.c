@@ -676,7 +676,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing paginated entities or error
     #[wasm_bindgen(js_name = getAllEntities)]
-    pub async fn get_all_entities(&self, limit: u32, offset: u32, internal_updated_at: u64) -> Result<Entities, JsValue> {
+    pub async fn get_all_entities(&self, limit: u32, offset: u32) -> Result<Entities, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
@@ -689,7 +689,7 @@ impl ToriiClient {
                 dont_include_hashed_keys: false,
                 order_by: vec![],
                 entity_models: vec![],
-                internal_updated_at,
+                internal_updated_at: 0,
             })
             .await;
 
