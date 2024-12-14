@@ -1,5 +1,7 @@
 <html>
 
+</html>
+
 <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <link rel="stylesheet"
@@ -28,7 +30,7 @@
             let cconfig = new ClientConfig(config.rpcUrl, config.toriiUrl, config.relayUrl, config.worldAddress);
             const client = await createClient(cconfig);
 
-            let entities = await client.getEntities({
+            let events = await client.getEventMessages({
                 limit: 10,
                 offset: 0,
                 dont_include_hashed_keys: true,
@@ -43,9 +45,11 @@
                 }
             });
 
-            updateManager.displayUpdate('fetch', entities);
+            updateManager.displayUpdate('fetch', events);
 
-            const subscription = await client.onEntityUpdated(
+            const is_historical = false;
+
+            const subscription = await client.onEventMessageUpdated(
                 [
                     {
                         Keys: {
@@ -54,8 +58,10 @@
                             models: []
                         }
                     }
-                ], (updatedEntities) => {
-                    updateManager.displayUpdate('update', updatedEntities);
+                ],
+                is_historical,
+                (updatedEvents) => {
+                    updateManager.displayUpdate('update', updatedEvents);
                 });
 
             // Keeps the subscription alive.
