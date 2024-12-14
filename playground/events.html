@@ -30,6 +30,8 @@
             let cconfig = new ClientConfig(config.rpcUrl, config.toriiUrl, config.relayUrl, config.worldAddress);
             const client = await createClient(cconfig);
 
+            const is_historical = false;
+
             let events = await client.getEventMessages({
                 limit: 10,
                 offset: 0,
@@ -43,11 +45,9 @@
                         models: []
                     }
                 }
-            });
+            }, is_historical);
 
             updateManager.displayUpdate('fetch', events);
-
-            const is_historical = false;
 
             const subscription = await client.onEventMessageUpdated(
                 [
