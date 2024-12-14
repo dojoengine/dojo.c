@@ -1,0 +1,77 @@
+<html>
+
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+</head>
+
+<body>
+    <script type="module">
+        import init, { createClient, ClientConfig } from '../pkg/dojo_c.js';
+        import { ThemeManager, UpdateManager } from './setup.js';
+
+        const themeManager = new ThemeManager();
+        const updateManager = new UpdateManager();
+
+        async function run() {
+            await init();
+
+            let config = {
+                rpcUrl: 'http://localhost:5050',
+                toriiUrl: 'http://localhost:8080',
+                relayUrl: '',
+                worldAddress: '0x064613f376f05242dfcc9fe360fa2ce1fdd6b00b1ce73dae2ea649ea118fd9be'
+            }
+
+            let cconfig = new ClientConfig(config.rpcUrl, config.toriiUrl, config.relayUrl, config.worldAddress);
+            const client = await createClient(cconfig);
+
+            let entities = await client.getEntities({
+                limit: 10,
+                offset: 0,
+                dont_include_hashed_keys: true,
+                order_by: [],
+                entity_models: [],
+                clause: {
+                    Keys: {
+                        keys: [undefined],
+                        pattern_matching: "VariableLen",
+                        models: []
+                    }
+                }
+            });
+
+            updateManager.displayUpdate('fetch', entities);
+
+            const subscription = await client.onEntityUpdated([
+                {
+                    Keys: {
+                        keys: [undefined],
+                        pattern_matching: "VariableLen",
+                        models: []
+                    }
+                }
+            ], (updatedEntities) => {
+                updateManager.displayUpdate('update', updatedEntities);
+            });
+
+            // Keeps the subscription alive.
+            window.addEventListener('beforeunload', () => {
+                if (subscription) {
+                    subscription.cancel();
+                }
+            });
+        }
+
+        run().catch(error => {
+            console.error(error);
+            updateManager.displayUpdate('error', error.toString());
+        });
+
+        console.log("a");
+    </script>
+</body>
+
+</html>

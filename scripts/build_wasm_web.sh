@@ -1,0 +1,1 @@
+bunx wasm-pack build --out-dir pkg --release --target web
