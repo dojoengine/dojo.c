@@ -6,7 +6,45 @@ The playground offers a simple interface to interact with the Dojo client, and t
 
 The rule of thumb is that the playground should be as simple as possible, to focus the reader on the Dojo client and its features.
 
-## Setup
+## Setup Dojo
+
+To quickly test the Torii client, you need a dojo project. The easiest way to play with entities with different keys and models, is using the `examples/simple` project.
+
+```bash
+# Start a Katana.
+katana --dev
+
+# Build and migrate the project.
+cd dojo/examples/simple
+sozo build
+sozo migrate
+```
+```bash
+# Then you can execute systems where entities ids are exposed.
+sozo execute c1 system_1 -c 1,1
+# Use the system_5 to have an other model with 2 keys.
+sozo execute c1 system_5 -c 1,1,2
+```
+```bash
+# Run Torii to index the world. If you are working on torii (most probably), use
+# cargo run:
+cargo run --bin torii -r -- --world 0x064613f376f05242dfcc9fe360fa2ce1fdd6b00b1ce73dae2ea649ea118fd9be --http.cors_origins "*"
+```
+
+## Setup Playground
+
+If you are working on adapting dojo.c to a new version of Torii, you might need to update the dojo dependencies in the `Cargo.toml` file. Change the `rev` is you've pushed to the dojo repository, or the `git`/`path` at your needs.
+
+```toml
+[dependencies]
+dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "180c6d2" }
+dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "180c6d2" }
+torii-client = { git = "https://github.com/dojoengine/dojo", rev = "180c6d2" }
+torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
+    "client",
+], rev = "180c6d2" }
+torii-relay = { git = "https://github.com/dojoengine/dojo", rev = "180c6d2" }
+```
 
 ```bash
 # Build the wasm module for the browser.
