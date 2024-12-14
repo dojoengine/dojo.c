@@ -30,7 +30,7 @@
             let cconfig = new ClientConfig(config.rpcUrl, config.toriiUrl, config.relayUrl, config.worldAddress);
             const client = await createClient(cconfig);
 
-            let entities = await client.getEventMessages({
+            let events = await client.getEventMessages({
                 limit: 10,
                 offset: 0,
                 dont_include_hashed_keys: true,
@@ -45,7 +45,7 @@
                 }
             });
 
-            updateManager.displayUpdate('fetch', entities);
+            updateManager.displayUpdate('fetch', events);
 
             const is_historical = false;
 
@@ -60,8 +60,8 @@
                     }
                 ],
                 is_historical,
-                (updatedEntities) => {
-                    updateManager.displayUpdate('update', updatedEntities);
+                (updatedEvents) => {
+                    updateManager.displayUpdate('update', updatedEvents);
                 });
 
             // Keeps the subscription alive.
