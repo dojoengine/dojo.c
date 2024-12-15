@@ -387,6 +387,7 @@ typedef struct Query {
   bool dont_include_hashed_keys;
   struct CArrayOrderBy order_by;
   struct CArrayc_char entity_models;
+  uint64_t internal_updated_at;
 } Query;
 
 typedef struct CArrayFieldElement {

@@ -302,6 +302,7 @@ pub struct Query {
     pub dont_include_hashed_keys: bool,
     pub order_by: Vec<OrderBy>,
     pub entity_models: Vec<String>,
+    pub internal_updated_at: u64,
 }
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
@@ -347,6 +348,7 @@ impl From<&Query> for torii_grpc::types::Query {
             dont_include_hashed_keys: value.dont_include_hashed_keys,
             order_by: value.order_by.iter().map(|o| o.into()).collect(),
             entity_models: value.entity_models.iter().map(|m| m.to_string()).collect(),
+            internal_updated_at: value.internal_updated_at,
         }
     }
 }
