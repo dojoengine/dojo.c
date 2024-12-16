@@ -256,7 +256,7 @@ cdef extern from *:
     bool dont_include_hashed_keys;
     CArrayOrderBy order_by;
     CArrayc_char entity_models;
-    uint64_t internal_updated_at;
+    uint64_t entity_updated_after;
 
   cdef struct CArrayFieldElement:
     FieldElement *data;

@@ -7,8 +7,8 @@ mod utils;
 
 use std::collections::HashMap;
 use std::str::FromStr;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
@@ -689,7 +689,7 @@ impl ToriiClient {
                 dont_include_hashed_keys: false,
                 order_by: vec![],
                 entity_models: vec![],
-                internal_updated_at: 0,
+                entity_updated_after: 0,
             })
             .await;
 
