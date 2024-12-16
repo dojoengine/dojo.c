@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use dojo_types::primitive::Primitive;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use torii_grpc::types::schema::Entity;
 use wasm_bindgen::JsValue;
 

@@ -1,3 +1,10 @@
 #!/bin/bash
 
-cargo +nightly fmt --check --all -- "$@"
+option="--check"
+
+if [ "$1" == "--fix" ]; then
+    option=""
+    shift
+fi
+
+cargo +nightly-2024-08-28 fmt $option --all -- "$@"

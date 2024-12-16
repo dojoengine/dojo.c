@@ -34,14 +34,8 @@
                 dont_include_hashed_keys: true,
                 order_by: [],
                 entity_models: [],
-                internal_updated_at: 0,
-                clause: {
-                    Keys: {
-                        keys: [undefined],
-                        pattern_matching: "VariableLen",
-                        models: []
-                    }
-                }
+                entity_updated_after: 0,
+
             });
 
             updateManager.displayUpdate('fetch', entities);

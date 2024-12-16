@@ -725,7 +725,7 @@ struct Query {
   bool dont_include_hashed_keys;
   CArray<OrderBy> order_by;
   CArray<const char*> entity_models;
-  uint64_t internal_updated_at;
+  uint64_t entity_updated_after;
 };
 
 struct ModelMetadata {
