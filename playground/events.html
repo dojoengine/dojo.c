@@ -61,8 +61,11 @@
                     }
                 ],
                 is_historical,
-                (updatedEvents) => {
-                    updateManager.displayUpdate('update', updatedEvents);
+                (entity_id, models) => {
+                    updateManager.displayUpdate('update', {
+                        entity_id: entity_id,
+                        models: models
+                    });
                 });
 
             // Keeps the subscription alive.

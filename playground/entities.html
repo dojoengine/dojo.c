@@ -49,8 +49,11 @@
                             models: []
                         }
                     }
-                ], (updatedEntities) => {
-                    updateManager.displayUpdate('update', updatedEntities);
+                ], (entity_id, models) => {
+                    updateManager.displayUpdate('update', {
+                        entity_id: entity_id,
+                        models: models
+                    });
                 });
 
             // Keeps the subscription alive.
