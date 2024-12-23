@@ -424,6 +424,7 @@ pub struct ModelKeysClause {
 pub enum MemberValue {
     Primitive(Primitive),
     String(*const c_char),
+    List(CArray<MemberValue>),
 }
 
 impl From<&MemberValue> for torii_grpc::types::MemberValue {
@@ -435,6 +436,14 @@ impl From<&MemberValue> for torii_grpc::types::MemberValue {
             MemberValue::String(string) => torii_grpc::types::MemberValue::String(unsafe {
                 CStr::from_ptr(*string).to_string_lossy().to_string()
             }),
+            MemberValue::List(list) => {
+                let mut values: Vec<torii_grpc::types::MemberValue> = Vec::with_capacity(list.data_len);
+                for i in 0..list.data_len {
+                    let value = unsafe { list.data.wrapping_add(i).read() };
+                    values.push((&value).into());
+                }
+                torii_grpc::types::MemberValue::List(values)
+            }
         }
     }
 }
@@ -447,6 +456,10 @@ impl From<&torii_grpc::types::MemberValue> for MemberValue {
             }
             torii_grpc::types::MemberValue::String(string) => {
                 MemberValue::String(CString::new(string.clone()).unwrap().into_raw())
+            }
+            torii_grpc::types::MemberValue::List(list) => {
+                let values = list.iter().map(|v| v.into()).collect::<Vec<MemberValue>>();
+                MemberValue::List(values.into())
             }
         }
     }
@@ -484,6 +497,8 @@ pub enum ComparisonOperator {
     Gte,
     Lt,
     Lte,
+    In,
+    NotIn,
 }
 
 #[derive(Clone, Debug)]
@@ -1155,6 +1170,8 @@ impl From<&ComparisonOperator> for torii_grpc::types::ComparisonOperator {
             ComparisonOperator::Gte => torii_grpc::types::ComparisonOperator::Gte,
             ComparisonOperator::Lt => torii_grpc::types::ComparisonOperator::Lt,
             ComparisonOperator::Lte => torii_grpc::types::ComparisonOperator::Lte,
+            ComparisonOperator::In => torii_grpc::types::ComparisonOperator::In,
+            ComparisonOperator::NotIn => torii_grpc::types::ComparisonOperator::NotIn,
         }
     }
 }
@@ -1168,6 +1185,8 @@ impl From<&torii_grpc::types::ComparisonOperator> for ComparisonOperator {
             torii_grpc::types::ComparisonOperator::Gte => ComparisonOperator::Gte,
             torii_grpc::types::ComparisonOperator::Lt => ComparisonOperator::Lt,
             torii_grpc::types::ComparisonOperator::Lte => ComparisonOperator::Lte,
+            torii_grpc::types::ComparisonOperator::In => ComparisonOperator::In,
+            torii_grpc::types::ComparisonOperator::NotIn => ComparisonOperator::NotIn,
         }
     }
 }

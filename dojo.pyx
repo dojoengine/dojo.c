@@ -17,6 +17,8 @@ cdef extern from *:
     Gte,
     Lt,
     Lte,
+    In,
+    NotIn,
 
   cdef enum LogicalOperator:
     And,
@@ -198,14 +200,20 @@ cdef extern from *:
     PatternMatching pattern_matching;
     CArrayc_char models;
 
+  cdef struct CArrayMemberValue:
+    MemberValue *data;
+    uintptr_t data_len;
+
   cdef enum MemberValue_Tag:
     Primitive,
     String,
+    List,
 
   cdef struct MemberValue:
     MemberValue_Tag tag;
     Primitive primitive;
     const char *string;
+    CArrayMemberValue list;
 
   cdef struct MemberClause:
     const char *model;
