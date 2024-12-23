@@ -432,7 +432,8 @@ impl From<&MemberValue> for torii_grpc::types::MemberValue {
             }
             MemberValue::String(string) => torii_grpc::types::MemberValue::String(string.clone()),
             MemberValue::List(list) => {
-                let values = list.iter().map(|v| v.into()).collect::<Vec<torii_grpc::types::MemberValue>>();
+                let values =
+                    list.iter().map(|v| v.into()).collect::<Vec<torii_grpc::types::MemberValue>>();
                 torii_grpc::types::MemberValue::List(values)
             }
         }

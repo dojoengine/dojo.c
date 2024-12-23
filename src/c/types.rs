@@ -437,7 +437,8 @@ impl From<&MemberValue> for torii_grpc::types::MemberValue {
                 CStr::from_ptr(*string).to_string_lossy().to_string()
             }),
             MemberValue::List(list) => {
-                let mut values: Vec<torii_grpc::types::MemberValue> = Vec::with_capacity(list.data_len);
+                let mut values: Vec<torii_grpc::types::MemberValue> =
+                    Vec::with_capacity(list.data_len);
                 for i in 0..list.data_len {
                     let value = unsafe { list.data.wrapping_add(i).read() };
                     values.push((&value).into());
