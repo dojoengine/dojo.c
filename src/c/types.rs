@@ -245,9 +245,9 @@ impl<T> From<Vec<T>> for CArray<T> {
     }
 }
 
-impl<T> From<&CArray<T>> for Vec<T> {
+impl<T: Clone> From<&CArray<T>> for Vec<T> {
     fn from(val: &CArray<T>) -> Self {
-        unsafe { Vec::from_raw_parts(val.data, val.data_len, val.data_len) }
+        unsafe { std::slice::from_raw_parts(val.data, val.data_len).to_vec() }
     }
 }
 
@@ -615,7 +615,7 @@ impl From<&Ty> for dojo_types::schema::Ty {
             Ty::Enum_(enum_) => dojo_types::schema::Ty::Enum((&enum_.clone()).into()),
             Ty::Tuple_(tuple) => {
                 let children = unsafe {
-                    Vec::from_raw_parts(tuple.data, tuple.data_len, tuple.data_len)
+                    std::slice::from_raw_parts(tuple.data, tuple.data_len)
                         .iter()
                         .map(|c| (&c.clone()).into())
                         .collect::<Vec<_>>()
@@ -625,7 +625,7 @@ impl From<&Ty> for dojo_types::schema::Ty {
             }
             Ty::Array_(array) => {
                 let children = unsafe {
-                    Vec::from_raw_parts(array.data, array.data_len, array.data_len)
+                    std::slice::from_raw_parts(array.data, array.data_len)
                         .iter()
                         .map(|c| (&c.clone()).into())
                         .collect::<Vec<_>>()
@@ -888,7 +888,7 @@ impl From<&Query> for torii_grpc::types::Query {
 
         match &val.clause {
             COption::Some(clause) => {
-                let clause = (&clause.clone()).into();
+                let clause = clause.into();
                 torii_grpc::types::Query {
                     limit: val.limit,
                     offset: val.offset,
@@ -919,7 +919,7 @@ impl From<&torii_grpc::types::Query> for Query {
 
         match &val.clause {
             Option::Some(clause) => {
-                let clause = (&clause.clone()).into();
+                let clause = clause.into();
                 Query {
                     limit: val.limit,
                     offset: val.offset,
@@ -946,11 +946,9 @@ impl From<&torii_grpc::types::Query> for Query {
 impl From<&Clause> for torii_grpc::types::Clause {
     fn from(val: &Clause) -> Self {
         match val {
-            Clause::Keys(keys) => torii_grpc::types::Clause::Keys((&keys.clone()).into()),
-            Clause::CMember(member) => torii_grpc::types::Clause::Member((&member.clone()).into()),
-            Clause::Composite(composite) => {
-                torii_grpc::types::Clause::Composite((&composite.clone()).into())
-            }
+            Clause::Keys(keys) => torii_grpc::types::Clause::Keys(keys.into()),
+            Clause::CMember(member) => torii_grpc::types::Clause::Member(member.into()),
+            Clause::Composite(composite) => torii_grpc::types::Clause::Composite(composite.into()),
         }
     }
 }
@@ -958,11 +956,9 @@ impl From<&Clause> for torii_grpc::types::Clause {
 impl From<&torii_grpc::types::Clause> for Clause {
     fn from(val: &torii_grpc::types::Clause) -> Self {
         match val {
-            torii_grpc::types::Clause::Keys(keys) => Clause::Keys((&keys.clone()).into()),
-            torii_grpc::types::Clause::Member(member) => Clause::CMember((&member.clone()).into()),
-            torii_grpc::types::Clause::Composite(composite) => {
-                Clause::Composite((&composite.clone()).into())
-            }
+            torii_grpc::types::Clause::Keys(keys) => Clause::Keys(keys.into()),
+            torii_grpc::types::Clause::Member(member) => Clause::CMember(member.into()),
+            torii_grpc::types::Clause::Composite(composite) => Clause::Composite(composite.into()),
         }
     }
 }
@@ -1108,14 +1104,10 @@ impl From<&torii_grpc::types::MemberClause> for MemberClause {
 impl From<&CompositeClause> for torii_grpc::types::CompositeClause {
     fn from(val: &CompositeClause) -> Self {
         let operator = &val.operator.clone();
-        let clauses = unsafe {
-            Vec::from_raw_parts(val.clauses.data, val.clauses.data_len, val.clauses.data_len)
-        };
+        let clauses = unsafe { std::slice::from_raw_parts(val.clauses.data, val.clauses.data_len) };
+        let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<torii_grpc::types::Clause>>();
 
-        torii_grpc::types::CompositeClause {
-            operator: operator.into(),
-            clauses: clauses.iter().map(|c| c.into()).collect(),
-        }
+        torii_grpc::types::CompositeClause { operator: operator.into(), clauses }
     }
 }
 
