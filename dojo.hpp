@@ -18,6 +18,8 @@ enum class ComparisonOperator {
   Gte,
   Lt,
   Lte,
+  In,
+  NotIn,
 };
 
 enum class LogicalOperator {
@@ -601,6 +603,7 @@ struct MemberValue {
   enum class Tag {
     Primitive,
     String,
+    List,
   };
 
   struct Primitive_Body {
@@ -611,10 +614,15 @@ struct MemberValue {
     const char *_0;
   };
 
+  struct List_Body {
+    CArray<MemberValue> _0;
+  };
+
   Tag tag;
   union {
     Primitive_Body primitive;
     String_Body string;
+    List_Body list;
   };
 
   static MemberValue Primitive(const Primitive &_0) {
@@ -637,6 +645,17 @@ struct MemberValue {
 
   bool IsString() const {
     return tag == Tag::String;
+  }
+
+  static MemberValue List(const CArray<MemberValue> &_0) {
+    MemberValue result;
+    ::new (&result.list._0) (CArray<MemberValue>)(_0);
+    result.tag = Tag::List;
+    return result;
+  }
+
+  bool IsList() const {
+    return tag == Tag::List;
   }
 };
 

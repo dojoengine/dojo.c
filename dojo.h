@@ -15,6 +15,8 @@ typedef enum ComparisonOperator {
   Gte,
   Lt,
   Lte,
+  In,
+  NotIn,
 } ComparisonOperator;
 
 typedef enum LogicalOperator {
@@ -300,9 +302,15 @@ typedef struct KeysClause {
   struct CArrayc_char models;
 } KeysClause;
 
+typedef struct CArrayMemberValue {
+  struct MemberValue *data;
+  uintptr_t data_len;
+} CArrayMemberValue;
+
 typedef enum MemberValue_Tag {
   Primitive,
   String,
+  List,
 } MemberValue_Tag;
 
 typedef struct MemberValue {
@@ -313,6 +321,9 @@ typedef struct MemberValue {
     };
     struct {
       const char *string;
+    };
+    struct {
+      struct CArrayMemberValue list;
     };
   };
 } MemberValue;

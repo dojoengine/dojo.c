@@ -421,6 +421,7 @@ pub struct KeysClause {
 pub enum MemberValue {
     Primitive(Primitive),
     String(String),
+    List(Vec<MemberValue>),
 }
 
 impl From<&MemberValue> for torii_grpc::types::MemberValue {
@@ -430,6 +431,11 @@ impl From<&MemberValue> for torii_grpc::types::MemberValue {
                 torii_grpc::types::MemberValue::Primitive(primitive.into())
             }
             MemberValue::String(string) => torii_grpc::types::MemberValue::String(string.clone()),
+            MemberValue::List(list) => {
+                let values =
+                    list.iter().map(|v| v.into()).collect::<Vec<torii_grpc::types::MemberValue>>();
+                torii_grpc::types::MemberValue::List(values)
+            }
         }
     }
 }
@@ -528,6 +534,8 @@ pub enum ComparisonOperator {
     Gte,
     Lt,
     Lte,
+    In,
+    NotIn,
 }
 
 impl From<&ComparisonOperator> for torii_grpc::types::ComparisonOperator {
@@ -539,6 +547,8 @@ impl From<&ComparisonOperator> for torii_grpc::types::ComparisonOperator {
             ComparisonOperator::Gte => Self::Gte,
             ComparisonOperator::Lt => Self::Lt,
             ComparisonOperator::Lte => Self::Lte,
+            ComparisonOperator::In => Self::In,
+            ComparisonOperator::NotIn => Self::NotIn,
         }
     }
 }
