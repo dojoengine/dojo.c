@@ -437,7 +437,7 @@ impl From<&MemberValue> for torii_grpc::types::MemberValue {
                 CStr::from_ptr(*string).to_string_lossy().to_string()
             }),
             MemberValue::List(list) => {
-                let values: Vec<MemberValue> = (&list).into();
+                let values: Vec<MemberValue> = list.into();
                 let values = values
                     .iter()
                     .map(|v| v.into())
