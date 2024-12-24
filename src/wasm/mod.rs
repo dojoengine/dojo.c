@@ -1049,8 +1049,9 @@ impl ToriiClient {
         let contract_addresses = contract_addresses
             .into_iter()
             .map(|addr| {
-                Felt::from_str(&addr)
-                    .map_err(|err| JsValue::from(format!("failed to parse contract address: {err}")))
+                Felt::from_str(&addr).map_err(|err| {
+                    JsValue::from(format!("failed to parse contract address: {err}"))
+                })
             })
             .collect::<Result<Vec<_>, _>>()?;
 
@@ -1126,8 +1127,9 @@ impl ToriiClient {
         let contract_addresses = contract_addresses
             .into_iter()
             .map(|addr| {
-                Felt::from_str(&addr)
-                    .map_err(|err| JsValue::from(format!("failed to parse contract address: {err}")))
+                Felt::from_str(&addr).map_err(|err| {
+                    JsValue::from(format!("failed to parse contract address: {err}"))
+                })
             })
             .collect::<Result<Vec<_>, _>>()?;
 

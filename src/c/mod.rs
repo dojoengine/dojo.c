@@ -583,12 +583,13 @@ pub unsafe extern "C" fn client_on_token_balance_update(
     callback: unsafe extern "C" fn(TokenBalance),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
-    
+
     // Convert account addresses array to Vec<Felt> if not empty
     let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
         Vec::new()
     } else {
-        let addresses = unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
+        let addresses =
+            unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
         addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
     };
 
@@ -596,7 +597,8 @@ pub unsafe extern "C" fn client_on_token_balance_update(
     let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
         Vec::new()
     } else {
-        let addresses = unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+        let addresses =
+            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
         addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
     };
 
@@ -612,11 +614,11 @@ pub unsafe extern "C" fn client_on_token_balance_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv = client_clone.inner.on_token_balance_updated(
-                contract_addresses.clone(),
-                account_addresses.clone(),
-            ).await;
-            
+            let rcv = client_clone
+                .inner
+                .on_token_balance_updated(contract_addresses.clone(), account_addresses.clone())
+                .await;
+
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
@@ -667,7 +669,8 @@ pub unsafe extern "C" fn client_update_token_balance_subscription(
     let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
         Vec::new()
     } else {
-        let addresses = unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
+        let addresses =
+            unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
         addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
     };
 
@@ -675,17 +678,16 @@ pub unsafe extern "C" fn client_update_token_balance_subscription(
     let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
         Vec::new()
     } else {
-        let addresses = unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+        let addresses =
+            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
         addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
     };
 
-    match (*client).runtime.block_on(
-        (*client).inner.update_token_balance_subscription(
-            (*subscription).id.load(Ordering::SeqCst),
-            contract_addresses,
-            account_addresses,
-        )
-    ) {
+    match (*client).runtime.block_on((*client).inner.update_token_balance_subscription(
+        (*subscription).id.load(Ordering::SeqCst),
+        contract_addresses,
+        account_addresses,
+    )) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
