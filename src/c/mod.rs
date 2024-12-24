@@ -466,10 +466,10 @@ pub unsafe extern "C" fn client_tokens(
 ///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
-/// * `account_addresses` - Array of account addresses
-/// * `account_addresses_len` - Length of account addresses array
 /// * `contract_addresses` - Array of contract addresses
 /// * `contract_addresses_len` - Length of contract addresses array
+/// * `account_addresses` - Array of account addresses
+/// * `account_addresses_len` - Length of account addresses array
 ///
 /// # Returns
 /// Result containing array of TokenBalance information or error
@@ -565,10 +565,10 @@ pub unsafe extern "C" fn on_indexer_update(
 ///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
-/// * `account_addresses` - Array of account addresses to filter (empty for all)
-/// * `account_addresses_len` - Length of account addresses array
 /// * `contract_addresses` - Array of contract addresses to filter (empty for all)
 /// * `contract_addresses_len` - Length of contract addresses array
+/// * `account_addresses` - Array of account addresses to filter (empty for all)
+/// * `account_addresses_len` - Length of account addresses array
 /// * `callback` - Function called when updates occur
 ///
 /// # Returns
@@ -627,7 +627,7 @@ pub unsafe extern "C" fn client_on_token_balance_update(
                 while let Some(Ok((id, balance))) = rcv.next().await {
                     subscription_id.store(id, Ordering::SeqCst);
                     let balance: TokenBalance = (&balance).into();
-                    callback(balance.into());
+                    callback(balance);
                 }
             }
 
@@ -649,10 +649,10 @@ pub unsafe extern "C" fn client_on_token_balance_update(
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
 /// * `subscription` - Pointer to existing Subscription
-/// * `account_addresses` - Array of account addresses to filter (empty for all)
-/// * `account_addresses_len` - Length of account addresses array
 /// * `contract_addresses` - Array of contract addresses to filter (empty for all)
 /// * `contract_addresses_len` - Length of contract addresses array
+/// * `account_addresses` - Array of account addresses to filter (empty for all)
+/// * `account_addresses_len` - Length of account addresses array
 ///
 /// # Returns
 /// Result containing success boolean or error

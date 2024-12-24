@@ -898,10 +898,10 @@ struct ResultCArrayToken client_tokens(struct ToriiClient *client,
  *
  * # Parameters
  * * `client` - Pointer to ToriiClient instance
- * * `account_addresses` - Array of account addresses
- * * `account_addresses_len` - Length of account addresses array
  * * `contract_addresses` - Array of contract addresses
  * * `contract_addresses_len` - Length of contract addresses array
+ * * `account_addresses` - Array of account addresses
+ * * `account_addresses_len` - Length of account addresses array
  *
  * # Returns
  * Result containing array of TokenBalance information or error
@@ -932,10 +932,10 @@ struct ResultSubscription on_indexer_update(struct ToriiClient *client,
  *
  * # Parameters
  * * `client` - Pointer to ToriiClient instance
- * * `account_addresses` - Array of account addresses to filter (empty for all)
- * * `account_addresses_len` - Length of account addresses array
  * * `contract_addresses` - Array of contract addresses to filter (empty for all)
  * * `contract_addresses_len` - Length of contract addresses array
+ * * `account_addresses` - Array of account addresses to filter (empty for all)
+ * * `account_addresses_len` - Length of account addresses array
  * * `callback` - Function called when updates occur
  *
  * # Returns
@@ -954,10 +954,10 @@ struct ResultSubscription client_on_token_balance_update(struct ToriiClient *cli
  * # Parameters
  * * `client` - Pointer to ToriiClient instance
  * * `subscription` - Pointer to existing Subscription
- * * `account_addresses` - Array of account addresses to filter (empty for all)
- * * `account_addresses_len` - Length of account addresses array
  * * `contract_addresses` - Array of contract addresses to filter (empty for all)
  * * `contract_addresses_len` - Length of contract addresses array
+ * * `account_addresses` - Array of account addresses to filter (empty for all)
+ * * `account_addresses_len` - Length of account addresses array
  *
  * # Returns
  * Result containing success boolean or error
