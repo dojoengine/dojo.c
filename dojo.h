@@ -907,10 +907,10 @@ struct ResultCArrayToken client_tokens(struct ToriiClient *client,
  * Result containing array of TokenBalance information or error
  */
 struct ResultCArrayTokenBalance client_token_balances(struct ToriiClient *client,
-                                                      const struct FieldElement *account_addresses,
-                                                      uintptr_t account_addresses_len,
                                                       const struct FieldElement *contract_addresses,
-                                                      uintptr_t contract_addresses_len);
+                                                      uintptr_t contract_addresses_len,
+                                                      const struct FieldElement *account_addresses,
+                                                      uintptr_t account_addresses_len);
 
 /**
  * Subscribes to indexer updates
@@ -926,6 +926,48 @@ struct ResultCArrayTokenBalance client_token_balances(struct ToriiClient *client
 struct ResultSubscription on_indexer_update(struct ToriiClient *client,
                                             const struct FieldElement *contract_address,
                                             void (*callback)(struct IndexerUpdate));
+
+/**
+ * Subscribes to token balance updates
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `account_addresses` - Array of account addresses to filter (empty for all)
+ * * `account_addresses_len` - Length of account addresses array
+ * * `contract_addresses` - Array of contract addresses to filter (empty for all)
+ * * `contract_addresses_len` - Length of contract addresses array
+ * * `callback` - Function called when updates occur
+ *
+ * # Returns
+ * Result containing pointer to Subscription or error
+ */
+struct ResultSubscription client_on_token_balance_update(struct ToriiClient *client,
+                                                         const struct FieldElement *contract_addresses,
+                                                         uintptr_t contract_addresses_len,
+                                                         const struct FieldElement *account_addresses,
+                                                         uintptr_t account_addresses_len,
+                                                         void (*callback)(struct TokenBalance));
+
+/**
+ * Updates an existing token balance subscription
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `subscription` - Pointer to existing Subscription
+ * * `account_addresses` - Array of account addresses to filter (empty for all)
+ * * `account_addresses_len` - Length of account addresses array
+ * * `contract_addresses` - Array of contract addresses to filter (empty for all)
+ * * `contract_addresses_len` - Length of contract addresses array
+ *
+ * # Returns
+ * Result containing success boolean or error
+ */
+struct Resultbool client_update_token_balance_subscription(struct ToriiClient *client,
+                                                           struct Subscription *subscription,
+                                                           const struct FieldElement *contract_addresses,
+                                                           uintptr_t contract_addresses_len,
+                                                           const struct FieldElement *account_addresses,
+                                                           uintptr_t account_addresses_len);
 
 /**
  * Serializes a string into a byte array

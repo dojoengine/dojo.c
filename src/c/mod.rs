@@ -476,10 +476,10 @@ pub unsafe extern "C" fn client_tokens(
 #[no_mangle]
 pub unsafe extern "C" fn client_token_balances(
     client: *mut ToriiClient,
-    account_addresses: *const types::FieldElement,
-    account_addresses_len: usize,
     contract_addresses: *const types::FieldElement,
     contract_addresses_len: usize,
+    account_addresses: *const types::FieldElement,
+    account_addresses_len: usize,
 ) -> Result<CArray<TokenBalance>> {
     let account_addresses =
         unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
@@ -559,6 +559,136 @@ pub unsafe extern "C" fn on_indexer_update(
     });
 
     Result::Ok(Box::into_raw(Box::new(subscription)))
+}
+
+/// Subscribes to token balance updates
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `account_addresses` - Array of account addresses to filter (empty for all)
+/// * `account_addresses_len` - Length of account addresses array
+/// * `contract_addresses` - Array of contract addresses to filter (empty for all)
+/// * `contract_addresses_len` - Length of contract addresses array
+/// * `callback` - Function called when updates occur
+///
+/// # Returns
+/// Result containing pointer to Subscription or error
+#[no_mangle]
+pub unsafe extern "C" fn client_on_token_balance_update(
+    client: *mut ToriiClient,
+    contract_addresses: *const types::FieldElement,
+    contract_addresses_len: usize,
+    account_addresses: *const types::FieldElement,
+    account_addresses_len: usize,
+    callback: unsafe extern "C" fn(TokenBalance),
+) -> Result<*mut Subscription> {
+    let client = Arc::new(unsafe { &*client });
+    
+    // Convert account addresses array to Vec<Felt> if not empty
+    let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses = unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
+        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+    };
+
+    // Convert contract addresses array to Vec<Felt> if not empty
+    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses = unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+    };
+
+    let subscription_id = Arc::new(AtomicU64::new(0));
+    let (trigger, tripwire) = Tripwire::new();
+
+    let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
+
+    // Spawn a new thread to handle the stream and reconnections
+    let client_clone = client.clone();
+    client.runtime.spawn(async move {
+        let mut backoff = Duration::from_secs(1);
+        let max_backoff = Duration::from_secs(60);
+
+        loop {
+            let rcv = client_clone.inner.on_token_balance_updated(
+                contract_addresses.clone(),
+                account_addresses.clone(),
+            ).await;
+            
+            if let Ok(rcv) = rcv {
+                backoff = Duration::from_secs(1); // Reset backoff on successful connection
+
+                let mut rcv = rcv.take_until_if(tripwire.clone());
+
+                while let Some(Ok((id, balance))) = rcv.next().await {
+                    subscription_id.store(id, Ordering::SeqCst);
+                    let balance: TokenBalance = (&balance).into();
+                    callback(balance.into());
+                }
+            }
+
+            // If we've reached this point, the stream has ended (possibly due to disconnection)
+            // We'll try to reconnect after a delay, unless the tripwire has been triggered
+            if tripwire.clone().now_or_never().unwrap_or_default() {
+                break; // Exit the loop if the subscription has been cancelled
+            }
+            sleep(backoff).await;
+            backoff = std::cmp::min(backoff * 2, max_backoff);
+        }
+    });
+
+    Result::Ok(Box::into_raw(Box::new(subscription)))
+}
+
+/// Updates an existing token balance subscription
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `subscription` - Pointer to existing Subscription
+/// * `account_addresses` - Array of account addresses to filter (empty for all)
+/// * `account_addresses_len` - Length of account addresses array
+/// * `contract_addresses` - Array of contract addresses to filter (empty for all)
+/// * `contract_addresses_len` - Length of contract addresses array
+///
+/// # Returns
+/// Result containing success boolean or error
+#[no_mangle]
+pub unsafe extern "C" fn client_update_token_balance_subscription(
+    client: *mut ToriiClient,
+    subscription: *mut Subscription,
+    contract_addresses: *const types::FieldElement,
+    contract_addresses_len: usize,
+    account_addresses: *const types::FieldElement,
+    account_addresses_len: usize,
+) -> Result<bool> {
+    // Convert account addresses array to Vec<Felt> if not empty
+    let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses = unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
+        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+    };
+
+    // Convert contract addresses array to Vec<Felt> if not empty
+    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses = unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+    };
+
+    match (*client).runtime.block_on(
+        (*client).inner.update_token_balance_subscription(
+            (*subscription).id.load(Ordering::SeqCst),
+            contract_addresses,
+            account_addresses,
+        )
+    ) {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(e.into()),
+    }
 }
 
 /// Serializes a string into a byte array
@@ -1258,5 +1388,3 @@ pub unsafe extern "C" fn string_free(string: *mut c_char) {
         let _: String = CString::from_raw(string).into_string().unwrap();
     }
 }
-
-// TODO: free keys clause
