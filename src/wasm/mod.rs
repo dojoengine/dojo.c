@@ -733,7 +733,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onEntityUpdated)]
-    pub async fn on_entity_updated(
+    pub fn on_entity_updated(
         &self,
         clauses: KeysClauses,
         callback: js_sys::Function,
@@ -816,7 +816,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onEventMessageUpdated)]
-    pub async fn on_event_message_updated(
+    pub fn on_event_message_updated(
         &self,
         clauses: KeysClauses,
         historical: bool,
@@ -907,7 +907,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onStarknetEvent)]
-    pub async fn on_starknet_event(
+    pub fn on_starknet_event(
         &self,
         clauses: KeysClauses,
         callback: js_sys::Function,
@@ -963,7 +963,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onIndexerUpdated)]
-    pub async fn on_indexer_updated(
+    pub fn on_indexer_updated(
         &self,
         contract_address: Option<String>,
         callback: js_sys::Function,
@@ -1029,7 +1029,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onTokenBalanceUpdated)]
-    pub async fn on_token_balance_updated(
+    pub fn on_token_balance_updated(
         &self,
         contract_addresses: Vec<String>,
         account_addresses: Vec<String>,
