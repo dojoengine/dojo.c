@@ -615,16 +615,16 @@ impl ToriiClient {
     /// Gets token balances for given accounts and contracts
     ///
     /// # Parameters
-    /// * `account_addresses` - Array of account addresses as hex strings
     /// * `contract_addresses` - Array of contract addresses as hex strings
+    /// * `account_addresses` - Array of account addresses as hex strings
     ///
     /// # Returns
     /// Result containing token balances or error
     #[wasm_bindgen(js_name = getTokenBalances)]
     pub async fn get_token_balances(
         &self,
-        account_addresses: Vec<String>,
         contract_addresses: Vec<String>,
+        account_addresses: Vec<String>,
     ) -> Result<TokenBalances, JsValue> {
         let account_addresses = account_addresses
             .into_iter()
@@ -1022,8 +1022,8 @@ impl ToriiClient {
     /// Subscribes to token balance updates
     ///
     /// # Parameters
-    /// * `contract_addresses` - Contract addresses to subscribe to. If empty, all contract addresses will be subscribed to.
-    /// * `account_addresses` - Account addresses to subscribe to. If empty, all account addresses will be subscribed to.
+    /// * `contract_addresses` - Array of contract addresses to filter (empty for all)
+    /// * `account_addresses` - Array of account addresses to filter (empty for all)
     /// * `callback` - JavaScript function to call on updates
     ///
     /// # Returns
@@ -1038,14 +1038,21 @@ impl ToriiClient {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let contract_addresses: Vec<Felt> = contract_addresses
-            .iter()
-            .map(|c| Felt::from_str(c.as_str()).unwrap())
-            .collect();
-        let account_addresses: Vec<Felt> = account_addresses
-            .iter()
-            .map(|a| Felt::from_str(a.as_str()).unwrap())
-            .collect();
+        let account_addresses = account_addresses
+            .into_iter()
+            .map(|addr| {
+                Felt::from_str(&addr)
+                    .map_err(|err| JsValue::from(format!("failed to parse account address: {err}")))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let contract_addresses = contract_addresses
+            .into_iter()
+            .map(|addr| {
+                Felt::from_str(&addr)
+                    .map_err(|err| JsValue::from(format!("failed to parse contract address: {err}")))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
 
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
@@ -1060,17 +1067,21 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                if let Ok(stream) = client.on_token_balance_updated(contract_addresses, account_addresses).await {
+                if let Ok(stream) = client
+                    .on_token_balance_updated(contract_addresses.clone(), account_addresses.clone())
+                    .await
+                {
                     backoff = 1000; // Reset backoff on successful connection
 
                     let mut stream = stream.take_until_if(tripwire.clone());
 
-                    while let Some(Ok(update)) = stream.next().await {
-                        let update: IndexerUpdate = (&update).into();
+                    while let Some(Ok((id, balance))) = stream.next().await {
+                        subscription_id_clone.store(id, Ordering::SeqCst);
+                        let balance: TokenBalance = (&balance).into();
 
                         let _ = callback.call1(
                             &JsValue::null(),
-                            &update.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            &balance.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                         );
                     }
                 }
@@ -1086,6 +1097,48 @@ impl ToriiClient {
         });
 
         Ok(subscription)
+    }
+
+    /// Updates an existing token balance subscription
+    ///
+    /// # Parameters
+    /// * `subscription` - Existing subscription to update
+    /// * `contract_addresses` - New array of contract addresses to filter
+    /// * `account_addresses` - New array of account addresses to filter
+    ///
+    /// # Returns
+    /// Result containing unit or error
+    #[wasm_bindgen(js_name = updateTokenBalanceSubscription)]
+    pub async fn update_token_balance_subscription(
+        &self,
+        subscription: &Subscription,
+        contract_addresses: Vec<String>,
+        account_addresses: Vec<String>,
+    ) -> Result<(), JsValue> {
+        let account_addresses = account_addresses
+            .into_iter()
+            .map(|addr| {
+                Felt::from_str(&addr)
+                    .map_err(|err| JsValue::from(format!("failed to parse account address: {err}")))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let contract_addresses = contract_addresses
+            .into_iter()
+            .map(|addr| {
+                Felt::from_str(&addr)
+                    .map_err(|err| JsValue::from(format!("failed to parse contract address: {err}")))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        self.inner
+            .update_token_balance_subscription(
+                subscription.id.load(Ordering::SeqCst),
+                contract_addresses,
+                account_addresses,
+            )
+            .await
+            .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }
 
     /// Publishes a message to the network
