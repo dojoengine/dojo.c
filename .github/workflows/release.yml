@@ -20,6 +20,49 @@ jobs:
         with:
           fetch-depth: 0
 
+  build-wasm:
+    name: Build WASM packages
+    needs: prepare
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: dtolnay/rust-toolchain@master
+        name: Rust Toolchain Setup
+        with:
+          targets: wasm32-unknown-unknown
+          toolchain: ${{ env.RUST_VERSION }}
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          cache-on-failure: true
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Build WASM (no-modules)
+        run: wasm-pack build --out-dir pkg-no-modules --release --target no-modules
+
+      - name: Build WASM (web)
+        run: wasm-pack build --out-dir pkg-web --release --target web
+
+      - name: Package WASM builds
+        id: wasm_artifacts
+        shell: bash
+        run: |
+          tar -czvf torii-wasm-no-modules.tar.gz pkg-no-modules/
+          tar -czvf torii-wasm-web.tar.gz pkg-web/
+          echo "files=torii-wasm-no-modules.tar.gz,torii-wasm-web.tar.gz" >> $GITHUB_OUTPUT
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            torii-wasm-no-modules.tar.gz
+            torii-wasm-web.tar.gz
+
   build-and-release:
     name: ${{ matrix.job.target }} (${{ matrix.job.os }})
     needs: prepare
