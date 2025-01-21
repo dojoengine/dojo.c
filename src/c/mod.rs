@@ -1,6 +1,7 @@
 mod types;
 
 use std::ffi::{c_void, CStr, CString};
+use std::net::SocketAddr;
 use std::ops::Deref;
 use std::os::raw::c_char;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -34,6 +35,9 @@ use crate::constants;
 use crate::types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
 
+use axum::{Router, routing::post, Json};
+use tokio::net::TcpListener;
+
 /// Creates a new Torii client instance
 ///
 /// # Parameters
@@ -50,6 +54,7 @@ pub unsafe extern "C" fn client_new(
     rpc_url: *const c_char,
     libp2p_relay_url: *const c_char,
     world: types::FieldElement,
+    callback_port: u16,
 ) -> Result<*mut ToriiClient> {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
@@ -69,7 +74,31 @@ pub unsafe extern "C" fn client_new(
         relay_runner.lock().await.run().await;
     });
 
-    Result::Ok(Box::into_raw(Box::new(ToriiClient { inner: client, runtime, logger: None })))
+    // Set up the HTTP callback server
+    let app = Router::new()
+        .route("/callback", post(handle_callback));
+
+    let addr = SocketAddr::from(([127, 0, 0, 1], callback_port));
+    
+    runtime.spawn(async move {
+        let listener = TcpListener::bind(addr).await.unwrap();
+        axum::serve(listener, app).await.unwrap();
+    });
+
+    println!("Listening on {}", addr);
+
+    Result::Ok(Box::into_raw(Box::new(ToriiClient { 
+        inner: client, 
+        runtime, 
+        logger: None,
+    })))
+}
+
+// Handler for callback endpoint
+async fn handle_callback(Json(payload): Json<serde_json::Value>) {
+    // Here you can process the callback payload
+    // For now, we'll just print it
+    println!("Received callback: {:?}", payload);
 }
 
 /// Sets a logger callback function for the client

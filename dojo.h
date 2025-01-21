@@ -734,7 +734,8 @@ extern "C" {
 struct ResultToriiClient client_new(const char *torii_url,
                                     const char *rpc_url,
                                     const char *libp2p_relay_url,
-                                    struct FieldElement world);
+                                    struct FieldElement world,
+                                    uint16_t callback_port);
 
 /**
  * Sets a logger callback function for the client

@@ -933,7 +933,8 @@ extern "C" {
 Result<ToriiClient*> client_new(const char *torii_url,
                                 const char *rpc_url,
                                 const char *libp2p_relay_url,
-                                FieldElement world);
+                                FieldElement world,
+                                uint16_t callback_port);
 
 /// Sets a logger callback function for the client
 ///
