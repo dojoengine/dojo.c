@@ -47,6 +47,9 @@ crypto-bigint = "0.5.5"
 tsify-next = { version = "0.5.4", features = ["js"] }
 instant = { version = "0.1.13", features = ["wasm-bindgen"] }
 gloo-timers = { version = "0.3.0", features = ["futures"] }
+axum = "0.8.1"
 
 [build-dependencies]
-cbindgen = "0.26.0"
+# this addresses issue with cyclical dependencies when generating C header
+# see. https://github.com/mozilla/cbindgen/issues/43
+cbindgen = { git = "https://github.com/masnagam/cbindgen", branch = "fix-issue-43" }

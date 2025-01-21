@@ -6,6 +6,14 @@
 
 namespace dojo_bindings {
 
+struct ToriiClient;
+struct Ty;
+struct Query;
+struct Subscription;
+struct EntityKeysClause;
+struct Provider;
+struct Account;
+
 enum class BlockTag {
   Latest,
   Pending,
@@ -36,14 +44,6 @@ enum class PatternMatching {
   FixedLen = 0,
   VariableLen = 1,
 };
-
-struct Account;
-
-struct Provider;
-
-struct Subscription;
-
-struct ToriiClient;
 
 struct Error {
   char *message;
@@ -101,6 +101,22 @@ template<typename T>
 struct CArray {
   T *data;
   uintptr_t data_len;
+};
+
+struct Member {
+  const char *name;
+  Ty *ty;
+  bool key;
+};
+
+struct Struct {
+  const char *name;
+  CArray<Member> children;
+};
+
+struct Entity {
+  FieldElement hashed_keys;
+  CArray<Struct> models;
 };
 
 struct Primitive {
@@ -539,214 +555,6 @@ struct Ty {
   }
 };
 
-struct Member {
-  const char *name;
-  Ty *ty;
-  bool key;
-};
-
-struct Struct {
-  const char *name;
-  CArray<Member> children;
-};
-
-struct Entity {
-  FieldElement hashed_keys;
-  CArray<Struct> models;
-};
-
-template<typename T>
-struct COption {
-  enum class Tag {
-    Some,
-    None,
-  };
-
-  struct Some_Body {
-    T _0;
-  };
-
-  Tag tag;
-  union {
-    Some_Body some;
-  };
-
-  static COption Some(const T &_0) {
-    COption result;
-    ::new (&result.some._0) (T)(_0);
-    result.tag = Tag::Some;
-    return result;
-  }
-
-  bool IsSome() const {
-    return tag == Tag::Some;
-  }
-
-  static COption None() {
-    COption result;
-    result.tag = Tag::None;
-    return result;
-  }
-
-  bool IsNone() const {
-    return tag == Tag::None;
-  }
-};
-
-struct KeysClause {
-  CArray<COption<FieldElement>> keys;
-  PatternMatching pattern_matching;
-  CArray<const char*> models;
-};
-
-struct MemberValue {
-  enum class Tag {
-    Primitive,
-    String,
-    List,
-  };
-
-  struct Primitive_Body {
-    Primitive _0;
-  };
-
-  struct String_Body {
-    const char *_0;
-  };
-
-  struct List_Body {
-    CArray<MemberValue> _0;
-  };
-
-  Tag tag;
-  union {
-    Primitive_Body primitive;
-    String_Body string;
-    List_Body list;
-  };
-
-  static MemberValue Primitive(const Primitive &_0) {
-    MemberValue result;
-    ::new (&result.primitive._0) (Primitive)(_0);
-    result.tag = Tag::Primitive;
-    return result;
-  }
-
-  bool IsPrimitive() const {
-    return tag == Tag::Primitive;
-  }
-
-  static MemberValue String(const char *const &_0) {
-    MemberValue result;
-    ::new (&result.string._0) (const char*)(_0);
-    result.tag = Tag::String;
-    return result;
-  }
-
-  bool IsString() const {
-    return tag == Tag::String;
-  }
-
-  static MemberValue List(const CArray<MemberValue> &_0) {
-    MemberValue result;
-    ::new (&result.list._0) (CArray<MemberValue>)(_0);
-    result.tag = Tag::List;
-    return result;
-  }
-
-  bool IsList() const {
-    return tag == Tag::List;
-  }
-};
-
-struct MemberClause {
-  const char *model;
-  const char *member;
-  ComparisonOperator operator_;
-  MemberValue value;
-};
-
-struct CompositeClause {
-  LogicalOperator operator_;
-  CArray<Clause> clauses;
-};
-
-struct Clause {
-  enum class Tag {
-    Keys,
-    CMember,
-    Composite,
-  };
-
-  struct Keys_Body {
-    KeysClause _0;
-  };
-
-  struct CMember_Body {
-    MemberClause _0;
-  };
-
-  struct Composite_Body {
-    CompositeClause _0;
-  };
-
-  Tag tag;
-  union {
-    Keys_Body keys;
-    CMember_Body c_member;
-    Composite_Body composite;
-  };
-
-  static Clause Keys(const KeysClause &_0) {
-    Clause result;
-    ::new (&result.keys._0) (KeysClause)(_0);
-    result.tag = Tag::Keys;
-    return result;
-  }
-
-  bool IsKeys() const {
-    return tag == Tag::Keys;
-  }
-
-  static Clause CMember(const MemberClause &_0) {
-    Clause result;
-    ::new (&result.c_member._0) (MemberClause)(_0);
-    result.tag = Tag::CMember;
-    return result;
-  }
-
-  bool IsCMember() const {
-    return tag == Tag::CMember;
-  }
-
-  static Clause Composite(const CompositeClause &_0) {
-    Clause result;
-    ::new (&result.composite._0) (CompositeClause)(_0);
-    result.tag = Tag::Composite;
-    return result;
-  }
-
-  bool IsComposite() const {
-    return tag == Tag::Composite;
-  }
-};
-
-struct OrderBy {
-  const char *model;
-  const char *member;
-  OrderDirection direction;
-};
-
-struct Query {
-  uint32_t limit;
-  uint32_t offset;
-  COption<Clause> clause;
-  bool dont_include_hashed_keys;
-  CArray<OrderBy> order_by;
-  CArray<const char*> entity_models;
-  uint64_t entity_updated_after;
-};
-
 struct ModelMetadata {
   Ty schema;
   const char *namespace_;
@@ -767,49 +575,6 @@ struct CHashItem {
 struct WorldMetadata {
   FieldElement world_address;
   CArray<CHashItem<FieldElement, ModelMetadata>> models;
-};
-
-struct EntityKeysClause {
-  enum class Tag {
-    HashedKeys,
-    EntityKeys,
-  };
-
-  struct HashedKeys_Body {
-    CArray<FieldElement> _0;
-  };
-
-  struct EntityKeys_Body {
-    KeysClause _0;
-  };
-
-  Tag tag;
-  union {
-    HashedKeys_Body hashed_keys;
-    EntityKeys_Body entity_keys;
-  };
-
-  static EntityKeysClause HashedKeys(const CArray<FieldElement> &_0) {
-    EntityKeysClause result;
-    ::new (&result.hashed_keys._0) (CArray<FieldElement>)(_0);
-    result.tag = Tag::HashedKeys;
-    return result;
-  }
-
-  bool IsHashedKeys() const {
-    return tag == Tag::HashedKeys;
-  }
-
-  static EntityKeysClause EntityKeys(const KeysClause &_0) {
-    EntityKeysClause result;
-    ::new (&result.entity_keys._0) (KeysClause)(_0);
-    result.tag = Tag::EntityKeys;
-    return result;
-  }
-
-  bool IsEntityKeys() const {
-    return tag == Tag::EntityKeys;
-  }
 };
 
 struct Event {
@@ -918,22 +683,259 @@ struct BlockId {
   }
 };
 
+template<typename T>
+struct COption {
+  enum class Tag {
+    Some,
+    None,
+  };
+
+  struct Some_Body {
+    T _0;
+  };
+
+  Tag tag;
+  union {
+    Some_Body some;
+  };
+
+  static COption Some(const T &_0) {
+    COption result;
+    ::new (&result.some._0) (T)(_0);
+    result.tag = Tag::Some;
+    return result;
+  }
+
+  bool IsSome() const {
+    return tag == Tag::Some;
+  }
+
+  static COption None() {
+    COption result;
+    result.tag = Tag::None;
+    return result;
+  }
+
+  bool IsNone() const {
+    return tag == Tag::None;
+  }
+};
+
+struct KeysClause {
+  CArray<COption<FieldElement>> keys;
+  PatternMatching pattern_matching;
+  CArray<const char*> models;
+};
+
+struct MemberValue {
+  enum class Tag {
+    PrimitiveValue,
+    StringValue,
+    ListValue,
+  };
+
+  struct PrimitiveValue_Body {
+    Primitive _0;
+  };
+
+  struct StringValue_Body {
+    const char *_0;
+  };
+
+  struct ListValue_Body {
+    CArray<MemberValue> _0;
+  };
+
+  Tag tag;
+  union {
+    PrimitiveValue_Body primitive_value;
+    StringValue_Body string_value;
+    ListValue_Body list_value;
+  };
+
+  static MemberValue PrimitiveValue(const Primitive &_0) {
+    MemberValue result;
+    ::new (&result.primitive_value._0) (Primitive)(_0);
+    result.tag = Tag::PrimitiveValue;
+    return result;
+  }
+
+  bool IsPrimitiveValue() const {
+    return tag == Tag::PrimitiveValue;
+  }
+
+  static MemberValue StringValue(const char *const &_0) {
+    MemberValue result;
+    ::new (&result.string_value._0) (const char*)(_0);
+    result.tag = Tag::StringValue;
+    return result;
+  }
+
+  bool IsStringValue() const {
+    return tag == Tag::StringValue;
+  }
+
+  static MemberValue ListValue(const CArray<MemberValue> &_0) {
+    MemberValue result;
+    ::new (&result.list_value._0) (CArray<MemberValue>)(_0);
+    result.tag = Tag::ListValue;
+    return result;
+  }
+
+  bool IsListValue() const {
+    return tag == Tag::ListValue;
+  }
+};
+
+struct MemberClause {
+  const char *model;
+  const char *member;
+  ComparisonOperator operator_;
+  MemberValue value;
+};
+
+struct CompositeClause {
+  LogicalOperator operator_;
+  CArray<Clause> clauses;
+};
+
+struct Clause {
+  enum class Tag {
+    Keys,
+    CMember,
+    Composite,
+  };
+
+  struct Keys_Body {
+    KeysClause _0;
+  };
+
+  struct CMember_Body {
+    MemberClause _0;
+  };
+
+  struct Composite_Body {
+    CompositeClause _0;
+  };
+
+  Tag tag;
+  union {
+    Keys_Body keys;
+    CMember_Body c_member;
+    Composite_Body composite;
+  };
+
+  static Clause Keys(const KeysClause &_0) {
+    Clause result;
+    ::new (&result.keys._0) (KeysClause)(_0);
+    result.tag = Tag::Keys;
+    return result;
+  }
+
+  bool IsKeys() const {
+    return tag == Tag::Keys;
+  }
+
+  static Clause CMember(const MemberClause &_0) {
+    Clause result;
+    ::new (&result.c_member._0) (MemberClause)(_0);
+    result.tag = Tag::CMember;
+    return result;
+  }
+
+  bool IsCMember() const {
+    return tag == Tag::CMember;
+  }
+
+  static Clause Composite(const CompositeClause &_0) {
+    Clause result;
+    ::new (&result.composite._0) (CompositeClause)(_0);
+    result.tag = Tag::Composite;
+    return result;
+  }
+
+  bool IsComposite() const {
+    return tag == Tag::Composite;
+  }
+};
+
+struct OrderBy {
+  const char *model;
+  const char *member;
+  OrderDirection direction;
+};
+
+struct Query {
+  uint32_t limit;
+  uint32_t offset;
+  COption<Clause> clause;
+  bool dont_include_hashed_keys;
+  CArray<OrderBy> order_by;
+  CArray<const char*> entity_models;
+  uint64_t entity_updated_after;
+};
+
+struct EntityKeysClause {
+  enum class Tag {
+    HashedKeys,
+    EntityKeys,
+  };
+
+  struct HashedKeys_Body {
+    CArray<FieldElement> _0;
+  };
+
+  struct EntityKeys_Body {
+    KeysClause _0;
+  };
+
+  Tag tag;
+  union {
+    HashedKeys_Body hashed_keys;
+    EntityKeys_Body entity_keys;
+  };
+
+  static EntityKeysClause HashedKeys(const CArray<FieldElement> &_0) {
+    EntityKeysClause result;
+    ::new (&result.hashed_keys._0) (CArray<FieldElement>)(_0);
+    result.tag = Tag::HashedKeys;
+    return result;
+  }
+
+  bool IsHashedKeys() const {
+    return tag == Tag::HashedKeys;
+  }
+
+  static EntityKeysClause EntityKeys(const KeysClause &_0) {
+    EntityKeysClause result;
+    ::new (&result.entity_keys._0) (KeysClause)(_0);
+    result.tag = Tag::EntityKeys;
+    return result;
+  }
+
+  bool IsEntityKeys() const {
+    return tag == Tag::EntityKeys;
+  }
+};
+
 extern "C" {
 
-/// Creates a new Torii client instance
+/// Creates a new Torii client instance with an HTTP callback server
 ///
 /// # Parameters
 /// * `torii_url` - URL of the Torii server
 /// * `rpc_url` - URL of the Starknet RPC endpoint
 /// * `libp2p_relay_url` - URL of the libp2p relay server
 /// * `world` - World address as a FieldElement
+/// * `callback_port` - Port number for the callback HTTP server
 ///
 /// # Returns
 /// Result containing pointer to new ToriiClient instance or error
 Result<ToriiClient*> client_new(const char *torii_url,
                                 const char *rpc_url,
                                 const char *libp2p_relay_url,
-                                FieldElement world);
+                                FieldElement world,
+                                uint16_t callback_port);
 
 /// Sets a logger callback function for the client
 ///
@@ -1457,6 +1459,6 @@ void carray_free(void *data, uintptr_t data_len);
 /// * `string` - Pointer to string to free
 void string_free(char *string);
 
-} // extern "C"
+}  // extern "C"
 
-} // namespace dojo_bindings
+}  // namespace dojo_bindings

@@ -422,21 +422,21 @@ pub struct ModelKeysClause {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub enum MemberValue {
-    Primitive(Primitive),
-    String(*const c_char),
-    List(CArray<MemberValue>),
+    PrimitiveValue(Primitive),
+    StringValue(*const c_char),
+    ListValue(CArray<MemberValue>),
 }
 
 impl From<&MemberValue> for torii_grpc::types::MemberValue {
     fn from(val: &MemberValue) -> Self {
         match val {
-            MemberValue::Primitive(primitive) => {
+            MemberValue::PrimitiveValue(primitive) => {
                 torii_grpc::types::MemberValue::Primitive((&primitive.clone()).into())
             }
-            MemberValue::String(string) => torii_grpc::types::MemberValue::String(unsafe {
+            MemberValue::StringValue(string) => torii_grpc::types::MemberValue::String(unsafe {
                 CStr::from_ptr(*string).to_string_lossy().to_string()
             }),
-            MemberValue::List(list) => {
+            MemberValue::ListValue(list) => {
                 let values: Vec<MemberValue> = list.into();
                 let values = values
                     .iter()
@@ -452,14 +452,14 @@ impl From<&torii_grpc::types::MemberValue> for MemberValue {
     fn from(val: &torii_grpc::types::MemberValue) -> Self {
         match val {
             torii_grpc::types::MemberValue::Primitive(primitive) => {
-                MemberValue::Primitive((&primitive.clone()).into())
+                MemberValue::PrimitiveValue((&primitive.clone()).into())
             }
             torii_grpc::types::MemberValue::String(string) => {
-                MemberValue::String(CString::new(string.clone()).unwrap().into_raw())
+                MemberValue::StringValue(CString::new(string.clone()).unwrap().into_raw())
             }
             torii_grpc::types::MemberValue::List(list) => {
                 let values = list.iter().map(|v| v.into()).collect::<Vec<MemberValue>>();
-                MemberValue::List(values.into())
+                MemberValue::ListValue(values.into())
             }
         }
     }
