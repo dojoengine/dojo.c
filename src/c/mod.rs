@@ -6,7 +6,6 @@ use std::os::raw::c_char;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use std::net::SocketAddr;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use dojo_world::contracts::naming::compute_selector_from_tag;
@@ -35,18 +34,13 @@ use crate::constants;
 use crate::types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
 
-use axum::{Router, routing::post, Json};
-use tokio::sync::mpsc;
-use tokio::net::TcpListener;
-
-/// Creates a new Torii client instance with an HTTP callback server
+/// Creates a new Torii client instance
 ///
 /// # Parameters
 /// * `torii_url` - URL of the Torii server
 /// * `rpc_url` - URL of the Starknet RPC endpoint
 /// * `libp2p_relay_url` - URL of the libp2p relay server
 /// * `world` - World address as a FieldElement
-/// * `callback_port` - Port number for the callback HTTP server
 ///
 /// # Returns
 /// Result containing pointer to new ToriiClient instance or error
@@ -56,7 +50,6 @@ pub unsafe extern "C" fn client_new(
     rpc_url: *const c_char,
     libp2p_relay_url: *const c_char,
     world: types::FieldElement,
-    callback_port: u16,
 ) -> Result<*mut ToriiClient> {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
@@ -76,29 +69,7 @@ pub unsafe extern "C" fn client_new(
         relay_runner.lock().await.run().await;
     });
 
-    // Set up the HTTP callback server
-    let app = Router::new()
-        .route("/callback", post(handle_callback));
-
-    let addr = SocketAddr::from(([127, 0, 0, 1], callback_port));
-    
-    runtime.spawn(async move {
-        let listener = TcpListener::bind(addr).await.unwrap();
-        axum::serve(listener, app).await.unwrap();
-    });
-
-    Result::Ok(Box::into_raw(Box::new(ToriiClient { 
-        inner: client, 
-        runtime, 
-        logger: None,
-    })))
-}
-
-// Handler for callback endpoint
-async fn handle_callback(Json(payload): Json<serde_json::Value>) {
-    // Here you can process the callback payload
-    // For now, we'll just print it
-    println!("Received callback: {:?}", payload);
+    Result::Ok(Box::into_raw(Box::new(ToriiClient { inner: client, runtime, logger: None })))
 }
 
 /// Sets a logger callback function for the client
