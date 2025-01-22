@@ -54,15 +54,14 @@ int main()
     const char *torii_url = "http://localhost:8080";
     const char *rpc_url = "http://localhost:5050";
 
-    const char *player_key = "0x02038e0daba5c3948a6289e91e2a68dfc28e734a281c753933b8bd331e6d3dae";
-    const char *player_address = "0x06162896d1d7ab204c7ccac6dd5f8e9e7c25ecd5ae4fcb4ad32e57786bb46e03";
-    const char *player_signing_key = "0x1800000000300000180000000000030000000000003006001800006600";
+    const char *player_address = "0x127fd5f1fe78a71f8bcd1fec63e3fe2f0486b6ecd5c86a0466c3a21fa5cfcec";
+    const char *player_signing_key = "0xc5b2fcab997346f3ea1c00b002ecf6f382c5f9c9659a3894eb783c5320f912";
     FieldElement world;
     hex_to_bytes("0x01385f25d20a724edc9c7b3bd9636c59af64cbaf9fcd12f33b3af96b2452f295", &world);
     FieldElement actions;
-    hex_to_bytes("0x03539c9b89b08095ba914653fb0f20e55d4b172a415beade611bc260b346d0f7", &actions);
+    hex_to_bytes("0x04ba8772b4785c0afce5b73ed98d30cf8832e3bfcceff5a688b085ef6d0f164e", &actions);
 
-    ResultToriiClient resClient = client_new(torii_url, rpc_url, "/ip4/127.0.0.1/tcp/9090", world, 2361);
+    ResultToriiClient resClient = client_new(torii_url, rpc_url, "/ip4/127.0.0.1/tcp/9090", world);
     if (resClient.tag == ErrToriiClient)
     {
         printf("Failed to create client: %s\n", resClient.err.message);
