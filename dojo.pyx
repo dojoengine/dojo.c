@@ -240,6 +240,11 @@ cdef extern from *:
     uint64_t number;
     BlockTag block_tag;
 
+  cdef struct Policy:
+    FieldElement target;
+    const char *method;
+    const char *description;
+
   cdef struct Entity:
     FieldElement hashed_keys;
     CArrayStruct models;
@@ -460,8 +465,9 @@ cdef extern from *:
   ResultToriiClient client_new(const char *torii_url,
                                const char *rpc_url,
                                const char *libp2p_relay_url,
-                               FieldElement world,
-                               uint16_t callback_port);
+                               FieldElement world);
+
+  void controller_connect(ToriiClient *client, const Policy *policies, uintptr_t policies_len);
 
   # Sets a logger callback function for the client
   #

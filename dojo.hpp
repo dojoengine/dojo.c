@@ -7,6 +7,7 @@
 namespace dojo_bindings {
 
 struct ToriiClient;
+struct Policy;
 struct Ty;
 struct Query;
 struct Subscription;
@@ -683,6 +684,12 @@ struct BlockId {
   }
 };
 
+struct Policy {
+  FieldElement target;
+  const char *method;
+  const char *description;
+};
+
 template<typename T>
 struct COption {
   enum class Tag {
@@ -933,8 +940,9 @@ extern "C" {
 Result<ToriiClient*> client_new(const char *torii_url,
                                 const char *rpc_url,
                                 const char *libp2p_relay_url,
-                                FieldElement world,
-                                uint16_t callback_port);
+                                FieldElement world);
+
+void controller_connect(ToriiClient *client, const Policy *policies, uintptr_t policies_len);
 
 /// Sets a logger callback function for the client
 ///

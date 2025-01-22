@@ -69,6 +69,12 @@ int main()
     }
     struct ToriiClient *client = resClient.ok;
 
+    Policy policies[] = {
+        {actions, "spawn", "Spawn an entity"},
+        {actions, "move", "Move an entity"},
+    };
+    controller_connect(client, policies, 2);
+
     // signing key
     FieldElement signing_key = {};
     hex_to_bytes(player_signing_key, &signing_key);

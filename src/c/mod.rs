@@ -8,6 +8,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
+use axum::http::StatusCode;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use dojo_world::contracts::naming::compute_selector_from_tag;
 use futures::FutureExt;
@@ -26,17 +27,20 @@ use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
-use types::{EntityKeysClause, Event, IndexerUpdate, Struct, Token, TokenBalance};
+use types::{EntityKeysClause, Event, IndexerUpdate, Policy, Struct, Token, TokenBalance};
 
 use self::types::{
     BlockId, CArray, Call, Entity, Error, Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
 };
 use crate::constants;
-use crate::types::{Account, Provider, Subscription};
+use crate::types::{Account, Provider, RegisterSessionResponse, Subscription};
 use crate::utils::watch_tx;
 
 use axum::{Router, routing::post, Json};
 use tokio::net::TcpListener;
+use keyring::Entry;
+use directories::ProjectDirs;
+use std::fs;
 
 /// Creates a new Torii client instance
 ///
@@ -54,14 +58,13 @@ pub unsafe extern "C" fn client_new(
     rpc_url: *const c_char,
     libp2p_relay_url: *const c_char,
     world: types::FieldElement,
-    callback_port: u16,
 ) -> Result<*mut ToriiClient> {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let libp2p_relay_url =
         unsafe { CStr::from_ptr(libp2p_relay_url).to_string_lossy().into_owned() };
 
-    let client_future = TClient::new(torii_url, rpc_url, libp2p_relay_url, (&world).into());
+    let client_future = TClient::new(torii_url, rpc_url.clone(), libp2p_relay_url, (&world).into());
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
     let client = match runtime.block_on(client_future) {
@@ -78,27 +81,62 @@ pub unsafe extern "C" fn client_new(
     let app = Router::new()
         .route("/callback", post(handle_callback));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], callback_port));
+    // Find an available port by trying to bind to port 0
+    let addr = SocketAddr::from(([127, 0, 0, 1], 0));
+    let listener = runtime.block_on(TcpListener::bind(addr)).unwrap();
+    let bound_addr = listener.local_addr().unwrap();
     
     runtime.spawn(async move {
-        let listener = TcpListener::bind(addr).await.unwrap();
         axum::serve(listener, app).await.unwrap();
     });
 
-    println!("Listening on {}", addr);
+    println!("Listening on {}", bound_addr);
 
     Result::Ok(Box::into_raw(Box::new(ToriiClient { 
         inner: client, 
-        runtime, 
+        runtime,
         logger: None,
+        callback_addr: bound_addr,
+        rpc_url: rpc_url,
     })))
 }
 
 // Handler for callback endpoint
-async fn handle_callback(Json(payload): Json<serde_json::Value>) {
-    // Here you can process the callback payload
-    // For now, we'll just print it
-    println!("Received callback: {:?}", payload);
+async fn handle_callback(Json(payload): Json<RegisterSessionResponse>) {
+    let project_dirs = ProjectDirs::from("org", "dojoengine", "dojo");
+    if let Some(proj_dirs) = project_dirs {
+        let data_dir = proj_dirs.data_dir();
+        fs::create_dir_all(data_dir).unwrap();
+        
+        let account_file = data_dir.join("account.json");
+        fs::write(account_file.clone(), serde_json::to_string_pretty(&payload).unwrap()).unwrap();
+        println!("Account data saved to {}", account_file.display());
+    }
+}
+
+// Opens the controller remote session registration page
+#[no_mangle]
+pub unsafe extern "C" fn controller_connect(client: *mut ToriiClient, policies: *const Policy, policies_len: usize) {
+    // Generate new random signing key
+    let signing_key = SigningKey::from_random();
+    let verifying_key = signing_key.verifying_key();
+    
+    // Store signing key in system keyring
+    let keyring = Entry::new("dojo-keyring", &format!("{:#x}", verifying_key.scalar())).unwrap();
+    keyring.set_password(&format!("{:#x}", signing_key.secret_scalar())).unwrap();
+    
+    let callback_url = format!("http://{}/callback", (*client).callback_addr);
+    let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
+    let policies = policies.iter().map(|p| p.into()).collect::<Vec<crate::types::Policy>>();
+    
+    let mut url = url::Url::parse(constants::KEYCHAIN_SESSION_URL).unwrap();
+    url.query_pairs_mut()
+        .append_pair("callback_uri", &callback_url)
+        .append_pair("public_key", &format!("{:#x}", verifying_key.scalar()))
+        .append_pair("rpc_url", &(*client).rpc_url)
+        .append_pair("policies", &serde_json::to_string(&policies).unwrap());
+    
+    open::that(url.as_str()).unwrap();
 }
 
 /// Sets a logger callback function for the client

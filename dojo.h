@@ -8,6 +8,7 @@ namespace dojo_bindings {
 #endif  // __cplusplus
 
 struct ToriiClient;
+struct Policy;
 struct Entity;
 struct Query;
 struct CHashItemFieldElementModelMetadata;
@@ -389,6 +390,12 @@ typedef struct BlockId {
   };
 } BlockId;
 
+typedef struct Policy {
+  struct FieldElement target;
+  const char *method;
+  const char *description;
+} Policy;
+
 typedef struct Entity {
   struct FieldElement hashed_keys;
   struct CArrayStruct models;
@@ -734,8 +741,11 @@ extern "C" {
 struct ResultToriiClient client_new(const char *torii_url,
                                     const char *rpc_url,
                                     const char *libp2p_relay_url,
-                                    struct FieldElement world,
-                                    uint16_t callback_port);
+                                    struct FieldElement world);
+
+void controller_connect(struct ToriiClient *client,
+                        const struct Policy *policies,
+                        uintptr_t policies_len);
 
 /**
  * Sets a logger callback function for the client

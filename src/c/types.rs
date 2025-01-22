@@ -1,6 +1,7 @@
-use std::ffi::{c_char, CStr, CString};
+use std::{ffi::{c_char, CStr, CString}, net::SocketAddr};
 
 use starknet::core::utils::get_selector_from_name;
+use starknet_crypto::Felt;
 use torii_client::client::Client;
 
 #[derive(Debug, Clone)]
@@ -47,6 +48,24 @@ impl<T> From<COption<T>> for Option<T> {
         match val {
             COption::Some(v) => Some(v),
             COption::None => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct Policy {
+    pub target: FieldElement,
+    pub method: *const c_char,
+    pub description: *const c_char,
+}
+
+impl From<&Policy> for crate::types::Policy {
+    fn from(val: &Policy) -> Self {
+        crate::types::Policy {
+            target: format!("{:#x}", Into::<Felt>::into(&val.target)),
+            method: unsafe { CStr::from_ptr(val.method).to_string_lossy().to_string() },
+            description: unsafe { CStr::from_ptr(val.description).to_string_lossy().to_string() },
         }
     }
 }
@@ -227,6 +246,8 @@ pub struct ToriiClient {
     pub inner: Client,
     pub runtime: tokio::runtime::Runtime,
     pub logger: Option<extern "C" fn(*const c_char)>,
+    pub callback_addr: SocketAddr,
+    pub rpc_url: String,
 }
 
 #[derive(Clone, Debug)]
