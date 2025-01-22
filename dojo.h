@@ -9,6 +9,7 @@ namespace dojo_bindings {
 
 struct ToriiClient;
 struct Policy;
+struct SessionAccount;
 struct Entity;
 struct Query;
 struct CHashItemFieldElementModelMetadata;
@@ -743,9 +744,10 @@ struct ResultToriiClient client_new(const char *torii_url,
                                     const char *libp2p_relay_url,
                                     struct FieldElement world);
 
-void controller_connect(struct ToriiClient *client,
+void controller_connect(const char *rpc_url,
                         const struct Policy *policies,
-                        uintptr_t policies_len);
+                        uintptr_t policies_len,
+                        void (*account_callback)(struct SessionAccount*));
 
 /**
  * Sets a logger callback function for the client

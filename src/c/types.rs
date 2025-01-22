@@ -1,6 +1,13 @@
-use std::{ffi::{c_char, CStr, CString}, net::SocketAddr};
+use std::{
+    ffi::{c_char, CStr, CString},
+    net::SocketAddr,
+};
 
-use starknet::core::utils::get_selector_from_name;
+use account_sdk::account::session::SessionAccount;
+use starknet::{
+    core::utils::get_selector_from_name,
+    providers::{jsonrpc::HttpTransport, JsonRpcClient},
+};
 use starknet_crypto::Felt;
 use torii_client::client::Client;
 
@@ -66,6 +73,18 @@ impl From<&Policy> for crate::types::Policy {
             target: format!("{:#x}", Into::<Felt>::into(&val.target)),
             method: unsafe { CStr::from_ptr(val.method).to_string_lossy().to_string() },
             description: unsafe { CStr::from_ptr(val.description).to_string_lossy().to_string() },
+        }
+    }
+}
+
+impl From<&Policy> for account_sdk::account::session::hash::Policy {
+    fn from(val: &Policy) -> Self {
+        account_sdk::account::session::hash::Policy {
+            contract_address: (&val.target).into(),
+            selector: get_selector_from_name(&unsafe {
+                CStr::from_ptr(val.method).to_string_lossy().to_string()
+            })
+            .unwrap(),
         }
     }
 }
@@ -246,8 +265,6 @@ pub struct ToriiClient {
     pub inner: Client,
     pub runtime: tokio::runtime::Runtime,
     pub logger: Option<extern "C" fn(*const c_char)>,
-    pub callback_addr: SocketAddr,
-    pub rpc_url: String,
 }
 
 #[derive(Clone, Debug)]

@@ -8,6 +8,7 @@ namespace dojo_bindings {
 
 struct ToriiClient;
 struct Policy;
+struct SessionAccount;
 struct Ty;
 struct Query;
 struct Subscription;
@@ -942,7 +943,10 @@ Result<ToriiClient*> client_new(const char *torii_url,
                                 const char *libp2p_relay_url,
                                 FieldElement world);
 
-void controller_connect(ToriiClient *client, const Policy *policies, uintptr_t policies_len);
+void controller_connect(const char *rpc_url,
+                        const Policy *policies,
+                        uintptr_t policies_len,
+                        void (*account_callback)(SessionAccount*));
 
 /// Sets a logger callback function for the client
 ///

@@ -24,6 +24,11 @@ void on_entity_state_update(FieldElement key, CArrayStruct models)
     }
 }
 
+void on_account_created(struct SessionAccount *account)
+{
+    printf("on_account_created\n");
+}
+
 void hex_to_bytes(const char *hex, FieldElement *felt)
 {
 
@@ -73,7 +78,7 @@ int main()
         {actions, "spawn", "Spawn an entity"},
         {actions, "move", "Move an entity"},
     };
-    controller_connect(client, policies, 2);
+    controller_connect(rpc_url, policies, 2, on_account_created);
 
     // signing key
     FieldElement signing_key = {};
