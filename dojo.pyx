@@ -302,14 +302,14 @@ cdef extern from *:
 
   cdef enum MemberValue_Tag:
     PrimitiveValue,
-    StringValue,
-    ListValue,
+    String,
+    List,
 
   cdef struct MemberValue:
     MemberValue_Tag tag;
     Primitive primitive_value;
-    const char *string_value;
-    CArrayMemberValue list_value;
+    const char *string;
+    CArrayMemberValue list;
 
   cdef struct MemberClause:
     const char *model;
@@ -447,22 +447,20 @@ cdef extern from *:
     const char *name;
     Ty *ty;
 
-  # Creates a new Torii client instance with an HTTP callback server
+  # Creates a new Torii client instance
   #
   # # Parameters
   # * `torii_url` - URL of the Torii server
   # * `rpc_url` - URL of the Starknet RPC endpoint
   # * `libp2p_relay_url` - URL of the libp2p relay server
   # * `world` - World address as a FieldElement
-  # * `callback_port` - Port number for the callback HTTP server
   #
   # # Returns
   # Result containing pointer to new ToriiClient instance or error
   ResultToriiClient client_new(const char *torii_url,
                                const char *rpc_url,
                                const char *libp2p_relay_url,
-                               FieldElement world,
-                               uint16_t callback_port);
+                               FieldElement world);
 
   # Sets a logger callback function for the client
   #

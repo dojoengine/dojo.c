@@ -730,27 +730,27 @@ struct KeysClause {
 struct MemberValue {
   enum class Tag {
     PrimitiveValue,
-    StringValue,
-    ListValue,
+    String,
+    List,
   };
 
   struct PrimitiveValue_Body {
     Primitive _0;
   };
 
-  struct StringValue_Body {
+  struct String_Body {
     const char *_0;
   };
 
-  struct ListValue_Body {
+  struct List_Body {
     CArray<MemberValue> _0;
   };
 
   Tag tag;
   union {
     PrimitiveValue_Body primitive_value;
-    StringValue_Body string_value;
-    ListValue_Body list_value;
+    String_Body string;
+    List_Body list;
   };
 
   static MemberValue PrimitiveValue(const Primitive &_0) {
@@ -764,26 +764,26 @@ struct MemberValue {
     return tag == Tag::PrimitiveValue;
   }
 
-  static MemberValue StringValue(const char *const &_0) {
+  static MemberValue String(const char *const &_0) {
     MemberValue result;
-    ::new (&result.string_value._0) (const char*)(_0);
-    result.tag = Tag::StringValue;
+    ::new (&result.string._0) (const char*)(_0);
+    result.tag = Tag::String;
     return result;
   }
 
-  bool IsStringValue() const {
-    return tag == Tag::StringValue;
+  bool IsString() const {
+    return tag == Tag::String;
   }
 
-  static MemberValue ListValue(const CArray<MemberValue> &_0) {
+  static MemberValue List(const CArray<MemberValue> &_0) {
     MemberValue result;
-    ::new (&result.list_value._0) (CArray<MemberValue>)(_0);
-    result.tag = Tag::ListValue;
+    ::new (&result.list._0) (CArray<MemberValue>)(_0);
+    result.tag = Tag::List;
     return result;
   }
 
-  bool IsListValue() const {
-    return tag == Tag::ListValue;
+  bool IsList() const {
+    return tag == Tag::List;
   }
 };
 
@@ -920,22 +920,20 @@ struct EntityKeysClause {
 
 extern "C" {
 
-/// Creates a new Torii client instance with an HTTP callback server
+/// Creates a new Torii client instance
 ///
 /// # Parameters
 /// * `torii_url` - URL of the Torii server
 /// * `rpc_url` - URL of the Starknet RPC endpoint
 /// * `libp2p_relay_url` - URL of the libp2p relay server
 /// * `world` - World address as a FieldElement
-/// * `callback_port` - Port number for the callback HTTP server
 ///
 /// # Returns
 /// Result containing pointer to new ToriiClient instance or error
 Result<ToriiClient*> client_new(const char *torii_url,
                                 const char *rpc_url,
                                 const char *libp2p_relay_url,
-                                FieldElement world,
-                                uint16_t callback_port);
+                                FieldElement world);
 
 /// Sets a logger callback function for the client
 ///

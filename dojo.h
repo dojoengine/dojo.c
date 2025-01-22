@@ -3,6 +3,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+namespace dojo_bindings {
+#endif  // __cplusplus
+
 struct ToriiClient;
 struct Entity;
 struct Query;
@@ -494,8 +498,8 @@ typedef struct CArrayMemberValue {
 
 typedef enum MemberValue_Tag {
   PrimitiveValue,
-  StringValue,
-  ListValue,
+  String,
+  List,
 } MemberValue_Tag;
 
 typedef struct MemberValue {
@@ -505,10 +509,10 @@ typedef struct MemberValue {
       struct Primitive primitive_value;
     };
     struct {
-      const char *string_value;
+      const char *string;
     };
     struct {
-      struct CArrayMemberValue list_value;
+      struct CArrayMemberValue list;
     };
   };
 } MemberValue;
@@ -716,14 +720,13 @@ extern "C" {
 #endif // __cplusplus
 
 /**
- * Creates a new Torii client instance with an HTTP callback server
+ * Creates a new Torii client instance
  *
  * # Parameters
  * * `torii_url` - URL of the Torii server
  * * `rpc_url` - URL of the Starknet RPC endpoint
  * * `libp2p_relay_url` - URL of the libp2p relay server
  * * `world` - World address as a FieldElement
- * * `callback_port` - Port number for the callback HTTP server
  *
  * # Returns
  * Result containing pointer to new ToriiClient instance or error
@@ -731,8 +734,7 @@ extern "C" {
 struct ResultToriiClient client_new(const char *torii_url,
                                     const char *rpc_url,
                                     const char *libp2p_relay_url,
-                                    struct FieldElement world,
-                                    uint16_t callback_port);
+                                    struct FieldElement world);
 
 /**
  * Sets a logger callback function for the client
@@ -1364,4 +1366,8 @@ void string_free(char *string);
 
 #ifdef __cplusplus
 }  // extern "C"
+#endif  // __cplusplus
+
+#ifdef __cplusplus
+}  // namespace dojo_bindings
 #endif  // __cplusplus

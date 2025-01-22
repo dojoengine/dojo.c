@@ -423,8 +423,8 @@ pub struct ModelKeysClause {
 #[repr(C)]
 pub enum MemberValue {
     PrimitiveValue(Primitive),
-    StringValue(*const c_char),
-    ListValue(CArray<MemberValue>),
+    String(*const c_char),
+    List(CArray<MemberValue>),
 }
 
 impl From<&MemberValue> for torii_grpc::types::MemberValue {
@@ -433,10 +433,10 @@ impl From<&MemberValue> for torii_grpc::types::MemberValue {
             MemberValue::PrimitiveValue(primitive) => {
                 torii_grpc::types::MemberValue::Primitive((&primitive.clone()).into())
             }
-            MemberValue::StringValue(string) => torii_grpc::types::MemberValue::String(unsafe {
+            MemberValue::String(string) => torii_grpc::types::MemberValue::String(unsafe {
                 CStr::from_ptr(*string).to_string_lossy().to_string()
             }),
-            MemberValue::ListValue(list) => {
+            MemberValue::List(list) => {
                 let values: Vec<MemberValue> = list.into();
                 let values = values
                     .iter()
@@ -455,11 +455,11 @@ impl From<&torii_grpc::types::MemberValue> for MemberValue {
                 MemberValue::PrimitiveValue((&primitive.clone()).into())
             }
             torii_grpc::types::MemberValue::String(string) => {
-                MemberValue::StringValue(CString::new(string.clone()).unwrap().into_raw())
+                MemberValue::String(CString::new(string.clone()).unwrap().into_raw())
             }
             torii_grpc::types::MemberValue::List(list) => {
                 let values = list.iter().map(|v| v.into()).collect::<Vec<MemberValue>>();
-                MemberValue::ListValue(values.into())
+                MemberValue::List(values.into())
             }
         }
     }
