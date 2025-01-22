@@ -1,8 +1,11 @@
 {
     "files.associations": {
+        ".fantomasignore": "ignore",
         "__locale": "c",
         "__config": "c",
-        "unistd.h": "c"
+        "unistd.h": "c",
+        "typeinfo": "c",
+        "dojo.h": "c"
     },
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml"

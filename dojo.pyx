@@ -72,100 +72,6 @@ cdef extern from *:
     CArrayu8 ok;
     Error err;
 
-  cdef enum Primitive_Tag:
-    I8,
-    I16,
-    I32,
-    I64,
-    I128,
-    U8,
-    U16,
-    U32,
-    U64,
-    U128,
-    U256,
-    U256,
-    USize,
-    Bool,
-    Felt252,
-    ClassHash,
-    ContractAddress,
-
-  cdef struct Primitive:
-    Primitive_Tag tag;
-    int8_t i8;
-    int16_t i16;
-    int32_t i32;
-    int64_t i64;
-    uint8_t i128[16];
-    uint8_t u8;
-    uint16_t u16;
-    uint32_t u32;
-    uint64_t u64;
-    uint8_t u128[16];
-    uint64_t u256[4];
-    uint32_t u256[8];
-    uint32_t u_size;
-    bool bool_;
-    FieldElement felt252;
-    FieldElement class_hash;
-    FieldElement contract_address;
-
-  cdef struct EnumOption:
-    const char *name;
-    Ty *ty;
-
-  cdef struct CArrayEnumOption:
-    EnumOption *data;
-    uintptr_t data_len;
-
-  cdef struct Enum:
-    const char *name;
-    uint8_t option;
-    CArrayEnumOption options;
-
-  cdef struct CArrayTy:
-    Ty *data;
-    uintptr_t data_len;
-
-  cdef enum Ty_Tag:
-    Primitive_,
-    Struct_,
-    Enum_,
-    Tuple_,
-    Array_,
-    ByteArray,
-
-  cdef struct Ty:
-    Ty_Tag tag;
-    Primitive primitive;
-    Struct struct_;
-    Enum enum_;
-    CArrayTy tuple;
-    CArrayTy array;
-    const char *byte_array;
-
-  cdef struct Member:
-    const char *name;
-    Ty *ty;
-    bool key;
-
-  cdef struct CArrayMember:
-    Member *data;
-    uintptr_t data_len;
-
-  cdef struct Struct:
-    const char *name;
-    CArrayMember children;
-
-  cdef struct CArrayStruct:
-    Struct *data;
-    uintptr_t data_len;
-
-  cdef struct Entity:
-    FieldElement hashed_keys;
-    CArrayStruct models;
-
   cdef struct CArrayEntity:
     Entity *data;
     uintptr_t data_len;
@@ -178,111 +84,6 @@ cdef extern from *:
     ResultCArrayEntity_Tag tag;
     CArrayEntity ok;
     Error err;
-
-  cdef enum COptionFieldElement_Tag:
-    SomeFieldElement,
-    NoneFieldElement,
-
-  cdef struct COptionFieldElement:
-    COptionFieldElement_Tag tag;
-    FieldElement some;
-
-  cdef struct CArrayCOptionFieldElement:
-    COptionFieldElement *data;
-    uintptr_t data_len;
-
-  cdef struct CArrayc_char:
-    const char **data;
-    uintptr_t data_len;
-
-  cdef struct KeysClause:
-    CArrayCOptionFieldElement keys;
-    PatternMatching pattern_matching;
-    CArrayc_char models;
-
-  cdef struct CArrayMemberValue:
-    MemberValue *data;
-    uintptr_t data_len;
-
-  cdef enum MemberValue_Tag:
-    Primitive,
-    String,
-    List,
-
-  cdef struct MemberValue:
-    MemberValue_Tag tag;
-    Primitive primitive;
-    const char *string;
-    CArrayMemberValue list;
-
-  cdef struct MemberClause:
-    const char *model;
-    const char *member;
-    ComparisonOperator operator_;
-    MemberValue value;
-
-  cdef struct CArrayClause:
-    Clause *data;
-    uintptr_t data_len;
-
-  cdef struct CompositeClause:
-    LogicalOperator operator_;
-    CArrayClause clauses;
-
-  cdef enum Clause_Tag:
-    Keys,
-    CMember,
-    Composite,
-
-  cdef struct Clause:
-    Clause_Tag tag;
-    KeysClause keys;
-    MemberClause c_member;
-    CompositeClause composite;
-
-  cdef enum COptionClause_Tag:
-    SomeClause,
-    NoneClause,
-
-  cdef struct COptionClause:
-    COptionClause_Tag tag;
-    Clause some;
-
-  cdef struct OrderBy:
-    const char *model;
-    const char *member;
-    OrderDirection direction;
-
-  cdef struct CArrayOrderBy:
-    OrderBy *data;
-    uintptr_t data_len;
-
-  cdef struct Query:
-    uint32_t limit;
-    uint32_t offset;
-    COptionClause clause;
-    bool dont_include_hashed_keys;
-    CArrayOrderBy order_by;
-    CArrayc_char entity_models;
-    uint64_t entity_updated_after;
-
-  cdef struct CArrayFieldElement:
-    FieldElement *data;
-    uintptr_t data_len;
-
-  cdef struct ModelMetadata:
-    Ty schema;
-    const char *namespace_;
-    const char *name;
-    uint32_t packed_size;
-    uint32_t unpacked_size;
-    FieldElement class_hash;
-    FieldElement contract_address;
-    CArrayFieldElement layout;
-
-  cdef struct CHashItemFieldElementModelMetadata:
-    FieldElement key;
-    ModelMetadata value;
 
   cdef struct CArrayCHashItemFieldElementModelMetadata:
     CHashItemFieldElementModelMetadata *data;
@@ -301,14 +102,9 @@ cdef extern from *:
     Subscription *ok;
     Error err;
 
-  cdef enum EntityKeysClause_Tag:
-    HashedKeys,
-    EntityKeys,
-
-  cdef struct EntityKeysClause:
-    EntityKeysClause_Tag tag;
-    CArrayFieldElement hashed_keys;
-    KeysClause entity_keys;
+  cdef struct CArrayStruct:
+    Struct *data;
+    uintptr_t data_len;
 
   cdef enum Resultbool_Tag:
     Okbool,
@@ -319,17 +115,14 @@ cdef extern from *:
     bool ok;
     Error err;
 
+  cdef struct CArrayFieldElement:
+    FieldElement *data;
+    uintptr_t data_len;
+
   cdef struct Event:
     CArrayFieldElement keys;
     CArrayFieldElement data;
     FieldElement transaction_hash;
-
-  cdef struct Token:
-    FieldElement contract_address;
-    const char *name;
-    const char *symbol;
-    uint8_t decimals;
-    const char *metadata;
 
   cdef struct CArrayToken:
     Token *data;
@@ -343,13 +136,6 @@ cdef extern from *:
     ResultCArrayToken_Tag tag;
     CArrayToken ok;
     Error err;
-
-  cdef struct TokenBalance:
-    uint64_t balance[4];
-    uint32_t balance[8];
-    FieldElement account_address;
-    FieldElement contract_address;
-    const char *token_id;
 
   cdef struct CArrayTokenBalance:
     TokenBalance *data;
@@ -369,6 +155,13 @@ cdef extern from *:
     int64_t tps;
     int64_t last_block_timestamp;
     FieldElement contract_address;
+
+  cdef struct TokenBalance:
+    uint64_t balance[4];
+    uint32_t balance[8];
+    FieldElement account_address;
+    FieldElement contract_address;
+    const char *token_id;
 
   cdef enum ResultCArrayFieldElement_Tag:
     OkCArrayFieldElement,
@@ -446,6 +239,213 @@ cdef extern from *:
     FieldElement hash;
     uint64_t number;
     BlockTag block_tag;
+
+  cdef struct Entity:
+    FieldElement hashed_keys;
+    CArrayStruct models;
+
+  cdef struct CArrayCOptionFieldElement:
+    COptionFieldElement *data;
+    uintptr_t data_len;
+
+  cdef struct CArrayc_char:
+    const char **data;
+    uintptr_t data_len;
+
+  cdef struct KeysClause:
+    CArrayCOptionFieldElement keys;
+    PatternMatching pattern_matching;
+    CArrayc_char models;
+
+  cdef enum Primitive_Tag:
+    I8,
+    I16,
+    I32,
+    I64,
+    I128,
+    U8,
+    U16,
+    U32,
+    U64,
+    U128,
+    U256,
+    U256,
+    USize,
+    Bool,
+    Felt252,
+    ClassHash,
+    ContractAddress,
+
+  cdef struct Primitive:
+    Primitive_Tag tag;
+    int8_t i8;
+    int16_t i16;
+    int32_t i32;
+    int64_t i64;
+    uint8_t i128[16];
+    uint8_t u8;
+    uint16_t u16;
+    uint32_t u32;
+    uint64_t u64;
+    uint8_t u128[16];
+    uint64_t u256[4];
+    uint32_t u256[8];
+    uint32_t u_size;
+    bool bool_;
+    FieldElement felt252;
+    FieldElement class_hash;
+    FieldElement contract_address;
+
+  cdef struct CArrayMemberValue:
+    MemberValue *data;
+    uintptr_t data_len;
+
+  cdef enum MemberValue_Tag:
+    PrimitiveValue,
+    String,
+    List,
+
+  cdef struct MemberValue:
+    MemberValue_Tag tag;
+    Primitive primitive_value;
+    const char *string;
+    CArrayMemberValue list;
+
+  cdef struct MemberClause:
+    const char *model;
+    const char *member;
+    ComparisonOperator operator_;
+    MemberValue value;
+
+  cdef struct CArrayClause:
+    Clause *data;
+    uintptr_t data_len;
+
+  cdef struct CompositeClause:
+    LogicalOperator operator_;
+    CArrayClause clauses;
+
+  cdef enum Clause_Tag:
+    Keys,
+    CMember,
+    Composite,
+
+  cdef struct Clause:
+    Clause_Tag tag;
+    KeysClause keys;
+    MemberClause c_member;
+    CompositeClause composite;
+
+  cdef enum COptionClause_Tag:
+    SomeClause,
+    NoneClause,
+
+  cdef struct COptionClause:
+    COptionClause_Tag tag;
+    Clause some;
+
+  cdef struct CArrayOrderBy:
+    OrderBy *data;
+    uintptr_t data_len;
+
+  cdef struct Query:
+    uint32_t limit;
+    uint32_t offset;
+    COptionClause clause;
+    bool dont_include_hashed_keys;
+    CArrayOrderBy order_by;
+    CArrayc_char entity_models;
+    uint64_t entity_updated_after;
+
+  cdef struct CArrayMember:
+    Member *data;
+    uintptr_t data_len;
+
+  cdef struct Struct:
+    const char *name;
+    CArrayMember children;
+
+  cdef struct CArrayEnumOption:
+    EnumOption *data;
+    uintptr_t data_len;
+
+  cdef struct Enum:
+    const char *name;
+    uint8_t option;
+    CArrayEnumOption options;
+
+  cdef struct CArrayTy:
+    Ty *data;
+    uintptr_t data_len;
+
+  cdef enum Ty_Tag:
+    Primitive_,
+    Struct_,
+    Enum_,
+    Tuple_,
+    Array_,
+    ByteArray,
+
+  cdef struct Ty:
+    Ty_Tag tag;
+    Primitive primitive;
+    Struct struct_;
+    Enum enum_;
+    CArrayTy tuple;
+    CArrayTy array;
+    const char *byte_array;
+
+  cdef struct ModelMetadata:
+    Ty schema;
+    const char *namespace_;
+    const char *name;
+    uint32_t packed_size;
+    uint32_t unpacked_size;
+    FieldElement class_hash;
+    FieldElement contract_address;
+    CArrayFieldElement layout;
+
+  cdef struct CHashItemFieldElementModelMetadata:
+    FieldElement key;
+    ModelMetadata value;
+
+  cdef enum EntityKeysClause_Tag:
+    HashedKeys,
+    EntityKeys,
+
+  cdef struct EntityKeysClause:
+    EntityKeysClause_Tag tag;
+    CArrayFieldElement hashed_keys;
+    KeysClause entity_keys;
+
+  cdef struct Token:
+    FieldElement contract_address;
+    const char *name;
+    const char *symbol;
+    uint8_t decimals;
+    const char *metadata;
+
+  cdef enum COptionFieldElement_Tag:
+    SomeFieldElement,
+    NoneFieldElement,
+
+  cdef struct COptionFieldElement:
+    COptionFieldElement_Tag tag;
+    FieldElement some;
+
+  cdef struct OrderBy:
+    const char *model;
+    const char *member;
+    OrderDirection direction;
+
+  cdef struct Member:
+    const char *name;
+    Ty *ty;
+    bool key;
+
+  cdef struct EnumOption:
+    const char *name;
+    Ty *ty;
 
   # Creates a new Torii client instance
   #

@@ -1,9 +1,9 @@
-#include "../dojo.h"
+#include "dojo.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 
-void on_entity_state_update(FieldElement key, CArrayModel models)
+void on_entity_state_update(FieldElement key, CArrayStruct models)
 {
     printf("on_entity_state_update\n");
     printf("Key: 0x");
@@ -24,7 +24,7 @@ void on_entity_state_update(FieldElement key, CArrayModel models)
     }
 }
 
-void hex_to_bytes(const char *hex, FieldElement* felt)
+void hex_to_bytes(const char *hex, FieldElement *felt)
 {
 
     if (hex[0] == '0' && hex[1] == 'x')
@@ -54,28 +54,20 @@ int main()
     const char *torii_url = "http://localhost:8080";
     const char *rpc_url = "http://localhost:5050";
 
-    const char *player_key = "0x02038e0daba5c3948a6289e91e2a68dfc28e734a281c753933b8bd331e6d3dae";
-    const char *player_address = "0x06162896d1d7ab204c7ccac6dd5f8e9e7c25ecd5ae4fcb4ad32e57786bb46e03";
-    const char *player_signing_key = "0x1800000000300000180000000000030000000000003006001800006600";
-    const char *world = "0x01385f25d20a724edc9c7b3bd9636c59af64cbaf9fcd12f33b3af96b2452f295";
-    const char *actions = "0x03539c9b89b08095ba914653fb0f20e55d4b172a415beade611bc260b346d0f7";
-    // Initialize world.data here...
+    const char *player_address = "0x127fd5f1fe78a71f8bcd1fec63e3fe2f0486b6ecd5c86a0466c3a21fa5cfcec";
+    const char *player_signing_key = "0xc5b2fcab997346f3ea1c00b002ecf6f382c5f9c9659a3894eb783c5320f912";
+    FieldElement world;
+    hex_to_bytes("0x01385f25d20a724edc9c7b3bd9636c59af64cbaf9fcd12f33b3af96b2452f295", &world);
+    FieldElement actions;
+    hex_to_bytes("0x04ba8772b4785c0afce5b73ed98d30cf8832e3bfcceff5a688b085ef6d0f164e", &actions);
 
-    KeysClause entities[1] = {};
-    // Initialize entities[0].model, entities[0].keys, and entities[0].keys_len here...
-    entities[0].model = "Position";
-    entities[0].keys.data = malloc(sizeof(char *));
-    entities[0].keys.data_len = 1;
-    entities[0].keys.data[0] = player_key;
-
-    ResultToriiClient resClient = client_new(torii_url, rpc_url, "/ip4/127.0.0.1/tcp/9090", world, entities, 1);
-    if (resClient.tag == ErrAccount)
+    ResultToriiClient resClient = client_new(torii_url, rpc_url, "/ip4/127.0.0.1/tcp/9090", world);
+    if (resClient.tag == ErrToriiClient)
     {
         printf("Failed to create client: %s\n", resClient.err.message);
         return 1;
     }
-    ToriiClient *client = resClient.ok;
-
+    struct ToriiClient *client = resClient.ok;
 
     // signing key
     FieldElement signing_key = {};
@@ -88,7 +80,7 @@ int main()
         printf("Failed to create provider: %s\n", resProvider.err.message);
         return 1;
     }
-    Provider *provider = resProvider.ok;
+    struct Provider *provider = resProvider.ok;
 
     // account
     ResultAccount resAccount = account_new(provider, signing_key, player_address);
@@ -97,7 +89,7 @@ int main()
         printf("Failed to create account: %s\n", resAccount.err.message);
         return 1;
     }
-    Account *master_account = resAccount.ok;
+    struct Account *master_account = resAccount.ok;
 
     FieldElement master_address = account_address(master_account);
     printf("Master account: 0x");
@@ -115,7 +107,7 @@ int main()
         return 1;
     }
 
-    Account *burner = resBurner.ok;
+    struct Account *burner = resBurner.ok;
 
     printf("Burner account: 0x");
     FieldElement burner_address = account_address(burner);
@@ -125,35 +117,9 @@ int main()
     }
     printf("\n");
 
-    ResultCOptionTy resTy = client_model(client, entities);
-    if (resTy.tag == ErrCOptionTy)
-    {
-        printf("Failed to get entity: %s\n", resTy.err.message);
-        return 1;
-    }
-    COptionTy ty = resTy.ok;
-
-    if (ty.tag == SomeTy)
-    {
-        printf("Got entity\n");
-        printf("Struct: %s\n", ty.some->struct_.name);
-        for (size_t i = 0; i < ty.some->struct_.children.data_len; i++)
-        {
-            printf("Field: %s\n", ty.some->struct_.children.data[i].name);
-        }
-
-        ty_free(ty.some);
-    }
-
-
     Query query = {};
     query.limit = 100;
-    query.clause.tag = SomeClause;
-    query.clause.some.tag = Keys;
-    query.clause.some.keys.keys.data = malloc(sizeof(char *));
-    query.clause.some.keys.keys.data_len = 1;
-    query.clause.some.keys.keys.data[0] = player_address;
-    query.clause.some.keys.model = "Moves";
+    query.clause.tag = NoneClause;
     ResultCArrayEntity resEntities = client_entities(client, &query);
     if (resEntities.tag == ErrCArrayEntity)
     {
@@ -180,32 +146,8 @@ int main()
         }
     }
 
-    // Result_bool resStartSub = client_start_subscription(client);
-    // if (resStartSub.tag == Err_bool)
-    // {
-    //     printf("Failed to start subscription: %s\n", resStartSub.err.message);
-    //     return 1;
-    // }
-
-    // Result_bool resAddEntities = client_add_models_to_sync(client, entities, 1);
-    // if (resAddEntities.tag == Err_bool)
-    // {
-    //     printf("Failed to add entities to sync: %s\n", resAddEntities.err.message);
-    //     return 1;
-    // }
-
-    // // print subscribed entities
-    const CArrayKeysClause subscribed_models = client_subscribed_models(client);
-    for (size_t i = 0; i < subscribed_models.data_len; i++)
-    {
-        printf("Subscribed entity: %s", subscribed_models.data[i].keys.data[0]);
-        printf("\n");
-    }
-
-    FieldElement keys[1] = {};
-    hex_to_bytes(player_key, &keys[0]);
-    Resultbool resEntityUpdate = client_on_entity_state_update(client, keys, 0, &on_entity_state_update);
-    if (resEntityUpdate.tag == Errbool)
+    ResultSubscription resEntityUpdate = client_on_entity_state_update(client, (void*)0, 0, &on_entity_state_update);
+    if (resEntityUpdate.tag == ErrSubscription)
     {
         printf("Failed to set entity update callback: %s\n", resEntityUpdate.err.message);
         return 1;
@@ -275,7 +217,6 @@ int main()
 
     while (1)
     {
-
     }
 
     // Result_bool resRemoveEntities = client_remove_models_to_sync(client, entities, 1);

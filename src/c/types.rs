@@ -422,7 +422,7 @@ pub struct ModelKeysClause {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub enum MemberValue {
-    Primitive(Primitive),
+    PrimitiveValue(Primitive),
     String(*const c_char),
     List(CArray<MemberValue>),
 }
@@ -430,7 +430,7 @@ pub enum MemberValue {
 impl From<&MemberValue> for torii_grpc::types::MemberValue {
     fn from(val: &MemberValue) -> Self {
         match val {
-            MemberValue::Primitive(primitive) => {
+            MemberValue::PrimitiveValue(primitive) => {
                 torii_grpc::types::MemberValue::Primitive((&primitive.clone()).into())
             }
             MemberValue::String(string) => torii_grpc::types::MemberValue::String(unsafe {
@@ -452,7 +452,7 @@ impl From<&torii_grpc::types::MemberValue> for MemberValue {
     fn from(val: &torii_grpc::types::MemberValue) -> Self {
         match val {
             torii_grpc::types::MemberValue::Primitive(primitive) => {
-                MemberValue::Primitive((&primitive.clone()).into())
+                MemberValue::PrimitiveValue((&primitive.clone()).into())
             }
             torii_grpc::types::MemberValue::String(string) => {
                 MemberValue::String(CString::new(string.clone()).unwrap().into_raw())

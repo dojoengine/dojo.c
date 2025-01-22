@@ -6,6 +6,14 @@
 
 namespace dojo_bindings {
 
+struct ToriiClient;
+struct Ty;
+struct Query;
+struct Subscription;
+struct EntityKeysClause;
+struct Provider;
+struct Account;
+
 enum class BlockTag {
   Latest,
   Pending,
@@ -36,14 +44,6 @@ enum class PatternMatching {
   FixedLen = 0,
   VariableLen = 1,
 };
-
-struct Account;
-
-struct Provider;
-
-struct Subscription;
-
-struct ToriiClient;
 
 struct Error {
   char *message;
@@ -101,6 +101,22 @@ template<typename T>
 struct CArray {
   T *data;
   uintptr_t data_len;
+};
+
+struct Member {
+  const char *name;
+  Ty *ty;
+  bool key;
+};
+
+struct Struct {
+  const char *name;
+  CArray<Member> children;
+};
+
+struct Entity {
+  FieldElement hashed_keys;
+  CArray<Struct> models;
 };
 
 struct Primitive {
@@ -539,20 +555,132 @@ struct Ty {
   }
 };
 
-struct Member {
+struct ModelMetadata {
+  Ty schema;
+  const char *namespace_;
   const char *name;
-  Ty *ty;
-  bool key;
+  uint32_t packed_size;
+  uint32_t unpacked_size;
+  FieldElement class_hash;
+  FieldElement contract_address;
+  CArray<FieldElement> layout;
 };
 
-struct Struct {
-  const char *name;
-  CArray<Member> children;
+template<typename K, typename V>
+struct CHashItem {
+  K key;
+  V value;
 };
 
-struct Entity {
-  FieldElement hashed_keys;
-  CArray<Struct> models;
+struct WorldMetadata {
+  FieldElement world_address;
+  CArray<CHashItem<FieldElement, ModelMetadata>> models;
+};
+
+struct Event {
+  CArray<FieldElement> keys;
+  CArray<FieldElement> data;
+  FieldElement transaction_hash;
+};
+
+struct Token {
+  FieldElement contract_address;
+  const char *name;
+  const char *symbol;
+  uint8_t decimals;
+  const char *metadata;
+};
+
+struct TokenBalance {
+  uint64_t balance[4];
+#if defined(TARGET_POINTER_WIDTH_32)
+  uint32_t balance[8]
+#endif
+  ;
+  FieldElement account_address;
+  FieldElement contract_address;
+  const char *token_id;
+};
+
+struct IndexerUpdate {
+  int64_t head;
+  int64_t tps;
+  int64_t last_block_timestamp;
+  FieldElement contract_address;
+};
+
+struct Signature {
+  /// The `r` value of a signature
+  FieldElement r;
+  /// The `s` value of a signature
+  FieldElement s;
+};
+
+struct Call {
+  FieldElement to;
+  const char *selector;
+  CArray<FieldElement> calldata;
+};
+
+/// Block hash, number or tag
+struct BlockId {
+  enum class Tag {
+    Hash,
+    Number,
+    BlockTag_,
+  };
+
+  struct Hash_Body {
+    FieldElement _0;
+  };
+
+  struct Number_Body {
+    uint64_t _0;
+  };
+
+  struct BlockTag__Body {
+    BlockTag _0;
+  };
+
+  Tag tag;
+  union {
+    Hash_Body hash;
+    Number_Body number;
+    BlockTag__Body block_tag;
+  };
+
+  static BlockId Hash(const FieldElement &_0) {
+    BlockId result;
+    ::new (&result.hash._0) (FieldElement)(_0);
+    result.tag = Tag::Hash;
+    return result;
+  }
+
+  bool IsHash() const {
+    return tag == Tag::Hash;
+  }
+
+  static BlockId Number(const uint64_t &_0) {
+    BlockId result;
+    ::new (&result.number._0) (uint64_t)(_0);
+    result.tag = Tag::Number;
+    return result;
+  }
+
+  bool IsNumber() const {
+    return tag == Tag::Number;
+  }
+
+  static BlockId BlockTag_(const BlockTag &_0) {
+    BlockId result;
+    ::new (&result.block_tag._0) (BlockTag)(_0);
+    result.tag = Tag::BlockTag_;
+    return result;
+  }
+
+  bool IsBlockTag_() const {
+    return tag == Tag::BlockTag_;
+  }
 };
 
 template<typename T>
@@ -601,12 +729,12 @@ struct KeysClause {
 
 struct MemberValue {
   enum class Tag {
-    Primitive,
+    PrimitiveValue,
     String,
     List,
   };
 
-  struct Primitive_Body {
+  struct PrimitiveValue_Body {
     Primitive _0;
   };
 
@@ -620,20 +748,20 @@ struct MemberValue {
 
   Tag tag;
   union {
-    Primitive_Body primitive;
+    PrimitiveValue_Body primitive_value;
     String_Body string;
     List_Body list;
   };
 
-  static MemberValue Primitive(const Primitive &_0) {
+  static MemberValue PrimitiveValue(const Primitive &_0) {
     MemberValue result;
-    ::new (&result.primitive._0) (Primitive)(_0);
-    result.tag = Tag::Primitive;
+    ::new (&result.primitive_value._0) (Primitive)(_0);
+    result.tag = Tag::PrimitiveValue;
     return result;
   }
 
-  bool IsPrimitive() const {
-    return tag == Tag::Primitive;
+  bool IsPrimitiveValue() const {
+    return tag == Tag::PrimitiveValue;
   }
 
   static MemberValue String(const char *const &_0) {
@@ -747,28 +875,6 @@ struct Query {
   uint64_t entity_updated_after;
 };
 
-struct ModelMetadata {
-  Ty schema;
-  const char *namespace_;
-  const char *name;
-  uint32_t packed_size;
-  uint32_t unpacked_size;
-  FieldElement class_hash;
-  FieldElement contract_address;
-  CArray<FieldElement> layout;
-};
-
-template<typename K, typename V>
-struct CHashItem {
-  K key;
-  V value;
-};
-
-struct WorldMetadata {
-  FieldElement world_address;
-  CArray<CHashItem<FieldElement, ModelMetadata>> models;
-};
-
 struct EntityKeysClause {
   enum class Tag {
     HashedKeys,
@@ -809,112 +915,6 @@ struct EntityKeysClause {
 
   bool IsEntityKeys() const {
     return tag == Tag::EntityKeys;
-  }
-};
-
-struct Event {
-  CArray<FieldElement> keys;
-  CArray<FieldElement> data;
-  FieldElement transaction_hash;
-};
-
-struct Token {
-  FieldElement contract_address;
-  const char *name;
-  const char *symbol;
-  uint8_t decimals;
-  const char *metadata;
-};
-
-struct TokenBalance {
-  uint64_t balance[4];
-#if defined(TARGET_POINTER_WIDTH_32)
-  uint32_t balance[8]
-#endif
-  ;
-  FieldElement account_address;
-  FieldElement contract_address;
-  const char *token_id;
-};
-
-struct IndexerUpdate {
-  int64_t head;
-  int64_t tps;
-  int64_t last_block_timestamp;
-  FieldElement contract_address;
-};
-
-struct Signature {
-  /// The `r` value of a signature
-  FieldElement r;
-  /// The `s` value of a signature
-  FieldElement s;
-};
-
-struct Call {
-  FieldElement to;
-  const char *selector;
-  CArray<FieldElement> calldata;
-};
-
-/// Block hash, number or tag
-struct BlockId {
-  enum class Tag {
-    Hash,
-    Number,
-    BlockTag_,
-  };
-
-  struct Hash_Body {
-    FieldElement _0;
-  };
-
-  struct Number_Body {
-    uint64_t _0;
-  };
-
-  struct BlockTag__Body {
-    BlockTag _0;
-  };
-
-  Tag tag;
-  union {
-    Hash_Body hash;
-    Number_Body number;
-    BlockTag__Body block_tag;
-  };
-
-  static BlockId Hash(const FieldElement &_0) {
-    BlockId result;
-    ::new (&result.hash._0) (FieldElement)(_0);
-    result.tag = Tag::Hash;
-    return result;
-  }
-
-  bool IsHash() const {
-    return tag == Tag::Hash;
-  }
-
-  static BlockId Number(const uint64_t &_0) {
-    BlockId result;
-    ::new (&result.number._0) (uint64_t)(_0);
-    result.tag = Tag::Number;
-    return result;
-  }
-
-  bool IsNumber() const {
-    return tag == Tag::Number;
-  }
-
-  static BlockId BlockTag_(const BlockTag &_0) {
-    BlockId result;
-    ::new (&result.block_tag._0) (BlockTag)(_0);
-    result.tag = Tag::BlockTag_;
-    return result;
-  }
-
-  bool IsBlockTag_() const {
-    return tag == Tag::BlockTag_;
   }
 };
 
@@ -1457,6 +1457,6 @@ void carray_free(void *data, uintptr_t data_len);
 /// * `string` - Pointer to string to free
 void string_free(char *string);
 
-} // extern "C"
+}  // extern "C"
 
-} // namespace dojo_bindings
+}  // namespace dojo_bindings

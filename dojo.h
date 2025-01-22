@@ -3,6 +3,27 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+namespace dojo_bindings {
+#endif  // __cplusplus
+
+struct ToriiClient;
+struct Entity;
+struct Query;
+struct CHashItemFieldElementModelMetadata;
+struct Subscription;
+struct EntityKeysClause;
+struct Struct;
+struct Token;
+struct TokenBalance;
+struct Provider;
+struct Account;
+struct Ty;
+struct COptionFieldElement;
+struct OrderBy;
+struct Member;
+struct EnumOption;
+
 typedef enum BlockTag {
   Latest,
   Pending,
@@ -33,14 +54,6 @@ typedef enum PatternMatching {
   FixedLen = 0,
   VariableLen = 1,
 } PatternMatching;
-
-typedef struct Account Account;
-
-typedef struct Provider Provider;
-
-typedef struct Subscription Subscription;
-
-typedef struct ToriiClient ToriiClient;
 
 typedef struct Error {
   char *message;
@@ -89,167 +102,6 @@ typedef struct ResultCArrayu8 {
   };
 } ResultCArrayu8;
 
-typedef enum Primitive_Tag {
-  I8,
-  I16,
-  I32,
-  I64,
-  I128,
-  U8,
-  U16,
-  U32,
-  U64,
-  U128,
-  U256,
-#if defined(TARGET_POINTER_WIDTH_32)
-  U256,
-#endif
-  USize,
-  Bool,
-  Felt252,
-  ClassHash,
-  ContractAddress,
-} Primitive_Tag;
-
-typedef struct Primitive {
-  Primitive_Tag tag;
-  union {
-    struct {
-      int8_t i8;
-    };
-    struct {
-      int16_t i16;
-    };
-    struct {
-      int32_t i32;
-    };
-    struct {
-      int64_t i64;
-    };
-    struct {
-      uint8_t i128[16];
-    };
-    struct {
-      uint8_t u8;
-    };
-    struct {
-      uint16_t u16;
-    };
-    struct {
-      uint32_t u32;
-    };
-    struct {
-      uint64_t u64;
-    };
-    struct {
-      uint8_t u128[16];
-    };
-    struct {
-      uint64_t u256[4];
-    };
-#if defined(TARGET_POINTER_WIDTH_32)
-    struct {
-      uint32_t u256[8];
-    };
-#endif
-    struct {
-      uint32_t u_size;
-    };
-    struct {
-      bool bool_;
-    };
-    struct {
-      struct FieldElement felt252;
-    };
-    struct {
-      struct FieldElement class_hash;
-    };
-    struct {
-      struct FieldElement contract_address;
-    };
-  };
-} Primitive;
-
-typedef struct EnumOption {
-  const char *name;
-  struct Ty *ty;
-} EnumOption;
-
-typedef struct CArrayEnumOption {
-  struct EnumOption *data;
-  uintptr_t data_len;
-} CArrayEnumOption;
-
-typedef struct Enum {
-  const char *name;
-  uint8_t option;
-  struct CArrayEnumOption options;
-} Enum;
-
-typedef struct CArrayTy {
-  struct Ty *data;
-  uintptr_t data_len;
-} CArrayTy;
-
-typedef enum Ty_Tag {
-  Primitive_,
-  Struct_,
-  Enum_,
-  Tuple_,
-  Array_,
-  ByteArray,
-} Ty_Tag;
-
-typedef struct Ty {
-  Ty_Tag tag;
-  union {
-    struct {
-      struct Primitive primitive;
-    };
-    struct {
-      struct Struct struct_;
-    };
-    struct {
-      struct Enum enum_;
-    };
-    struct {
-      struct CArrayTy tuple;
-    };
-    struct {
-      struct CArrayTy array;
-    };
-    struct {
-      const char *byte_array;
-    };
-  };
-} Ty;
-
-typedef struct Member {
-  const char *name;
-  struct Ty *ty;
-  bool key;
-} Member;
-
-typedef struct CArrayMember {
-  struct Member *data;
-  uintptr_t data_len;
-} CArrayMember;
-
-typedef struct Struct {
-  const char *name;
-  struct CArrayMember children;
-} Struct;
-
-typedef struct CArrayStruct {
-  struct Struct *data;
-  uintptr_t data_len;
-} CArrayStruct;
-
-typedef struct Entity {
-  struct FieldElement hashed_keys;
-  struct CArrayStruct models;
-} Entity;
-
 typedef struct CArrayEntity {
   struct Entity *data;
   uintptr_t data_len;
@@ -271,156 +123,6 @@ typedef struct ResultCArrayEntity {
     };
   };
 } ResultCArrayEntity;
-
-typedef enum COptionFieldElement_Tag {
-  SomeFieldElement,
-  NoneFieldElement,
-} COptionFieldElement_Tag;
-
-typedef struct COptionFieldElement {
-  COptionFieldElement_Tag tag;
-  union {
-    struct {
-      struct FieldElement some;
-    };
-  };
-} COptionFieldElement;
-
-typedef struct CArrayCOptionFieldElement {
-  struct COptionFieldElement *data;
-  uintptr_t data_len;
-} CArrayCOptionFieldElement;
-
-typedef struct CArrayc_char {
-  const char **data;
-  uintptr_t data_len;
-} CArrayc_char;
-
-typedef struct KeysClause {
-  struct CArrayCOptionFieldElement keys;
-  enum PatternMatching pattern_matching;
-  struct CArrayc_char models;
-} KeysClause;
-
-typedef struct CArrayMemberValue {
-  struct MemberValue *data;
-  uintptr_t data_len;
-} CArrayMemberValue;
-
-typedef enum MemberValue_Tag {
-  Primitive,
-  String,
-  List,
-} MemberValue_Tag;
-
-typedef struct MemberValue {
-  MemberValue_Tag tag;
-  union {
-    struct {
-      struct Primitive primitive;
-    };
-    struct {
-      const char *string;
-    };
-    struct {
-      struct CArrayMemberValue list;
-    };
-  };
-} MemberValue;
-
-typedef struct MemberClause {
-  const char *model;
-  const char *member;
-  enum ComparisonOperator operator_;
-  struct MemberValue value;
-} MemberClause;
-
-typedef struct CArrayClause {
-  struct Clause *data;
-  uintptr_t data_len;
-} CArrayClause;
-
-typedef struct CompositeClause {
-  enum LogicalOperator operator_;
-  struct CArrayClause clauses;
-} CompositeClause;
-
-typedef enum Clause_Tag {
-  Keys,
-  CMember,
-  Composite,
-} Clause_Tag;
-
-typedef struct Clause {
-  Clause_Tag tag;
-  union {
-    struct {
-      struct KeysClause keys;
-    };
-    struct {
-      struct MemberClause c_member;
-    };
-    struct {
-      struct CompositeClause composite;
-    };
-  };
-} Clause;
-
-typedef enum COptionClause_Tag {
-  SomeClause,
-  NoneClause,
-} COptionClause_Tag;
-
-typedef struct COptionClause {
-  COptionClause_Tag tag;
-  union {
-    struct {
-      struct Clause some;
-    };
-  };
-} COptionClause;
-
-typedef struct OrderBy {
-  const char *model;
-  const char *member;
-  enum OrderDirection direction;
-} OrderBy;
-
-typedef struct CArrayOrderBy {
-  struct OrderBy *data;
-  uintptr_t data_len;
-} CArrayOrderBy;
-
-typedef struct Query {
-  uint32_t limit;
-  uint32_t offset;
-  struct COptionClause clause;
-  bool dont_include_hashed_keys;
-  struct CArrayOrderBy order_by;
-  struct CArrayc_char entity_models;
-  uint64_t entity_updated_after;
-} Query;
-
-typedef struct CArrayFieldElement {
-  struct FieldElement *data;
-  uintptr_t data_len;
-} CArrayFieldElement;
-
-typedef struct ModelMetadata {
-  struct Ty schema;
-  const char *namespace_;
-  const char *name;
-  uint32_t packed_size;
-  uint32_t unpacked_size;
-  struct FieldElement class_hash;
-  struct FieldElement contract_address;
-  struct CArrayFieldElement layout;
-} ModelMetadata;
-
-typedef struct CHashItemFieldElementModelMetadata {
-  struct FieldElement key;
-  struct ModelMetadata value;
-} CHashItemFieldElementModelMetadata;
 
 typedef struct CArrayCHashItemFieldElementModelMetadata {
   struct CHashItemFieldElementModelMetadata *data;
@@ -449,22 +151,10 @@ typedef struct ResultSubscription {
   };
 } ResultSubscription;
 
-typedef enum EntityKeysClause_Tag {
-  HashedKeys,
-  EntityKeys,
-} EntityKeysClause_Tag;
-
-typedef struct EntityKeysClause {
-  EntityKeysClause_Tag tag;
-  union {
-    struct {
-      struct CArrayFieldElement hashed_keys;
-    };
-    struct {
-      struct KeysClause entity_keys;
-    };
-  };
-} EntityKeysClause;
+typedef struct CArrayStruct {
+  struct Struct *data;
+  uintptr_t data_len;
+} CArrayStruct;
 
 typedef enum Resultbool_Tag {
   Okbool,
@@ -483,19 +173,16 @@ typedef struct Resultbool {
   };
 } Resultbool;
 
+typedef struct CArrayFieldElement {
+  struct FieldElement *data;
+  uintptr_t data_len;
+} CArrayFieldElement;
+
 typedef struct Event {
   struct CArrayFieldElement keys;
   struct CArrayFieldElement data;
   struct FieldElement transaction_hash;
 } Event;
-
-typedef struct Token {
-  struct FieldElement contract_address;
-  const char *name;
-  const char *symbol;
-  uint8_t decimals;
-  const char *metadata;
-} Token;
 
 typedef struct CArrayToken {
   struct Token *data;
@@ -518,17 +205,6 @@ typedef struct ResultCArrayToken {
     };
   };
 } ResultCArrayToken;
-
-typedef struct TokenBalance {
-  uint64_t balance[4];
-#if defined(TARGET_POINTER_WIDTH_32)
-  uint32_t balance[8]
-#endif
-  ;
-  struct FieldElement account_address;
-  struct FieldElement contract_address;
-  const char *token_id;
-} TokenBalance;
 
 typedef struct CArrayTokenBalance {
   struct TokenBalance *data;
@@ -558,6 +234,17 @@ typedef struct IndexerUpdate {
   int64_t last_block_timestamp;
   struct FieldElement contract_address;
 } IndexerUpdate;
+
+typedef struct TokenBalance {
+  uint64_t balance[4];
+#if defined(TARGET_POINTER_WIDTH_32)
+  uint32_t balance[8]
+#endif
+  ;
+  struct FieldElement account_address;
+  struct FieldElement contract_address;
+  const char *token_id;
+} TokenBalance;
 
 typedef enum ResultCArrayFieldElement_Tag {
   OkCArrayFieldElement,
@@ -701,6 +388,332 @@ typedef struct BlockId {
     };
   };
 } BlockId;
+
+typedef struct Entity {
+  struct FieldElement hashed_keys;
+  struct CArrayStruct models;
+} Entity;
+
+typedef struct CArrayCOptionFieldElement {
+  struct COptionFieldElement *data;
+  uintptr_t data_len;
+} CArrayCOptionFieldElement;
+
+typedef struct CArrayc_char {
+  const char **data;
+  uintptr_t data_len;
+} CArrayc_char;
+
+typedef struct KeysClause {
+  struct CArrayCOptionFieldElement keys;
+  enum PatternMatching pattern_matching;
+  struct CArrayc_char models;
+} KeysClause;
+
+typedef enum Primitive_Tag {
+  I8,
+  I16,
+  I32,
+  I64,
+  I128,
+  U8,
+  U16,
+  U32,
+  U64,
+  U128,
+  U256,
+#if defined(TARGET_POINTER_WIDTH_32)
+  U256,
+#endif
+  USize,
+  Bool,
+  Felt252,
+  ClassHash,
+  ContractAddress,
+} Primitive_Tag;
+
+typedef struct Primitive {
+  Primitive_Tag tag;
+  union {
+    struct {
+      int8_t i8;
+    };
+    struct {
+      int16_t i16;
+    };
+    struct {
+      int32_t i32;
+    };
+    struct {
+      int64_t i64;
+    };
+    struct {
+      uint8_t i128[16];
+    };
+    struct {
+      uint8_t u8;
+    };
+    struct {
+      uint16_t u16;
+    };
+    struct {
+      uint32_t u32;
+    };
+    struct {
+      uint64_t u64;
+    };
+    struct {
+      uint8_t u128[16];
+    };
+    struct {
+      uint64_t u256[4];
+    };
+#if defined(TARGET_POINTER_WIDTH_32)
+    struct {
+      uint32_t u256[8];
+    };
+#endif
+    struct {
+      uint32_t u_size;
+    };
+    struct {
+      bool bool_;
+    };
+    struct {
+      struct FieldElement felt252;
+    };
+    struct {
+      struct FieldElement class_hash;
+    };
+    struct {
+      struct FieldElement contract_address;
+    };
+  };
+} Primitive;
+
+typedef struct CArrayMemberValue {
+  struct MemberValue *data;
+  uintptr_t data_len;
+} CArrayMemberValue;
+
+typedef enum MemberValue_Tag {
+  PrimitiveValue,
+  String,
+  List,
+} MemberValue_Tag;
+
+typedef struct MemberValue {
+  MemberValue_Tag tag;
+  union {
+    struct {
+      struct Primitive primitive_value;
+    };
+    struct {
+      const char *string;
+    };
+    struct {
+      struct CArrayMemberValue list;
+    };
+  };
+} MemberValue;
+
+typedef struct MemberClause {
+  const char *model;
+  const char *member;
+  enum ComparisonOperator operator_;
+  struct MemberValue value;
+} MemberClause;
+
+typedef struct CArrayClause {
+  struct Clause *data;
+  uintptr_t data_len;
+} CArrayClause;
+
+typedef struct CompositeClause {
+  enum LogicalOperator operator_;
+  struct CArrayClause clauses;
+} CompositeClause;
+
+typedef enum Clause_Tag {
+  Keys,
+  CMember,
+  Composite,
+} Clause_Tag;
+
+typedef struct Clause {
+  Clause_Tag tag;
+  union {
+    struct {
+      struct KeysClause keys;
+    };
+    struct {
+      struct MemberClause c_member;
+    };
+    struct {
+      struct CompositeClause composite;
+    };
+  };
+} Clause;
+
+typedef enum COptionClause_Tag {
+  SomeClause,
+  NoneClause,
+} COptionClause_Tag;
+
+typedef struct COptionClause {
+  COptionClause_Tag tag;
+  union {
+    struct {
+      struct Clause some;
+    };
+  };
+} COptionClause;
+
+typedef struct CArrayOrderBy {
+  struct OrderBy *data;
+  uintptr_t data_len;
+} CArrayOrderBy;
+
+typedef struct Query {
+  uint32_t limit;
+  uint32_t offset;
+  struct COptionClause clause;
+  bool dont_include_hashed_keys;
+  struct CArrayOrderBy order_by;
+  struct CArrayc_char entity_models;
+  uint64_t entity_updated_after;
+} Query;
+
+typedef struct CArrayMember {
+  struct Member *data;
+  uintptr_t data_len;
+} CArrayMember;
+
+typedef struct Struct {
+  const char *name;
+  struct CArrayMember children;
+} Struct;
+
+typedef struct CArrayEnumOption {
+  struct EnumOption *data;
+  uintptr_t data_len;
+} CArrayEnumOption;
+
+typedef struct Enum {
+  const char *name;
+  uint8_t option;
+  struct CArrayEnumOption options;
+} Enum;
+
+typedef struct CArrayTy {
+  struct Ty *data;
+  uintptr_t data_len;
+} CArrayTy;
+
+typedef enum Ty_Tag {
+  Primitive_,
+  Struct_,
+  Enum_,
+  Tuple_,
+  Array_,
+  ByteArray,
+} Ty_Tag;
+
+typedef struct Ty {
+  Ty_Tag tag;
+  union {
+    struct {
+      struct Primitive primitive;
+    };
+    struct {
+      struct Struct struct_;
+    };
+    struct {
+      struct Enum enum_;
+    };
+    struct {
+      struct CArrayTy tuple;
+    };
+    struct {
+      struct CArrayTy array;
+    };
+    struct {
+      const char *byte_array;
+    };
+  };
+} Ty;
+
+typedef struct ModelMetadata {
+  struct Ty schema;
+  const char *namespace_;
+  const char *name;
+  uint32_t packed_size;
+  uint32_t unpacked_size;
+  struct FieldElement class_hash;
+  struct FieldElement contract_address;
+  struct CArrayFieldElement layout;
+} ModelMetadata;
+
+typedef struct CHashItemFieldElementModelMetadata {
+  struct FieldElement key;
+  struct ModelMetadata value;
+} CHashItemFieldElementModelMetadata;
+
+typedef enum EntityKeysClause_Tag {
+  HashedKeys,
+  EntityKeys,
+} EntityKeysClause_Tag;
+
+typedef struct EntityKeysClause {
+  EntityKeysClause_Tag tag;
+  union {
+    struct {
+      struct CArrayFieldElement hashed_keys;
+    };
+    struct {
+      struct KeysClause entity_keys;
+    };
+  };
+} EntityKeysClause;
+
+typedef struct Token {
+  struct FieldElement contract_address;
+  const char *name;
+  const char *symbol;
+  uint8_t decimals;
+  const char *metadata;
+} Token;
+
+typedef enum COptionFieldElement_Tag {
+  SomeFieldElement,
+  NoneFieldElement,
+} COptionFieldElement_Tag;
+
+typedef struct COptionFieldElement {
+  COptionFieldElement_Tag tag;
+  union {
+    struct {
+      struct FieldElement some;
+    };
+  };
+} COptionFieldElement;
+
+typedef struct OrderBy {
+  const char *model;
+  const char *member;
+  enum OrderDirection direction;
+} OrderBy;
+
+typedef struct Member {
+  const char *name;
+  struct Ty *ty;
+  bool key;
+} Member;
+
+typedef struct EnumOption {
+  const char *name;
+  struct Ty *ty;
+} EnumOption;
 
 #ifdef __cplusplus
 extern "C" {
@@ -1352,5 +1365,9 @@ void carray_free(void *data, uintptr_t data_len);
 void string_free(char *string);
 
 #ifdef __cplusplus
-} // extern "C"
-#endif // __cplusplus
+}  // extern "C"
+#endif  // __cplusplus
+
+#ifdef __cplusplus
+}  // namespace dojo_bindings
+#endif  // __cplusplus
