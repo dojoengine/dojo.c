@@ -17,7 +17,10 @@ fn main() {
                     ..Default::default()
                 },
                 export: cbindgen::ExportConfig {
-                    mangle: cbindgen::MangleConfig { remove_underscores: true, ..Default::default() },
+                    mangle: cbindgen::MangleConfig {
+                        remove_underscores: true,
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
                 namespace: Some("dojo_bindings".to_string()),
@@ -38,7 +41,7 @@ fn main() {
 
     cbindgen::Builder::new()
         .with_config({
-                let mut config = cbindgen::Config {
+            let mut config = cbindgen::Config {
                 language: cbindgen::Language::Cxx,
                 braces: cbindgen::Braces::SameLine,
                 style: cbindgen::Style::Both,
@@ -49,7 +52,10 @@ fn main() {
                     ..Default::default()
                 },
                 export: cbindgen::ExportConfig {
-                    mangle: cbindgen::MangleConfig { remove_underscores: true, ..Default::default() },
+                    mangle: cbindgen::MangleConfig {
+                        remove_underscores: true,
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
                 namespace: Some("dojo_bindings".to_string()),
@@ -81,7 +87,10 @@ fn main() {
                     ..Default::default()
                 },
                 export: cbindgen::ExportConfig {
-                    mangle: cbindgen::MangleConfig { remove_underscores: true, ..Default::default() },
+                    mangle: cbindgen::MangleConfig {
+                        remove_underscores: true,
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
                 namespace: Some("dojo_bindings".to_string()),
