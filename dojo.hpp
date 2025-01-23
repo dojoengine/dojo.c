@@ -9,6 +9,7 @@ namespace dojo_bindings {
 struct ToriiClient;
 struct Policy;
 struct SessionAccount;
+struct Call;
 struct Ty;
 struct Query;
 struct Subscription;
@@ -947,6 +948,56 @@ void controller_connect(const char *rpc_url,
                         const Policy *policies,
                         uintptr_t policies_len,
                         void (*account_callback)(SessionAccount*));
+
+/// Retrieves a stored session account if one exists and is valid
+///
+/// # Parameters
+/// * `policies` - Array of policies to match the session
+/// * `policies_len` - Length of policies array
+///
+/// # Returns
+/// Result containing pointer to SessionAccount or error if no valid account exists
+Result<SessionAccount*> controller_account(const Policy *policies, uintptr_t policies_len);
+
+/// Gets account address
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+///
+/// # Returns
+/// FieldElement containing the account address
+FieldElement controller_address(SessionAccount *account);
+
+/// Gets account chain ID
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+///
+/// # Returns
+/// FieldElement containing the chain ID
+FieldElement controller_chain_id(SessionAccount *account);
+
+/// Gets account nonce
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+///
+/// # Returns
+/// Result containing FieldElement nonce or error
+Result<FieldElement> controller_nonce(SessionAccount *account);
+
+/// Executes raw transaction
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+/// * `calldata` - Array of Call structs
+/// * `calldata_len` - Length of calldata array
+///
+/// # Returns
+/// Result containing transaction hash as FieldElement or error
+Result<FieldElement> controller_execute_raw(SessionAccount *account,
+                                            const Call *calldata,
+                                            uintptr_t calldata_len);
 
 /// Sets a logger callback function for the client
 ///

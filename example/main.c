@@ -78,11 +78,21 @@ int main()
         {actions, "transfer", "Transfer ETH"},
         // {actions, "move", "Move an entity"},
     };
-    controller_connect("https://api.cartridge.gg/x/starknet/sepolia", policies, 1, on_account_created);
 
-    while (1)
+    ResultSessionAccount resController = controller_account(policies, 1);
+    if (resController.tag == ErrSessionAccount)
     {
+        controller_connect("https://api.cartridge.gg/x/starknet/sepolia", policies, 1, on_account_created);
+        return 1;
     }
+
+    FieldElement controller_addr = controller_address(resController.ok);
+    printf("Controller address: 0x");
+    for (size_t i = 0; i < 32; i++)
+    {
+        printf("%02x", controller_addr.data[i]);
+    }
+    printf("\n");
 
     // signing key
     FieldElement signing_key = {};

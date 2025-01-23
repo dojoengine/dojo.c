@@ -1,16 +1,18 @@
 mod types;
 
+use std::collections::HashMap;
 use std::ffi::{c_void, CStr, CString};
+use std::hash::DefaultHasher;
 use std::net::SocketAddr;
 use std::ops::Deref;
 use std::os::raw::c_char;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc};
+use std::sync::Arc;
 use std::time::Duration;
 
 use account_sdk::account::session::hash::Session;
-use account_sdk::account::session::SessionAccount;
+use account_sdk::account::session::{self, SessionAccount};
 use account_sdk::signers::{HashSigner, Signer};
 use axum::extract::State;
 use axum::http::{HeaderValue, Method, StatusCode};
@@ -41,25 +43,26 @@ use self::types::{
     BlockId, CArray, Call, Entity, Error, Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
 };
 use crate::constants;
-use crate::types::{Account, AccountStorage, Provider, RegisterSessionResponse, Subscription};
+use crate::types::{
+    Account, Provider, RegisterSessionResponse, RegisteredAccount, RegisteredSession,
+    SessionsStorage, Subscription,
+};
 use crate::utils::watch_tx;
 
-use axum::{Router, routing::post, Json};
-use tokio::net::TcpListener;
-use keyring::Entry;
-use directories::ProjectDirs;
-use std::fs;
-use tower_http::cors::{AllowOrigin, CorsLayer};
 use axum::http::header;
-use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
+use axum::{routing::post, Json, Router};
+use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
+use directories::ProjectDirs;
+use keyring::Entry;
 use lazy_static::lazy_static;
+use std::fs;
+use tokio::net::TcpListener;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 
 lazy_static! {
-    static ref RUNTIME: Arc<Runtime> = Arc::new(
-        Runtime::new().expect("Failed to create Tokio runtime")
-    );
+    static ref RUNTIME: Arc<Runtime> =
+        Arc::new(Runtime::new().expect("Failed to create Tokio runtime"));
 }
-
 
 /// Creates a new Torii client instance
 ///
@@ -95,10 +98,7 @@ pub unsafe extern "C" fn client_new(
         relay_runner.lock().await.run().await;
     });
 
-    Result::Ok(Box::into_raw(Box::new(ToriiClient { 
-        inner: client, 
-        logger: None,
-    })))
+    Result::Ok(Box::into_raw(Box::new(ToriiClient { inner: client, logger: None })))
 }
 
 // State struct to share data with callback handler
@@ -107,26 +107,23 @@ struct CallbackState {
     shutdown_tx: tokio::sync::mpsc::Sender<()>,
     rpc_url: String,
     policies: Vec<account_sdk::account::session::hash::Policy>,
-    verifying_key: Felt,
+    public_key: Felt,
     account_callback: extern "C" fn(*mut crate::types::SessionAccount),
 }
 
 // Modify handle_callback to call the callback
-async fn handle_callback(
-    State(state): State<CallbackState>,
-    body: String,
-) -> impl IntoResponse {
+async fn handle_callback(State(state): State<CallbackState>, body: String) -> impl IntoResponse {
     // Decode base64 payload
     let padded = match body.len() % 4 {
         0 => body,
-        n => body + &"=".repeat(4 - n)
+        n => body + &"=".repeat(4 - n),
     };
     let decoded = match BASE64.decode(padded) {
         Ok(d) => d,
         Err(e) => {
             println!("Failed to decode payload: {}", e);
-            return StatusCode::BAD_REQUEST
-        },
+            return StatusCode::BAD_REQUEST;
+        }
     };
 
     // Parse JSON from decoded bytes
@@ -134,68 +131,70 @@ async fn handle_callback(
         Ok(p) => p,
         Err(e) => {
             println!("Failed to deserialize payload: {}", e);
-            return StatusCode::BAD_REQUEST
-        },
+            return StatusCode::BAD_REQUEST;
+        }
     };
+
+    let provider =
+        Arc::new(JsonRpcClient::new(HttpTransport::new(Url::from_str(&state.rpc_url).unwrap())));
+    let chain_id = provider.chain_id().await.unwrap();
 
     let project_dirs = ProjectDirs::from("org", "dojoengine", "dojo");
     if let Some(proj_dirs) = project_dirs {
         let data_dir = proj_dirs.data_dir();
         fs::create_dir_all(data_dir).unwrap();
-        
-        let account_file = data_dir.join("account.json");
-        let mut account_storage = AccountStorage::from_file(account_file.clone()).ok();
-        
-        // Set policies leafs. If we're registering a new account, set the policies leafs to the new policies. 
-        // If we're updating an existing account, add the new policies to the existing policies.
-        let policies_leafs = state.policies.iter().map(|p| p.as_merkle_leaf()).collect();
-        if let Some(ref mut account_storage) = account_storage {
-            if account_storage.session_account.address != payload.address {
-                account_storage.authorized_policies = policies_leafs;
-            } else {
-                account_storage.authorized_policies.extend(policies_leafs);
-            }
 
-            account_storage.session_account = payload.clone();
-            account_storage.verifying_key = format!("{:#x}", state.verifying_key);
-        } else {
-            account_storage = Some(AccountStorage {
-                verifying_key: format!("{:#x}", state.verifying_key),
-                authorized_policies: policies_leafs,
-                session_account: payload.clone(),
-            });
-        }
+        let account_file = data_dir.join("sessions.json");
+        let mut sessions_storage =
+            SessionsStorage::from_file(account_file.clone()).unwrap_or_default();
 
-        let account_storage = account_storage.unwrap();
-        fs::write(account_file.clone(), serde_json::to_string_pretty(&account_storage).unwrap()).unwrap();
+        sessions_storage.active = format!("{}/{:#x}", payload.address, chain_id);
+        sessions_storage.sessions.entry(sessions_storage.active.clone()).or_insert(vec![]).push(
+            RegisteredSession {
+                public_key: state.public_key,
+                expires_at: u64::from_str_radix(&payload.expires_at, 10).unwrap(),
+                policies: state.policies.clone(),
+            },
+        );
+        sessions_storage.accounts.insert(
+            sessions_storage.active.clone(),
+            RegisteredAccount {
+                username: payload.username,
+                address: Felt::from_hex(&payload.address).unwrap(),
+                owner_guid: Felt::from_hex(&payload.owner_guid).unwrap(),
+                chain_id,
+                rpc_url: state.rpc_url,
+            },
+        );
+
+        fs::write(account_file.clone(), serde_json::to_string_pretty(&sessions_storage).unwrap())
+            .unwrap();
         println!("Account data saved to {}", account_file.display());
     }
-
-    let provider = JsonRpcClient::new(HttpTransport::new(Url::from_str(&state.rpc_url).unwrap()));
-    let chain_id = provider.chain_id().await.unwrap();
 
     let address = Felt::from_hex(&payload.address).unwrap();
     let owner_guid = Felt::from_hex(&payload.owner_guid).unwrap();
 
     // Read signer from keyring
-    let keyring = Entry::new("dojo-keyring", &format!("{:#x}", state.verifying_key)).unwrap();
+    let keyring = Entry::new("dojo-keyring", &format!("{:#x}", state.public_key)).unwrap();
     let signing_key_hex = keyring.get_password().unwrap();
     let signing_key = SigningKey::from_secret_scalar(Felt::from_hex(&signing_key_hex).unwrap());
     let signer = Signer::Starknet(signing_key);
 
-    let session = Session::new(state.policies, u64::from_str_radix(&payload.expires_at, 10).unwrap(), &signer.signer()).unwrap();
+    let session = Session::new(
+        state.policies.clone(),
+        u64::from_str_radix(&payload.expires_at, 10).unwrap(),
+        &signer.signer(),
+    )
+    .unwrap();
 
-    let session_account = SessionAccount::new_as_registered(
-        provider,
-        signer,
-        address,
-        chain_id,
-        owner_guid,
-        session,
-    );
+    let session_account =
+        SessionAccount::new_as_registered(provider, signer, address, chain_id, owner_guid, session);
 
     // Call the callback with the new account
-    (state.account_callback)(Box::into_raw(Box::new(crate::types::SessionAccount(session_account))));
+    (state.account_callback)(Box::into_raw(Box::new(crate::types::SessionAccount(
+        session_account,
+    ))));
 
     // Signal shutdown after handling callback
     state.shutdown_tx.send(()).await.unwrap();
@@ -205,22 +204,25 @@ async fn handle_callback(
 // Modify controller_connect to take a callback
 #[no_mangle]
 pub unsafe extern "C" fn controller_connect(
-    rpc_url: *const c_char, 
-    policies: *const Policy, 
+    rpc_url: *const c_char,
+    policies: *const Policy,
     policies_len: usize,
     account_callback: extern "C" fn(*mut crate::types::SessionAccount),
 ) {
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
-    let account_policies = policies.iter().map(|p| Into::<account_sdk::account::session::hash::Policy>::into(p)).collect();
+    let account_policies = policies
+        .iter()
+        .map(|p| Into::<account_sdk::account::session::hash::Policy>::into(p))
+        .collect();
     let policies = policies.iter().map(|p| p.into()).collect::<Vec<crate::types::Policy>>();
-    
+
     // Generate new random signing key
     let signing_key = SigningKey::from_random();
-    let verifying_key = signing_key.verifying_key();
+    let verifying_key = signing_key.verifying_key().scalar();
 
     // Store signing key in system keyring
-    let keyring = Entry::new("dojo-keyring", &format!("{:#x}", verifying_key.scalar())).unwrap();
+    let keyring = Entry::new("dojo-keyring", &format!("{:#x}", verifying_key)).unwrap();
     keyring.set_password(&format!("{:#x}", signing_key.secret_scalar())).unwrap();
 
     // Create shutdown channel
@@ -231,45 +233,265 @@ pub unsafe extern "C" fn controller_connect(
         shutdown_tx,
         rpc_url: rpc_url.clone(),
         policies: account_policies,
-        verifying_key: verifying_key.scalar(),
+        public_key: verifying_key,
         account_callback,
     };
 
     // Set up the HTTP callback server with state and CORS
     let app = Router::new()
         .route("/callback", post(handle_callback))
-        .layer(CorsLayer::new()
-            .allow_origin(AllowOrigin::exact(HeaderValue::from_static("https://x.cartridge.gg")))
-            .allow_methods([Method::POST])
-            .allow_headers([header::CONTENT_TYPE]))
+        .layer(
+            CorsLayer::new()
+                .allow_origin(AllowOrigin::exact(HeaderValue::from_static(
+                    "https://x.cartridge.gg",
+                )))
+                .allow_methods([Method::POST])
+                .allow_headers([header::CONTENT_TYPE]),
+        )
         .with_state(state);
 
     // Find an available port by trying to bind to port 0
     let addr = SocketAddr::from(([127, 0, 0, 1], 1234));
     let listener = RUNTIME.block_on(TcpListener::bind(addr)).unwrap();
     let bound_addr = listener.local_addr().unwrap();
-    
+
     let server = axum::serve(listener, app);
-    
+
     // Spawn server with graceful shutdown
     RUNTIME.spawn(async move {
-        server.with_graceful_shutdown(async move {
-            shutdown_rx.recv().await;
-            println!("Shutting down server");
-        }).await.unwrap();
+        server
+            .with_graceful_shutdown(async move {
+                shutdown_rx.recv().await;
+                println!("Shutting down server");
+            })
+            .await
+            .unwrap();
     });
 
     println!("Listening on {}", bound_addr);
-    
+
     let callback_url = format!("http://{}/callback", bound_addr).replace("127.0.0.1", "localhost");
     let mut url = url::Url::parse(constants::KEYCHAIN_SESSION_URL).unwrap();
     url.query_pairs_mut()
         .append_pair("callback_uri", &callback_url)
-        .append_pair("public_key", &format!("{:#x}", verifying_key.scalar()))
+        .append_pair("public_key", &format!("{:#x}", verifying_key))
         .append_pair("rpc_url", &rpc_url)
         .append_pair("policies", &serde_json::to_string(&policies).unwrap());
-    
+
     open::that(url.as_str()).unwrap();
+}
+
+/// Retrieves a stored session account if one exists and is valid
+///
+/// # Parameters
+/// * `policies` - Array of policies to match the session
+/// * `policies_len` - Length of policies array
+///
+/// # Returns
+/// Result containing pointer to SessionAccount or error if no valid account exists
+#[no_mangle]
+pub unsafe extern "C" fn controller_account(
+    policies: *const Policy,
+    policies_len: usize,
+) -> Result<*mut crate::types::SessionAccount> {
+    let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
+    let account_policies: Vec<account_sdk::account::session::hash::Policy> = policies
+        .iter()
+        .map(|p| Into::<account_sdk::account::session::hash::Policy>::into(p))
+        .collect();
+
+    // Get project directories
+    let project_dirs = match ProjectDirs::from("org", "dojoengine", "dojo") {
+        Some(dirs) => dirs,
+        None => {
+            return Result::Err(Error {
+                message: CString::new("Could not determine project directories")
+                    .unwrap()
+                    .into_raw(),
+            })
+        }
+    };
+
+    // Load sessions storage
+    let account_file = project_dirs.data_dir().join("sessions.json");
+    let sessions_storage = match SessionsStorage::from_file(account_file) {
+        Ok(storage) => storage,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("No stored session found").unwrap().into_raw(),
+            })
+        }
+    };
+
+    // Check if we have an active session
+    if sessions_storage.active.is_empty() {
+        return Result::Err(Error {
+            message: CString::new("No active session found").unwrap().into_raw(),
+        });
+    }
+
+    // Get the active account
+    let account = match sessions_storage.accounts.get(&sessions_storage.active) {
+        Some(account) => account,
+        None => {
+            return Result::Err(Error {
+                message: CString::new("Active account data not found").unwrap().into_raw(),
+            })
+        }
+    };
+
+    // Find a valid session with matching policies
+    let session =
+        match sessions_storage.sessions.get(&sessions_storage.active).and_then(|sessions| {
+            sessions.iter().find(|session| {
+                // Check expiration
+                let current_time = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+
+                if current_time > session.expires_at {
+                    return false;
+                }
+
+                // Check if policies match
+                session.policies == account_policies
+            })
+        }) {
+            Some(session) => session,
+            None => {
+                return Result::Err(Error {
+                    message: CString::new("No valid session found with matching policies")
+                        .unwrap()
+                        .into_raw(),
+                })
+            }
+        };
+
+    // Get the signing key from keyring
+    let keyring = match Entry::new("dojo-keyring", &format!("{:#x}", session.public_key)) {
+        Ok(keyring) => keyring,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Could not access keyring").unwrap().into_raw(),
+            })
+        }
+    };
+
+    let signing_key_hex = match keyring.get_password() {
+        Ok(key) => key,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Could not retrieve signing key from keyring")
+                    .unwrap()
+                    .into_raw(),
+            })
+        }
+    };
+
+    // Initialize provider and signer
+    let provider =
+        Arc::new(JsonRpcClient::new(HttpTransport::new(Url::from_str(&account.rpc_url).unwrap())));
+    let signing_key = SigningKey::from_secret_scalar(Felt::from_hex(&signing_key_hex).unwrap());
+    let signer = Signer::Starknet(signing_key);
+
+    // Create new session
+    let session = match Session::new(session.policies.clone(), session.expires_at, &signer.signer())
+    {
+        Ok(session) => session,
+        Err(e) => {
+            return Result::Err(Error {
+                message: CString::new(format!("Failed to create session: {}", e))
+                    .unwrap()
+                    .into_raw(),
+            })
+        }
+    };
+
+    // Create session account
+    let session_account = SessionAccount::new_as_registered(
+        provider,
+        signer,
+        account.address,
+        account.chain_id,
+        account.owner_guid,
+        session,
+    );
+
+    Result::Ok(Box::into_raw(Box::new(crate::types::SessionAccount(session_account))))
+}
+
+/// Gets account address
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+///
+/// # Returns
+/// FieldElement containing the account address
+#[no_mangle]
+pub unsafe extern "C" fn controller_address(
+    account: *mut crate::types::SessionAccount,
+) -> types::FieldElement {
+    (&(*account).0.address()).into()
+}
+
+/// Gets account chain ID
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+///
+/// # Returns
+/// FieldElement containing the chain ID
+#[no_mangle]
+pub unsafe extern "C" fn controller_chain_id(
+    account: *mut crate::types::SessionAccount,
+) -> types::FieldElement {
+    (&(*account).0.chain_id()).into()
+}
+
+/// Gets account nonce
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+///
+/// # Returns
+/// Result containing FieldElement nonce or error
+#[no_mangle]
+pub unsafe extern "C" fn controller_nonce(
+    account: *mut crate::types::SessionAccount,
+) -> Result<types::FieldElement> {
+    let nonce = match RUNTIME.block_on((*account).0.get_nonce()) {
+        Ok(nonce) => nonce,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    Result::Ok((&nonce).into())
+}
+
+/// Executes raw transaction
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+/// * `calldata` - Array of Call structs
+/// * `calldata_len` - Length of calldata array
+///
+/// # Returns
+/// Result containing transaction hash as FieldElement or error
+#[no_mangle]
+pub unsafe extern "C" fn controller_execute_raw(
+    account: *mut crate::types::SessionAccount,
+    calldata: *const Call,
+    calldata_len: usize,
+) -> Result<types::FieldElement> {
+    let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
+    let calldata =
+        calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::core::types::Call>>();
+    let call = (*account).0.execute_v1(calldata);
+
+    match RUNTIME.block_on(call.send()) {
+        Ok(result) => Result::Ok((&result.transaction_hash).into()),
+        Err(e) => Result::Err(e.into()),
+    }
 }
 
 /// Sets a logger callback function for the client
@@ -691,7 +913,9 @@ pub unsafe extern "C" fn client_token_balances(
     let contract_addresses =
         contract_addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
 
-    let token_balances = match RUNTIME.block_on((*client).inner.token_balances(account_addresses, contract_addresses)) {
+    let token_balances = match RUNTIME
+        .block_on((*client).inner.token_balances(account_addresses, contract_addresses))
+    {
         Ok(balances) => balances,
         Err(e) => return Result::Err(e.into()),
     };
@@ -1200,11 +1424,8 @@ pub unsafe extern "C" fn account_new(
         Err(e) => return Result::Err(e.into()),
     };
 
-    let chain_id = match tokio::runtime::Runtime::new() {
-        Ok(runtime) => match runtime.block_on((*rpc).0.chain_id()) {
-            Ok(chain_id) => chain_id,
-            Err(e) => return Result::Err(e.into()),
-        },
+    let chain_id = match RUNTIME.block_on((*rpc).0.chain_id()) {
+        Ok(chain_id) => chain_id,
         Err(e) => return Result::Err(e.into()),
     };
 
@@ -1236,18 +1457,14 @@ pub unsafe extern "C" fn starknet_call(
     call: Call,
     block_id: BlockId,
 ) -> Result<CArray<types::FieldElement>> {
-    let res = match tokio::runtime::Runtime::new() {
-        Ok(runtime) => match runtime.block_on(
-            (*provider).0.call::<FunctionCall, starknet::core::types::BlockId>(
-                (&call).into(),
-                (&block_id).into(),
-            ),
-        ) {
+    let res =
+        match RUNTIME.block_on((*provider).0.call::<FunctionCall, starknet::core::types::BlockId>(
+            (&call).into(),
+            (&block_id).into(),
+        )) {
             Ok(res) => res,
             Err(e) => return Result::Err(e.into()),
-        },
-        Err(e) => return Result::Err(e.into()),
-    };
+        };
 
     let res: Vec<_> = res.iter().map(|f| f.into()).collect::<Vec<_>>();
     Result::Ok(res.into())
@@ -1301,17 +1518,12 @@ pub unsafe extern "C" fn account_deploy_burner(
         selector: starknet::core::utils::get_selector_from_name("deployContract").unwrap(),
     }]);
 
-    let runtime = match tokio::runtime::Runtime::new() {
-        Ok(runtime) => runtime,
-        Err(e) => return Result::Err(e.into()),
-    };
-
-    let result = match runtime.block_on(exec.send()) {
+    let result = match RUNTIME.block_on(exec.send()) {
         Ok(result) => result,
         Err(e) => return Result::Err(e.into()),
     };
 
-    match runtime.block_on(watch_tx(&(*provider).0, result.transaction_hash)) {
+    match RUNTIME.block_on(watch_tx(&(*provider).0, result.transaction_hash)) {
         Ok(_) => Result::Ok(Box::into_raw(Box::new(Account(account)))),
         Err(e) => Result::Err(Error { message: CString::new(e.to_string()).unwrap().into_raw() }),
     }
@@ -1361,7 +1573,7 @@ pub unsafe extern "C" fn account_set_block_id(account: *mut Account, block_id: B
 /// Result containing FieldElement nonce or error
 #[no_mangle]
 pub unsafe extern "C" fn account_nonce(account: *mut Account) -> Result<types::FieldElement> {
-    let nonce = match tokio::runtime::Runtime::new().unwrap().block_on((*account).0.get_nonce()) {
+    let nonce = match RUNTIME.block_on((*account).0.get_nonce()) {
         Ok(nonce) => nonce,
         Err(e) => return Result::Err(e.into()),
     };
@@ -1389,11 +1601,8 @@ pub unsafe extern "C" fn account_execute_raw(
         calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::core::types::Call>>();
     let call = (*account).0.execute_v1(calldata);
 
-    match tokio::runtime::Runtime::new() {
-        Ok(runtime) => match runtime.block_on(call.send()) {
-            Ok(result) => Result::Ok((&result.transaction_hash).into()),
-            Err(e) => Result::Err(e.into()),
-        },
+    match RUNTIME.block_on(call.send()) {
+        Ok(result) => Result::Ok((&result.transaction_hash).into()),
         Err(e) => Result::Err(e.into()),
     }
 }
@@ -1412,14 +1621,9 @@ pub unsafe extern "C" fn wait_for_transaction(
     txn_hash: types::FieldElement,
 ) -> Result<bool> {
     let txn_hash = (&txn_hash).into();
-    match tokio::runtime::Runtime::new() {
-        Ok(runtime) => match runtime.block_on(watch_tx(&(*rpc).0, txn_hash)) {
-            Ok(_) => Result::Ok(true),
-            Err(e) => {
-                Result::Err(Error { message: CString::new(e.to_string()).unwrap().into_raw() })
-            }
-        },
-        Err(e) => Result::Err(e.into()),
+    match RUNTIME.block_on(watch_tx(&(*rpc).0, txn_hash)) {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(Error { message: CString::new(e.to_string()).unwrap().into_raw() }),
     }
 }
 

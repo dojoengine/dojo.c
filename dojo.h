@@ -10,6 +10,7 @@ namespace dojo_bindings {
 struct ToriiClient;
 struct Policy;
 struct SessionAccount;
+struct Call;
 struct Entity;
 struct Query;
 struct CHashItemFieldElementModelMetadata;
@@ -81,6 +82,40 @@ typedef struct ResultToriiClient {
 typedef struct FieldElement {
   uint8_t data[32];
 } FieldElement;
+
+typedef enum ResultSessionAccount_Tag {
+  OkSessionAccount,
+  ErrSessionAccount,
+} ResultSessionAccount_Tag;
+
+typedef struct ResultSessionAccount {
+  ResultSessionAccount_Tag tag;
+  union {
+    struct {
+      struct SessionAccount *ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultSessionAccount;
+
+typedef enum ResultFieldElement_Tag {
+  OkFieldElement,
+  ErrFieldElement,
+} ResultFieldElement_Tag;
+
+typedef struct ResultFieldElement {
+  ResultFieldElement_Tag tag;
+  union {
+    struct {
+      struct FieldElement ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultFieldElement;
 
 typedef struct CArrayu8 {
   uint8_t *data;
@@ -281,23 +316,6 @@ typedef struct Resultc_char {
     };
   };
 } Resultc_char;
-
-typedef enum ResultFieldElement_Tag {
-  OkFieldElement,
-  ErrFieldElement,
-} ResultFieldElement_Tag;
-
-typedef struct ResultFieldElement {
-  ResultFieldElement_Tag tag;
-  union {
-    struct {
-      struct FieldElement ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultFieldElement;
 
 typedef struct Signature {
   /**
@@ -748,6 +766,67 @@ void controller_connect(const char *rpc_url,
                         const struct Policy *policies,
                         uintptr_t policies_len,
                         void (*account_callback)(struct SessionAccount*));
+
+/**
+ * Retrieves a stored session account if one exists and is valid
+ *
+ * # Parameters
+ * * `policies` - Array of policies to match the session
+ * * `policies_len` - Length of policies array
+ *
+ * # Returns
+ * Result containing pointer to SessionAccount or error if no valid account exists
+ */
+struct ResultSessionAccount controller_account(const struct Policy *policies,
+                                               uintptr_t policies_len);
+
+/**
+ * Gets account address
+ *
+ * # Parameters
+ * * `account` - Pointer to Account
+ *
+ * # Returns
+ * FieldElement containing the account address
+ */
+struct FieldElement controller_address(struct SessionAccount *account);
+
+/**
+ * Gets account chain ID
+ *
+ * # Parameters
+ * * `account` - Pointer to Account
+ *
+ * # Returns
+ * FieldElement containing the chain ID
+ */
+struct FieldElement controller_chain_id(struct SessionAccount *account);
+
+/**
+ * Gets account nonce
+ *
+ * # Parameters
+ * * `account` - Pointer to Account
+ *
+ * # Returns
+ * Result containing FieldElement nonce or error
+ */
+struct ResultFieldElement controller_nonce(struct SessionAccount *account);
+
+/**
+ * Executes raw transaction
+ *
+ * # Parameters
+ * * `account` - Pointer to Account
+ * * `calldata` - Array of Call structs
+ * * `calldata_len` - Length of calldata array
+ *
+ * # Returns
+ * Result containing transaction hash as FieldElement or error
+ */
+struct ResultFieldElement controller_execute_raw(struct SessionAccount *account,
+                                                 const struct Call *calldata,
+                                                 uintptr_t calldata_len);
 
 /**
  * Sets a logger callback function for the client

@@ -70,7 +70,7 @@ pub struct Policy {
 impl From<&Policy> for crate::types::Policy {
     fn from(val: &Policy) -> Self {
         crate::types::Policy {
-            target: format!("{:#x}", Into::<Felt>::into(&val.target)),
+            target: (&val.target).into(),
             method: unsafe { CStr::from_ptr(val.method).to_string_lossy().to_string() },
             description: unsafe { CStr::from_ptr(val.description).to_string_lossy().to_string() },
         }

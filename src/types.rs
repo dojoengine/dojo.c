@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::ffi::c_char;
 use std::fs::File;
 use std::io::BufReader;
@@ -16,9 +16,9 @@ use stream_cancel::Trigger;
 use torii_client::client::Client;
 use wasm_bindgen::prelude::*;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Policy {
-    pub target: String,
+    pub target: Felt,
     pub method: String,
     pub description: String,
 }
@@ -36,18 +36,34 @@ pub struct RegisterSessionResponse {
     pub already_registered: Option<bool>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AccountStorage {
-    pub verifying_key: String,
-    pub session_account: RegisterSessionResponse,
-    pub authorized_policies: Vec<Felt>
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct SessionsStorage {
+    pub active: String,
+    pub sessions: HashMap<String, Vec<RegisteredSession>>,
+    pub accounts: HashMap<String, RegisteredAccount>,
 }
 
-impl AccountStorage {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RegisteredSession {
+    pub public_key: Felt,
+    pub expires_at: u64,
+    pub policies: Vec<account_sdk::account::session::hash::Policy>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RegisteredAccount {
+    pub username: String,
+    pub address: Felt,
+    pub owner_guid: Felt,
+    pub chain_id: Felt,
+    pub rpc_url: String
+}
+
+impl SessionsStorage {
     pub fn from_file(file: PathBuf) -> Result<Self, Box<dyn std::error::Error>> {
         let file = File::open(file)?;
         let reader = BufReader::new(file);
-        let account_storage: AccountStorage = serde_json::from_reader(reader)?;
+        let account_storage: SessionsStorage = serde_json::from_reader(reader)?;
         Ok(account_storage)
     }
 }
@@ -72,7 +88,7 @@ pub struct Provider(pub(crate) Arc<JsonRpcClient<HttpTransport>>);
 #[wasm_bindgen]
 pub struct Account(pub(crate) SingleOwnerAccount<Arc<JsonRpcClient<HttpTransport>>, LocalWallet>);
 #[wasm_bindgen]
-pub struct SessionAccount(pub(crate) account_sdk::account::session::SessionAccount<JsonRpcClient<HttpTransport>>);
+pub struct SessionAccount(pub(crate) account_sdk::account::session::SessionAccount<Arc<JsonRpcClient<HttpTransport>>>);
 #[wasm_bindgen]
 pub struct Subscription {
     pub(crate) id: Arc<AtomicU64>,
