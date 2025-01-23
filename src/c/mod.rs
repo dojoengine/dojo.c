@@ -522,7 +522,10 @@ pub unsafe extern "C" fn controller_execute_raw(
 
     match RUNTIME.block_on(call.send()) {
         Ok(result) => Result::Ok((&result.transaction_hash).into()),
-        Err(e) => Result::Err(e.into()),
+        Err(e) => {
+            println!("Error executing call: {:?}", e);
+            Result::Err(e.into())
+        },
     }
 }
 

@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 
+// Add this global variable near the top of the file
+static struct SessionAccount* g_session_account = NULL;
+
 void on_entity_state_update(FieldElement key, CArrayStruct models)
 {
     printf("on_entity_state_update\n");
@@ -22,11 +25,6 @@ void on_entity_state_update(FieldElement key, CArrayStruct models)
         //     printf("Value: %s\n", models.data[i].children.data[j].value);
         // }
     }
-}
-
-void on_account_created(struct SessionAccount *account)
-{
-    printf("on_account_created\n");
 }
 
 void hex_to_bytes(const char *hex, FieldElement *felt)
@@ -52,6 +50,12 @@ void hex_to_bytes(const char *hex, FieldElement *felt)
     {
         sscanf(hex + 2 * i, "%2hhx", &(*felt).data[i]);
     }
+}
+
+void on_account_connected(struct SessionAccount *account)
+{
+    // Store the account in our global variable
+    g_session_account = account;
 }
 
 int main()
@@ -80,15 +84,16 @@ int main()
         {eth, "transfer", "Transfer ETH"},
     };
 
-    ResultSessionAccount resController = controller_account(policies, 1);
-    if (resController.tag == ErrSessionAccount)
-    {
-        controller_connect("https://api.cartridge.gg/x/starknet/sepolia", policies, 1, on_account_created);
-        return 1;
+    // Replace the direct call with the async version
+    controller_connect("https://api.cartridge.gg/x/starknet/sepolia", policies, 1, on_account_connected);
+    
+    // Wait for the account to be connected
+    while (g_session_account == NULL) {
+        usleep(100000); // Sleep for 100ms to avoid busy waiting
     }
-
-    FieldElement controller_addr = controller_address(resController.ok);
-    printf("Controller address: 0x");
+    
+    FieldElement controller_addr = controller_address(g_session_account);
+    printf("Connected controller address: 0x");
     for (size_t i = 0; i < 32; i++)
     {
         printf("%02x", controller_addr.data[i]);
@@ -100,12 +105,14 @@ int main()
         .to = eth,
         .selector = "transfer",
         .calldata = {
-            .data = malloc(sizeof(FieldElement)),
-            .data_len = 1,
+            .data = malloc(sizeof(FieldElement) * 3),
+            .data_len = 3,
         }};
-    hex_to_bytes("0x01", &transfer.calldata.data[0]);
+    hex_to_bytes("0x025Ee38b230906EA41B00401cC12bb51f58DC62198cf058a336655696908863D", &transfer.calldata.data[0]);
+    hex_to_bytes("0x00", &transfer.calldata.data[1]);
+    hex_to_bytes("0x01", &transfer.calldata.data[2]);
 
-    ResultFieldElement resTransfer = controller_execute_raw(resController.ok, &transfer, 1);
+    ResultFieldElement resTransfer = controller_execute_raw(g_session_account, &transfer, 1);
     if (resTransfer.tag == ErrFieldElement)
     {
         printf("Failed to execute call: %s\n", resTransfer.err.message);
