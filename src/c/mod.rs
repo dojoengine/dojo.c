@@ -283,7 +283,7 @@ pub unsafe extern "C" fn controller_connect(
         .with_state(state);
 
     // Find an available port by trying to bind to port 0
-    let addr = SocketAddr::from(([127, 0, 0, 1], 1234));
+    let addr = SocketAddr::from(([127, 0, 0, 1], 0));
     let listener = RUNTIME.block_on(TcpListener::bind(addr)).unwrap();
     let bound_addr = listener.local_addr().unwrap();
 
