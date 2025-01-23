@@ -762,6 +762,43 @@ struct ResultToriiClient client_new(const char *torii_url,
                                     const char *libp2p_relay_url,
                                     struct FieldElement world);
 
+/**
+ * Initiates a connection to establish a new session account
+ *
+ * This function:
+ * 1. Generates a new signing key pair
+ * 2. Starts a local HTTP server to receive the callback
+ * 3. Opens the keychain session URL in browser
+ * 4. Waits for callback with session details
+ * 5. Creates and stores the session
+ * 6. Calls the provided callback with the new session account
+ *
+ * # Safety
+ * This function is marked as unsafe because it:
+ * - Handles raw C pointers
+ * - Performs FFI operations
+ * - Creates system-level resources (HTTP server, keyring entries)
+ *
+ * # Parameters
+ * * `rpc_url` - Pointer to null-terminated string containing the RPC endpoint URL
+ * * `policies` - Pointer to array of Policy structs defining session permissions
+ * * `policies_len` - Length of the policies array
+ * * `account_callback` - Function pointer called with the new session account when ready
+ *
+ * # Example
+ * ```c
+ * void on_account(SessionAccount* account) {
+ *     // Handle new session account
+ * }
+ *
+ * controller_connect(
+ *     "https://rpc.example.com",
+ *     policies,
+ *     policies_length,
+ *     on_account
+ * );
+ * ```
+ */
 void controller_connect(const char *rpc_url,
                         const struct Policy *policies,
                         uintptr_t policies_len,

@@ -199,7 +199,41 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
     StatusCode::OK
 }
 
-// Modify controller_connect to take a callback
+/// Initiates a connection to establish a new session account
+///
+/// This function:
+/// 1. Generates a new signing key pair
+/// 2. Starts a local HTTP server to receive the callback
+/// 3. Opens the keychain session URL in browser
+/// 4. Waits for callback with session details
+/// 5. Creates and stores the session
+/// 6. Calls the provided callback with the new session account
+///
+/// # Safety
+/// This function is marked as unsafe because it:
+/// - Handles raw C pointers
+/// - Performs FFI operations
+/// - Creates system-level resources (HTTP server, keyring entries)
+///
+/// # Parameters
+/// * `rpc_url` - Pointer to null-terminated string containing the RPC endpoint URL
+/// * `policies` - Pointer to array of Policy structs defining session permissions
+/// * `policies_len` - Length of the policies array
+/// * `account_callback` - Function pointer called with the new session account when ready
+///
+/// # Example
+/// ```c
+/// void on_account(SessionAccount* account) {
+///     // Handle new session account
+/// }
+///
+/// controller_connect(
+///     "https://rpc.example.com",
+///     policies,
+///     policies_length,
+///     on_account
+/// );
+/// ```
 #[no_mangle]
 pub unsafe extern "C" fn controller_connect(
     rpc_url: *const c_char,
