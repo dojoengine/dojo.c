@@ -263,7 +263,6 @@ impl From<&Call> for starknet::core::types::FunctionCall {
 
 pub struct ToriiClient {
     pub inner: Client,
-    pub runtime: tokio::runtime::Runtime,
     pub logger: Option<extern "C" fn(*const c_char)>,
 }
 

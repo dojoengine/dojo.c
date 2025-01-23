@@ -1920,6 +1920,7 @@ dependencies = [
  "instant",
  "js-sys",
  "keyring",
+ "lazy_static",
  "open",
  "parking_lot 0.12.3",
  "serde",

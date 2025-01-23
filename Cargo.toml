@@ -55,6 +55,7 @@ keyring = { version = "3.6.1", features = ["apple-native", "windows-native", "sy
 directories = "6.0.0"
 tower-http = { version = "0.6.2", features = ["cors"] }
 base64 = "0.22.1"
+lazy_static = "1.5.0"
 
 
 [build-dependencies]

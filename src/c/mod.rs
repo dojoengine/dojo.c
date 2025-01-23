@@ -6,7 +6,7 @@ use std::ops::Deref;
 use std::os::raw::c_char;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc};
 use std::time::Duration;
 
 use account_sdk::account::session::hash::Session;
@@ -28,6 +28,7 @@ use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
 use starknet_crypto::{poseidon_hash_many, Felt};
 use stream_cancel::{StreamExt as _, Tripwire};
+use tokio::runtime::Runtime;
 use tokio::time::sleep;
 use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
@@ -51,6 +52,14 @@ use std::fs;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use axum::http::header;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref RUNTIME: Arc<Runtime> = Arc::new(
+        Runtime::new().expect("Failed to create Tokio runtime")
+    );
+}
+
 
 /// Creates a new Torii client instance
 ///
@@ -76,20 +85,18 @@ pub unsafe extern "C" fn client_new(
 
     let client_future = TClient::new(torii_url, rpc_url.clone(), libp2p_relay_url, (&world).into());
 
-    let runtime = tokio::runtime::Runtime::new().unwrap();
-    let client = match runtime.block_on(client_future) {
+    let client = match RUNTIME.block_on(client_future) {
         Ok(client) => client,
         Err(e) => return Result::Err(e.into()),
     };
 
     let relay_runner = client.relay_runner();
-    runtime.spawn(async move {
+    RUNTIME.spawn(async move {
         relay_runner.lock().await.run().await;
     });
 
     Result::Ok(Box::into_raw(Box::new(ToriiClient { 
         inner: client, 
-        runtime,
         logger: None,
     })))
 }
@@ -102,7 +109,6 @@ struct CallbackState {
     policies: Vec<account_sdk::account::session::hash::Policy>,
     verifying_key: Felt,
     account_callback: extern "C" fn(*mut crate::types::SessionAccount),
-    runtime: Arc<tokio::runtime::Runtime>,
 }
 
 // Modify handle_callback to call the callback
@@ -204,7 +210,6 @@ pub unsafe extern "C" fn controller_connect(
     policies_len: usize,
     account_callback: extern "C" fn(*mut crate::types::SessionAccount),
 ) {
-    let runtime = Arc::new(tokio::runtime::Runtime::new().unwrap());
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
     let account_policies = policies.iter().map(|p| Into::<account_sdk::account::session::hash::Policy>::into(p)).collect();
@@ -228,7 +233,6 @@ pub unsafe extern "C" fn controller_connect(
         policies: account_policies,
         verifying_key: verifying_key.scalar(),
         account_callback,
-        runtime: Arc::clone(&runtime),
     };
 
     // Set up the HTTP callback server with state and CORS
@@ -242,13 +246,13 @@ pub unsafe extern "C" fn controller_connect(
 
     // Find an available port by trying to bind to port 0
     let addr = SocketAddr::from(([127, 0, 0, 1], 1234));
-    let listener = runtime.block_on(TcpListener::bind(addr)).unwrap();
+    let listener = RUNTIME.block_on(TcpListener::bind(addr)).unwrap();
     let bound_addr = listener.local_addr().unwrap();
     
     let server = axum::serve(listener, app);
     
     // Spawn server with graceful shutdown
-    runtime.spawn(async move {
+    RUNTIME.spawn(async move {
         server.with_graceful_shutdown(async move {
             shutdown_rx.recv().await;
             println!("Shutting down server");
@@ -312,7 +316,7 @@ pub unsafe extern "C" fn client_publish_message(
 
     let client_future = unsafe { (*client).inner.publish_message(Message { message, signature }) };
 
-    match (*client).runtime.block_on(client_future) {
+    match RUNTIME.block_on(client_future) {
         Ok(data) => Result::Ok(data.into()),
         Err(e) => Result::Err(e.into()),
     }
@@ -333,7 +337,7 @@ pub unsafe extern "C" fn client_entities(
 ) -> Result<CArray<Entity>> {
     let entities_future = unsafe { (*client).inner.entities(query.into()) };
 
-    match (*client).runtime.block_on(entities_future) {
+    match RUNTIME.block_on(entities_future) {
         Ok(entities) => {
             let entities: Vec<Entity> = entities.into_iter().map(|e| (&e).into()).collect();
 
@@ -360,7 +364,7 @@ pub unsafe extern "C" fn client_event_messages(
 ) -> Result<CArray<Entity>> {
     let event_messages_future = unsafe { (*client).inner.event_messages(query.into(), historical) };
 
-    match (*client).runtime.block_on(event_messages_future) {
+    match RUNTIME.block_on(event_messages_future) {
         Ok(event_messages) => {
             let event_messages: Vec<Entity> =
                 event_messages.into_iter().map(|e| (&e).into()).collect();
@@ -412,7 +416,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
     let subscription_id_clone = Arc::clone(&subscription_id);
-    client.runtime.spawn(async move {
+    RUNTIME.spawn(async move {
         let mut backoff = Duration::from_secs(1);
         let max_backoff = Duration::from_secs(60);
 
@@ -465,7 +469,7 @@ pub unsafe extern "C" fn client_update_entity_subscription(
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
-    match (*client).runtime.block_on(
+    match RUNTIME.block_on(
         (*client)
             .inner
             .update_entity_subscription((*subscription).id.load(Ordering::SeqCst), clauses),
@@ -506,7 +510,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
     let subscription_id_clone = Arc::clone(&subscription_id);
-    client.runtime.spawn(async move {
+    RUNTIME.spawn(async move {
         let mut backoff = Duration::from_secs(1);
         let max_backoff = Duration::from_secs(60);
 
@@ -562,7 +566,7 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
     let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
     let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
 
-    match (*client).runtime.block_on((*client).inner.update_event_message_subscription(
+    match RUNTIME.block_on((*client).inner.update_event_message_subscription(
         (*subscription).id.load(Ordering::SeqCst),
         clauses,
         historical,
@@ -600,7 +604,7 @@ pub unsafe extern "C" fn client_on_starknet_event(
 
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
-    client.runtime.spawn(async move {
+    RUNTIME.spawn(async move {
         let mut backoff = Duration::from_secs(1);
         let max_backoff = Duration::from_secs(60);
 
@@ -649,7 +653,7 @@ pub unsafe extern "C" fn client_tokens(
         unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
     let contract_addresses =
         contract_addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
-    let tokens = match (*client).runtime.block_on((*client).inner.tokens(contract_addresses)) {
+    let tokens = match RUNTIME.block_on((*client).inner.tokens(contract_addresses)) {
         Ok(tokens) => tokens,
         Err(e) => return Result::Err(e.into()),
     };
@@ -687,10 +691,7 @@ pub unsafe extern "C" fn client_token_balances(
     let contract_addresses =
         contract_addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
 
-    let token_balances = match (*client)
-        .runtime
-        .block_on((*client).inner.token_balances(account_addresses, contract_addresses))
-    {
+    let token_balances = match RUNTIME.block_on((*client).inner.token_balances(account_addresses, contract_addresses)) {
         Ok(balances) => balances,
         Err(e) => return Result::Err(e.into()),
     };
@@ -728,7 +729,7 @@ pub unsafe extern "C" fn on_indexer_update(
 
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
-    client.runtime.spawn(async move {
+    RUNTIME.spawn(async move {
         let mut backoff = Duration::from_secs(1);
         let max_backoff = Duration::from_secs(60);
 
@@ -805,7 +806,7 @@ pub unsafe extern "C" fn client_on_token_balance_update(
 
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
-    client.runtime.spawn(async move {
+    RUNTIME.spawn(async move {
         let mut backoff = Duration::from_secs(1);
         let max_backoff = Duration::from_secs(60);
 
@@ -879,7 +880,7 @@ pub unsafe extern "C" fn client_update_token_balance_subscription(
         addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
     };
 
-    match (*client).runtime.block_on((*client).inner.update_token_balance_subscription(
+    match RUNTIME.block_on((*client).inner.update_token_balance_subscription(
         (*subscription).id.load(Ordering::SeqCst),
         contract_addresses,
         account_addresses,
@@ -1477,8 +1478,7 @@ pub unsafe extern "C" fn subscription_cancel(subscription: *mut Subscription) {
 pub unsafe extern "C" fn client_free(t: *mut ToriiClient) {
     if !t.is_null() {
         unsafe {
-            let client = Box::from_raw(t);
-            client.runtime.shutdown_background();
+            let _ = Box::from_raw(t);
         }
     }
 }
