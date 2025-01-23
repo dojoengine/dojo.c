@@ -64,7 +64,9 @@ int main()
     FieldElement world;
     hex_to_bytes("0x01385f25d20a724edc9c7b3bd9636c59af64cbaf9fcd12f33b3af96b2452f295", &world);
     FieldElement actions;
-    hex_to_bytes("0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7", &actions);
+    hex_to_bytes("0x04ba8772b4785c0afce5b73ed98d30cf8832e3bfcceff5a688b085ef6d0f164e", &actions);
+    FieldElement eth;
+    hex_to_bytes("0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7", &eth);
 
     ResultToriiClient resClient = client_new(torii_url, rpc_url, "/ip4/127.0.0.1/tcp/9090", world);
     if (resClient.tag == ErrToriiClient)
@@ -75,8 +77,7 @@ int main()
     struct ToriiClient *client = resClient.ok;
 
     Policy policies[] = {
-        {actions, "transfer", "Transfer ETH"},
-        // {actions, "move", "Move an entity"},
+        {eth, "transfer", "Transfer ETH"},
     };
 
     ResultSessionAccount resController = controller_account(policies, 1);
@@ -93,6 +94,23 @@ int main()
         printf("%02x", controller_addr.data[i]);
     }
     printf("\n");
+
+    // Transfer a bit of ETH to another account
+    Call transfer = {
+        .to = eth,
+        .selector = "transfer",
+        .calldata = {
+            .data = malloc(sizeof(FieldElement)),
+            .data_len = 1,
+        }};
+    hex_to_bytes("0x01", &transfer.calldata.data[0]);
+
+    ResultFieldElement resTransfer = controller_execute_raw(resController.ok, &transfer, 1);
+    if (resTransfer.tag == ErrFieldElement)
+    {
+        printf("Failed to execute call: %s\n", resTransfer.err.message);
+        return 1;
+    }
 
     // signing key
     FieldElement signing_key = {};
