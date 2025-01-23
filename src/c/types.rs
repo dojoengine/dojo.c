@@ -69,14 +69,15 @@ impl From<&Policy> for crate::types::Policy {
     }
 }
 
-impl From<&Policy> for account_sdk::account::session::hash::Policy {
+impl From<&Policy> for account_sdk::account::session::policy::CallPolicy {
     fn from(val: &Policy) -> Self {
-        account_sdk::account::session::hash::Policy {
+        account_sdk::account::session::policy::CallPolicy {
             contract_address: (&val.target).into(),
             selector: get_selector_from_name(&unsafe {
                 CStr::from_ptr(val.method).to_string_lossy().to_string()
             })
             .unwrap(),
+            authorized: Some(true),
         }
     }
 }

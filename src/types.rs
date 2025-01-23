@@ -47,7 +47,7 @@ pub struct SessionsStorage {
 pub struct RegisteredSession {
     pub public_key: Felt,
     pub expires_at: u64,
-    pub policies: Vec<account_sdk::account::session::hash::Policy>
+    pub policies: Vec<account_sdk::account::session::policy::Policy>
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -88,7 +88,7 @@ pub struct Provider(pub(crate) Arc<JsonRpcClient<HttpTransport>>);
 #[wasm_bindgen]
 pub struct Account(pub(crate) SingleOwnerAccount<Arc<JsonRpcClient<HttpTransport>>, LocalWallet>);
 #[wasm_bindgen]
-pub struct SessionAccount(pub(crate) account_sdk::account::session::SessionAccount<Arc<JsonRpcClient<HttpTransport>>>);
+pub struct SessionAccount(pub(crate) account_sdk::account::session::account::SessionAccount);
 #[wasm_bindgen]
 pub struct Subscription {
     pub(crate) id: Arc<AtomicU64>,

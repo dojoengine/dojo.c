@@ -5,33 +5,26 @@ version = 3
 [[package]]
 name = "account_sdk"
 version = "0.1.0"
-source = "git+https://github.com/cartridge-gg/controller?rev=61d2fd0#61d2fd0cd856daa01b2da52b762368542c03da6f"
+source = "git+https://github.com/cartridge-gg/controller#0aaa31e7c017c48848e8653b61b0bdf4b505fbe6"
 dependencies = [
  "anyhow",
  "async-trait",
  "auto_impl",
- "base64 0.22.1",
- "base64urlsafedata",
- "cainome 0.2.3 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.2)",
- "coset",
- "ecdsa",
+ "cainome 0.4.5",
+ "cainome-cairo-serde 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.5)",
  "futures",
- "gloo-net",
  "hex",
  "indexmap 2.7.0",
  "js-sys",
  "lazy_static",
- "nom",
  "num-traits",
- "p256",
+ "once_cell",
  "primitive-types",
  "reqwest",
  "serde",
  "serde-wasm-bindgen",
- "serde_cbor_2",
  "serde_json",
  "serde_with 3.11.0",
- "sha2",
  "starknet 0.12.0",
  "starknet-crypto",
  "starknet-types-core",
@@ -46,7 +39,6 @@ dependencies = [
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
  "web-sys",
- "webauthn-rs-proto",
 ]
 
 [[package]]
@@ -695,16 +687,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
-name = "base64urlsafedata"
-version = "0.5.0"
-source = "git+https://github.com/cartridge-gg/webauthn-rs?rev=a6cea88#a6cea888b953382c6d0604bd08bbede195205140"
-dependencies = [
- "base64 0.21.7",
- "paste",
- "serde",
-]
-
-[[package]]
 name = "bincode"
 version = "1.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -854,15 +836,16 @@ dependencies = [
 
 [[package]]
 name = "cainome"
-version = "0.2.3"
-source = "git+https://github.com/cartridge-gg/cainome?tag=v0.4.2#4e3924fb82b7299d56d3619aa5d7b9863f581e0a"
+version = "0.4.5"
+source = "git+https://github.com/cartridge-gg/cainome?tag=v0.4.5#c3857b13cbf2ed3abda9d07297326ea4ad8e93da"
 dependencies = [
  "anyhow",
  "async-trait",
- "cainome-cairo-serde 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.2)",
- "cainome-parser 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.2)",
- "cainome-rs 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.2)",
- "cainome-rs-macro 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.2)",
+ "cainome-cairo-serde 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.5)",
+ "cainome-cairo-serde-derive 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.5)",
+ "cainome-parser 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.5)",
+ "cainome-rs 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.5)",
+ "cainome-rs-macro 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.5)",
  "camino",
  "clap",
  "clap_complete",
@@ -885,7 +868,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "cainome-cairo-serde 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.10)",
- "cainome-cairo-serde-derive",
+ "cainome-cairo-serde-derive 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.10)",
  "cainome-parser 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.10)",
  "cainome-rs 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.10)",
  "cainome-rs-macro 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.10)",
@@ -928,7 +911,7 @@ dependencies = [
 [[package]]
 name = "cainome-cairo-serde"
 version = "0.1.0"
-source = "git+https://github.com/cartridge-gg/cainome?tag=v0.4.2#4e3924fb82b7299d56d3619aa5d7b9863f581e0a"
+source = "git+https://github.com/cartridge-gg/cainome?tag=v0.4.5#c3857b13cbf2ed3abda9d07297326ea4ad8e93da"
 dependencies = [
  "serde",
  "starknet 0.12.0",
@@ -939,6 +922,17 @@ dependencies = [
 name = "cainome-cairo-serde-derive"
 version = "0.1.0"
 source = "git+https://github.com/cartridge-gg/cainome?tag=v0.4.10#6fefd8bf4370c77d8834d18a2ae3c59d3a5e8dd5"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.90",
+ "unzip-n",
+]
+
+[[package]]
+name = "cainome-cairo-serde-derive"
+version = "0.1.0"
+source = "git+https://github.com/cartridge-gg/cainome?tag=v0.4.5#c3857b13cbf2ed3abda9d07297326ea4ad8e93da"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -975,7 +969,7 @@ dependencies = [
 [[package]]
 name = "cainome-parser"
 version = "0.1.0"
-source = "git+https://github.com/cartridge-gg/cainome?tag=v0.4.2#4e3924fb82b7299d56d3619aa5d7b9863f581e0a"
+source = "git+https://github.com/cartridge-gg/cainome?tag=v0.4.5#c3857b13cbf2ed3abda9d07297326ea4ad8e93da"
 dependencies = [
  "convert_case",
  "quote",
@@ -1024,11 +1018,11 @@ dependencies = [
 [[package]]
 name = "cainome-rs"
 version = "0.1.0"
-source = "git+https://github.com/cartridge-gg/cainome?tag=v0.4.2#4e3924fb82b7299d56d3619aa5d7b9863f581e0a"
+source = "git+https://github.com/cartridge-gg/cainome?tag=v0.4.5#c3857b13cbf2ed3abda9d07297326ea4ad8e93da"
 dependencies = [
  "anyhow",
- "cainome-cairo-serde 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.2)",
- "cainome-parser 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.2)",
+ "cainome-cairo-serde 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.5)",
+ "cainome-parser 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.5)",
  "camino",
  "prettyplease",
  "proc-macro2",
@@ -1060,12 +1054,12 @@ dependencies = [
 [[package]]
 name = "cainome-rs-macro"
 version = "0.1.0"
-source = "git+https://github.com/cartridge-gg/cainome?tag=v0.4.2#4e3924fb82b7299d56d3619aa5d7b9863f581e0a"
+source = "git+https://github.com/cartridge-gg/cainome?tag=v0.4.5#c3857b13cbf2ed3abda9d07297326ea4ad8e93da"
 dependencies = [
  "anyhow",
- "cainome-cairo-serde 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.2)",
- "cainome-parser 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.2)",
- "cainome-rs 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.2)",
+ "cainome-cairo-serde 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.5)",
+ "cainome-parser 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.5)",
+ "cainome-rs 0.1.0 (git+https://github.com/cartridge-gg/cainome?tag=v0.4.5)",
  "proc-macro-error",
  "proc-macro2",
  "quote",
@@ -1336,33 +1330,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ciborium"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42e69ffd6f0917f5c029256a24d0161db17cea3997d185db0d35926308770f0e"
-dependencies = [
- "ciborium-io",
- "ciborium-ll",
- "serde",
-]
-
-[[package]]
-name = "ciborium-io"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05afea1e0a06c9be33d539b876f1ce3692f4afea2cb41f740e7743225ed1c757"
-
-[[package]]
-name = "ciborium-ll"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57663b653d948a338bfb3eeba9bb2fd5fcfaecb9e199e87e1eda4d9e8b240fd9"
-dependencies = [
- "ciborium-io",
- "half 2.4.1",
-]
-
-[[package]]
 name = "cipher"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1519,16 +1486,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b49ba7ef1ad6107f8824dbe97de947cbaac53c44e7f9756a1fba0d37c1eec505"
 dependencies = [
  "memchr",
-]
-
-[[package]]
-name = "coset"
-version = "0.3.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4c8cc80f631f8307b887faca24dcc3abc427cd0367f6eb6188f6e8f5b7ad8fb"
-dependencies = [
- "ciborium",
- "ciborium-io",
 ]
 
 [[package]]
@@ -1908,7 +1865,7 @@ dependencies = [
  "anyhow",
  "axum 0.8.1",
  "base64 0.22.1",
- "cainome 0.2.3 (git+https://github.com/cartridge-gg/cainome?tag=v0.3.2)",
+ "cainome 0.2.3",
  "cbindgen",
  "crypto-bigint",
  "directories",
@@ -2537,27 +2494,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
 
 [[package]]
-name = "gloo-net"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c06f627b1a58ca3d42b45d6104bf1e1a03799df472df00988b6ba21accc10580"
-dependencies = [
- "futures-channel",
- "futures-core",
- "futures-sink",
- "gloo-utils",
- "http 1.2.0",
- "js-sys",
- "pin-project",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
-]
-
-[[package]]
 name = "gloo-timers"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2632,22 +2568,6 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
-]
-
-[[package]]
-name = "half"
-version = "1.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b43ede17f21864e81be2fa654110bf1e793774238d86ef8555c37e6519c0403"
-
-[[package]]
-name = "half"
-version = "2.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6dd08c532ae367adf81c312a4580bc67f1d0fe8bc9c460520283f4c0ff277888"
-dependencies = [
- "cfg-if",
- "crunchy",
 ]
 
 [[package]]
@@ -6147,16 +6067,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_cbor_2"
-version = "0.12.0-dev"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b46d75f449e01f1eddbe9b00f432d616fbbd899b809c837d0fbc380496a0dd55"
-dependencies = [
- "half 1.8.3",
- "serde",
-]
-
-[[package]]
 name = "serde_derive"
 version = "1.0.215"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8377,18 +8287,6 @@ checksum = "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "webauthn-rs-proto"
-version = "0.5.0"
-source = "git+https://github.com/cartridge-gg/webauthn-rs?rev=a6cea88#a6cea888b953382c6d0604bd08bbede195205140"
-dependencies = [
- "base64 0.21.7",
- "base64urlsafedata",
- "serde",
- "serde_json",
- "url",
 ]
 
 [[package]]

@@ -9,9 +9,10 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
+use account_sdk::account::session::account::SessionAccount;
 use account_sdk::account::session::hash::Session;
-use account_sdk::account::session::SessionAccount;
-use account_sdk::signers::{HashSigner, Signer};
+use account_sdk::provider::CartridgeJsonRpcProvider;
+use account_sdk::signers::Signer;
 use axum::extract::State;
 use axum::http::{HeaderValue, Method, StatusCode};
 use axum::response::IntoResponse;
@@ -104,7 +105,7 @@ pub unsafe extern "C" fn client_new(
 struct CallbackState {
     shutdown_tx: tokio::sync::mpsc::Sender<()>,
     rpc_url: String,
-    policies: Vec<account_sdk::account::session::hash::Policy>,
+    policies: Vec<account_sdk::account::session::policy::Policy>,
     public_key: Felt,
     account_callback: extern "C" fn(*mut crate::types::SessionAccount),
 }
@@ -133,8 +134,7 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
         }
     };
 
-    let provider =
-        Arc::new(JsonRpcClient::new(HttpTransport::new(Url::from_str(&state.rpc_url).unwrap())));
+    let provider = CartridgeJsonRpcProvider::new(Url::from_str(&state.rpc_url).unwrap());
     let chain_id = provider.chain_id().await.unwrap();
 
     let project_dirs = ProjectDirs::from("org", "dojoengine", "dojo");
@@ -182,7 +182,8 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
     let session = Session::new(
         state.policies.clone(),
         u64::from_str_radix(&payload.expires_at, 10).unwrap(),
-        &signer.signer(),
+        &signer.clone().into(),
+        Felt::ZERO,
     )
     .unwrap();
 
@@ -243,10 +244,7 @@ pub unsafe extern "C" fn controller_connect(
 ) {
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
-    let account_policies = policies
-        .iter()
-        .map(|p| Into::<account_sdk::account::session::hash::Policy>::into(p))
-        .collect();
+    let account_policies = policies.iter().map(|p| account_sdk::account::session::policy::Policy::Call(p.into())).collect::<Vec<account_sdk::account::session::policy::Policy>>();
     let policies = policies.iter().map(|p| p.into()).collect::<Vec<crate::types::Policy>>();
 
     // Generate new random signing key
@@ -327,9 +325,9 @@ pub unsafe extern "C" fn controller_account(
     policies_len: usize,
 ) -> Result<*mut crate::types::SessionAccount> {
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
-    let account_policies: Vec<account_sdk::account::session::hash::Policy> = policies
+    let account_policies: Vec<account_sdk::account::session::policy::Policy> = policies
         .iter()
-        .map(|p| Into::<account_sdk::account::session::hash::Policy>::into(p))
+        .map(|p| account_sdk::account::session::policy::Policy::Call(p.into()))
         .collect();
 
     // Get project directories
@@ -422,13 +420,12 @@ pub unsafe extern "C" fn controller_account(
     };
 
     // Initialize provider and signer
-    let provider =
-        Arc::new(JsonRpcClient::new(HttpTransport::new(Url::from_str(&account.rpc_url).unwrap())));
+    let provider = CartridgeJsonRpcProvider::new(Url::from_str(&account.rpc_url).unwrap());
     let signing_key = SigningKey::from_secret_scalar(Felt::from_hex(&signing_key_hex).unwrap());
     let signer = Signer::Starknet(signing_key);
 
     // Create new session
-    let session = match Session::new(session.policies.clone(), session.expires_at, &signer.signer())
+    let session = match Session::new(session.policies.clone(), session.expires_at, &signer.clone().into(), Felt::ZERO)
     {
         Ok(session) => session,
         Err(e) => {
