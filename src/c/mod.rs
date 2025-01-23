@@ -1,8 +1,6 @@
 mod types;
 
-use std::collections::HashMap;
 use std::ffi::{c_void, CStr, CString};
-use std::hash::DefaultHasher;
 use std::net::SocketAddr;
 use std::ops::Deref;
 use std::os::raw::c_char;
@@ -12,7 +10,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use account_sdk::account::session::hash::Session;
-use account_sdk::account::session::{self, SessionAccount};
+use account_sdk::account::session::SessionAccount;
 use account_sdk::signers::{HashSigner, Signer};
 use axum::extract::State;
 use axum::http::{HeaderValue, Method, StatusCode};
@@ -50,7 +48,7 @@ use crate::types::{
 use crate::utils::watch_tx;
 
 use axum::http::header;
-use axum::{routing::post, Json, Router};
+use axum::{routing::post, Router};
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use directories::ProjectDirs;
 use keyring::Entry;

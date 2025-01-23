@@ -1,14 +1,6 @@
-use std::{
-    ffi::{c_char, CStr, CString},
-    net::SocketAddr,
-};
+use std::ffi::{c_char, CStr, CString};
 
-use account_sdk::account::session::SessionAccount;
-use starknet::{
-    core::utils::get_selector_from_name,
-    providers::{jsonrpc::HttpTransport, JsonRpcClient},
-};
-use starknet_crypto::Felt;
+use starknet::core::utils::get_selector_from_name;
 use torii_client::client::Client;
 
 #[derive(Debug, Clone)]
