@@ -13,7 +13,7 @@ use account_sdk::account::session::hash::Session;
 use account_sdk::account::session::SessionAccount;
 use account_sdk::signers::{HashSigner, Signer};
 use axum::extract::State;
-use axum::http::StatusCode;
+use axum::http::{HeaderValue, Method, StatusCode};
 use axum::response::IntoResponse;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use dojo_world::contracts::naming::compute_selector_from_tag;
@@ -48,6 +48,9 @@ use tokio::net::TcpListener;
 use keyring::Entry;
 use directories::ProjectDirs;
 use std::fs;
+use tower_http::cors::{AllowOrigin, CorsLayer};
+use axum::http::header;
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 
 /// Creates a new Torii client instance
 ///
@@ -99,38 +102,65 @@ struct CallbackState {
     policies: Vec<account_sdk::account::session::hash::Policy>,
     verifying_key: Felt,
     account_callback: extern "C" fn(*mut crate::types::SessionAccount),
+    runtime: Arc<tokio::runtime::Runtime>,
 }
 
 // Modify handle_callback to call the callback
 async fn handle_callback(
     State(state): State<CallbackState>,
-    Json(payload): Json<RegisterSessionResponse>,
+    body: String,
 ) -> impl IntoResponse {
+    // Decode base64 payload
+    let padded = match body.len() % 4 {
+        0 => body,
+        n => body + &"=".repeat(4 - n)
+    };
+    let decoded = match BASE64.decode(padded) {
+        Ok(d) => d,
+        Err(e) => {
+            println!("Failed to decode payload: {}", e);
+            return StatusCode::BAD_REQUEST
+        },
+    };
+
+    // Parse JSON from decoded bytes
+    let payload: RegisterSessionResponse = match serde_json::from_slice(&decoded) {
+        Ok(p) => p,
+        Err(e) => {
+            println!("Failed to deserialize payload: {}", e);
+            return StatusCode::BAD_REQUEST
+        },
+    };
+
     let project_dirs = ProjectDirs::from("org", "dojoengine", "dojo");
     if let Some(proj_dirs) = project_dirs {
         let data_dir = proj_dirs.data_dir();
         fs::create_dir_all(data_dir).unwrap();
         
         let account_file = data_dir.join("account.json");
-        let mut account_storage = AccountStorage::from_file(account_file.clone()).unwrap();
+        let mut account_storage = AccountStorage::from_file(account_file.clone()).ok();
         
         // Set policies leafs. If we're registering a new account, set the policies leafs to the new policies. 
         // If we're updating an existing account, add the new policies to the existing policies.
         let policies_leafs = state.policies.iter().map(|p| p.as_merkle_leaf()).collect();
-        if let Some(session_account) = account_storage.session_account {
-            if session_account.address != payload.address {
+        if let Some(ref mut account_storage) = account_storage {
+            if account_storage.session_account.address != payload.address {
                 account_storage.authorized_policies = policies_leafs;
             } else {
                 account_storage.authorized_policies.extend(policies_leafs);
             }
+
+            account_storage.session_account = payload.clone();
+            account_storage.verifying_key = format!("{:#x}", state.verifying_key);
         } else {
-            account_storage.authorized_policies = policies_leafs;
+            account_storage = Some(AccountStorage {
+                verifying_key: format!("{:#x}", state.verifying_key),
+                authorized_policies: policies_leafs,
+                session_account: payload.clone(),
+            });
         }
 
-        // Set verifying key
-        account_storage.verifying_key = format!("{:#x}", state.verifying_key);
-        account_storage.session_account = Some(payload.clone());
-        
+        let account_storage = account_storage.unwrap();
         fs::write(account_file.clone(), serde_json::to_string_pretty(&account_storage).unwrap()).unwrap();
         println!("Account data saved to {}", account_file.display());
     }
@@ -174,7 +204,7 @@ pub unsafe extern "C" fn controller_connect(
     policies_len: usize,
     account_callback: extern "C" fn(*mut crate::types::SessionAccount),
 ) {
-    let runtime = tokio::runtime::Runtime::new().unwrap();
+    let runtime = Arc::new(tokio::runtime::Runtime::new().unwrap());
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
     let account_policies = policies.iter().map(|p| Into::<account_sdk::account::session::hash::Policy>::into(p)).collect();
@@ -198,15 +228,20 @@ pub unsafe extern "C" fn controller_connect(
         policies: account_policies,
         verifying_key: verifying_key.scalar(),
         account_callback,
+        runtime: Arc::clone(&runtime),
     };
 
-    // Set up the HTTP callback server with state
+    // Set up the HTTP callback server with state and CORS
     let app = Router::new()
         .route("/callback", post(handle_callback))
+        .layer(CorsLayer::new()
+            .allow_origin(AllowOrigin::exact(HeaderValue::from_static("https://x.cartridge.gg")))
+            .allow_methods([Method::POST])
+            .allow_headers([header::CONTENT_TYPE]))
         .with_state(state);
 
     // Find an available port by trying to bind to port 0
-    let addr = SocketAddr::from(([127, 0, 0, 1], 0));
+    let addr = SocketAddr::from(([127, 0, 0, 1], 1234));
     let listener = runtime.block_on(TcpListener::bind(addr)).unwrap();
     let bound_addr = listener.local_addr().unwrap();
     
@@ -216,12 +251,13 @@ pub unsafe extern "C" fn controller_connect(
     runtime.spawn(async move {
         server.with_graceful_shutdown(async move {
             shutdown_rx.recv().await;
+            println!("Shutting down server");
         }).await.unwrap();
     });
 
     println!("Listening on {}", bound_addr);
     
-    let callback_url = format!("http://{}/callback", bound_addr);
+    let callback_url = format!("http://{}/callback", bound_addr).replace("127.0.0.1", "localhost");
     let mut url = url::Url::parse(constants::KEYCHAIN_SESSION_URL).unwrap();
     url.query_pairs_mut()
         .append_pair("callback_uri", &callback_url)

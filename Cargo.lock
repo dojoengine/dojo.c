@@ -1907,6 +1907,7 @@ dependencies = [
  "account_sdk",
  "anyhow",
  "axum 0.8.1",
+ "base64 0.22.1",
  "cainome 0.2.3 (git+https://github.com/cartridge-gg/cainome?tag=v0.3.2)",
  "cbindgen",
  "crypto-bigint",
@@ -1933,6 +1934,7 @@ dependencies = [
  "torii-client",
  "torii-grpc",
  "torii-relay",
+ "tower-http 0.6.2",
  "tsify-next",
  "url",
  "urlencoding",
@@ -7586,7 +7588,7 @@ dependencies = [
  "pin-project",
  "tokio-stream",
  "tonic 0.11.0",
- "tower-http",
+ "tower-http 0.4.4",
  "tower-layer",
  "tower-service",
  "tracing",
@@ -7715,7 +7717,7 @@ dependencies = [
  "tonic-web",
  "tonic-web-wasm-client",
  "tower 0.4.13",
- "tower-http",
+ "tower-http 0.4.4",
  "tracing",
 ]
 
@@ -7800,6 +7802,20 @@ dependencies = [
  "http 0.2.12",
  "http-body 0.4.6",
  "http-range-header",
+ "pin-project-lite",
+ "tower-layer",
+ "tower-service",
+]
+
+[[package]]
+name = "tower-http"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "403fa3b783d4b626a8ad51d766ab03cb6d2dbfc46b1c5d4448395e6628dc9697"
+dependencies = [
+ "bitflags 2.6.0",
+ "bytes",
+ "http 1.2.0",
  "pin-project-lite",
  "tower-layer",
  "tower-service",

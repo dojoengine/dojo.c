@@ -24,19 +24,22 @@ pub struct Policy {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RegisterSessionResponse {
     pub username: String,
     pub address: String,
     pub expires_at: String,
     pub owner_guid: String,
+    #[serde(default)]
     pub transaction_hash: Option<String>,
+    #[serde(default)]
     pub already_registered: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AccountStorage {
     pub verifying_key: String,
-    pub session_account: Option<RegisterSessionResponse>,
+    pub session_account: RegisterSessionResponse,
     pub authorized_policies: Vec<Felt>
 }
 
