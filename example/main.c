@@ -109,7 +109,6 @@ int main()
     if (resTransfer.tag == ErrFieldElement)
     {
         printf("Failed to execute call: %s\n", resTransfer.err.message);
-        return 1;
     }
 
     // signing key
