@@ -9,10 +9,15 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
+use account_sdk::abigen::controller::OutsideExecutionV3;
+use account_sdk::account::outside_execution::{
+    OutsideExecution, OutsideExecutionAccount, OutsideExecutionCaller,
+};
 use account_sdk::account::session::account::SessionAccount;
 use account_sdk::account::session::hash::Session;
-use account_sdk::provider::CartridgeJsonRpcProvider;
+use account_sdk::provider::{CartridgeJsonRpcProvider, CartridgeProvider};
 use account_sdk::signers::Signer;
+use account_sdk::utils::time::get_current_timestamp;
 use axum::extract::State;
 use axum::http::{HeaderValue, Method, StatusCode};
 use axum::response::IntoResponse;
@@ -106,6 +111,7 @@ struct CallbackState {
     shutdown_tx: tokio::sync::mpsc::Sender<()>,
     rpc_url: String,
     policies: Vec<account_sdk::account::session::policy::Policy>,
+    private_key: SigningKey,
     public_key: Felt,
     account_callback: extern "C" fn(*mut crate::types::SessionAccount),
 }
@@ -146,11 +152,11 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
         let mut sessions_storage =
             SessionsStorage::from_file(account_file.clone()).unwrap_or_default();
 
-        sessions_storage.active = format!("{}/{:#x}", payload.address, chain_id);
+        sessions_storage.active = format!("{:#x}/{:#x}", payload.address, chain_id);
         sessions_storage.sessions.entry(sessions_storage.active.clone()).or_insert(vec![]).push(
             RegisteredSession {
                 public_key: state.public_key,
-                expires_at: u64::from_str_radix(&payload.expires_at, 10).unwrap(),
+                expires_at: payload.expires_at,
                 policies: state.policies.clone(),
             },
         );
@@ -158,8 +164,8 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
             sessions_storage.active.clone(),
             RegisteredAccount {
                 username: payload.username,
-                address: Felt::from_hex(&payload.address).unwrap(),
-                owner_guid: Felt::from_hex(&payload.owner_guid).unwrap(),
+                address: payload.address,
+                owner_guid: payload.owner_guid,
                 chain_id,
                 rpc_url: state.rpc_url,
             },
@@ -170,25 +176,23 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
         println!("Account data saved to {}", account_file.display());
     }
 
-    let address = Felt::from_hex(&payload.address).unwrap();
-    let owner_guid = Felt::from_hex(&payload.owner_guid).unwrap();
-
-    // Read signer from keyring
-    let keyring = Entry::new("dojo-keyring", &format!("{:#x}", state.public_key)).unwrap();
-    let signing_key_hex = keyring.get_password().unwrap();
-    let signing_key = SigningKey::from_secret_scalar(Felt::from_hex(&signing_key_hex).unwrap());
-    let signer = Signer::Starknet(signing_key);
-
+    let signer = Signer::Starknet(state.private_key);
     let session = Session::new(
         state.policies.clone(),
-        u64::from_str_radix(&payload.expires_at, 10).unwrap(),
+        payload.expires_at,
         &signer.clone().into(),
         Felt::ZERO,
     )
     .unwrap();
 
-    let session_account =
-        SessionAccount::new_as_registered(provider, signer, address, chain_id, owner_guid, session);
+    let session_account = SessionAccount::new_as_registered(
+        provider,
+        signer,
+        payload.address,
+        chain_id,
+        payload.owner_guid,
+        session,
+    );
 
     // Call the callback with the new account
     (state.account_callback)(Box::into_raw(Box::new(crate::types::SessionAccount(
@@ -244,7 +248,10 @@ pub unsafe extern "C" fn controller_connect(
 ) {
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
-    let account_policies = policies.iter().map(|p| account_sdk::account::session::policy::Policy::Call(p.into())).collect::<Vec<account_sdk::account::session::policy::Policy>>();
+    let account_policies = policies
+        .iter()
+        .map(|p| account_sdk::account::session::policy::Policy::Call(p.into()))
+        .collect::<Vec<account_sdk::account::session::policy::Policy>>();
     let policies = policies.iter().map(|p| p.into()).collect::<Vec<crate::types::Policy>>();
 
     // Generate new random signing key
@@ -263,6 +270,7 @@ pub unsafe extern "C" fn controller_connect(
         shutdown_tx,
         rpc_url: rpc_url.clone(),
         policies: account_policies,
+        private_key: signing_key,
         public_key: verifying_key,
         account_callback,
     };
@@ -425,8 +433,12 @@ pub unsafe extern "C" fn controller_account(
     let signer = Signer::Starknet(signing_key);
 
     // Create new session
-    let session = match Session::new(session.policies.clone(), session.expires_at, &signer.clone().into(), Felt::ZERO)
-    {
+    let session = match Session::new(
+        session.policies.clone(),
+        session.expires_at,
+        &signer.clone().into(),
+        Felt::ZERO,
+    ) {
         Ok(session) => session,
         Err(e) => {
             return Result::Err(Error {
@@ -522,8 +534,54 @@ pub unsafe extern "C" fn controller_execute_raw(
         Err(e) => {
             println!("Error executing call: {:?}", e);
             Result::Err(e.into())
-        },
+        }
     }
+}
+
+/// Executes a transaction from outside (paymaster)
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+/// * `calldata` - Array of Call structs
+/// * `calldata_len` - Length of calldata array
+///
+/// # Returns
+/// Result containing transaction hash as FieldElement or error
+#[no_mangle]
+pub unsafe extern "C" fn controller_execute_from_outside(
+    account: *mut crate::types::SessionAccount,
+    calldata: *const Call,
+    calldata_len: usize,
+) -> Result<types::FieldElement> {
+    let caller = OutsideExecutionCaller::Any;
+    let calls = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
+    let calls = calls.iter().map(|c| c.into()).collect::<Vec<starknet::core::types::Call>>();
+    let now = get_current_timestamp();
+    let outside_execution = OutsideExecutionV3 {
+        caller: caller.into(),
+        execute_after: 0_u64,
+        execute_before: now + 600,
+        calls: calls.into_iter().map(|c| c.into()).collect(),
+        nonce: (SigningKey::from_random().secret_scalar(), 1),
+    };
+
+    let signed = match RUNTIME.block_on(
+        (*account).0.sign_outside_execution(OutsideExecution::V3(outside_execution.clone())),
+    ) {
+        Ok(signed) => signed,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    let res = match RUNTIME.block_on((*account).0.provider().add_execute_outside_transaction(
+        OutsideExecution::V3(outside_execution),
+        (*account).0.address(),
+        signed.signature,
+    )) {
+        Ok(res) => res,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    Result::Ok((&res.transaction_hash).into())
 }
 
 /// Sets a logger callback function for the client

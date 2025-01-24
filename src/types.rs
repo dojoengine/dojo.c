@@ -23,17 +23,24 @@ pub struct Policy {
     pub description: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RegisterSessionResponse {
     pub username: String,
-    pub address: String,
-    pub expires_at: String,
-    pub owner_guid: String,
-    #[serde(default)]
-    pub transaction_hash: Option<String>,
-    #[serde(default)]
-    pub already_registered: Option<bool>,
+    pub address: Felt,
+    #[serde(deserialize_with = "deserialize_expires_at", serialize_with = "serialize_expires_at")]
+    pub expires_at: u64,
+    pub owner_guid: Felt,
+    pub _transaction_hash: Option<Felt>,
+    pub _already_registered: Option<bool>,
+}
+
+fn deserialize_expires_at<'de, D>(deserializer: D) -> Result<u64, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let expires_at_str = String::deserialize(deserializer)?;
+    expires_at_str.parse::<u64>().map_err(serde::de::Error::custom)
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]

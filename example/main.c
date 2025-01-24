@@ -84,8 +84,21 @@ int main()
         {eth, "transfer", "Transfer ETH"},
     };
 
-    // Replace the direct call with the async version
-    controller_connect("https://api.cartridge.gg/x/starknet/sepolia", policies, 1, on_account_connected);
+    ResultProvider resControllerProvider = provider_new("https://api.cartridge.gg/x/starknet/sepolia");
+    if (resControllerProvider.tag == ErrProvider)
+    {
+        printf("Failed to create provider: %s\n", resControllerProvider.err.message);
+        return 1;
+    }
+    struct Provider *controller_provider = resControllerProvider.ok;
+
+    ResultSessionAccount resSessionAccount = controller_account(policies, 1);
+    if (resSessionAccount.tag == OkSessionAccount) {
+        printf("Session account already connected\n");
+        g_session_account = resSessionAccount.ok;
+    } else {
+        controller_connect("https://api.cartridge.gg/x/starknet/sepolia", policies, 1, on_account_connected);
+    }
     
     // Wait for the account to be connected
     while (g_session_account == NULL) {
@@ -109,14 +122,27 @@ int main()
             .data_len = 3,
         }};
     hex_to_bytes("0x025Ee38b230906EA41B00401cC12bb51f58DC62198cf058a336655696908863D", &transfer.calldata.data[0]);
-    hex_to_bytes("0x00", &transfer.calldata.data[1]);
-    hex_to_bytes("0x01", &transfer.calldata.data[2]);
+    hex_to_bytes("0x174876e800", &transfer.calldata.data[1]);
+    hex_to_bytes("0x0", &transfer.calldata.data[2]);
 
-    ResultFieldElement resTransfer = controller_execute_raw(g_session_account, &transfer, 1);
+    ResultFieldElement resTransfer = controller_execute_from_outside(g_session_account, &transfer, 1);
     if (resTransfer.tag == ErrFieldElement)
     {
         printf("Failed to execute call: %s\n", resTransfer.err.message);
     }
+
+    wait_for_transaction(controller_provider, resTransfer.ok);
+
+    // Log transaction hash
+    printf("ETH Transfer Transaction hash: 0x");
+    for (size_t i = 0; i < 32; i++)
+    {
+        printf("%02x", resTransfer.ok.data[i]);
+    }
+    printf("\n");
+
+    return 0;
+
 
     // signing key
     FieldElement signing_key = {};

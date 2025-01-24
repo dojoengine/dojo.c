@@ -1034,6 +1034,19 @@ Result<FieldElement> controller_execute_raw(SessionAccount *account,
                                             const Call *calldata,
                                             uintptr_t calldata_len);
 
+/// Executes a transaction from outside (paymaster)
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+/// * `calldata` - Array of Call structs
+/// * `calldata_len` - Length of calldata array
+///
+/// # Returns
+/// Result containing transaction hash as FieldElement or error
+Result<FieldElement> controller_execute_from_outside(SessionAccount *account,
+                                                     const Call *calldata,
+                                                     uintptr_t calldata_len);
+
 /// Sets a logger callback function for the client
 ///
 /// # Parameters
