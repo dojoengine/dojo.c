@@ -54,7 +54,7 @@ pub struct SessionsStorage {
 pub struct RegisteredSession {
     pub public_key: Felt,
     pub expires_at: u64,
-    pub policies: Vec<account_sdk::account::session::policy::Policy>
+    pub policies: Vec<account_sdk::account::session::policy::Policy>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -63,7 +63,7 @@ pub struct RegisteredAccount {
     pub address: Felt,
     pub owner_guid: Felt,
     pub chain_id: Felt,
-    pub rpc_url: String
+    pub rpc_url: String,
 }
 
 impl SessionsStorage {

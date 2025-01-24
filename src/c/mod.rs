@@ -1,6 +1,7 @@
 mod types;
 
 use std::ffi::{c_void, CStr, CString};
+use std::fs;
 use std::net::SocketAddr;
 use std::ops::Deref;
 use std::os::raw::c_char;
@@ -19,11 +20,18 @@ use account_sdk::provider::{CartridgeJsonRpcProvider, CartridgeProvider};
 use account_sdk::signers::Signer;
 use account_sdk::utils::time::get_current_timestamp;
 use axum::extract::State;
-use axum::http::{HeaderValue, Method, StatusCode};
+use axum::http::{header, HeaderValue, Method, StatusCode};
 use axum::response::IntoResponse;
+use axum::routing::post;
+use axum::Router;
+use base64::engine::general_purpose::STANDARD as BASE64;
+use base64::Engine as _;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
+use directories::ProjectDirs;
 use dojo_world::contracts::naming::compute_selector_from_tag;
 use futures::FutureExt;
+use keyring::Entry;
+use lazy_static::lazy_static;
 use starknet::accounts::{
     Account as StarknetAccount, ConnectedAccount, ExecutionEncoding, SingleOwnerAccount,
 };
@@ -34,12 +42,14 @@ use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
 use starknet_crypto::{poseidon_hash_many, Felt};
 use stream_cancel::{StreamExt as _, Tripwire};
+use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
 use tokio::time::sleep;
 use tokio_stream::StreamExt;
 use torii_client::client::Client as TClient;
 use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{EntityKeysClause, Event, IndexerUpdate, Policy, Struct, Token, TokenBalance};
 use url::Url;
 
@@ -52,16 +62,6 @@ use crate::types::{
     SessionsStorage, Subscription,
 };
 use crate::utils::watch_tx;
-
-use axum::http::header;
-use axum::{routing::post, Router};
-use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
-use directories::ProjectDirs;
-use keyring::Entry;
-use lazy_static::lazy_static;
-use std::fs;
-use tokio::net::TcpListener;
-use tower_http::cors::{AllowOrigin, CorsLayer};
 
 lazy_static! {
     static ref RUNTIME: Arc<Runtime> =
@@ -153,7 +153,7 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
             SessionsStorage::from_file(account_file.clone()).unwrap_or_default();
 
         sessions_storage.active = format!("{:#x}/{:#x}", payload.address, chain_id);
-        sessions_storage.sessions.entry(sessions_storage.active.clone()).or_insert(vec![]).push(
+        sessions_storage.sessions.entry(sessions_storage.active.clone()).or_default().push(
             RegisteredSession {
                 public_key: state.public_key,
                 expires_at: payload.expires_at,
@@ -346,7 +346,7 @@ pub unsafe extern "C" fn controller_account(
                 message: CString::new("Could not determine project directories")
                     .unwrap()
                     .into_raw(),
-            })
+            });
         }
     };
 
@@ -357,7 +357,7 @@ pub unsafe extern "C" fn controller_account(
         Err(_) => {
             return Result::Err(Error {
                 message: CString::new("No stored session found").unwrap().into_raw(),
-            })
+            });
         }
     };
 
@@ -374,7 +374,7 @@ pub unsafe extern "C" fn controller_account(
         None => {
             return Result::Err(Error {
                 message: CString::new("Active account data not found").unwrap().into_raw(),
-            })
+            });
         }
     };
 
@@ -402,7 +402,7 @@ pub unsafe extern "C" fn controller_account(
                     message: CString::new("No valid session found with matching policies")
                         .unwrap()
                         .into_raw(),
-                })
+                });
             }
         };
 
@@ -412,7 +412,7 @@ pub unsafe extern "C" fn controller_account(
         Err(_) => {
             return Result::Err(Error {
                 message: CString::new("Could not access keyring").unwrap().into_raw(),
-            })
+            });
         }
     };
 
@@ -423,7 +423,7 @@ pub unsafe extern "C" fn controller_account(
                 message: CString::new("Could not retrieve signing key from keyring")
                     .unwrap()
                     .into_raw(),
-            })
+            });
         }
     };
 
@@ -445,7 +445,7 @@ pub unsafe extern "C" fn controller_account(
                 message: CString::new(format!("Failed to create session: {}", e))
                     .unwrap()
                     .into_raw(),
-            })
+            });
         }
     };
 
