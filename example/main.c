@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 
+// Add this global variable near the top of the file
+static struct SessionAccount* g_session_account = NULL;
+
 void on_entity_state_update(FieldElement key, CArrayStruct models)
 {
     printf("on_entity_state_update\n");
@@ -49,6 +52,12 @@ void hex_to_bytes(const char *hex, FieldElement *felt)
     }
 }
 
+void on_account_connected(struct SessionAccount *account)
+{
+    // Store the account in our global variable
+    g_session_account = account;
+}
+
 int main()
 {
     const char *torii_url = "http://localhost:8080";
@@ -60,6 +69,8 @@ int main()
     hex_to_bytes("0x01385f25d20a724edc9c7b3bd9636c59af64cbaf9fcd12f33b3af96b2452f295", &world);
     FieldElement actions;
     hex_to_bytes("0x04ba8772b4785c0afce5b73ed98d30cf8832e3bfcceff5a688b085ef6d0f164e", &actions);
+    FieldElement eth;
+    hex_to_bytes("0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7", &eth);
 
     ResultToriiClient resClient = client_new(torii_url, rpc_url, "/ip4/127.0.0.1/tcp/9090", world);
     if (resClient.tag == ErrToriiClient)
@@ -68,6 +79,70 @@ int main()
         return 1;
     }
     struct ToriiClient *client = resClient.ok;
+
+    Policy policies[] = {
+        {eth, "transfer", "Transfer ETH"},
+    };
+
+    ResultProvider resControllerProvider = provider_new("https://api.cartridge.gg/x/starknet/sepolia");
+    if (resControllerProvider.tag == ErrProvider)
+    {
+        printf("Failed to create provider: %s\n", resControllerProvider.err.message);
+        return 1;
+    }
+    struct Provider *controller_provider = resControllerProvider.ok;
+
+    ResultSessionAccount resSessionAccount = controller_account(policies, 1);
+    if (resSessionAccount.tag == OkSessionAccount) {
+        printf("Session account already connected\n");
+        g_session_account = resSessionAccount.ok;
+    } else {
+        controller_connect("https://api.cartridge.gg/x/starknet/sepolia", policies, 1, on_account_connected);
+    }
+    
+    // Wait for the account to be connected
+    while (g_session_account == NULL) {
+        usleep(100000); // Sleep for 100ms to avoid busy waiting
+    }
+    
+    FieldElement controller_addr = controller_address(g_session_account);
+    printf("Connected controller address: 0x");
+    for (size_t i = 0; i < 32; i++)
+    {
+        printf("%02x", controller_addr.data[i]);
+    }
+    printf("\n");
+
+    // Transfer a bit of ETH to another account
+    Call transfer = {
+        .to = eth,
+        .selector = "transfer",
+        .calldata = {
+            .data = malloc(sizeof(FieldElement) * 3),
+            .data_len = 3,
+        }};
+    hex_to_bytes("0x025Ee38b230906EA41B00401cC12bb51f58DC62198cf058a336655696908863D", &transfer.calldata.data[0]);
+    hex_to_bytes("0x174876e800", &transfer.calldata.data[1]);
+    hex_to_bytes("0x0", &transfer.calldata.data[2]);
+
+    ResultFieldElement resTransfer = controller_execute_from_outside(g_session_account, &transfer, 1);
+    if (resTransfer.tag == ErrFieldElement)
+    {
+        printf("Failed to execute call: %s\n", resTransfer.err.message);
+    }
+
+    wait_for_transaction(controller_provider, resTransfer.ok);
+
+    // Log transaction hash
+    printf("ETH Transfer Transaction hash: 0x");
+    for (size_t i = 0; i < 32; i++)
+    {
+        printf("%02x", resTransfer.ok.data[i]);
+    }
+    printf("\n");
+
+    return 0;
+
 
     // signing key
     FieldElement signing_key = {};

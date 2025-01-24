@@ -7,6 +7,9 @@
 namespace dojo_bindings {
 
 struct ToriiClient;
+struct Policy;
+struct SessionAccount;
+struct Call;
 struct Ty;
 struct Query;
 struct Subscription;
@@ -683,6 +686,12 @@ struct BlockId {
   }
 };
 
+struct Policy {
+  FieldElement target;
+  const char *method;
+  const char *description;
+};
+
 template<typename T>
 struct COption {
   enum class Tag {
@@ -934,6 +943,109 @@ Result<ToriiClient*> client_new(const char *torii_url,
                                 const char *rpc_url,
                                 const char *libp2p_relay_url,
                                 FieldElement world);
+
+/// Initiates a connection to establish a new session account
+///
+/// This function:
+/// 1. Generates a new signing key pair
+/// 2. Starts a local HTTP server to receive the callback
+/// 3. Opens the keychain session URL in browser
+/// 4. Waits for callback with session details
+/// 5. Creates and stores the session
+/// 6. Calls the provided callback with the new session account
+///
+/// # Safety
+/// This function is marked as unsafe because it:
+/// - Handles raw C pointers
+/// - Performs FFI operations
+/// - Creates system-level resources (HTTP server, keyring entries)
+///
+/// # Parameters
+/// * `rpc_url` - Pointer to null-terminated string containing the RPC endpoint URL
+/// * `policies` - Pointer to array of Policy structs defining session permissions
+/// * `policies_len` - Length of the policies array
+/// * `account_callback` - Function pointer called with the new session account when ready
+///
+/// # Example
+/// ```c
+/// void on_account(SessionAccount* account) {
+///     // Handle new session account
+/// }
+///
+/// controller_connect(
+///     "https://rpc.example.com",
+///     policies,
+///     policies_length,
+///     on_account
+/// );
+/// ```
+void controller_connect(const char *rpc_url,
+                        const Policy *policies,
+                        uintptr_t policies_len,
+                        void (*account_callback)(SessionAccount*));
+
+/// Retrieves a stored session account if one exists and is valid
+///
+/// # Parameters
+/// * `policies` - Array of policies to match the session
+/// * `policies_len` - Length of policies array
+///
+/// # Returns
+/// Result containing pointer to SessionAccount or error if no valid account exists
+Result<SessionAccount*> controller_account(const Policy *policies, uintptr_t policies_len);
+
+/// Gets account address
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+///
+/// # Returns
+/// FieldElement containing the account address
+FieldElement controller_address(SessionAccount *account);
+
+/// Gets account chain ID
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+///
+/// # Returns
+/// FieldElement containing the chain ID
+FieldElement controller_chain_id(SessionAccount *account);
+
+/// Gets account nonce
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+///
+/// # Returns
+/// Result containing FieldElement nonce or error
+Result<FieldElement> controller_nonce(SessionAccount *account);
+
+/// Executes raw transaction
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+/// * `calldata` - Array of Call structs
+/// * `calldata_len` - Length of calldata array
+///
+/// # Returns
+/// Result containing transaction hash as FieldElement or error
+Result<FieldElement> controller_execute_raw(SessionAccount *account,
+                                            const Call *calldata,
+                                            uintptr_t calldata_len);
+
+/// Executes a transaction from outside (paymaster)
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+/// * `calldata` - Array of Call structs
+/// * `calldata_len` - Length of calldata array
+///
+/// # Returns
+/// Result containing transaction hash as FieldElement or error
+Result<FieldElement> controller_execute_from_outside(SessionAccount *account,
+                                                     const Call *calldata,
+                                                     uintptr_t calldata_len);
 
 /// Sets a logger callback function for the client
 ///
