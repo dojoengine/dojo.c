@@ -71,6 +71,8 @@ int main()
     hex_to_bytes("0x04ba8772b4785c0afce5b73ed98d30cf8832e3bfcceff5a688b085ef6d0f164e", &actions);
     FieldElement eth;
     hex_to_bytes("0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7", &eth);
+    FieldElement katana;
+    hex_to_bytes("0x03dc18a09d1dc893eb1abce2e0d33b8cc285ea430a4bdd30bccf0c8638e59659", &katana);
 
     ResultToriiClient resClient = client_new(torii_url, rpc_url, "/ip4/127.0.0.1/tcp/9090", world);
     if (resClient.tag == ErrToriiClient)
@@ -81,10 +83,11 @@ int main()
     struct ToriiClient *client = resClient.ok;
 
     Policy policies[] = {
-        {eth, "transfer", "Transfer ETH"},
+        {katana, "create_Board", "Create a board"},
+        {katana, "create_Game", "Create a game"},
     };
 
-    ResultProvider resControllerProvider = provider_new("https://api.cartridge.gg/x/starknet/sepolia");
+    ResultProvider resControllerProvider = provider_new("https://api.cartridge.gg/x/knet-controller/katana");
     if (resControllerProvider.tag == ErrProvider)
     {
         printf("Failed to create provider: %s\n", resControllerProvider.err.message);
@@ -92,12 +95,12 @@ int main()
     }
     struct Provider *controller_provider = resControllerProvider.ok;
 
-    ResultSessionAccount resSessionAccount = controller_account(policies, 1);
-    if (resSessionAccount.tag == OkSessionAccount) {
+    ResultSessionAccount resSessionAccount = controller_account(policies, 2);
+    if (resSessionAccount.tag == ErrSessionAccount) {
         printf("Session account already connected\n");
         g_session_account = resSessionAccount.ok;
     } else {
-        controller_connect("https://api.cartridge.gg/x/starknet/sepolia", policies, 1, on_account_connected);
+        controller_connect("https://api.cartridge.gg/x/knet-controller/katana", policies, 2, on_account_connected);
     }
     
     // Wait for the account to be connected
@@ -114,30 +117,29 @@ int main()
     printf("\n");
 
     // Transfer a bit of ETH to another account
-    Call transfer = {
-        .to = eth,
-        .selector = "transfer",
+    Call create_Game = {
+        .to = katana,
+        .selector = "create_Game",
         .calldata = {
-            .data = malloc(sizeof(FieldElement) * 3),
-            .data_len = 3,
+            .data = malloc(sizeof(FieldElement) * 1),
+            .data_len = 1,
         }};
-    hex_to_bytes("0x025Ee38b230906EA41B00401cC12bb51f58DC62198cf058a336655696908863D", &transfer.calldata.data[0]);
-    hex_to_bytes("0x174876e800", &transfer.calldata.data[1]);
-    hex_to_bytes("0x0", &transfer.calldata.data[2]);
 
-    ResultFieldElement resTransfer = controller_execute_from_outside(g_session_account, &transfer, 1);
-    if (resTransfer.tag == ErrFieldElement)
+    hex_to_bytes("0x01", &create_Game.calldata.data[0]);
+
+    ResultFieldElement resCreateGame = controller_execute_from_outside(g_session_account, &create_Game, 1);
+    if (resCreateGame.tag == ErrFieldElement)
     {
-        printf("Failed to execute call: %s\n", resTransfer.err.message);
+        printf("Failed to execute call: %s\n", resCreateGame.err.message);
     }
 
-    wait_for_transaction(controller_provider, resTransfer.ok);
+    wait_for_transaction(controller_provider, resCreateGame.ok);
 
     // Log transaction hash
-    printf("ETH Transfer Transaction hash: 0x");
+    printf("Game created Transaction hash: 0x");
     for (size_t i = 0; i < 32; i++)
     {
-        printf("%02x", resTransfer.ok.data[i]);
+        printf("%02x", resCreateGame.ok.data[i]);
     }
     printf("\n");
 

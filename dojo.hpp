@@ -8,7 +8,7 @@ namespace dojo_bindings {
 
 struct ToriiClient;
 struct Policy;
-struct SessionAccount;
+struct Controller;
 struct Call;
 struct Ty;
 struct Query;
@@ -982,7 +982,7 @@ Result<ToriiClient*> client_new(const char *torii_url,
 void controller_connect(const char *rpc_url,
                         const Policy *policies,
                         uintptr_t policies_len,
-                        void (*account_callback)(SessionAccount*));
+                        void (*account_callback)(Controller*));
 
 /// Retrieves a stored session account if one exists and is valid
 ///
@@ -992,7 +992,16 @@ void controller_connect(const char *rpc_url,
 ///
 /// # Returns
 /// Result containing pointer to SessionAccount or error if no valid account exists
-Result<SessionAccount*> controller_account(const Policy *policies, uintptr_t policies_len);
+Result<Controller*> controller_account(const Policy *policies, uintptr_t policies_len);
+
+/// Gets the username of controller
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+///
+/// # Returns
+/// CString containing the username
+const char *controller_username(Controller *controller);
 
 /// Gets account address
 ///
@@ -1001,7 +1010,7 @@ Result<SessionAccount*> controller_account(const Policy *policies, uintptr_t pol
 ///
 /// # Returns
 /// FieldElement containing the account address
-FieldElement controller_address(SessionAccount *account);
+FieldElement controller_address(Controller *controller);
 
 /// Gets account chain ID
 ///
@@ -1010,7 +1019,7 @@ FieldElement controller_address(SessionAccount *account);
 ///
 /// # Returns
 /// FieldElement containing the chain ID
-FieldElement controller_chain_id(SessionAccount *account);
+FieldElement controller_chain_id(Controller *controller);
 
 /// Gets account nonce
 ///
@@ -1019,7 +1028,7 @@ FieldElement controller_chain_id(SessionAccount *account);
 ///
 /// # Returns
 /// Result containing FieldElement nonce or error
-Result<FieldElement> controller_nonce(SessionAccount *account);
+Result<FieldElement> controller_nonce(Controller *controller);
 
 /// Executes raw transaction
 ///
@@ -1030,7 +1039,7 @@ Result<FieldElement> controller_nonce(SessionAccount *account);
 ///
 /// # Returns
 /// Result containing transaction hash as FieldElement or error
-Result<FieldElement> controller_execute_raw(SessionAccount *account,
+Result<FieldElement> controller_execute_raw(Controller *controller,
                                             const Call *calldata,
                                             uintptr_t calldata_len);
 
@@ -1043,7 +1052,7 @@ Result<FieldElement> controller_execute_raw(SessionAccount *account,
 ///
 /// # Returns
 /// Result containing transaction hash as FieldElement or error
-Result<FieldElement> controller_execute_from_outside(SessionAccount *account,
+Result<FieldElement> controller_execute_from_outside(Controller *controller,
                                                      const Call *calldata,
                                                      uintptr_t calldata_len);
 

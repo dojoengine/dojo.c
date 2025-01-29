@@ -9,7 +9,7 @@ namespace dojo_bindings {
 
 struct ToriiClient;
 struct Policy;
-struct SessionAccount;
+struct Controller;
 struct Call;
 struct Entity;
 struct Query;
@@ -83,22 +83,22 @@ typedef struct FieldElement {
   uint8_t data[32];
 } FieldElement;
 
-typedef enum ResultSessionAccount_Tag {
-  OkSessionAccount,
-  ErrSessionAccount,
-} ResultSessionAccount_Tag;
+typedef enum ResultController_Tag {
+  OkController,
+  ErrController,
+} ResultController_Tag;
 
-typedef struct ResultSessionAccount {
-  ResultSessionAccount_Tag tag;
+typedef struct ResultController {
+  ResultController_Tag tag;
   union {
     struct {
-      struct SessionAccount *ok;
+      struct Controller *ok;
     };
     struct {
       struct Error err;
     };
   };
-} ResultSessionAccount;
+} ResultController;
 
 typedef enum ResultFieldElement_Tag {
   OkFieldElement,
@@ -802,7 +802,7 @@ struct ResultToriiClient client_new(const char *torii_url,
 void controller_connect(const char *rpc_url,
                         const struct Policy *policies,
                         uintptr_t policies_len,
-                        void (*account_callback)(struct SessionAccount*));
+                        void (*account_callback)(struct Controller*));
 
 /**
  * Retrieves a stored session account if one exists and is valid
@@ -814,8 +814,18 @@ void controller_connect(const char *rpc_url,
  * # Returns
  * Result containing pointer to SessionAccount or error if no valid account exists
  */
-struct ResultSessionAccount controller_account(const struct Policy *policies,
-                                               uintptr_t policies_len);
+struct ResultController controller_account(const struct Policy *policies, uintptr_t policies_len);
+
+/**
+ * Gets the username of controller
+ *
+ * # Parameters
+ * * `account` - Pointer to Account
+ *
+ * # Returns
+ * CString containing the username
+ */
+const char *controller_username(struct Controller *controller);
 
 /**
  * Gets account address
@@ -826,7 +836,7 @@ struct ResultSessionAccount controller_account(const struct Policy *policies,
  * # Returns
  * FieldElement containing the account address
  */
-struct FieldElement controller_address(struct SessionAccount *account);
+struct FieldElement controller_address(struct Controller *controller);
 
 /**
  * Gets account chain ID
@@ -837,7 +847,7 @@ struct FieldElement controller_address(struct SessionAccount *account);
  * # Returns
  * FieldElement containing the chain ID
  */
-struct FieldElement controller_chain_id(struct SessionAccount *account);
+struct FieldElement controller_chain_id(struct Controller *controller);
 
 /**
  * Gets account nonce
@@ -848,7 +858,7 @@ struct FieldElement controller_chain_id(struct SessionAccount *account);
  * # Returns
  * Result containing FieldElement nonce or error
  */
-struct ResultFieldElement controller_nonce(struct SessionAccount *account);
+struct ResultFieldElement controller_nonce(struct Controller *controller);
 
 /**
  * Executes raw transaction
@@ -861,7 +871,7 @@ struct ResultFieldElement controller_nonce(struct SessionAccount *account);
  * # Returns
  * Result containing transaction hash as FieldElement or error
  */
-struct ResultFieldElement controller_execute_raw(struct SessionAccount *account,
+struct ResultFieldElement controller_execute_raw(struct Controller *controller,
                                                  const struct Call *calldata,
                                                  uintptr_t calldata_len);
 
@@ -876,7 +886,7 @@ struct ResultFieldElement controller_execute_raw(struct SessionAccount *account,
  * # Returns
  * Result containing transaction hash as FieldElement or error
  */
-struct ResultFieldElement controller_execute_from_outside(struct SessionAccount *account,
+struct ResultFieldElement controller_execute_from_outside(struct Controller *controller,
                                                           const struct Call *calldata,
                                                           uintptr_t calldata_len);
 

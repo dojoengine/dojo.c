@@ -113,7 +113,7 @@ struct CallbackState {
     policies: Vec<account_sdk::account::session::policy::Policy>,
     private_key: SigningKey,
     public_key: Felt,
-    account_callback: extern "C" fn(*mut crate::types::SessionAccount),
+    account_callback: extern "C" fn(*mut crate::types::Controller),
 }
 
 // Modify handle_callback to call the callback
@@ -163,7 +163,7 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
         sessions_storage.accounts.insert(
             sessions_storage.active.clone(),
             RegisteredAccount {
-                username: payload.username,
+                username: payload.username.clone(),
                 address: payload.address,
                 owner_guid: payload.owner_guid,
                 chain_id,
@@ -195,9 +195,10 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
     );
 
     // Call the callback with the new account
-    (state.account_callback)(Box::into_raw(Box::new(crate::types::SessionAccount(
-        session_account,
-    ))));
+    (state.account_callback)(Box::into_raw(Box::new(crate::types::Controller {
+        account: session_account,
+        username: payload.username,
+    })));
 
     // Signal shutdown after handling callback
     state.shutdown_tx.send(()).await.unwrap();
@@ -244,7 +245,7 @@ pub unsafe extern "C" fn controller_connect(
     rpc_url: *const c_char,
     policies: *const Policy,
     policies_len: usize,
-    account_callback: extern "C" fn(*mut crate::types::SessionAccount),
+    account_callback: extern "C" fn(*mut crate::types::Controller),
 ) {
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
@@ -331,7 +332,7 @@ pub unsafe extern "C" fn controller_connect(
 pub unsafe extern "C" fn controller_account(
     policies: *const Policy,
     policies_len: usize,
-) -> Result<*mut crate::types::SessionAccount> {
+) -> Result<*mut crate::types::Controller> {
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
     let account_policies: Vec<account_sdk::account::session::policy::Policy> = policies
         .iter()
@@ -459,7 +460,24 @@ pub unsafe extern "C" fn controller_account(
         session,
     );
 
-    Result::Ok(Box::into_raw(Box::new(crate::types::SessionAccount(session_account))))
+    Result::Ok(Box::into_raw(Box::new(crate::types::Controller {
+        account: session_account,
+        username: account.username.clone(),
+    })))
+}
+
+/// Gets the username of controller
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+///
+/// # Returns
+/// CString containing the username
+#[no_mangle]
+pub unsafe extern "C" fn controller_username(
+    controller: *mut crate::types::Controller,
+) -> *const c_char {
+    CString::new((*controller).username.to_string()).unwrap().into_raw()
 }
 
 /// Gets account address
@@ -471,9 +489,9 @@ pub unsafe extern "C" fn controller_account(
 /// FieldElement containing the account address
 #[no_mangle]
 pub unsafe extern "C" fn controller_address(
-    account: *mut crate::types::SessionAccount,
+    controller: *mut crate::types::Controller,
 ) -> types::FieldElement {
-    (&(*account).0.address()).into()
+    (&(*controller).account.address()).into()
 }
 
 /// Gets account chain ID
@@ -485,9 +503,9 @@ pub unsafe extern "C" fn controller_address(
 /// FieldElement containing the chain ID
 #[no_mangle]
 pub unsafe extern "C" fn controller_chain_id(
-    account: *mut crate::types::SessionAccount,
+    controller: *mut crate::types::Controller,
 ) -> types::FieldElement {
-    (&(*account).0.chain_id()).into()
+    (&(*controller).account.chain_id()).into()
 }
 
 /// Gets account nonce
@@ -499,9 +517,9 @@ pub unsafe extern "C" fn controller_chain_id(
 /// Result containing FieldElement nonce or error
 #[no_mangle]
 pub unsafe extern "C" fn controller_nonce(
-    account: *mut crate::types::SessionAccount,
+    controller: *mut crate::types::Controller,
 ) -> Result<types::FieldElement> {
-    let nonce = match RUNTIME.block_on((*account).0.get_nonce()) {
+    let nonce = match RUNTIME.block_on((*controller).account.get_nonce()) {
         Ok(nonce) => nonce,
         Err(e) => return Result::Err(e.into()),
     };
@@ -520,14 +538,14 @@ pub unsafe extern "C" fn controller_nonce(
 /// Result containing transaction hash as FieldElement or error
 #[no_mangle]
 pub unsafe extern "C" fn controller_execute_raw(
-    account: *mut crate::types::SessionAccount,
+    controller: *mut crate::types::Controller,
     calldata: *const Call,
     calldata_len: usize,
 ) -> Result<types::FieldElement> {
     let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
     let calldata =
         calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::core::types::Call>>();
-    let call = (*account).0.execute_v1(calldata);
+    let call = (*controller).account.execute_v1(calldata);
 
     match RUNTIME.block_on(call.send()) {
         Ok(result) => Result::Ok((&result.transaction_hash).into()),
@@ -549,7 +567,7 @@ pub unsafe extern "C" fn controller_execute_raw(
 /// Result containing transaction hash as FieldElement or error
 #[no_mangle]
 pub unsafe extern "C" fn controller_execute_from_outside(
-    account: *mut crate::types::SessionAccount,
+    controller: *mut crate::types::Controller,
     calldata: *const Call,
     calldata_len: usize,
 ) -> Result<types::FieldElement> {
@@ -566,20 +584,26 @@ pub unsafe extern "C" fn controller_execute_from_outside(
     };
 
     let signed = match RUNTIME.block_on(
-        (*account).0.sign_outside_execution(OutsideExecution::V3(outside_execution.clone())),
+        (*controller)
+            .account
+            .sign_outside_execution(OutsideExecution::V3(outside_execution.clone())),
     ) {
         Ok(signed) => signed,
         Err(e) => return Result::Err(e.into()),
     };
 
-    let res = match RUNTIME.block_on((*account).0.provider().add_execute_outside_transaction(
-        OutsideExecution::V3(outside_execution),
-        (*account).0.address(),
-        signed.signature,
-    )) {
-        Ok(res) => res,
-        Err(e) => return Result::Err(e.into()),
-    };
+    let res =
+        match RUNTIME.block_on((*controller).account.provider().add_execute_outside_transaction(
+            OutsideExecution::V3(outside_execution),
+            (*controller).account.address(),
+            signed.signature,
+        )) {
+            Ok(res) => res,
+            Err(e) => {
+                println!("Error executing call: {:?}", e);
+                return Result::Err(e.into());
+            }
+        };
 
     Result::Ok((&res.transaction_hash).into())
 }
