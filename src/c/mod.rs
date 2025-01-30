@@ -367,17 +367,17 @@ pub unsafe extern "C" fn controller_account(
     };
 
     // Helper function to try creating a session account
-    let try_create_session_account = |account: &RegisteredAccount, session: &RegisteredSession| -> Option<crate::types::Controller> {
+    let try_create_session_account = |account: &RegisteredAccount,
+                                      session: &RegisteredSession|
+     -> Option<crate::types::Controller> {
         // Check chain ID
         if account.chain_id != chain_id {
             return None;
         }
 
         // Check expiration
-        let current_time = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
+        let current_time =
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
 
         if current_time > session.expires_at {
             return None;
@@ -403,7 +403,8 @@ pub unsafe extern "C" fn controller_account(
             session.expires_at,
             &signer.clone().into(),
             Felt::ZERO,
-        ).ok()?;
+        )
+        .ok()?;
 
         // Create session account
         let session_account = SessionAccount::new_as_registered(
@@ -511,7 +512,9 @@ pub unsafe extern "C" fn controller_clear(
                 sessions.retain(|session| {
                     if session.policies == account_policies {
                         // Remove the signing key from keyring
-                        if let Ok(keyring) = Entry::new("dojo-keyring", &format!("{:#x}", session.public_key)) {
+                        if let Ok(keyring) =
+                            Entry::new("dojo-keyring", &format!("{:#x}", session.public_key))
+                        {
                             let _ = keyring.delete_credential();
                         }
                         false // Remove this session
@@ -878,7 +881,7 @@ pub unsafe extern "C" fn client_update_entity_subscription(
     match RUNTIME.block_on(
         (*client)
             .inner
-            .update_entity_subscription((*subscription).id.load(Ordering::SeqCst), clauses)
+            .update_entity_subscription((*subscription).id.load(Ordering::SeqCst), clauses),
     ) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
@@ -1967,4 +1970,3 @@ pub unsafe extern "C" fn string_free(string: *mut c_char) {
         let _: String = CString::from_raw(string).into_string().unwrap();
     }
 }
-
