@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::ffi::c_char;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, BufWriter};
 use std::path::PathBuf;
 use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
@@ -73,6 +73,13 @@ impl SessionsStorage {
         let account_storage: SessionsStorage = serde_json::from_reader(reader)?;
         Ok(account_storage)
     }
+
+    pub fn write_to_file(&self, file: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+        let file = File::create(file)?;
+        let writer = BufWriter::new(file);
+        serde_json::to_writer_pretty(writer, self)?;
+        Ok(())
+    }
 }
 
 #[wasm_bindgen]
@@ -95,7 +102,10 @@ pub struct Provider(pub(crate) Arc<JsonRpcClient<HttpTransport>>);
 #[wasm_bindgen]
 pub struct Account(pub(crate) SingleOwnerAccount<Arc<JsonRpcClient<HttpTransport>>, LocalWallet>);
 #[wasm_bindgen]
-pub struct SessionAccount(pub(crate) account_sdk::account::session::account::SessionAccount);
+pub struct Controller {
+    pub(crate) account: account_sdk::account::session::account::SessionAccount,
+    pub(crate) username: String,
+}
 #[wasm_bindgen]
 pub struct Subscription {
     pub(crate) id: Arc<AtomicU64>,

@@ -113,7 +113,7 @@ struct CallbackState {
     policies: Vec<account_sdk::account::session::policy::Policy>,
     private_key: SigningKey,
     public_key: Felt,
-    account_callback: extern "C" fn(*mut crate::types::SessionAccount),
+    account_callback: extern "C" fn(*mut crate::types::Controller),
 }
 
 // Modify handle_callback to call the callback
@@ -163,7 +163,7 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
         sessions_storage.accounts.insert(
             sessions_storage.active.clone(),
             RegisteredAccount {
-                username: payload.username,
+                username: payload.username.clone(),
                 address: payload.address,
                 owner_guid: payload.owner_guid,
                 chain_id,
@@ -195,9 +195,10 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
     );
 
     // Call the callback with the new account
-    (state.account_callback)(Box::into_raw(Box::new(crate::types::SessionAccount(
-        session_account,
-    ))));
+    (state.account_callback)(Box::into_raw(Box::new(crate::types::Controller {
+        account: session_account,
+        username: payload.username,
+    })));
 
     // Signal shutdown after handling callback
     state.shutdown_tx.send(()).await.unwrap();
@@ -244,7 +245,7 @@ pub unsafe extern "C" fn controller_connect(
     rpc_url: *const c_char,
     policies: *const Policy,
     policies_len: usize,
-    account_callback: extern "C" fn(*mut crate::types::SessionAccount),
+    account_callback: extern "C" fn(*mut crate::types::Controller),
 ) {
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
@@ -324,6 +325,7 @@ pub unsafe extern "C" fn controller_connect(
 /// # Parameters
 /// * `policies` - Array of policies to match the session
 /// * `policies_len` - Length of policies array
+/// * `chain_id` - Chain ID to verify against
 ///
 /// # Returns
 /// Result containing pointer to SessionAccount or error if no valid account exists
@@ -331,12 +333,15 @@ pub unsafe extern "C" fn controller_connect(
 pub unsafe extern "C" fn controller_account(
     policies: *const Policy,
     policies_len: usize,
-) -> Result<*mut crate::types::SessionAccount> {
+    chain_id: types::FieldElement,
+) -> Result<*mut crate::types::Controller> {
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
     let account_policies: Vec<account_sdk::account::session::policy::Policy> = policies
         .iter()
         .map(|p| account_sdk::account::session::policy::Policy::Call(p.into()))
         .collect();
+
+    let chain_id: Felt = (&chain_id).into();
 
     // Get project directories
     let project_dirs = match ProjectDirs::from("org", "dojoengine", "dojo") {
@@ -361,105 +366,191 @@ pub unsafe extern "C" fn controller_account(
         }
     };
 
-    // Check if we have an active session
-    if sessions_storage.active.is_empty() {
-        return Result::Err(Error {
-            message: CString::new("No active session found").unwrap().into_raw(),
-        });
+    // Helper function to try creating a session account
+    let try_create_session_account = |account: &RegisteredAccount,
+                                      session: &RegisteredSession|
+     -> Option<crate::types::Controller> {
+        // Check chain ID
+        if account.chain_id != chain_id {
+            return None;
+        }
+
+        // Check expiration
+        let current_time =
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+
+        if current_time > session.expires_at {
+            return None;
+        }
+
+        // Check if policies match
+        if session.policies != account_policies {
+            return None;
+        }
+
+        // Get the signing key from keyring
+        let keyring = Entry::new("dojo-keyring", &format!("{:#x}", session.public_key)).ok()?;
+        let signing_key_hex = keyring.get_password().ok()?;
+
+        // Initialize provider and signer
+        let provider = CartridgeJsonRpcProvider::new(Url::from_str(&account.rpc_url).unwrap());
+        let signing_key = SigningKey::from_secret_scalar(Felt::from_hex(&signing_key_hex).unwrap());
+        let signer = Signer::Starknet(signing_key);
+
+        // Create new session
+        let session = Session::new(
+            session.policies.clone(),
+            session.expires_at,
+            &signer.clone().into(),
+            Felt::ZERO,
+        )
+        .ok()?;
+
+        // Create session account
+        let session_account = SessionAccount::new_as_registered(
+            provider,
+            signer,
+            account.address,
+            account.chain_id,
+            account.owner_guid,
+            session,
+        );
+
+        Some(crate::types::Controller {
+            account: session_account,
+            username: account.username.clone(),
+        })
+    };
+
+    // First try the active account if it exists
+    if !sessions_storage.active.is_empty() {
+        if let Some(account) = sessions_storage.accounts.get(&sessions_storage.active) {
+            if let Some(sessions) = sessions_storage.sessions.get(&sessions_storage.active) {
+                for session in sessions {
+                    if let Some(controller) = try_create_session_account(account, session) {
+                        return Result::Ok(Box::into_raw(Box::new(controller)));
+                    }
+                }
+            }
+        }
     }
 
-    // Get the active account
-    let account = match sessions_storage.accounts.get(&sessions_storage.active) {
-        Some(account) => account,
+    // If active account didn't work, try all accounts
+    for (account_key, account) in sessions_storage.accounts.iter() {
+        if let Some(sessions) = sessions_storage.sessions.get(account_key) {
+            for session in sessions {
+                if let Some(controller) = try_create_session_account(account, session) {
+                    return Result::Ok(Box::into_raw(Box::new(controller)));
+                }
+            }
+        }
+    }
+
+    // No valid session found
+    Result::Err(Error {
+        message: CString::new("No valid session found with matching chain ID and policies")
+            .unwrap()
+            .into_raw(),
+    })
+}
+
+/// Clears sessions matching the specified policies and chain ID
+///
+/// # Parameters
+/// * `policies` - Array of policies to match
+/// * `policies_len` - Length of policies array
+/// * `chain_id` - Chain ID to match
+///
+/// # Returns
+/// Result containing success boolean or error
+#[no_mangle]
+pub unsafe extern "C" fn controller_clear(
+    policies: *const Policy,
+    policies_len: usize,
+    chain_id: types::FieldElement,
+) -> Result<bool> {
+    let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
+    let account_policies: Vec<account_sdk::account::session::policy::Policy> = policies
+        .iter()
+        .map(|p| account_sdk::account::session::policy::Policy::Call(p.into()))
+        .collect();
+
+    let chain_id: Felt = (&chain_id).into();
+
+    // Get project directories
+    let project_dirs = match ProjectDirs::from("org", "dojoengine", "dojo") {
+        Some(dirs) => dirs,
         None => {
             return Result::Err(Error {
-                message: CString::new("Active account data not found").unwrap().into_raw(),
+                message: CString::new("Could not determine project directories")
+                    .unwrap()
+                    .into_raw(),
             });
         }
     };
 
-    // Find a valid session with matching policies
-    let session =
-        match sessions_storage.sessions.get(&sessions_storage.active).and_then(|sessions| {
-            sessions.iter().find(|session| {
-                // Check expiration
-                let current_time = std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs();
+    // Load sessions storage
+    let account_file = project_dirs.data_dir().join("sessions.json");
+    let mut sessions_storage = match SessionsStorage::from_file(account_file.clone()) {
+        Ok(storage) => storage,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("No stored session found").unwrap().into_raw(),
+            });
+        }
+    };
 
-                if current_time > session.expires_at {
-                    return false;
-                }
+    let mut modified = false;
 
-                // Check if policies match
-                session.policies == account_policies
-            })
-        }) {
-            Some(session) => session,
-            None => {
-                return Result::Err(Error {
-                    message: CString::new("No valid session found with matching policies")
-                        .unwrap()
-                        .into_raw(),
+    // Get the active account
+    if let Some(account) = sessions_storage.accounts.get(&sessions_storage.active) {
+        // Only process if chain ID matches
+        if account.chain_id == chain_id {
+            if let Some(sessions) = sessions_storage.sessions.get_mut(&sessions_storage.active) {
+                // Find and remove sessions with matching policies
+                let initial_len = sessions.len();
+                sessions.retain(|session| {
+                    if session.policies == account_policies {
+                        // Remove the signing key from keyring
+                        if let Ok(keyring) =
+                            Entry::new("dojo-keyring", &format!("{:#x}", session.public_key))
+                        {
+                            let _ = keyring.delete_credential();
+                        }
+                        false // Remove this session
+                    } else {
+                        true // Keep this session
+                    }
                 });
+                modified = initial_len != sessions.len();
             }
-        };
+        }
+    }
 
-    // Get the signing key from keyring
-    let keyring = match Entry::new("dojo-keyring", &format!("{:#x}", session.public_key)) {
-        Ok(keyring) => keyring,
-        Err(_) => {
+    // Save changes if any modifications were made
+    if modified {
+        if let Err(_) = sessions_storage.write_to_file(account_file) {
             return Result::Err(Error {
-                message: CString::new("Could not access keyring").unwrap().into_raw(),
+                message: CString::new("Failed to save updated sessions").unwrap().into_raw(),
             });
         }
-    };
+    }
 
-    let signing_key_hex = match keyring.get_password() {
-        Ok(key) => key,
-        Err(_) => {
-            return Result::Err(Error {
-                message: CString::new("Could not retrieve signing key from keyring")
-                    .unwrap()
-                    .into_raw(),
-            });
-        }
-    };
+    Result::Ok(true)
+}
 
-    // Initialize provider and signer
-    let provider = CartridgeJsonRpcProvider::new(Url::from_str(&account.rpc_url).unwrap());
-    let signing_key = SigningKey::from_secret_scalar(Felt::from_hex(&signing_key_hex).unwrap());
-    let signer = Signer::Starknet(signing_key);
-
-    // Create new session
-    let session = match Session::new(
-        session.policies.clone(),
-        session.expires_at,
-        &signer.clone().into(),
-        Felt::ZERO,
-    ) {
-        Ok(session) => session,
-        Err(e) => {
-            return Result::Err(Error {
-                message: CString::new(format!("Failed to create session: {}", e))
-                    .unwrap()
-                    .into_raw(),
-            });
-        }
-    };
-
-    // Create session account
-    let session_account = SessionAccount::new_as_registered(
-        provider,
-        signer,
-        account.address,
-        account.chain_id,
-        account.owner_guid,
-        session,
-    );
-
-    Result::Ok(Box::into_raw(Box::new(crate::types::SessionAccount(session_account))))
+/// Gets the username of controller
+///
+/// # Parameters
+/// * `account` - Pointer to Account
+///
+/// # Returns
+/// CString containing the username
+#[no_mangle]
+pub unsafe extern "C" fn controller_username(
+    controller: *mut crate::types::Controller,
+) -> *const c_char {
+    CString::new((*controller).username.to_string()).unwrap().into_raw()
 }
 
 /// Gets account address
@@ -471,9 +562,9 @@ pub unsafe extern "C" fn controller_account(
 /// FieldElement containing the account address
 #[no_mangle]
 pub unsafe extern "C" fn controller_address(
-    account: *mut crate::types::SessionAccount,
+    controller: *mut crate::types::Controller,
 ) -> types::FieldElement {
-    (&(*account).0.address()).into()
+    (&(*controller).account.address()).into()
 }
 
 /// Gets account chain ID
@@ -485,9 +576,9 @@ pub unsafe extern "C" fn controller_address(
 /// FieldElement containing the chain ID
 #[no_mangle]
 pub unsafe extern "C" fn controller_chain_id(
-    account: *mut crate::types::SessionAccount,
+    controller: *mut crate::types::Controller,
 ) -> types::FieldElement {
-    (&(*account).0.chain_id()).into()
+    (&(*controller).account.chain_id()).into()
 }
 
 /// Gets account nonce
@@ -499,9 +590,9 @@ pub unsafe extern "C" fn controller_chain_id(
 /// Result containing FieldElement nonce or error
 #[no_mangle]
 pub unsafe extern "C" fn controller_nonce(
-    account: *mut crate::types::SessionAccount,
+    controller: *mut crate::types::Controller,
 ) -> Result<types::FieldElement> {
-    let nonce = match RUNTIME.block_on((*account).0.get_nonce()) {
+    let nonce = match RUNTIME.block_on((*controller).account.get_nonce()) {
         Ok(nonce) => nonce,
         Err(e) => return Result::Err(e.into()),
     };
@@ -520,14 +611,14 @@ pub unsafe extern "C" fn controller_nonce(
 /// Result containing transaction hash as FieldElement or error
 #[no_mangle]
 pub unsafe extern "C" fn controller_execute_raw(
-    account: *mut crate::types::SessionAccount,
+    controller: *mut crate::types::Controller,
     calldata: *const Call,
     calldata_len: usize,
 ) -> Result<types::FieldElement> {
     let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
     let calldata =
         calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::core::types::Call>>();
-    let call = (*account).0.execute_v1(calldata);
+    let call = (*controller).account.execute_v1(calldata);
 
     match RUNTIME.block_on(call.send()) {
         Ok(result) => Result::Ok((&result.transaction_hash).into()),
@@ -549,7 +640,7 @@ pub unsafe extern "C" fn controller_execute_raw(
 /// Result containing transaction hash as FieldElement or error
 #[no_mangle]
 pub unsafe extern "C" fn controller_execute_from_outside(
-    account: *mut crate::types::SessionAccount,
+    controller: *mut crate::types::Controller,
     calldata: *const Call,
     calldata_len: usize,
 ) -> Result<types::FieldElement> {
@@ -566,20 +657,26 @@ pub unsafe extern "C" fn controller_execute_from_outside(
     };
 
     let signed = match RUNTIME.block_on(
-        (*account).0.sign_outside_execution(OutsideExecution::V3(outside_execution.clone())),
+        (*controller)
+            .account
+            .sign_outside_execution(OutsideExecution::V3(outside_execution.clone())),
     ) {
         Ok(signed) => signed,
         Err(e) => return Result::Err(e.into()),
     };
 
-    let res = match RUNTIME.block_on((*account).0.provider().add_execute_outside_transaction(
-        OutsideExecution::V3(outside_execution),
-        (*account).0.address(),
-        signed.signature,
-    )) {
-        Ok(res) => res,
-        Err(e) => return Result::Err(e.into()),
-    };
+    let res =
+        match RUNTIME.block_on((*controller).account.provider().add_execute_outside_transaction(
+            OutsideExecution::V3(outside_execution),
+            (*controller).account.address(),
+            signed.signature,
+        )) {
+            Ok(res) => res,
+            Err(e) => {
+                println!("Error executing call: {:?}", e);
+                return Result::Err(e.into());
+            }
+        };
 
     Result::Ok((&res.transaction_hash).into())
 }
@@ -1176,7 +1273,9 @@ pub unsafe extern "C" fn client_update_token_balance_subscription(
     account_addresses: *const types::FieldElement,
     account_addresses_len: usize,
 ) -> Result<bool> {
-    // Convert account addresses array to Vec<Felt> if not empty
+    let clauses = unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+    let clauses = clauses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
+
     let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
         Vec::new()
     } else {
@@ -1185,18 +1284,9 @@ pub unsafe extern "C" fn client_update_token_balance_subscription(
         addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
     };
 
-    // Convert contract addresses array to Vec<Felt> if not empty
-    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
-        Vec::new()
-    } else {
-        let addresses =
-            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
-    };
-
     match RUNTIME.block_on((*client).inner.update_token_balance_subscription(
         (*subscription).id.load(Ordering::SeqCst),
-        contract_addresses,
+        clauses,
         account_addresses,
     )) {
         Ok(_) => Result::Ok(true),

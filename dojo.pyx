@@ -35,10 +35,10 @@ cdef extern from *:
   cdef struct Account:
     pass
 
-  cdef struct Provider:
+  cdef struct Controller:
     pass
 
-  cdef struct SessionAccount:
+  cdef struct Provider:
     pass
 
   cdef struct Subscription:
@@ -62,13 +62,22 @@ cdef extern from *:
   cdef struct FieldElement:
     uint8_t data[32];
 
-  cdef enum ResultSessionAccount_Tag:
-    OkSessionAccount,
-    ErrSessionAccount,
+  cdef enum ResultController_Tag:
+    OkController,
+    ErrController,
 
-  cdef struct ResultSessionAccount:
-    ResultSessionAccount_Tag tag;
-    SessionAccount *ok;
+  cdef struct ResultController:
+    ResultController_Tag tag;
+    Controller *ok;
+    Error err;
+
+  cdef enum Resultbool_Tag:
+    Okbool,
+    Errbool,
+
+  cdef struct Resultbool:
+    Resultbool_Tag tag;
+    bool ok;
     Error err;
 
   cdef enum ResultFieldElement_Tag:
@@ -126,15 +135,6 @@ cdef extern from *:
   cdef struct CArrayStruct:
     Struct *data;
     uintptr_t data_len;
-
-  cdef enum Resultbool_Tag:
-    Okbool,
-    Errbool,
-
-  cdef struct Resultbool:
-    Resultbool_Tag tag;
-    bool ok;
-    Error err;
 
   cdef struct CArrayFieldElement:
     FieldElement *data;
@@ -517,17 +517,42 @@ cdef extern from *:
   void controller_connect(const char *rpc_url,
                           const Policy *policies,
                           uintptr_t policies_len,
-                          void (*account_callback)(SessionAccount*));
+                          void (*account_callback)(Controller*));
 
   # Retrieves a stored session account if one exists and is valid
   #
   # # Parameters
   # * `policies` - Array of policies to match the session
   # * `policies_len` - Length of policies array
+  # * `chain_id` - Chain ID to verify against
   #
   # # Returns
   # Result containing pointer to SessionAccount or error if no valid account exists
-  ResultSessionAccount controller_account(const Policy *policies, uintptr_t policies_len);
+  ResultController controller_account(const Policy *policies,
+                                      uintptr_t policies_len,
+                                      FieldElement chain_id);
+
+  # Clears sessions matching the specified policies and chain ID
+  #
+  # # Parameters
+  # * `policies` - Array of policies to match
+  # * `policies_len` - Length of policies array
+  # * `chain_id` - Chain ID to match
+  #
+  # # Returns
+  # Result containing success boolean or error
+  Resultbool controller_clear(const Policy *policies,
+                              uintptr_t policies_len,
+                              FieldElement chain_id);
+
+  # Gets the username of controller
+  #
+  # # Parameters
+  # * `account` - Pointer to Account
+  #
+  # # Returns
+  # CString containing the username
+  const char *controller_username(Controller *controller);
 
   # Gets account address
   #
@@ -536,7 +561,7 @@ cdef extern from *:
   #
   # # Returns
   # FieldElement containing the account address
-  FieldElement controller_address(SessionAccount *account);
+  FieldElement controller_address(Controller *controller);
 
   # Gets account chain ID
   #
@@ -545,7 +570,7 @@ cdef extern from *:
   #
   # # Returns
   # FieldElement containing the chain ID
-  FieldElement controller_chain_id(SessionAccount *account);
+  FieldElement controller_chain_id(Controller *controller);
 
   # Gets account nonce
   #
@@ -554,7 +579,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing FieldElement nonce or error
-  ResultFieldElement controller_nonce(SessionAccount *account);
+  ResultFieldElement controller_nonce(Controller *controller);
 
   # Executes raw transaction
   #
@@ -565,7 +590,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing transaction hash as FieldElement or error
-  ResultFieldElement controller_execute_raw(SessionAccount *account,
+  ResultFieldElement controller_execute_raw(Controller *controller,
                                             const Call *calldata,
                                             uintptr_t calldata_len);
 
@@ -578,7 +603,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing transaction hash as FieldElement or error
-  ResultFieldElement controller_execute_from_outside(SessionAccount *account,
+  ResultFieldElement controller_execute_from_outside(Controller *controller,
                                                      const Call *calldata,
                                                      uintptr_t calldata_len);
 

@@ -6,7 +6,6 @@ version = "1.0.9"
 [lib]
 crate-type = ["cdylib", "rlib", "staticlib"]
 
-
 [dependencies]
 dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "02557aee098cb5abf6431665c6af8d0588b64128" }
 dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "02557aee098cb5abf6431665c6af8d0588b64128"}
