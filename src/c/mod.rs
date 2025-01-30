@@ -529,7 +529,7 @@ pub unsafe extern "C" fn controller_clear(
 
     // Save changes if any modifications were made
     if modified {
-        if let Err(_) = sessions_storage.write_to_file(account_file) {
+        if sessions_storage.write_to_file(account_file).is_err() {
             return Result::Err(Error {
                 message: CString::new("Failed to save updated sessions").unwrap().into_raw(),
             });
