@@ -100,6 +100,23 @@ typedef struct ResultController {
   };
 } ResultController;
 
+typedef enum Resultbool_Tag {
+  Okbool,
+  Errbool,
+} Resultbool_Tag;
+
+typedef struct Resultbool {
+  Resultbool_Tag tag;
+  union {
+    struct {
+      bool ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Resultbool;
+
 typedef enum ResultFieldElement_Tag {
   OkFieldElement,
   ErrFieldElement,
@@ -192,23 +209,6 @@ typedef struct CArrayStruct {
   struct Struct *data;
   uintptr_t data_len;
 } CArrayStruct;
-
-typedef enum Resultbool_Tag {
-  Okbool,
-  Errbool,
-} Resultbool_Tag;
-
-typedef struct Resultbool {
-  Resultbool_Tag tag;
-  union {
-    struct {
-      bool ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} Resultbool;
 
 typedef struct CArrayFieldElement {
   struct FieldElement *data;
@@ -810,11 +810,29 @@ void controller_connect(const char *rpc_url,
  * # Parameters
  * * `policies` - Array of policies to match the session
  * * `policies_len` - Length of policies array
+ * * `chain_id` - Chain ID to verify against
  *
  * # Returns
  * Result containing pointer to SessionAccount or error if no valid account exists
  */
-struct ResultController controller_account(const struct Policy *policies, uintptr_t policies_len);
+struct ResultController controller_account(const struct Policy *policies,
+                                           uintptr_t policies_len,
+                                           struct FieldElement chain_id);
+
+/**
+ * Clears sessions matching the specified policies and chain ID
+ *
+ * # Parameters
+ * * `policies` - Array of policies to match
+ * * `policies_len` - Length of policies array
+ * * `chain_id` - Chain ID to match
+ *
+ * # Returns
+ * Result containing success boolean or error
+ */
+struct Resultbool controller_clear(const struct Policy *policies,
+                                   uintptr_t policies_len,
+                                   struct FieldElement chain_id);
 
 /**
  * Gets the username of controller

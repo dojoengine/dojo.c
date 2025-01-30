@@ -71,6 +71,15 @@ cdef extern from *:
     Controller *ok;
     Error err;
 
+  cdef enum Resultbool_Tag:
+    Okbool,
+    Errbool,
+
+  cdef struct Resultbool:
+    Resultbool_Tag tag;
+    bool ok;
+    Error err;
+
   cdef enum ResultFieldElement_Tag:
     OkFieldElement,
     ErrFieldElement,
@@ -126,15 +135,6 @@ cdef extern from *:
   cdef struct CArrayStruct:
     Struct *data;
     uintptr_t data_len;
-
-  cdef enum Resultbool_Tag:
-    Okbool,
-    Errbool,
-
-  cdef struct Resultbool:
-    Resultbool_Tag tag;
-    bool ok;
-    Error err;
 
   cdef struct CArrayFieldElement:
     FieldElement *data;
@@ -524,10 +524,26 @@ cdef extern from *:
   # # Parameters
   # * `policies` - Array of policies to match the session
   # * `policies_len` - Length of policies array
+  # * `chain_id` - Chain ID to verify against
   #
   # # Returns
   # Result containing pointer to SessionAccount or error if no valid account exists
-  ResultController controller_account(const Policy *policies, uintptr_t policies_len);
+  ResultController controller_account(const Policy *policies,
+                                      uintptr_t policies_len,
+                                      FieldElement chain_id);
+
+  # Clears sessions matching the specified policies and chain ID
+  #
+  # # Parameters
+  # * `policies` - Array of policies to match
+  # * `policies_len` - Length of policies array
+  # * `chain_id` - Chain ID to match
+  #
+  # # Returns
+  # Result containing success boolean or error
+  Resultbool controller_clear(const Policy *policies,
+                              uintptr_t policies_len,
+                              FieldElement chain_id);
 
   # Gets the username of controller
   #

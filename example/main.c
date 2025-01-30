@@ -95,8 +95,8 @@ int main()
     }
     struct Provider *controller_provider = resControllerProvider.ok;
 
-    ResultSessionAccount resSessionAccount = controller_account(policies, 2);
-    if (resSessionAccount.tag == ErrSessionAccount) {
+    ResultController resSessionAccount = controller_account(policies, 2);
+    if (resSessionAccount.tag == OkController) {
         printf("Session account already connected\n");
         g_session_account = resSessionAccount.ok;
     } else {

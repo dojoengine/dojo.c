@@ -989,10 +989,26 @@ void controller_connect(const char *rpc_url,
 /// # Parameters
 /// * `policies` - Array of policies to match the session
 /// * `policies_len` - Length of policies array
+/// * `chain_id` - Chain ID to verify against
 ///
 /// # Returns
 /// Result containing pointer to SessionAccount or error if no valid account exists
-Result<Controller*> controller_account(const Policy *policies, uintptr_t policies_len);
+Result<Controller*> controller_account(const Policy *policies,
+                                       uintptr_t policies_len,
+                                       FieldElement chain_id);
+
+/// Clears sessions matching the specified policies and chain ID
+///
+/// # Parameters
+/// * `policies` - Array of policies to match
+/// * `policies_len` - Length of policies array
+/// * `chain_id` - Chain ID to match
+///
+/// # Returns
+/// Result containing success boolean or error
+Result<bool> controller_clear(const Policy *policies,
+                              uintptr_t policies_len,
+                              FieldElement chain_id);
 
 /// Gets the username of controller
 ///
