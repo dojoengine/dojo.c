@@ -74,20 +74,14 @@ jobs:
     strategy:
       matrix:
         job:
-          # The OS is used for the runner
-          # The platform is a generic platform name
-          # The target is used by Cargo
-          # The arch is either 386, arm64 or amd64
-          # The svm target platform to use for the binary https://github.com/roynalnaruto/svm-rs/blob/84cbe0ac705becabdc13168bae28a45ad2299749/svm-builds/build.rs#L4-L24
-          - os: ubuntu-latest-32-cores
+          - os: ubuntu-latest
             platform: linux
             target: x86_64-unknown-linux-gnu
             arch: amd64
-          - os: ubuntu-latest-32-cores
+          - os: ubuntu-latest
             platform: linux
             target: aarch64-unknown-linux-gnu
             arch: arm64
-            svm_target_platform: linux-aarch64
           - os: macos-latest
             platform: darwin
             target: x86_64-apple-darwin
@@ -118,37 +112,27 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+      # Install cross for Linux builds
+      - name: Install cross
+        if: runner.os == 'Linux'
+        run: cargo install cross
+
+      # Apple M1 setup
       - name: Apple M1 setup
         if: ${{ matrix.job.target == 'aarch64-apple-darwin' }}
         run: |
           echo "SDKROOT=$(xcrun -sdk macosx --show-sdk-path)" >> $GITHUB_ENV
           echo "MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version)" >> $GITHUB_ENV
 
-      - name: Linux ARM setup
-        if: ${{ matrix.job.target == 'aarch64-unknown-linux-gnu' }}
-        run: |
-          sudo dpkg --add-architecture arm64
-          sudo tee /etc/apt/sources.list.d/arm64.list > /dev/null <<EOT
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main restricted
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main restricted
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main restricted
-          EOT
-          sudo apt-get update -y
-          sudo apt-get install -y gcc-aarch64-linux-gnu libssl-dev
-          sudo apt-get install -y libdbus-1-dev:arm64 pkg-config
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-          echo "PKG_CONFIG_ALLOW_CROSS=1" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig" >> $GITHUB_ENV
-
-      # Add system dependencies for Linux builds (non-ARM)
-      - name: Install Linux system dependencies
-        if: runner.os == 'Linux' && matrix.job.target != 'aarch64-unknown-linux-gnu'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libdbus-1-dev pkg-config
-
+      # Build step
       - name: Build binaries
-        run: cargo build --release --target ${{ matrix.job.target }}
+        run: |
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            cross build --release --target ${{ matrix.job.target }}
+          else
+            cargo build --release --target ${{ matrix.job.target }}
+          fi
+        shell: bash
 
       - name: Package
         id: artifacts
