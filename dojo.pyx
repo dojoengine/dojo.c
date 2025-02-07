@@ -35,9 +35,6 @@ cdef extern from *:
   cdef struct Account:
     pass
 
-  cdef struct Controller:
-    pass
-
   cdef struct Provider:
     pass
 
@@ -100,6 +97,19 @@ cdef extern from *:
   cdef struct ResultCArrayu8:
     ResultCArrayu8_Tag tag;
     CArrayu8 ok;
+    Error err;
+
+  cdef struct CArrayController:
+    Controller *data;
+    uintptr_t data_len;
+
+  cdef enum ResultCArrayController_Tag:
+    OkCArrayController,
+    ErrCArrayController,
+
+  cdef struct ResultCArrayController:
+    ResultCArrayController_Tag tag;
+    CArrayController ok;
     Error err;
 
   cdef struct CArrayEntity:
@@ -256,6 +266,11 @@ cdef extern from *:
     FieldElement target;
     const char *method;
     const char *description;
+
+  cdef struct Controller:
+    FieldElement address;
+    const char *username;
+    uint64_t deployed_at_timestamp;
 
   cdef struct Entity:
     FieldElement hashed_keys;
@@ -628,6 +643,18 @@ cdef extern from *:
                                         const char *message,
                                         const FieldElement *signature_felts,
                                         uintptr_t signature_felts_len);
+
+  # Retrieves controllers for the given contract addresses
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `contract_addresses` - Array of contract addresses. If empty, all controllers will be returned.
+  #
+  # # Returns
+  # Result containing controllers or error
+  ResultCArrayController client_controllers(ToriiClient *client,
+                                            const FieldElement *contract_addresses,
+                                            uintptr_t contract_addresses_len);
 
   # Queries entities matching given criteria
   #

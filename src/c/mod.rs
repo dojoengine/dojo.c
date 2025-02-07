@@ -50,7 +50,7 @@ use torii_client::client::Client as TClient;
 use torii_relay::types::Message;
 use torii_typed_data::TypedData;
 use tower_http::cors::{AllowOrigin, CorsLayer};
-use types::{EntityKeysClause, Event, IndexerUpdate, Policy, Struct, Token, TokenBalance};
+use types::{Controller, EntityKeysClause, Event, IndexerUpdate, Policy, Struct, Token, TokenBalance};
 use url::Url;
 
 use self::types::{
@@ -725,6 +725,34 @@ pub unsafe extern "C" fn client_publish_message(
 
     match RUNTIME.block_on(client_future) {
         Ok(data) => Result::Ok(data.into()),
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
+/// Retrieves controllers for the given contract addresses
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `contract_addresses` - Array of contract addresses. If empty, all controllers will be returned.
+///
+/// # Returns
+/// Result containing controllers or error
+#[no_mangle]
+pub unsafe extern "C" fn client_controllers(
+    client: *mut ToriiClient,
+    contract_addresses: *const types::FieldElement,
+    contract_addresses_len: usize,
+) -> Result<CArray<Controller>> {
+    let contract_addresses = unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+    let contract_addresses = contract_addresses.iter().map(|f| f.into()).collect::<Vec<_>>();
+
+    let controllers_future = unsafe { (*client).inner.controllers(contract_addresses) };
+
+    match RUNTIME.block_on(controllers_future) {
+        Ok(controllers) => {
+            let controllers: Vec<Controller> = controllers.iter().map(|c| c.into()).collect();
+            Result::Ok(controllers.into())
+        }
         Err(e) => Result::Err(e.into()),
     }
 }

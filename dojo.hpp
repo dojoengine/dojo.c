@@ -106,6 +106,12 @@ struct CArray {
   uintptr_t data_len;
 };
 
+struct Controller {
+  FieldElement address;
+  const char *username;
+  uint64_t deployed_at_timestamp;
+};
+
 struct Member {
   const char *name;
   Ty *ty;
@@ -1093,6 +1099,18 @@ Result<CArray<uint8_t>> client_publish_message(ToriiClient *client,
                                                const char *message,
                                                const FieldElement *signature_felts,
                                                uintptr_t signature_felts_len);
+
+/// Retrieves controllers for the given contract addresses
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `contract_addresses` - Array of contract addresses. If empty, all controllers will be returned.
+///
+/// # Returns
+/// Result containing controllers or error
+Result<CArray<Controller>> client_controllers(ToriiClient *client,
+                                              const FieldElement *contract_addresses,
+                                              uintptr_t contract_addresses_len);
 
 /// Queries entities matching given criteria
 ///

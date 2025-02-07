@@ -21,9 +21,15 @@ pub struct Controllers(pub Vec<Controller>);
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Controller {
-    pub contract_address: String,
+    pub address: String,
     pub username: String,
     pub deployed_at_timestamp: u64,
+}
+
+impl From<&torii_grpc::types::Controller> for Controller {
+    fn from(value: &torii_grpc::types::Controller) -> Self {
+        Self { address: format!("{:#x}", value.address), username: value.username.clone(), deployed_at_timestamp: value.deployed_at }
+    }
 }
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]

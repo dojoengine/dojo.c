@@ -156,6 +156,28 @@ typedef struct ResultCArrayu8 {
   };
 } ResultCArrayu8;
 
+typedef struct CArrayController {
+  struct Controller *data;
+  uintptr_t data_len;
+} CArrayController;
+
+typedef enum ResultCArrayController_Tag {
+  OkCArrayController,
+  ErrCArrayController,
+} ResultCArrayController_Tag;
+
+typedef struct ResultCArrayController {
+  ResultCArrayController_Tag tag;
+  union {
+    struct {
+      struct CArrayController ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultCArrayController;
+
 typedef struct CArrayEntity {
   struct Entity *data;
   uintptr_t data_len;
@@ -414,6 +436,12 @@ typedef struct Policy {
   const char *method;
   const char *description;
 } Policy;
+
+typedef struct Controller {
+  struct FieldElement address;
+  const char *username;
+  uint64_t deployed_at_timestamp;
+} Controller;
 
 typedef struct Entity {
   struct FieldElement hashed_keys;
@@ -933,6 +961,20 @@ struct ResultCArrayu8 client_publish_message(struct ToriiClient *client,
                                              const char *message,
                                              const struct FieldElement *signature_felts,
                                              uintptr_t signature_felts_len);
+
+/**
+ * Retrieves controllers for the given contract addresses
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `contract_addresses` - Array of contract addresses. If empty, all controllers will be returned.
+ *
+ * # Returns
+ * Result containing controllers or error
+ */
+struct ResultCArrayController client_controllers(struct ToriiClient *client,
+                                                 const struct FieldElement *contract_addresses,
+                                                 uintptr_t contract_addresses_len);
 
 /**
  * Queries entities matching given criteria
