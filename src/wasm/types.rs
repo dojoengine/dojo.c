@@ -13,6 +13,19 @@ use wasm_bindgen::prelude::*;
 
 use super::utils::parse_ty_as_json_str;
 
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Controllers(pub Vec<Controller>);
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Controller {
+    pub contract_address: String,
+    pub username: String,
+    pub deployed_at_timestamp: u64,
+}
+
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Tokens(pub Vec<Token>);

@@ -588,6 +588,30 @@ pub fn parse_cairo_short_string(str: &str) -> Result<String, JsValue> {
 
 #[wasm_bindgen]
 impl ToriiClient {
+    /// Gets controllers along with their usernames for the given contract addresses
+    ///
+    /// # Parameters
+    /// * `contract_addresses` - Array of contract addresses as hex strings. If empty, all controllers will be returned.
+    ///
+    /// # Returns
+    /// Result containing controllers or error
+    #[wasm_bindgen(js_name = getControllers)]
+    pub async fn get_controllers(&self, contract_addresses: Vec<String>) -> Result<Controllers, JsValue> {
+        let contract_addresses = contract_addresses
+            .into_iter()
+            .map(|c| Felt::from_str(&c))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
+
+        let controllers = self
+            .inner
+            .controllers(contract_addresses)
+            .await
+            .map_err(|e| JsValue::from(format!("failed to get controllers: {e}")))?;
+
+        Ok(Controllers(controllers.iter().map(|c| c.into()).collect()))
+    }
+
     /// Gets token information for the given contract addresses
     ///
     /// # Parameters
