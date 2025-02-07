@@ -8,7 +8,7 @@ namespace dojo_bindings {
 
 struct ToriiClient;
 struct Policy;
-struct Controller;
+struct ControllerAccount;
 struct Call;
 struct Ty;
 struct Query;
@@ -988,7 +988,7 @@ Result<ToriiClient*> client_new(const char *torii_url,
 void controller_connect(const char *rpc_url,
                         const Policy *policies,
                         uintptr_t policies_len,
-                        void (*account_callback)(Controller*));
+                        void (*account_callback)(ControllerAccount*));
 
 /// Retrieves a stored session account if one exists and is valid
 ///
@@ -999,9 +999,9 @@ void controller_connect(const char *rpc_url,
 ///
 /// # Returns
 /// Result containing pointer to SessionAccount or error if no valid account exists
-Result<Controller*> controller_account(const Policy *policies,
-                                       uintptr_t policies_len,
-                                       FieldElement chain_id);
+Result<ControllerAccount*> controller_account(const Policy *policies,
+                                              uintptr_t policies_len,
+                                              FieldElement chain_id);
 
 /// Clears sessions matching the specified policies and chain ID
 ///
@@ -1023,7 +1023,7 @@ Result<bool> controller_clear(const Policy *policies,
 ///
 /// # Returns
 /// CString containing the username
-const char *controller_username(Controller *controller);
+const char *controller_username(ControllerAccount *controller);
 
 /// Gets account address
 ///
@@ -1032,7 +1032,7 @@ const char *controller_username(Controller *controller);
 ///
 /// # Returns
 /// FieldElement containing the account address
-FieldElement controller_address(Controller *controller);
+FieldElement controller_address(ControllerAccount *controller);
 
 /// Gets account chain ID
 ///
@@ -1041,7 +1041,7 @@ FieldElement controller_address(Controller *controller);
 ///
 /// # Returns
 /// FieldElement containing the chain ID
-FieldElement controller_chain_id(Controller *controller);
+FieldElement controller_chain_id(ControllerAccount *controller);
 
 /// Gets account nonce
 ///
@@ -1050,7 +1050,7 @@ FieldElement controller_chain_id(Controller *controller);
 ///
 /// # Returns
 /// Result containing FieldElement nonce or error
-Result<FieldElement> controller_nonce(Controller *controller);
+Result<FieldElement> controller_nonce(ControllerAccount *controller);
 
 /// Executes raw transaction
 ///
@@ -1061,7 +1061,7 @@ Result<FieldElement> controller_nonce(Controller *controller);
 ///
 /// # Returns
 /// Result containing transaction hash as FieldElement or error
-Result<FieldElement> controller_execute_raw(Controller *controller,
+Result<FieldElement> controller_execute_raw(ControllerAccount *controller,
                                             const Call *calldata,
                                             uintptr_t calldata_len);
 
@@ -1074,7 +1074,7 @@ Result<FieldElement> controller_execute_raw(Controller *controller,
 ///
 /// # Returns
 /// Result containing transaction hash as FieldElement or error
-Result<FieldElement> controller_execute_from_outside(Controller *controller,
+Result<FieldElement> controller_execute_from_outside(ControllerAccount *controller,
                                                      const Call *calldata,
                                                      uintptr_t calldata_len);
 
@@ -1104,7 +1104,8 @@ Result<CArray<uint8_t>> client_publish_message(ToriiClient *client,
 ///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
-/// * `contract_addresses` - Array of contract addresses. If empty, all controllers will be returned.
+/// * `contract_addresses` - Array of contract addresses. If empty, all controllers will be
+///   returned.
 ///
 /// # Returns
 /// Result containing controllers or error

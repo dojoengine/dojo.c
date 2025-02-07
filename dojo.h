@@ -9,8 +9,9 @@ namespace dojo_bindings {
 
 struct ToriiClient;
 struct Policy;
-struct Controller;
+struct ControllerAccount;
 struct Call;
+struct Controller;
 struct Entity;
 struct Query;
 struct CHashItemFieldElementModelMetadata;
@@ -83,22 +84,22 @@ typedef struct FieldElement {
   uint8_t data[32];
 } FieldElement;
 
-typedef enum ResultController_Tag {
-  OkController,
-  ErrController,
-} ResultController_Tag;
+typedef enum ResultControllerAccount_Tag {
+  OkControllerAccount,
+  ErrControllerAccount,
+} ResultControllerAccount_Tag;
 
-typedef struct ResultController {
-  ResultController_Tag tag;
+typedef struct ResultControllerAccount {
+  ResultControllerAccount_Tag tag;
   union {
     struct {
-      struct Controller *ok;
+      struct ControllerAccount *ok;
     };
     struct {
       struct Error err;
     };
   };
-} ResultController;
+} ResultControllerAccount;
 
 typedef enum Resultbool_Tag {
   Okbool,
@@ -830,7 +831,7 @@ struct ResultToriiClient client_new(const char *torii_url,
 void controller_connect(const char *rpc_url,
                         const struct Policy *policies,
                         uintptr_t policies_len,
-                        void (*account_callback)(struct Controller*));
+                        void (*account_callback)(struct ControllerAccount*));
 
 /**
  * Retrieves a stored session account if one exists and is valid
@@ -843,9 +844,9 @@ void controller_connect(const char *rpc_url,
  * # Returns
  * Result containing pointer to SessionAccount or error if no valid account exists
  */
-struct ResultController controller_account(const struct Policy *policies,
-                                           uintptr_t policies_len,
-                                           struct FieldElement chain_id);
+struct ResultControllerAccount controller_account(const struct Policy *policies,
+                                                  uintptr_t policies_len,
+                                                  struct FieldElement chain_id);
 
 /**
  * Clears sessions matching the specified policies and chain ID
@@ -871,7 +872,7 @@ struct Resultbool controller_clear(const struct Policy *policies,
  * # Returns
  * CString containing the username
  */
-const char *controller_username(struct Controller *controller);
+const char *controller_username(struct ControllerAccount *controller);
 
 /**
  * Gets account address
@@ -882,7 +883,7 @@ const char *controller_username(struct Controller *controller);
  * # Returns
  * FieldElement containing the account address
  */
-struct FieldElement controller_address(struct Controller *controller);
+struct FieldElement controller_address(struct ControllerAccount *controller);
 
 /**
  * Gets account chain ID
@@ -893,7 +894,7 @@ struct FieldElement controller_address(struct Controller *controller);
  * # Returns
  * FieldElement containing the chain ID
  */
-struct FieldElement controller_chain_id(struct Controller *controller);
+struct FieldElement controller_chain_id(struct ControllerAccount *controller);
 
 /**
  * Gets account nonce
@@ -904,7 +905,7 @@ struct FieldElement controller_chain_id(struct Controller *controller);
  * # Returns
  * Result containing FieldElement nonce or error
  */
-struct ResultFieldElement controller_nonce(struct Controller *controller);
+struct ResultFieldElement controller_nonce(struct ControllerAccount *controller);
 
 /**
  * Executes raw transaction
@@ -917,7 +918,7 @@ struct ResultFieldElement controller_nonce(struct Controller *controller);
  * # Returns
  * Result containing transaction hash as FieldElement or error
  */
-struct ResultFieldElement controller_execute_raw(struct Controller *controller,
+struct ResultFieldElement controller_execute_raw(struct ControllerAccount *controller,
                                                  const struct Call *calldata,
                                                  uintptr_t calldata_len);
 
@@ -932,7 +933,7 @@ struct ResultFieldElement controller_execute_raw(struct Controller *controller,
  * # Returns
  * Result containing transaction hash as FieldElement or error
  */
-struct ResultFieldElement controller_execute_from_outside(struct Controller *controller,
+struct ResultFieldElement controller_execute_from_outside(struct ControllerAccount *controller,
                                                           const struct Call *calldata,
                                                           uintptr_t calldata_len);
 
@@ -967,7 +968,8 @@ struct ResultCArrayu8 client_publish_message(struct ToriiClient *client,
  *
  * # Parameters
  * * `client` - Pointer to ToriiClient instance
- * * `contract_addresses` - Array of contract addresses. If empty, all controllers will be returned.
+ * * `contract_addresses` - Array of contract addresses. If empty, all controllers will be
+ *   returned.
  *
  * # Returns
  * Result containing controllers or error
