@@ -451,11 +451,11 @@ typedef enum Primitive_Tag {
 #if defined(TARGET_POINTER_WIDTH_32)
   U256,
 #endif
-  USize,
   Bool,
   Felt252,
   ClassHash,
   ContractAddress,
+  EthAddress,
 } Primitive_Tag;
 
 typedef struct Primitive {
@@ -500,9 +500,6 @@ typedef struct Primitive {
     };
 #endif
     struct {
-      uint32_t u_size;
-    };
-    struct {
       bool bool_;
     };
     struct {
@@ -513,6 +510,9 @@ typedef struct Primitive {
     };
     struct {
       struct FieldElement contract_address;
+    };
+    struct {
+      struct FieldElement eth_address;
     };
   };
 } Primitive;

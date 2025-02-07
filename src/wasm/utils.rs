@@ -100,7 +100,6 @@ fn primitive_value_json(primitive: Primitive) -> JsValue {
         Primitive::U8(Some(value)) => JsValue::from_f64(value.into()),
         Primitive::U16(Some(value)) => JsValue::from_f64(value.into()),
         Primitive::U32(Some(value)) => JsValue::from_f64(value.into()),
-        Primitive::USize(Some(value)) => JsValue::from_f64(value.into()),
         Primitive::I64(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
         Primitive::U64(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
         Primitive::I128(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
@@ -109,6 +108,7 @@ fn primitive_value_json(primitive: Primitive) -> JsValue {
         Primitive::Felt252(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
         Primitive::ClassHash(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
         Primitive::ContractAddress(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
+        Primitive::EthAddress(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
         _ => JsValue::NULL,
     }
 }

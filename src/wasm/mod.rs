@@ -28,8 +28,8 @@ use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
 use starknet_crypto::poseidon_hash_many;
 use stream_cancel::{StreamExt as _, Tripwire};
-use torii_relay::typed_data::TypedData;
 use torii_relay::types::Message;
+use torii_typed_data::TypedData;
 use tsify_next::Tsify;
 use wasm_bindgen::prelude::*;
 

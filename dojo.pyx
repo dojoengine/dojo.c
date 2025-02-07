@@ -287,11 +287,11 @@ cdef extern from *:
     U128,
     U256,
     U256,
-    USize,
     Bool,
     Felt252,
     ClassHash,
     ContractAddress,
+    EthAddress,
 
   cdef struct Primitive:
     Primitive_Tag tag;
@@ -307,11 +307,11 @@ cdef extern from *:
     uint8_t u128[16];
     uint64_t u256[4];
     uint32_t u256[8];
-    uint32_t u_size;
     bool bool_;
     FieldElement felt252;
     FieldElement class_hash;
     FieldElement contract_address;
+    FieldElement eth_address;
 
   cdef struct CArrayMemberValue:
     MemberValue *data;
