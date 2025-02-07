@@ -138,11 +138,11 @@ struct Primitive {
 #if defined(TARGET_POINTER_WIDTH_32)
     U256,
 #endif
-    USize,
     Bool,
     Felt252,
     ClassHash,
     ContractAddress,
+    EthAddress,
   };
 
   struct I8_Body {
@@ -195,10 +195,6 @@ struct Primitive {
   };
 #endif
 
-  struct USize_Body {
-    uint32_t _0;
-  };
-
   struct Bool_Body {
     bool _0;
   };
@@ -212,6 +208,10 @@ struct Primitive {
   };
 
   struct ContractAddress_Body {
+    FieldElement _0;
+  };
+
+  struct EthAddress_Body {
     FieldElement _0;
   };
 
@@ -231,11 +231,11 @@ struct Primitive {
 #if defined(TARGET_POINTER_WIDTH_32)
     U256_Body u256;
 #endif
-    USize_Body u_size;
     Bool_Body bool_;
     Felt252_Body felt252;
     ClassHash_Body class_hash;
     ContractAddress_Body contract_address;
+    EthAddress_Body eth_address;
   };
 
   static Primitive I8(const int8_t &_0) {
@@ -380,17 +380,6 @@ struct Primitive {
   }
 #endif
 
-  static Primitive USize(const uint32_t &_0) {
-    Primitive result;
-    ::new (&result.u_size._0) (uint32_t)(_0);
-    result.tag = Tag::USize;
-    return result;
-  }
-
-  bool IsUSize() const {
-    return tag == Tag::USize;
-  }
-
   static Primitive Bool(const bool &_0) {
     Primitive result;
     ::new (&result.bool_._0) (bool)(_0);
@@ -433,6 +422,17 @@ struct Primitive {
 
   bool IsContractAddress() const {
     return tag == Tag::ContractAddress;
+  }
+
+  static Primitive EthAddress(const FieldElement &_0) {
+    Primitive result;
+    ::new (&result.eth_address._0) (FieldElement)(_0);
+    result.tag = Tag::EthAddress;
+    return result;
+  }
+
+  bool IsEthAddress() const {
+    return tag == Tag::EthAddress;
   }
 };
 

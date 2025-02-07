@@ -822,11 +822,11 @@ pub enum Primitive {
     U256([u64; 4]),
     #[cfg(target_pointer_width = "32")]
     U256([u32; 8]),
-    USize(u32),
     Bool(bool),
     Felt252(FieldElement),
     ClassHash(FieldElement),
     ContractAddress(FieldElement),
+    EthAddress(FieldElement),
 }
 
 impl From<&Primitive> for dojo_types::primitive::Primitive {
@@ -847,7 +847,6 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
                 dojo_types::primitive::Primitive::U128(Some(u128::from_be_bytes(*v)))
             }
             Primitive::U256(v) => dojo_types::primitive::Primitive::U256(Some((*v).into())),
-            Primitive::USize(v) => dojo_types::primitive::Primitive::USize(Some(*v)),
             Primitive::Bool(v) => dojo_types::primitive::Primitive::Bool(Some(*v)),
             Primitive::Felt252(v) => {
                 dojo_types::primitive::Primitive::Felt252(Some((&v.clone()).into()))
@@ -857,6 +856,9 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
             }
             Primitive::ContractAddress(v) => {
                 dojo_types::primitive::Primitive::ContractAddress(Some((&v.clone()).into()))
+            }
+            Primitive::EthAddress(v) => {
+                dojo_types::primitive::Primitive::EthAddress(Some((&v.clone()).into()))
             }
         }
     }
@@ -897,7 +899,6 @@ impl From<&dojo_types::primitive::Primitive> for Primitive {
                     return Primitive::U256([0; 8]);
                 }
             }
-            dojo_types::primitive::Primitive::USize(v) => Primitive::USize(v.unwrap_or(0)),
             dojo_types::primitive::Primitive::Bool(v) => Primitive::Bool(v.unwrap_or(false)),
             dojo_types::primitive::Primitive::Felt252(v) => {
                 if let Some(v) = v {
@@ -918,6 +919,13 @@ impl From<&dojo_types::primitive::Primitive> for Primitive {
                     Primitive::Felt252((&v.clone()).into())
                 } else {
                     Primitive::Felt252(FieldElement { data: [0; 32] })
+                }
+            }
+            dojo_types::primitive::Primitive::EthAddress(v) => {
+                if let Some(v) = v {
+                    Primitive::EthAddress((&v.clone()).into())
+                } else {
+                    Primitive::EthAddress(FieldElement { data: [0; 32] })
                 }
             }
         }

@@ -605,11 +605,11 @@ pub enum Primitive {
     U64(Option<u64>),
     U128(Option<String>),
     U256(Option<String>),
-    USize(Option<u32>),
     Bool(Option<bool>),
     Felt252(Option<String>),
     ClassHash(Option<String>),
     ContractAddress(Option<String>),
+    EthAddress(Option<String>),
 }
 
 impl From<&Primitive> for dojo_types::primitive::Primitive {
@@ -626,7 +626,6 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
             Primitive::U64(Some(value)) => Self::U64(Some(*value)),
             Primitive::U128(Some(value)) => Self::U128(Some(u128::from_str(value).unwrap())),
             Primitive::U256(Some(value)) => Self::U256(Some(U256::from_be_hex(value.as_str()))),
-            Primitive::USize(Some(value)) => Self::USize(Some(*value)),
             Primitive::Bool(Some(value)) => Self::Bool(Some(*value)),
             Primitive::Felt252(Some(value)) => Self::Felt252(Some(Felt::from_str(value).unwrap())),
             Primitive::ClassHash(Some(value)) => {
@@ -634,6 +633,9 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
             }
             Primitive::ContractAddress(Some(value)) => {
                 Self::ContractAddress(Some(Felt::from_str(value).unwrap()))
+            }
+            Primitive::EthAddress(Some(value)) => {
+                Self::EthAddress(Some(Felt::from_str(value).unwrap()))
             }
             _ => unimplemented!(),
         }

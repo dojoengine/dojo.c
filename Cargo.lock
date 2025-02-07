@@ -1738,6 +1738,7 @@ dependencies = [
  "torii-client",
  "torii-grpc",
  "torii-relay",
+ "torii-typed-data",
  "tower-http 0.6.2",
  "tsify-next",
  "url",
