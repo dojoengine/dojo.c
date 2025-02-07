@@ -30,6 +30,26 @@ jobs:
       - run: |
           cargo nextest run --all-features --no-tests=pass
 
+  wasm-check:
+    name: Check WASM compilation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      - name: Check WASM build (no-modules)
+        run: wasm-pack build --out-dir pkg-no-modules --release --target no-modules
+      - name: Check WASM build (web)
+        run: wasm-pack build --out-dir pkg-web --release --target web
+
   clippy:
     runs-on: ubuntu-latest
     steps:
