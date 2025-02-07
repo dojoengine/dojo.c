@@ -30,7 +30,7 @@ jobs:
       - run: |
           cargo nextest run --all-features --no-tests=pass
 
-  wasm-check:
+  ensure-wasm:
     name: Check WASM compilation
     runs-on: ubuntu-latest
     steps:
@@ -43,12 +43,8 @@ jobs:
       - uses: arduino/setup-protoc@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install wasm-pack
-        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-      - name: Check WASM build (no-modules)
-        run: wasm-pack build --out-dir pkg-no-modules --release --target no-modules
-      - name: Check WASM build (web)
-        run: wasm-pack build --out-dir pkg-web --release --target web
+      - name: Compile WASM
+        run: cargo build --release --target wasm32-unknown-unknown
 
   clippy:
     runs-on: ubuntu-latest
