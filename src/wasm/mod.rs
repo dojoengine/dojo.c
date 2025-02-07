@@ -40,8 +40,8 @@ use crate::utils::watch_tx;
 mod types;
 
 use types::{
-    BlockId, Call, Calls, ClientConfig, Entities, Entity, IndexerUpdate, KeysClause, KeysClauses,
-    Model, Query, Signature, Token, TokenBalance, TokenBalances, Tokens, Controller, Controllers,
+    BlockId, Call, Calls, ClientConfig, Controller, Controllers, Entities, Entity, IndexerUpdate,
+    KeysClause, KeysClauses, Model, Query, Signature, Token, TokenBalance, TokenBalances, Tokens,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -591,12 +591,16 @@ impl ToriiClient {
     /// Gets controllers along with their usernames for the given contract addresses
     ///
     /// # Parameters
-    /// * `contract_addresses` - Array of contract addresses as hex strings. If empty, all controllers will be returned.
+    /// * `contract_addresses` - Array of contract addresses as hex strings. If empty, all
+    ///   controllers will be returned.
     ///
     /// # Returns
     /// Result containing controllers or error
     #[wasm_bindgen(js_name = getControllers)]
-    pub async fn get_controllers(&self, contract_addresses: Vec<String>) -> Result<Controllers, JsValue> {
+    pub async fn get_controllers(
+        &self,
+        contract_addresses: Vec<String>,
+    ) -> Result<Controllers, JsValue> {
         let contract_addresses = contract_addresses
             .into_iter()
             .map(|c| Felt::from_str(&c))

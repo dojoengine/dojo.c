@@ -92,7 +92,11 @@ pub struct Controller {
 
 impl From<&torii_grpc::types::Controller> for Controller {
     fn from(val: &torii_grpc::types::Controller) -> Self {
-        Controller { address: (&val.address).into(), username: CString::new(val.username.clone()).unwrap().into_raw(), deployed_at_timestamp: val.deployed_at }
+        Controller {
+            address: (&val.address).into(),
+            username: CString::new(val.username.clone()).unwrap().into_raw(),
+            deployed_at_timestamp: val.deployed_at,
+        }
     }
 }
 

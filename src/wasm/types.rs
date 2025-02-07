@@ -13,7 +13,6 @@ use wasm_bindgen::prelude::*;
 
 use super::utils::parse_ty_as_json_str;
 
-
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Controllers(pub Vec<Controller>);
@@ -28,7 +27,11 @@ pub struct Controller {
 
 impl From<&torii_grpc::types::Controller> for Controller {
     fn from(value: &torii_grpc::types::Controller) -> Self {
-        Self { address: format!("{:#x}", value.address), username: value.username.clone(), deployed_at_timestamp: value.deployed_at }
+        Self {
+            address: format!("{:#x}", value.address),
+            username: value.username.clone(),
+            deployed_at_timestamp: value.deployed_at,
+        }
     }
 }
 
