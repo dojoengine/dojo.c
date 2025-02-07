@@ -30,6 +30,24 @@ jobs:
       - run: |
           cargo nextest run --all-features --no-tests=pass
 
+  ensure-wasm:
+    name: Check WASM compilation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+      - name: Compile WASM
+        run: cargo build --release --target wasm32-unknown-unknown
+
   clippy:
     runs-on: ubuntu-latest
     steps:
