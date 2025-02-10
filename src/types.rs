@@ -102,7 +102,7 @@ pub struct Provider(pub(crate) Arc<JsonRpcClient<HttpTransport>>);
 #[wasm_bindgen]
 pub struct Account(pub(crate) SingleOwnerAccount<Arc<JsonRpcClient<HttpTransport>>, LocalWallet>);
 #[wasm_bindgen]
-pub struct Controller {
+pub struct ControllerAccount {
     pub(crate) account: account_sdk::account::session::account::SessionAccount,
     pub(crate) username: String,
 }

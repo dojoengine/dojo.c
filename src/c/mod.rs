@@ -50,16 +50,16 @@ use torii_client::client::Client as TClient;
 use torii_relay::types::Message;
 use torii_typed_data::TypedData;
 use tower_http::cors::{AllowOrigin, CorsLayer};
-use types::{EntityKeysClause, Event, IndexerUpdate, Policy, Struct, Token, TokenBalance};
+use types::{
+    BlockId, CArray, Call, Controller, Entity, EntityKeysClause, Error, Event, IndexerUpdate,
+    Policy, Query, Result, Signature, Struct, Token, TokenBalance, ToriiClient, Ty, WorldMetadata,
+};
 use url::Url;
 
-use self::types::{
-    BlockId, CArray, Call, Entity, Error, Query, Result, Signature, ToriiClient, Ty, WorldMetadata,
-};
 use crate::constants;
 use crate::types::{
-    Account, Provider, RegisterSessionResponse, RegisteredAccount, RegisteredSession,
-    SessionsStorage, Subscription,
+    Account, ControllerAccount, Provider, RegisterSessionResponse, RegisteredAccount,
+    RegisteredSession, SessionsStorage, Subscription,
 };
 use crate::utils::watch_tx;
 
@@ -113,7 +113,7 @@ struct CallbackState {
     policies: Vec<account_sdk::account::session::policy::Policy>,
     private_key: SigningKey,
     public_key: Felt,
-    account_callback: extern "C" fn(*mut crate::types::Controller),
+    account_callback: extern "C" fn(*mut ControllerAccount),
 }
 
 // Modify handle_callback to call the callback
@@ -195,7 +195,7 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
     );
 
     // Call the callback with the new account
-    (state.account_callback)(Box::into_raw(Box::new(crate::types::Controller {
+    (state.account_callback)(Box::into_raw(Box::new(ControllerAccount {
         account: session_account,
         username: payload.username,
     })));
@@ -245,7 +245,7 @@ pub unsafe extern "C" fn controller_connect(
     rpc_url: *const c_char,
     policies: *const Policy,
     policies_len: usize,
-    account_callback: extern "C" fn(*mut crate::types::Controller),
+    account_callback: extern "C" fn(*mut ControllerAccount),
 ) {
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
@@ -334,7 +334,7 @@ pub unsafe extern "C" fn controller_account(
     policies: *const Policy,
     policies_len: usize,
     chain_id: types::FieldElement,
-) -> Result<*mut crate::types::Controller> {
+) -> Result<*mut ControllerAccount> {
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
     let account_policies: Vec<account_sdk::account::session::policy::Policy> = policies
         .iter()
@@ -369,7 +369,7 @@ pub unsafe extern "C" fn controller_account(
     // Helper function to try creating a session account
     let try_create_session_account = |account: &RegisteredAccount,
                                       session: &RegisteredSession|
-     -> Option<crate::types::Controller> {
+     -> Option<ControllerAccount> {
         // Check chain ID
         if account.chain_id != chain_id {
             return None;
@@ -416,10 +416,7 @@ pub unsafe extern "C" fn controller_account(
             session,
         );
 
-        Some(crate::types::Controller {
-            account: session_account,
-            username: account.username.clone(),
-        })
+        Some(ControllerAccount { account: session_account, username: account.username.clone() })
     };
 
     // First try the active account if it exists
@@ -545,9 +542,7 @@ pub unsafe extern "C" fn controller_clear(
 /// # Returns
 /// CString containing the username
 #[no_mangle]
-pub unsafe extern "C" fn controller_username(
-    controller: *mut crate::types::Controller,
-) -> *const c_char {
+pub unsafe extern "C" fn controller_username(controller: *mut ControllerAccount) -> *const c_char {
     CString::new((*controller).username.to_string()).unwrap().into_raw()
 }
 
@@ -560,7 +555,7 @@ pub unsafe extern "C" fn controller_username(
 /// FieldElement containing the account address
 #[no_mangle]
 pub unsafe extern "C" fn controller_address(
-    controller: *mut crate::types::Controller,
+    controller: *mut ControllerAccount,
 ) -> types::FieldElement {
     (&(*controller).account.address()).into()
 }
@@ -574,7 +569,7 @@ pub unsafe extern "C" fn controller_address(
 /// FieldElement containing the chain ID
 #[no_mangle]
 pub unsafe extern "C" fn controller_chain_id(
-    controller: *mut crate::types::Controller,
+    controller: *mut ControllerAccount,
 ) -> types::FieldElement {
     (&(*controller).account.chain_id()).into()
 }
@@ -588,7 +583,7 @@ pub unsafe extern "C" fn controller_chain_id(
 /// Result containing FieldElement nonce or error
 #[no_mangle]
 pub unsafe extern "C" fn controller_nonce(
-    controller: *mut crate::types::Controller,
+    controller: *mut ControllerAccount,
 ) -> Result<types::FieldElement> {
     let nonce = match RUNTIME.block_on((*controller).account.get_nonce()) {
         Ok(nonce) => nonce,
@@ -609,7 +604,7 @@ pub unsafe extern "C" fn controller_nonce(
 /// Result containing transaction hash as FieldElement or error
 #[no_mangle]
 pub unsafe extern "C" fn controller_execute_raw(
-    controller: *mut crate::types::Controller,
+    controller: *mut ControllerAccount,
     calldata: *const Call,
     calldata_len: usize,
 ) -> Result<types::FieldElement> {
@@ -638,7 +633,7 @@ pub unsafe extern "C" fn controller_execute_raw(
 /// Result containing transaction hash as FieldElement or error
 #[no_mangle]
 pub unsafe extern "C" fn controller_execute_from_outside(
-    controller: *mut crate::types::Controller,
+    controller: *mut ControllerAccount,
     calldata: *const Call,
     calldata_len: usize,
 ) -> Result<types::FieldElement> {
@@ -725,6 +720,36 @@ pub unsafe extern "C" fn client_publish_message(
 
     match RUNTIME.block_on(client_future) {
         Ok(data) => Result::Ok(data.into()),
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
+/// Retrieves controllers for the given contract addresses
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `contract_addresses` - Array of contract addresses. If empty, all controllers will be
+///   returned.
+///
+/// # Returns
+/// Result containing controllers or error
+#[no_mangle]
+pub unsafe extern "C" fn client_controllers(
+    client: *mut ToriiClient,
+    contract_addresses: *const types::FieldElement,
+    contract_addresses_len: usize,
+) -> Result<CArray<Controller>> {
+    let contract_addresses =
+        unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+    let contract_addresses = contract_addresses.iter().map(|f| f.into()).collect::<Vec<_>>();
+
+    let controllers_future = unsafe { (*client).inner.controllers(contract_addresses) };
+
+    match RUNTIME.block_on(controllers_future) {
+        Ok(controllers) => {
+            let controllers: Vec<Controller> = controllers.iter().map(|c| c.into()).collect();
+            Result::Ok(controllers.into())
+        }
         Err(e) => Result::Err(e.into()),
     }
 }

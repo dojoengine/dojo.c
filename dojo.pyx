@@ -35,7 +35,7 @@ cdef extern from *:
   cdef struct Account:
     pass
 
-  cdef struct Controller:
+  cdef struct ControllerAccount:
     pass
 
   cdef struct Provider:
@@ -62,13 +62,13 @@ cdef extern from *:
   cdef struct FieldElement:
     uint8_t data[32];
 
-  cdef enum ResultController_Tag:
-    OkController,
-    ErrController,
+  cdef enum ResultControllerAccount_Tag:
+    OkControllerAccount,
+    ErrControllerAccount,
 
-  cdef struct ResultController:
-    ResultController_Tag tag;
-    Controller *ok;
+  cdef struct ResultControllerAccount:
+    ResultControllerAccount_Tag tag;
+    ControllerAccount *ok;
     Error err;
 
   cdef enum Resultbool_Tag:
@@ -100,6 +100,19 @@ cdef extern from *:
   cdef struct ResultCArrayu8:
     ResultCArrayu8_Tag tag;
     CArrayu8 ok;
+    Error err;
+
+  cdef struct CArrayController:
+    Controller *data;
+    uintptr_t data_len;
+
+  cdef enum ResultCArrayController_Tag:
+    OkCArrayController,
+    ErrCArrayController,
+
+  cdef struct ResultCArrayController:
+    ResultCArrayController_Tag tag;
+    CArrayController ok;
     Error err;
 
   cdef struct CArrayEntity:
@@ -256,6 +269,11 @@ cdef extern from *:
     FieldElement target;
     const char *method;
     const char *description;
+
+  cdef struct Controller:
+    FieldElement address;
+    const char *username;
+    uint64_t deployed_at_timestamp;
 
   cdef struct Entity:
     FieldElement hashed_keys;
@@ -517,7 +535,7 @@ cdef extern from *:
   void controller_connect(const char *rpc_url,
                           const Policy *policies,
                           uintptr_t policies_len,
-                          void (*account_callback)(Controller*));
+                          void (*account_callback)(ControllerAccount*));
 
   # Retrieves a stored session account if one exists and is valid
   #
@@ -528,9 +546,9 @@ cdef extern from *:
   #
   # # Returns
   # Result containing pointer to SessionAccount or error if no valid account exists
-  ResultController controller_account(const Policy *policies,
-                                      uintptr_t policies_len,
-                                      FieldElement chain_id);
+  ResultControllerAccount controller_account(const Policy *policies,
+                                             uintptr_t policies_len,
+                                             FieldElement chain_id);
 
   # Clears sessions matching the specified policies and chain ID
   #
@@ -552,7 +570,7 @@ cdef extern from *:
   #
   # # Returns
   # CString containing the username
-  const char *controller_username(Controller *controller);
+  const char *controller_username(ControllerAccount *controller);
 
   # Gets account address
   #
@@ -561,7 +579,7 @@ cdef extern from *:
   #
   # # Returns
   # FieldElement containing the account address
-  FieldElement controller_address(Controller *controller);
+  FieldElement controller_address(ControllerAccount *controller);
 
   # Gets account chain ID
   #
@@ -570,7 +588,7 @@ cdef extern from *:
   #
   # # Returns
   # FieldElement containing the chain ID
-  FieldElement controller_chain_id(Controller *controller);
+  FieldElement controller_chain_id(ControllerAccount *controller);
 
   # Gets account nonce
   #
@@ -579,7 +597,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing FieldElement nonce or error
-  ResultFieldElement controller_nonce(Controller *controller);
+  ResultFieldElement controller_nonce(ControllerAccount *controller);
 
   # Executes raw transaction
   #
@@ -590,7 +608,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing transaction hash as FieldElement or error
-  ResultFieldElement controller_execute_raw(Controller *controller,
+  ResultFieldElement controller_execute_raw(ControllerAccount *controller,
                                             const Call *calldata,
                                             uintptr_t calldata_len);
 
@@ -603,7 +621,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing transaction hash as FieldElement or error
-  ResultFieldElement controller_execute_from_outside(Controller *controller,
+  ResultFieldElement controller_execute_from_outside(ControllerAccount *controller,
                                                      const Call *calldata,
                                                      uintptr_t calldata_len);
 
@@ -628,6 +646,19 @@ cdef extern from *:
                                         const char *message,
                                         const FieldElement *signature_felts,
                                         uintptr_t signature_felts_len);
+
+  # Retrieves controllers for the given contract addresses
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `contract_addresses` - Array of contract addresses. If empty, all controllers will be
+  #   returned.
+  #
+  # # Returns
+  # Result containing controllers or error
+  ResultCArrayController client_controllers(ToriiClient *client,
+                                            const FieldElement *contract_addresses,
+                                            uintptr_t contract_addresses_len);
 
   # Queries entities matching given criteria
   #

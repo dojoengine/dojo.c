@@ -84,6 +84,24 @@ impl From<&Policy> for account_sdk::account::session::policy::CallPolicy {
 
 #[derive(Debug, Clone)]
 #[repr(C)]
+pub struct Controller {
+    pub address: FieldElement,
+    pub username: *const c_char,
+    pub deployed_at_timestamp: u64,
+}
+
+impl From<&torii_grpc::types::Controller> for Controller {
+    fn from(val: &torii_grpc::types::Controller) -> Self {
+        Controller {
+            address: (&val.address).into(),
+            username: CString::new(val.username.clone()).unwrap().into_raw(),
+            deployed_at_timestamp: val.deployed_at,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
 pub struct Token {
     pub contract_address: FieldElement,
     pub name: *const c_char,
