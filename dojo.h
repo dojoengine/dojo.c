@@ -59,6 +59,8 @@ typedef enum PatternMatching {
   VariableLen = 1,
 } PatternMatching;
 
+typedef struct String String;
+
 typedef struct Error {
   char *message;
 } Error;
@@ -732,6 +734,7 @@ typedef struct EntityKeysClause {
 } EntityKeysClause;
 
 typedef struct Token {
+  struct String id;
   struct FieldElement contract_address;
   const char *name;
   const char *symbol;

@@ -41,6 +41,9 @@ cdef extern from *:
   cdef struct Provider:
     pass
 
+  cdef struct String:
+    pass
+
   cdef struct Subscription:
     pass
 
@@ -454,6 +457,7 @@ cdef extern from *:
     KeysClause entity_keys;
 
   cdef struct Token:
+    String id;
     FieldElement contract_address;
     const char *name;
     const char *symbol;

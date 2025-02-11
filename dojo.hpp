@@ -48,6 +48,8 @@ enum class PatternMatching {
   VariableLen = 1,
 };
 
+struct String;
+
 struct Error {
   char *message;
 };
@@ -593,6 +595,7 @@ struct Event {
 };
 
 struct Token {
+  String id;
   FieldElement contract_address;
   const char *name;
   const char *symbol;
