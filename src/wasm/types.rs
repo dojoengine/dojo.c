@@ -46,7 +46,6 @@ pub struct TokenBalances(pub Vec<TokenBalance>);
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Token {
-    pub id: String,
     pub contract_address: String,
     pub name: String,
     pub symbol: String,
@@ -57,7 +56,6 @@ pub struct Token {
 impl From<&torii_grpc::types::Token> for Token {
     fn from(value: &torii_grpc::types::Token) -> Self {
         Self {
-            id: format!("{:#x}", value.contract_address),
             contract_address: format!("{:#x}", value.contract_address),
             name: value.name.clone(),
             symbol: value.symbol.clone(),

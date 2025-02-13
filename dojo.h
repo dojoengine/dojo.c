@@ -59,8 +59,6 @@ typedef enum PatternMatching {
   VariableLen = 1,
 } PatternMatching;
 
-typedef struct String String;
-
 typedef struct Error {
   char *message;
 } Error;
@@ -267,6 +265,14 @@ typedef struct ResultCArrayToken {
     };
   };
 } ResultCArrayToken;
+
+typedef struct Token {
+  struct FieldElement contract_address;
+  const char *name;
+  const char *symbol;
+  uint8_t decimals;
+  const char *metadata;
+} Token;
 
 typedef struct CArrayTokenBalance {
   struct TokenBalance *data;
@@ -733,15 +739,6 @@ typedef struct EntityKeysClause {
   };
 } EntityKeysClause;
 
-typedef struct Token {
-  struct String id;
-  struct FieldElement contract_address;
-  const char *name;
-  const char *symbol;
-  uint8_t decimals;
-  const char *metadata;
-} Token;
-
 typedef enum COptionFieldElement_Tag {
   SomeFieldElement,
   NoneFieldElement,
@@ -1124,6 +1121,22 @@ struct ResultSubscription client_on_starknet_event(struct ToriiClient *client,
 struct ResultCArrayToken client_tokens(struct ToriiClient *client,
                                        const struct FieldElement *contract_addresses,
                                        uintptr_t contract_addresses_len);
+
+/**
+ * Subscribes to token updates
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `contract_addresses` - Array of contract addresses
+ * * `callback` - Function called when updates occur
+ *
+ * # Returns
+ * Result containing pointer to Subscription or error
+ */
+struct ResultSubscription client_on_token_update(struct ToriiClient *client,
+                                                 const struct FieldElement *contract_addresses,
+                                                 uintptr_t contract_addresses_len,
+                                                 void (*callback)(struct Token));
 
 /**
  * Gets token balances for given accounts and contracts

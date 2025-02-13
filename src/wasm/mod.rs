@@ -640,6 +640,74 @@ impl ToriiClient {
         Ok(Tokens(tokens.iter().map(|t| t.into()).collect()))
     }
 
+    /// Subscribes to token updates
+    ///
+    /// # Parameters
+    /// * `contract_addresses` - Array of contract addresses as hex strings
+    /// * `callback` - JavaScript function to call on updates
+    ///
+    /// # Returns
+    /// Result containing subscription handle or error
+    #[wasm_bindgen(js_name = onTokenUpdated)]
+    pub fn on_token_updated(
+        &self,
+        contract_addresses: Vec<String>,
+        callback: js_sys::Function,
+    ) -> Result<Subscription, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        let contract_addresses = contract_addresses
+            .into_iter()
+            .map(|addr| {
+                Felt::from_str(&addr).map_err(|err| {
+                    JsValue::from(format!("failed to parse contract address: {err}"))
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let subscription_id = Arc::new(AtomicU64::new(0));
+        let (trigger, tripwire) = Tripwire::new();
+
+        let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
+
+        // Spawn a new task to handle the stream and reconnections
+        let client = self.inner.clone();
+        let subscription_id_clone = Arc::clone(&subscription_id);
+        wasm_bindgen_futures::spawn_local(async move {
+            let mut backoff = 1000;
+            let max_backoff = 60000;
+
+            loop {
+                if let Ok(stream) = client.on_token_updated(contract_addresses.clone()).await {
+                    backoff = 1000; // Reset backoff on successful connection
+
+                    let mut stream = stream.take_until_if(tripwire.clone());
+
+                    while let Some(Ok((id, token))) = stream.next().await {
+                        subscription_id_clone.store(id, Ordering::SeqCst);
+                        let token: Token = (&token).into();
+
+                        let _ = callback.call1(
+                            &JsValue::null(),
+                            &token.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                        );
+                    }
+                }
+
+                // If we've reached this point, the stream has ended (possibly due to disconnection)
+                // We'll try to reconnect after a delay, unless the tripwire has been triggered
+                if tripwire.clone().now_or_never().unwrap_or_default() {
+                    break; // Exit the loop if the subscription has been cancelled
+                }
+                gloo_timers::future::TimeoutFuture::new(backoff).await;
+                backoff = std::cmp::min(backoff * 2, max_backoff);
+            }
+        });
+
+        Ok(subscription)
+    }
+
     /// Gets token balances for given accounts and contracts
     ///
     /// # Parameters

@@ -48,8 +48,6 @@ enum class PatternMatching {
   VariableLen = 1,
 };
 
-struct String;
-
 struct Error {
   char *message;
 };
@@ -595,7 +593,6 @@ struct Event {
 };
 
 struct Token {
-  String id;
   FieldElement contract_address;
   const char *name;
   const char *symbol;
@@ -1239,6 +1236,20 @@ Result<Subscription*> client_on_starknet_event(ToriiClient *client,
 Result<CArray<Token>> client_tokens(ToriiClient *client,
                                     const FieldElement *contract_addresses,
                                     uintptr_t contract_addresses_len);
+
+/// Subscribes to token updates
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `contract_addresses` - Array of contract addresses
+/// * `callback` - Function called when updates occur
+///
+/// # Returns
+/// Result containing pointer to Subscription or error
+Result<Subscription*> client_on_token_update(ToriiClient *client,
+                                             const FieldElement *contract_addresses,
+                                             uintptr_t contract_addresses_len,
+                                             void (*callback)(Token));
 
 /// Gets token balances for given accounts and contracts
 ///
