@@ -172,6 +172,7 @@ cdef extern from *:
     Error err;
 
   cdef struct Token:
+    const char *id;
     FieldElement contract_address;
     const char *name;
     const char *symbol;

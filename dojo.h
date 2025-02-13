@@ -267,6 +267,7 @@ typedef struct ResultCArrayToken {
 } ResultCArrayToken;
 
 typedef struct Token {
+  const char *id;
   struct FieldElement contract_address;
   const char *name;
   const char *symbol;

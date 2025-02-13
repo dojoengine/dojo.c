@@ -593,6 +593,7 @@ struct Event {
 };
 
 struct Token {
+  const char *id;
   FieldElement contract_address;
   const char *name;
   const char *symbol;
