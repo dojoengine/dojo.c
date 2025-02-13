@@ -103,6 +103,7 @@ impl From<&torii_grpc::types::Controller> for Controller {
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub struct Token {
+    id: *const c_char,
     pub contract_address: FieldElement,
     pub name: *const c_char,
     pub symbol: *const c_char,
@@ -113,6 +114,7 @@ pub struct Token {
 impl From<&torii_grpc::types::Token> for Token {
     fn from(val: &torii_grpc::types::Token) -> Self {
         Token {
+            id: CString::new(val.id.clone()).unwrap().into_raw(),
             contract_address: (&val.contract_address).into(),
             name: CString::new(val.name.clone()).unwrap().into_raw(),
             symbol: CString::new(val.symbol.clone()).unwrap().into_raw(),

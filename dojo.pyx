@@ -171,6 +171,14 @@ cdef extern from *:
     CArrayToken ok;
     Error err;
 
+  cdef struct Token:
+    const char *id;
+    FieldElement contract_address;
+    const char *name;
+    const char *symbol;
+    uint8_t decimals;
+    const char *metadata;
+
   cdef struct CArrayTokenBalance:
     TokenBalance *data;
     uintptr_t data_len;
@@ -452,13 +460,6 @@ cdef extern from *:
     EntityKeysClause_Tag tag;
     CArrayFieldElement hashed_keys;
     KeysClause entity_keys;
-
-  cdef struct Token:
-    FieldElement contract_address;
-    const char *name;
-    const char *symbol;
-    uint8_t decimals;
-    const char *metadata;
 
   cdef enum COptionFieldElement_Tag:
     SomeFieldElement,
@@ -783,6 +784,20 @@ cdef extern from *:
   ResultCArrayToken client_tokens(ToriiClient *client,
                                   const FieldElement *contract_addresses,
                                   uintptr_t contract_addresses_len);
+
+  # Subscribes to token updates
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `contract_addresses` - Array of contract addresses
+  # * `callback` - Function called when updates occur
+  #
+  # # Returns
+  # Result containing pointer to Subscription or error
+  ResultSubscription client_on_token_update(ToriiClient *client,
+                                            const FieldElement *contract_addresses,
+                                            uintptr_t contract_addresses_len,
+                                            void (*callback)(Token));
 
   # Gets token balances for given accounts and contracts
   #
