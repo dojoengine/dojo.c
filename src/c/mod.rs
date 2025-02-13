@@ -1083,7 +1083,8 @@ pub unsafe extern "C" fn client_tokens(
 ) -> Result<CArray<Token>> {
     let contract_addresses =
         unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-    let contract_addresses = contract_addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
+    let contract_addresses =
+        contract_addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
     let tokens = match RUNTIME.block_on((*client).inner.tokens(contract_addresses)) {
         Ok(tokens) => tokens,
         Err(e) => return Result::Err(e.into()),
@@ -1115,7 +1116,8 @@ pub unsafe extern "C" fn client_on_token_update(
     let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
         Vec::new()
     } else {
-        let addresses = unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+        let addresses =
+            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
         addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
     };
 
