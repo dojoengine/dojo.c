@@ -27,6 +27,7 @@ use axum::Router;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
+use crypto_bigint::U256;
 use directories::ProjectDirs;
 use dojo_world::contracts::naming::compute_selector_from_tag;
 use futures::FutureExt;
@@ -81,16 +82,14 @@ lazy_static! {
 #[no_mangle]
 pub unsafe extern "C" fn client_new(
     torii_url: *const c_char,
-    rpc_url: *const c_char,
     libp2p_relay_url: *const c_char,
     world: types::FieldElement,
 ) -> Result<*mut ToriiClient> {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
-    let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let libp2p_relay_url =
         unsafe { CStr::from_ptr(libp2p_relay_url).to_string_lossy().into_owned() };
 
-    let client_future = TClient::new(torii_url, rpc_url.clone(), libp2p_relay_url, (&world).into());
+    let client_future = TClient::new(torii_url, libp2p_relay_url, (&world).into());
 
     let client = match RUNTIME.block_on(client_future) {
         Ok(client) => client,
@@ -739,9 +738,13 @@ pub unsafe extern "C" fn client_controllers(
     contract_addresses: *const types::FieldElement,
     contract_addresses_len: usize,
 ) -> Result<CArray<Controller>> {
-    let contract_addresses =
-        unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-    let contract_addresses = contract_addresses.iter().map(|f| f.into()).collect::<Vec<_>>();
+    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses =
+            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+    };
 
     let controllers_future = unsafe { (*client).inner.controllers(contract_addresses) };
 
@@ -815,8 +818,12 @@ pub unsafe extern "C" fn client_event_messages(
 /// # Returns
 /// WorldMetadata structure containing world information
 #[no_mangle]
-pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> WorldMetadata {
-    unsafe { (&(*client).inner.metadata().clone()).into() }
+pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> Result<WorldMetadata> {
+    let metadata_future = unsafe { (*client).inner.metadata() };
+    match RUNTIME.block_on(metadata_future) {
+        Ok(metadata) => Result::Ok((&metadata).into()),
+        Err(e) => Result::Err(e.into()),
+    }
 }
 
 /// Subscribes to entity state updates
@@ -837,8 +844,12 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
-    let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-    let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
+    let clauses = if clauses.is_null() || clauses_len == 0 {
+        Vec::new()
+    } else {
+        let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
+        clauses.iter().map(|c| c.into()).collect::<Vec<_>>()
+    };
 
     let subscription_id = Arc::new(AtomicU64::new(0));
     let (trigger, tripwire) = Tripwire::new();
@@ -898,8 +909,12 @@ pub unsafe extern "C" fn client_update_entity_subscription(
     clauses: *const EntityKeysClause,
     clauses_len: usize,
 ) -> Result<bool> {
-    let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-    let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
+    let clauses = if clauses.is_null() || clauses_len == 0 {
+        Vec::new()
+    } else {
+        let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
+        clauses.iter().map(|c| c.into()).collect::<Vec<_>>()
+    };
 
     match RUNTIME.block_on(
         (*client)
@@ -931,8 +946,12 @@ pub unsafe extern "C" fn client_on_event_message_update(
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
-    let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-    let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
+    let clauses = if clauses.is_null() || clauses_len == 0 {
+        Vec::new()
+    } else {
+        let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
+        clauses.iter().map(|c| c.into()).collect::<Vec<_>>()
+    };
 
     let subscription_id = Arc::new(AtomicU64::new(0));
     let (trigger, tripwire) = Tripwire::new();
@@ -995,8 +1014,12 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
     clauses_len: usize,
     historical: bool,
 ) -> Result<bool> {
-    let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-    let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
+    let clauses = if clauses.is_null() || clauses_len == 0 {
+        Vec::new()
+    } else {
+        let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
+        clauses.iter().map(|c| c.into()).collect::<Vec<_>>()
+    };
 
     match RUNTIME.block_on((*client).inner.update_event_message_subscription(
         (*subscription).id.load(Ordering::SeqCst),
@@ -1026,8 +1049,12 @@ pub unsafe extern "C" fn client_on_starknet_event(
     callback: unsafe extern "C" fn(Event),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
-    let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-    let clauses = clauses.iter().map(|c| c.into()).collect::<Vec<_>>();
+    let clauses = if clauses.is_null() || clauses_len == 0 {
+        Vec::new()
+    } else {
+        let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
+        clauses.iter().map(|c| c.into()).collect::<Vec<_>>()
+    };
 
     let subscription_id = Arc::new(AtomicU64::new(0));
     let (trigger, tripwire) = Tripwire::new();
@@ -1080,12 +1107,24 @@ pub unsafe extern "C" fn client_tokens(
     client: *mut ToriiClient,
     contract_addresses: *const types::FieldElement,
     contract_addresses_len: usize,
+    token_ids: *const types::U256,
+    token_ids_len: usize,
 ) -> Result<CArray<Token>> {
-    let contract_addresses =
-        unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-    let contract_addresses =
-        contract_addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
-    let tokens = match RUNTIME.block_on((*client).inner.tokens(contract_addresses)) {
+    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses =
+            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+    };
+    let token_ids = if token_ids.is_null() || token_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
+        ids.iter().map(|f| (&f.clone()).into()).collect::<Vec<U256>>()
+    };
+
+    let tokens = match RUNTIME.block_on((*client).inner.tokens(contract_addresses, token_ids)) {
         Ok(tokens) => tokens,
         Err(e) => return Result::Err(e.into()),
     };
@@ -1108,6 +1147,8 @@ pub unsafe extern "C" fn client_on_token_update(
     client: *mut ToriiClient,
     contract_addresses: *const types::FieldElement,
     contract_addresses_len: usize,
+    token_ids: *const types::U256,
+    token_ids_len: usize,
     callback: unsafe extern "C" fn(Token),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
@@ -1119,6 +1160,13 @@ pub unsafe extern "C" fn client_on_token_update(
         let addresses =
             unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
         addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+    };
+
+    let token_ids = if token_ids.is_null() || token_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
+        ids.iter().map(|f| (&f.clone()).into()).collect::<Vec<U256>>()
     };
 
     let subscription_id = Arc::new(AtomicU64::new(0));
@@ -1133,7 +1181,10 @@ pub unsafe extern "C" fn client_on_token_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv = client_clone.inner.on_token_updated(contract_addresses.clone()).await;
+            let rcv = client_clone
+                .inner
+                .on_token_updated(contract_addresses.clone(), token_ids.clone())
+                .await;
 
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
@@ -1178,20 +1229,37 @@ pub unsafe extern "C" fn client_token_balances(
     contract_addresses_len: usize,
     account_addresses: *const types::FieldElement,
     account_addresses_len: usize,
+    token_ids: *const types::U256,
+    token_ids_len: usize,
 ) -> Result<CArray<TokenBalance>> {
-    let account_addresses =
-        unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
-    let account_addresses =
-        account_addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
+    let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses =
+            unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
+        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+    };
 
-    let contract_addresses =
-        unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-    let contract_addresses =
-        contract_addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
+    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses =
+            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+    };
 
-    let token_balances = match RUNTIME
-        .block_on((*client).inner.token_balances(account_addresses, contract_addresses))
-    {
+    let token_ids = if token_ids.is_null() || token_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
+        ids.iter().map(|f| (&f.clone()).into()).collect::<Vec<U256>>()
+    };
+
+    let token_balances = match RUNTIME.block_on((*client).inner.token_balances(
+        account_addresses,
+        contract_addresses,
+        token_ids,
+    )) {
         Ok(balances) => balances,
         Err(e) => return Result::Err(e.into()),
     };
@@ -1277,6 +1345,8 @@ pub unsafe extern "C" fn client_on_token_balance_update(
     contract_addresses_len: usize,
     account_addresses: *const types::FieldElement,
     account_addresses_len: usize,
+    token_ids: *const types::U256,
+    token_ids_len: usize,
     callback: unsafe extern "C" fn(TokenBalance),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
@@ -1299,6 +1369,13 @@ pub unsafe extern "C" fn client_on_token_balance_update(
         addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
     };
 
+    let token_ids = if token_ids.is_null() || token_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
+        ids.iter().map(|f| (&f.clone()).into()).collect::<Vec<U256>>()
+    };
+
     let subscription_id = Arc::new(AtomicU64::new(0));
     let (trigger, tripwire) = Tripwire::new();
 
@@ -1313,7 +1390,11 @@ pub unsafe extern "C" fn client_on_token_balance_update(
         loop {
             let rcv = client_clone
                 .inner
-                .on_token_balance_updated(contract_addresses.clone(), account_addresses.clone())
+                .on_token_balance_updated(
+                    contract_addresses.clone(),
+                    account_addresses.clone(),
+                    token_ids.clone(),
+                )
                 .await;
 
             if let Ok(rcv) = rcv {
@@ -1361,9 +1442,16 @@ pub unsafe extern "C" fn client_update_token_balance_subscription(
     contract_addresses_len: usize,
     account_addresses: *const types::FieldElement,
     account_addresses_len: usize,
+    token_ids: *const types::U256,
+    token_ids_len: usize,
 ) -> Result<bool> {
-    let clauses = unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-    let clauses = clauses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
+    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses =
+            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+    };
 
     let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
         Vec::new()
@@ -1373,10 +1461,18 @@ pub unsafe extern "C" fn client_update_token_balance_subscription(
         addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
     };
 
+    let token_ids = if token_ids.is_null() || token_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
+        ids.iter().map(|f| (&f.clone()).into()).collect::<Vec<U256>>()
+    };
+
     match RUNTIME.block_on((*client).inner.update_token_balance_subscription(
         (*subscription).id.load(Ordering::SeqCst),
-        clauses,
+        contract_addresses,
         account_addresses,
+        token_ids,
     )) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
