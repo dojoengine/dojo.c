@@ -132,11 +132,7 @@ pub struct ClientConfig {
 #[wasm_bindgen]
 impl ClientConfig {
     #[wasm_bindgen(constructor)]
-    pub fn new(
-        torii_url: String,
-        relay_url: String,
-        world_address: String,
-    ) -> Self {
+    pub fn new(torii_url: String, relay_url: String, world_address: String) -> Self {
         Self { torii_url, relay_url, world_address }
     }
 }

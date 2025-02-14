@@ -1181,7 +1181,10 @@ pub unsafe extern "C" fn client_on_token_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv = client_clone.inner.on_token_updated(contract_addresses.clone(), token_ids.clone()).await;
+            let rcv = client_clone
+                .inner
+                .on_token_updated(contract_addresses.clone(), token_ids.clone())
+                .await;
 
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
@@ -1252,9 +1255,11 @@ pub unsafe extern "C" fn client_token_balances(
         ids.iter().map(|f| (&f.clone()).into()).collect::<Vec<U256>>()
     };
 
-    let token_balances = match RUNTIME
-        .block_on((*client).inner.token_balances(account_addresses, contract_addresses, token_ids))
-    {
+    let token_balances = match RUNTIME.block_on((*client).inner.token_balances(
+        account_addresses,
+        contract_addresses,
+        token_ids,
+    )) {
         Ok(balances) => balances,
         Err(e) => return Result::Err(e.into()),
     };
@@ -1385,7 +1390,11 @@ pub unsafe extern "C" fn client_on_token_balance_update(
         loop {
             let rcv = client_clone
                 .inner
-                .on_token_balance_updated(contract_addresses.clone(), account_addresses.clone(), token_ids.clone())
+                .on_token_balance_updated(
+                    contract_addresses.clone(),
+                    account_addresses.clone(),
+                    token_ids.clone(),
+                )
                 .await;
 
             if let Ok(rcv) = rcv {
