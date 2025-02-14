@@ -624,16 +624,25 @@ impl ToriiClient {
     /// # Returns
     /// Result containing token information or error
     #[wasm_bindgen(js_name = getTokens)]
-    pub async fn get_tokens(&self, contract_addresses: Vec<String>) -> Result<Tokens, JsValue> {
+    pub async fn get_tokens(
+        &self,
+        contract_addresses: Vec<String>,
+        token_ids: Vec<String>,
+    ) -> Result<Tokens, JsValue> {
         let contract_addresses = contract_addresses
             .into_iter()
             .map(|c| Felt::from_str(&c))
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
 
+        let token_ids = token_ids
+            .into_iter()
+            .map(|t| U256::from_be_hex(&t))
+            .collect::<Vec<_>>();
+
         let tokens = self
             .inner
-            .tokens(contract_addresses)
+            .tokens(contract_addresses, token_ids)
             .await
             .map_err(|e| JsValue::from(format!("failed to get tokens: {e}")))?;
 
@@ -652,6 +661,7 @@ impl ToriiClient {
     pub fn on_token_updated(
         &self,
         contract_addresses: Vec<String>,
+        token_ids: Vec<String>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
@@ -666,6 +676,11 @@ impl ToriiClient {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
+        let token_ids = token_ids
+            .into_iter()
+            .map(|t| U256::from_be_hex(&t))
+            .collect::<Vec<_>>();
+
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
 
@@ -679,7 +694,10 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                if let Ok(stream) = client.on_token_updated(contract_addresses.clone()).await {
+                if let Ok(stream) = client
+                    .on_token_updated(contract_addresses.clone(), token_ids.clone())
+                    .await
+                {
                     backoff = 1000; // Reset backoff on successful connection
 
                     let mut stream = stream.take_until_if(tripwire.clone());
@@ -721,6 +739,7 @@ impl ToriiClient {
         &self,
         contract_addresses: Vec<String>,
         account_addresses: Vec<String>,
+        token_ids: Vec<String>,
     ) -> Result<TokenBalances, JsValue> {
         let account_addresses = account_addresses
             .into_iter()
@@ -734,9 +753,14 @@ impl ToriiClient {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
 
+        let token_ids = token_ids
+            .into_iter()
+            .map(|t| U256::from_be_hex(&t))
+            .collect::<Vec<_>>();
+
         let token_balances = self
             .inner
-            .token_balances(account_addresses, contract_addresses)
+            .token_balances(account_addresses, contract_addresses, token_ids)
             .await
             .map_err(|e| JsValue::from(format!("failed to get token balances: {e}")))?;
 
@@ -1129,6 +1153,7 @@ impl ToriiClient {
         &self,
         contract_addresses: Vec<String>,
         account_addresses: Vec<String>,
+        token_ids: Vec<String>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
@@ -1151,6 +1176,11 @@ impl ToriiClient {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
+        let token_ids = token_ids
+            .into_iter()
+            .map(|t| U256::from_be_hex(&t))
+            .collect::<Vec<_>>();
+
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
 
@@ -1165,7 +1195,11 @@ impl ToriiClient {
 
             loop {
                 if let Ok(stream) = client
-                    .on_token_balance_updated(contract_addresses.clone(), account_addresses.clone())
+                    .on_token_balance_updated(
+                        contract_addresses.clone(),
+                        account_addresses.clone(),
+                        token_ids.clone(),
+                    )
                     .await
                 {
                     backoff = 1000; // Reset backoff on successful connection
@@ -1211,6 +1245,7 @@ impl ToriiClient {
         subscription: &Subscription,
         contract_addresses: Vec<String>,
         account_addresses: Vec<String>,
+        token_ids: Vec<String>,
     ) -> Result<(), JsValue> {
         let account_addresses = account_addresses
             .into_iter()
@@ -1229,11 +1264,17 @@ impl ToriiClient {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
+        let token_ids = token_ids
+            .into_iter()
+            .map(|t| U256::from_be_hex(&t))
+            .collect::<Vec<_>>();
+
         self.inner
             .update_token_balance_subscription(
                 subscription.id.load(Ordering::SeqCst),
                 contract_addresses,
                 account_addresses,
+                token_ids,
             )
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
@@ -1296,12 +1337,12 @@ pub async fn create_client(config: ClientConfig) -> Result<ToriiClient, JsValue>
     #[cfg(feature = "console-error-panic")]
     console_error_panic_hook::set_once();
 
-    let ClientConfig { rpc_url, torii_url, relay_url, world_address } = config;
+    let ClientConfig { torii_url, relay_url, world_address } = config;
 
     let world_address = Felt::from_str(&world_address)
         .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
 
-    let client = torii_client::client::Client::new(torii_url, rpc_url, relay_url, world_address)
+    let client = torii_client::client::Client::new(torii_url, relay_url, world_address)
         .await
         .map_err(|err| JsValue::from(format!("failed to build client: {err}")))?;
 

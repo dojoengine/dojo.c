@@ -46,8 +46,8 @@ pub struct TokenBalances(pub Vec<TokenBalance>);
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Token {
-    pub id: String,
     pub contract_address: String,
+    pub token_id: String,
     pub name: String,
     pub symbol: String,
     pub decimals: u8,
@@ -57,8 +57,8 @@ pub struct Token {
 impl From<&torii_grpc::types::Token> for Token {
     fn from(value: &torii_grpc::types::Token) -> Self {
         Self {
-            id: value.id.clone(),
             contract_address: format!("{:#x}", value.contract_address),
+            token_id: format!("0x{:x}", value.token_id),
             name: value.name.clone(),
             symbol: value.symbol.clone(),
             decimals: value.decimals,
@@ -82,7 +82,7 @@ impl From<&torii_grpc::types::TokenBalance> for TokenBalance {
             balance: format!("0x{:x}", value.balance),
             account_address: format!("{:#x}", value.account_address),
             contract_address: format!("{:#x}", value.contract_address),
-            token_id: value.token_id.to_string(),
+            token_id: format!("0x{:x}", value.token_id),
         }
     }
 }
@@ -121,8 +121,6 @@ impl From<&torii_grpc::types::IndexerUpdate> for IndexerUpdate {
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct ClientConfig {
-    #[serde(rename = "rpcUrl")]
-    pub rpc_url: String,
     #[serde(rename = "toriiUrl")]
     pub torii_url: String,
     #[serde(rename = "relayUrl")]
@@ -135,12 +133,11 @@ pub struct ClientConfig {
 impl ClientConfig {
     #[wasm_bindgen(constructor)]
     pub fn new(
-        rpc_url: String,
         torii_url: String,
         relay_url: String,
         world_address: String,
     ) -> Self {
-        Self { rpc_url, torii_url, relay_url, world_address }
+        Self { torii_url, relay_url, world_address }
     }
 }
 
