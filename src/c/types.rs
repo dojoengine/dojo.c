@@ -1,5 +1,6 @@
 use std::ffi::{c_char, CStr, CString};
 
+use crypto_bigint::Encoding;
 use starknet::core::utils::get_selector_from_name;
 use torii_client::client::Client;
 
@@ -103,8 +104,8 @@ impl From<&torii_grpc::types::Controller> for Controller {
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub struct Token {
-    id: *const c_char,
     pub contract_address: FieldElement,
+    pub token_id: U256,
     pub name: *const c_char,
     pub symbol: *const c_char,
     pub decimals: u8,
@@ -114,7 +115,7 @@ pub struct Token {
 impl From<&torii_grpc::types::Token> for Token {
     fn from(val: &torii_grpc::types::Token) -> Self {
         Token {
-            id: CString::new(val.id.clone()).unwrap().into_raw(),
+            token_id: (&val.token_id).into(),
             contract_address: (&val.contract_address).into(),
             name: CString::new(val.name.clone()).unwrap().into_raw(),
             symbol: CString::new(val.symbol.clone()).unwrap().into_raw(),
@@ -127,22 +128,19 @@ impl From<&torii_grpc::types::Token> for Token {
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub struct TokenBalance {
-    #[cfg(target_pointer_width = "64")]
-    pub balance: [u64; 4],
-    #[cfg(target_pointer_width = "32")]
-    pub balance: [u32; 8],
+    pub balance: U256,
     pub account_address: FieldElement,
     pub contract_address: FieldElement,
-    pub token_id: *const c_char,
+    pub token_id: U256,
 }
 
 impl From<&torii_grpc::types::TokenBalance> for TokenBalance {
     fn from(val: &torii_grpc::types::TokenBalance) -> Self {
         TokenBalance {
-            balance: val.balance.to_words(),
+            balance: (&val.balance).into(),
             account_address: (&val.account_address).into(),
             contract_address: (&val.contract_address).into(),
-            token_id: CString::new(val.token_id.clone()).unwrap().into_raw(),
+            token_id: (&val.token_id).into(),
         }
     }
 }
@@ -346,6 +344,24 @@ where
 {
     fn from(val: T) -> Self {
         Error { message: CString::new(val.to_string()).unwrap().into_raw() }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct U256 {
+    data: [u8; 32],
+}
+
+impl From<&U256> for crypto_bigint::U256 {
+    fn from(val: &U256) -> Self {
+        crypto_bigint::U256::from_be_slice(&val.data)
+    }
+}
+
+impl From<&crypto_bigint::U256> for U256 {
+    fn from(val: &crypto_bigint::U256) -> Self {
+        U256 { data: val.to_be_bytes() }
     }
 }
 

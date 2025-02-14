@@ -592,9 +592,13 @@ struct Event {
   FieldElement transaction_hash;
 };
 
+struct U256 {
+  uint8_t data[32];
+};
+
 struct Token {
-  const char *id;
   FieldElement contract_address;
+  U256 token_id;
   const char *name;
   const char *symbol;
   uint8_t decimals;
@@ -602,14 +606,10 @@ struct Token {
 };
 
 struct TokenBalance {
-  uint64_t balance[4];
-#if defined(TARGET_POINTER_WIDTH_32)
-  uint32_t balance[8]
-#endif
-  ;
+  U256 balance;
   FieldElement account_address;
   FieldElement contract_address;
-  const char *token_id;
+  U256 token_id;
 };
 
 struct IndexerUpdate {
@@ -947,7 +947,6 @@ extern "C" {
 /// # Returns
 /// Result containing pointer to new ToriiClient instance or error
 Result<ToriiClient*> client_new(const char *torii_url,
-                                const char *rpc_url,
                                 const char *libp2p_relay_url,
                                 FieldElement world);
 
@@ -1144,7 +1143,7 @@ Result<CArray<Entity>> client_event_messages(ToriiClient *client,
 ///
 /// # Returns
 /// WorldMetadata structure containing world information
-WorldMetadata client_metadata(ToriiClient *client);
+Result<WorldMetadata> client_metadata(ToriiClient *client);
 
 /// Subscribes to entity state updates
 ///
@@ -1236,7 +1235,9 @@ Result<Subscription*> client_on_starknet_event(ToriiClient *client,
 /// Result containing array of Token information or error
 Result<CArray<Token>> client_tokens(ToriiClient *client,
                                     const FieldElement *contract_addresses,
-                                    uintptr_t contract_addresses_len);
+                                    uintptr_t contract_addresses_len,
+                                    const U256 *token_ids,
+                                    uintptr_t token_ids_len);
 
 /// Subscribes to token updates
 ///
@@ -1250,6 +1251,8 @@ Result<CArray<Token>> client_tokens(ToriiClient *client,
 Result<Subscription*> client_on_token_update(ToriiClient *client,
                                              const FieldElement *contract_addresses,
                                              uintptr_t contract_addresses_len,
+                                             const U256 *token_ids,
+                                             uintptr_t token_ids_len,
                                              void (*callback)(Token));
 
 /// Gets token balances for given accounts and contracts
@@ -1267,7 +1270,9 @@ Result<CArray<TokenBalance>> client_token_balances(ToriiClient *client,
                                                    const FieldElement *contract_addresses,
                                                    uintptr_t contract_addresses_len,
                                                    const FieldElement *account_addresses,
-                                                   uintptr_t account_addresses_len);
+                                                   uintptr_t account_addresses_len,
+                                                   const U256 *token_ids,
+                                                   uintptr_t token_ids_len);
 
 /// Subscribes to indexer updates
 ///
@@ -1299,6 +1304,8 @@ Result<Subscription*> client_on_token_balance_update(ToriiClient *client,
                                                      uintptr_t contract_addresses_len,
                                                      const FieldElement *account_addresses,
                                                      uintptr_t account_addresses_len,
+                                                     const U256 *token_ids,
+                                                     uintptr_t token_ids_len,
                                                      void (*callback)(TokenBalance));
 
 /// Updates an existing token balance subscription
@@ -1318,7 +1325,9 @@ Result<bool> client_update_token_balance_subscription(ToriiClient *client,
                                                       const FieldElement *contract_addresses,
                                                       uintptr_t contract_addresses_len,
                                                       const FieldElement *account_addresses,
-                                                      uintptr_t account_addresses_len);
+                                                      uintptr_t account_addresses_len,
+                                                      const U256 *token_ids,
+                                                      uintptr_t token_ids_len);
 
 /// Serializes a string into a byte array
 ///

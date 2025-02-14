@@ -19,6 +19,7 @@ struct Subscription;
 struct EntityKeysClause;
 struct Struct;
 struct Token;
+struct U256;
 struct TokenBalance;
 struct Provider;
 struct Account;
@@ -211,6 +212,23 @@ typedef struct WorldMetadata {
   struct CArrayCHashItemFieldElementModelMetadata models;
 } WorldMetadata;
 
+typedef enum ResultWorldMetadata_Tag {
+  OkWorldMetadata,
+  ErrWorldMetadata,
+} ResultWorldMetadata_Tag;
+
+typedef struct ResultWorldMetadata {
+  ResultWorldMetadata_Tag tag;
+  union {
+    struct {
+      struct WorldMetadata ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultWorldMetadata;
+
 typedef enum ResultSubscription_Tag {
   OkSubscription,
   ErrSubscription,
@@ -266,9 +284,13 @@ typedef struct ResultCArrayToken {
   };
 } ResultCArrayToken;
 
+typedef struct U256 {
+  uint8_t data[32];
+} U256;
+
 typedef struct Token {
-  const char *id;
   struct FieldElement contract_address;
+  struct U256 token_id;
   const char *name;
   const char *symbol;
   uint8_t decimals;
@@ -305,14 +327,10 @@ typedef struct IndexerUpdate {
 } IndexerUpdate;
 
 typedef struct TokenBalance {
-  uint64_t balance[4];
-#if defined(TARGET_POINTER_WIDTH_32)
-  uint32_t balance[8]
-#endif
-  ;
+  struct U256 balance;
   struct FieldElement account_address;
   struct FieldElement contract_address;
-  const char *token_id;
+  struct U256 token_id;
 } TokenBalance;
 
 typedef enum ResultCArrayFieldElement_Tag {
@@ -788,7 +806,6 @@ extern "C" {
  * Result containing pointer to new ToriiClient instance or error
  */
 struct ResultToriiClient client_new(const char *torii_url,
-                                    const char *rpc_url,
                                     const char *libp2p_relay_url,
                                     struct FieldElement world);
 
@@ -1015,7 +1032,7 @@ struct ResultCArrayEntity client_event_messages(struct ToriiClient *client,
  * # Returns
  * WorldMetadata structure containing world information
  */
-struct WorldMetadata client_metadata(struct ToriiClient *client);
+struct ResultWorldMetadata client_metadata(struct ToriiClient *client);
 
 /**
  * Subscribes to entity state updates
@@ -1121,7 +1138,9 @@ struct ResultSubscription client_on_starknet_event(struct ToriiClient *client,
  */
 struct ResultCArrayToken client_tokens(struct ToriiClient *client,
                                        const struct FieldElement *contract_addresses,
-                                       uintptr_t contract_addresses_len);
+                                       uintptr_t contract_addresses_len,
+                                       const struct U256 *token_ids,
+                                       uintptr_t token_ids_len);
 
 /**
  * Subscribes to token updates
@@ -1137,6 +1156,8 @@ struct ResultCArrayToken client_tokens(struct ToriiClient *client,
 struct ResultSubscription client_on_token_update(struct ToriiClient *client,
                                                  const struct FieldElement *contract_addresses,
                                                  uintptr_t contract_addresses_len,
+                                                 const struct U256 *token_ids,
+                                                 uintptr_t token_ids_len,
                                                  void (*callback)(struct Token));
 
 /**
@@ -1156,7 +1177,9 @@ struct ResultCArrayTokenBalance client_token_balances(struct ToriiClient *client
                                                       const struct FieldElement *contract_addresses,
                                                       uintptr_t contract_addresses_len,
                                                       const struct FieldElement *account_addresses,
-                                                      uintptr_t account_addresses_len);
+                                                      uintptr_t account_addresses_len,
+                                                      const struct U256 *token_ids,
+                                                      uintptr_t token_ids_len);
 
 /**
  * Subscribes to indexer updates
@@ -1192,6 +1215,8 @@ struct ResultSubscription client_on_token_balance_update(struct ToriiClient *cli
                                                          uintptr_t contract_addresses_len,
                                                          const struct FieldElement *account_addresses,
                                                          uintptr_t account_addresses_len,
+                                                         const struct U256 *token_ids,
+                                                         uintptr_t token_ids_len,
                                                          void (*callback)(struct TokenBalance));
 
 /**
@@ -1213,7 +1238,9 @@ struct Resultbool client_update_token_balance_subscription(struct ToriiClient *c
                                                            const struct FieldElement *contract_addresses,
                                                            uintptr_t contract_addresses_len,
                                                            const struct FieldElement *account_addresses,
-                                                           uintptr_t account_addresses_len);
+                                                           uintptr_t account_addresses_len,
+                                                           const struct U256 *token_ids,
+                                                           uintptr_t token_ids_len);
 
 /**
  * Serializes a string into a byte array
