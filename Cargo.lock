@@ -1705,7 +1705,7 @@ dependencies = [
 
 [[package]]
 name = "dojo-c"
-version = "1.0.9"
+version = "1.2.0"
 dependencies = [
  "account_sdk",
  "anyhow",
@@ -1751,7 +1751,7 @@ dependencies = [
 [[package]]
 name = "dojo-types"
 version = "1.2.0"
-source = "git+https://github.com/dojoengine/dojo?rev=0a186fa#0a186faefcaad5f26a26598a87616253bb1fa9c1"
+source = "git+https://github.com/dojoengine/dojo?rev=ce8c3f7#ce8c3f7c80e1cf3c0408940c0fffee7405bf696b"
 dependencies = [
  "anyhow",
  "cainome 0.4.11",
@@ -1773,7 +1773,7 @@ dependencies = [
 [[package]]
 name = "dojo-world"
 version = "1.2.0"
-source = "git+https://github.com/dojoengine/dojo?rev=0a186fa#0a186faefcaad5f26a26598a87616253bb1fa9c1"
+source = "git+https://github.com/dojoengine/dojo?rev=ce8c3f7#ce8c3f7c80e1cf3c0408940c0fffee7405bf696b"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6838,7 +6838,7 @@ dependencies = [
 [[package]]
 name = "torii-client"
 version = "1.2.0"
-source = "git+https://github.com/dojoengine/dojo?rev=0a186fa#0a186faefcaad5f26a26598a87616253bb1fa9c1"
+source = "git+https://github.com/dojoengine/dojo?rev=ce8c3f7#ce8c3f7c80e1cf3c0408940c0fffee7405bf696b"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -6866,7 +6866,7 @@ dependencies = [
 [[package]]
 name = "torii-grpc"
 version = "1.2.0"
-source = "git+https://github.com/dojoengine/dojo?rev=0a186fa#0a186faefcaad5f26a26598a87616253bb1fa9c1"
+source = "git+https://github.com/dojoengine/dojo?rev=ce8c3f7#ce8c3f7c80e1cf3c0408940c0fffee7405bf696b"
 dependencies = [
  "crypto-bigint",
  "dojo-types",
@@ -6905,7 +6905,7 @@ dependencies = [
 [[package]]
 name = "torii-relay"
 version = "1.2.0"
-source = "git+https://github.com/dojoengine/dojo?rev=0a186fa#0a186faefcaad5f26a26598a87616253bb1fa9c1"
+source = "git+https://github.com/dojoengine/dojo?rev=ce8c3f7#ce8c3f7c80e1cf3c0408940c0fffee7405bf696b"
 dependencies = [
  "anyhow",
  "futures",
@@ -6923,7 +6923,7 @@ dependencies = [
 [[package]]
 name = "torii-typed-data"
 version = "1.2.0"
-source = "git+https://github.com/dojoengine/dojo?rev=0a186fa#0a186faefcaad5f26a26598a87616253bb1fa9c1"
+source = "git+https://github.com/dojoengine/dojo?rev=ce8c3f7#ce8c3f7c80e1cf3c0408940c0fffee7405bf696b"
 dependencies = [
  "cainome 0.4.11",
  "crypto-bigint",
