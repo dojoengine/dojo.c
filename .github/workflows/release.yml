@@ -103,6 +103,7 @@ jobs:
         with:
           targets: ${{ matrix.job.target }}
           toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v1
         with:
@@ -123,6 +124,10 @@ jobs:
         run: |
           echo "SDKROOT=$(xcrun -sdk macosx --show-sdk-path)" >> $GITHUB_ENV
           echo "MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version)" >> $GITHUB_ENV
+
+      # Add this step to explicitly install the target
+      - name: Install Target
+        run: rustup target add ${{ matrix.job.target }}
 
       # Build step
       - name: Build binaries
