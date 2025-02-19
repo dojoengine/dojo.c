@@ -1,6 +1,12 @@
 [build]
 pre-build = [
     "dpkg --add-architecture $CROSS_DEB_ARCH",
-    "apt-get update && apt-get install --assume-yes libssl-dev:$CROSS_DEB_ARCH libdbus-1-dev:$CROSS_DEB_ARCH protobuf-compiler libprotobuf-dev"
+    "apt-get update && apt-get install --assume-yes libssl-dev:$CROSS_DEB_ARCH libdbus-1-dev:$CROSS_DEB_ARCH pkg-config unzip curl",
+    "ARCH=$(case $CROSS_DEB_ARCH in aarch64-linux-gnu) echo linux-aarch_64 ;; x86_64-linux-gnu) echo linux-x86_64 ;; *) echo linux-x86_64 ;; esac)",
+    "PB_REL=\"https://github.com/protocolbuffers/protobuf/releases\"",
+    "curl -LO $PB_REL/download/v29.3/protoc-29.3-${ARCH}.zip",
+    "unzip protoc-29.3-${ARCH}.zip -d $HOME/.local",
+    "export PATH=\"$PATH:$HOME/.local/bin\"",
+    "protoc --version"
 ]
 
