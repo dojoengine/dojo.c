@@ -5,8 +5,9 @@ pre-build = [
     "ARCH=$(case $CROSS_DEB_ARCH in aarch64-linux-gnu) echo linux-aarch_64 ;; x86_64-linux-gnu) echo linux-x86_64 ;; *) echo linux-x86_64 ;; esac)",
     "PB_REL=\"https://github.com/protocolbuffers/protobuf/releases\"",
     "curl -LO $PB_REL/download/v29.3/protoc-29.3-${ARCH}.zip",
-    "unzip protoc-29.3-${ARCH}.zip -d $HOME/.local",
-    "export PATH=\"$PATH:$HOME/.local/bin\"",
+    "unzip protoc-29.3-${ARCH}.zip -d /usr",
+    "chmod 755 /usr/bin/protoc",
+    "export PROTOC=/usr/bin/protoc",
     "protoc --version"
 ]
 
