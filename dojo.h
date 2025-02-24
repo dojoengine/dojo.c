@@ -503,10 +503,7 @@ typedef enum Primitive_Tag {
   U32,
   U64,
   U128,
-  U256,
-#if defined(TARGET_POINTER_WIDTH_32)
-  U256,
-#endif
+  U256_,
   Bool,
   Felt252,
   ClassHash,
@@ -548,13 +545,8 @@ typedef struct Primitive {
       uint8_t u128[16];
     };
     struct {
-      uint64_t u256[4];
+      struct U256 u256;
     };
-#if defined(TARGET_POINTER_WIDTH_32)
-    struct {
-      uint32_t u256[8];
-    };
-#endif
     struct {
       bool bool_;
     };
@@ -798,7 +790,6 @@ extern "C" {
  *
  * # Parameters
  * * `torii_url` - URL of the Torii server
- * * `rpc_url` - URL of the Starknet RPC endpoint
  * * `libp2p_relay_url` - URL of the libp2p relay server
  * * `world` - World address as a FieldElement
  *

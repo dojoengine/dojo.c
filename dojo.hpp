@@ -128,6 +128,10 @@ struct Entity {
   CArray<Struct> models;
 };
 
+struct U256 {
+  uint8_t data[32];
+};
+
 struct Primitive {
   enum class Tag {
     I8,
@@ -140,10 +144,7 @@ struct Primitive {
     U32,
     U64,
     U128,
-    U256,
-#if defined(TARGET_POINTER_WIDTH_32)
-    U256,
-#endif
+    U256_,
     Bool,
     Felt252,
     ClassHash,
@@ -191,15 +192,9 @@ struct Primitive {
     uint8_t _0[16];
   };
 
-  struct U256_Body {
-    uint64_t _0[4];
+  struct U256__Body {
+    U256 _0;
   };
-
-#if defined(TARGET_POINTER_WIDTH_32)
-  struct U256_Body {
-    uint32_t _0[8];
-  };
-#endif
 
   struct Bool_Body {
     bool _0;
@@ -233,10 +228,7 @@ struct Primitive {
     U32_Body u32;
     U64_Body u64;
     U128_Body u128;
-    U256_Body u256;
-#if defined(TARGET_POINTER_WIDTH_32)
-    U256_Body u256;
-#endif
+    U256__Body u256;
     Bool_Body bool_;
     Felt252_Body felt252;
     ClassHash_Body class_hash;
@@ -358,33 +350,16 @@ struct Primitive {
     return tag == Tag::U128;
   }
 
-  static Primitive U256(const uint64_t (&_0)[4]) {
+  static Primitive U256_(const U256 &_0) {
     Primitive result;
-    for (int i = 0; i < 4; i++) {
-      ::new (&result.u256._0[i]) (uint64_t)(_0[i]);
-    }
-    result.tag = Tag::U256;
+    ::new (&result.u256._0) (U256)(_0);
+    result.tag = Tag::U256_;
     return result;
   }
 
-  bool IsU256() const {
-    return tag == Tag::U256;
+  bool IsU256_() const {
+    return tag == Tag::U256_;
   }
-
-#if defined(TARGET_POINTER_WIDTH_32)
-  static Primitive U256(const uint32_t (&_0)[8]) {
-    Primitive result;
-    for (int i = 0; i < 8; i++) {
-      ::new (&result.u256._0[i]) (uint32_t)(_0[i]);
-    }
-    result.tag = Tag::U256;
-    return result;
-  }
-
-  bool IsU256() const {
-    return tag == Tag::U256;
-  }
-#endif
 
   static Primitive Bool(const bool &_0) {
     Primitive result;
@@ -590,10 +565,6 @@ struct Event {
   CArray<FieldElement> keys;
   CArray<FieldElement> data;
   FieldElement transaction_hash;
-};
-
-struct U256 {
-  uint8_t data[32];
 };
 
 struct Token {
@@ -940,7 +911,6 @@ extern "C" {
 ///
 /// # Parameters
 /// * `torii_url` - URL of the Torii server
-/// * `rpc_url` - URL of the Starknet RPC endpoint
 /// * `libp2p_relay_url` - URL of the libp2p relay server
 /// * `world` - World address as a FieldElement
 ///

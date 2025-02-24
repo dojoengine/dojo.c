@@ -322,8 +322,7 @@ cdef extern from *:
     U32,
     U64,
     U128,
-    U256,
-    U256,
+    U256_,
     Bool,
     Felt252,
     ClassHash,
@@ -342,8 +341,7 @@ cdef extern from *:
     uint32_t u32;
     uint64_t u64;
     uint8_t u128[16];
-    uint64_t u256[4];
-    uint32_t u256[8];
+    U256 u256;
     bool bool_;
     FieldElement felt252;
     FieldElement class_hash;
@@ -498,7 +496,6 @@ cdef extern from *:
   #
   # # Parameters
   # * `torii_url` - URL of the Torii server
-  # * `rpc_url` - URL of the Starknet RPC endpoint
   # * `libp2p_relay_url` - URL of the libp2p relay server
   # * `world` - World address as a FieldElement
   #
