@@ -503,9 +503,9 @@ typedef enum Primitive_Tag {
   U32,
   U64,
   U128,
-  U256,
+  U256_,
 #if defined(TARGET_POINTER_WIDTH_32)
-  U256,
+  U256_,
 #endif
   Bool,
   Felt252,
@@ -798,7 +798,6 @@ extern "C" {
  *
  * # Parameters
  * * `torii_url` - URL of the Torii server
- * * `rpc_url` - URL of the Starknet RPC endpoint
  * * `libp2p_relay_url` - URL of the libp2p relay server
  * * `world` - World address as a FieldElement
  *

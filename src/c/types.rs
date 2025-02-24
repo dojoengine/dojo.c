@@ -855,9 +855,9 @@ pub enum Primitive {
     // TODO: better way?
     U128([u8; 16]),
     #[cfg(target_pointer_width = "64")]
-    U256([u64; 4]),
+    U256_([u64; 4]),
     #[cfg(target_pointer_width = "32")]
-    U256([u32; 8]),
+    U256_([u32; 8]),
     Bool(bool),
     Felt252(FieldElement),
     ClassHash(FieldElement),
@@ -882,7 +882,7 @@ impl From<&Primitive> for dojo_types::primitive::Primitive {
             Primitive::U128(v) => {
                 dojo_types::primitive::Primitive::U128(Some(u128::from_be_bytes(*v)))
             }
-            Primitive::U256(v) => dojo_types::primitive::Primitive::U256(Some((*v).into())),
+            Primitive::U256_(v) => dojo_types::primitive::Primitive::U256(Some((*v).into())),
             Primitive::Bool(v) => dojo_types::primitive::Primitive::Bool(Some(*v)),
             Primitive::Felt252(v) => {
                 dojo_types::primitive::Primitive::Felt252(Some((&v.clone()).into()))
@@ -927,12 +927,12 @@ impl From<&dojo_types::primitive::Primitive> for Primitive {
             }
             dojo_types::primitive::Primitive::U256(v) => {
                 if let Some(v) = v {
-                    Primitive::U256(v.to_words())
+                    Primitive::U256_(v.to_words())
                 } else {
                     #[cfg(target_pointer_width = "64")]
-                    return Primitive::U256([0; 4]);
+                    return Primitive::U256_([0; 4]);
                     #[cfg(target_pointer_width = "32")]
-                    return Primitive::U256([0; 8]);
+                    return Primitive::U256_([0; 8]);
                 }
             }
             dojo_types::primitive::Primitive::Bool(v) => Primitive::Bool(v.unwrap_or(false)),

@@ -73,7 +73,6 @@ lazy_static! {
 ///
 /// # Parameters
 /// * `torii_url` - URL of the Torii server
-/// * `rpc_url` - URL of the Starknet RPC endpoint
 /// * `libp2p_relay_url` - URL of the libp2p relay server
 /// * `world` - World address as a FieldElement
 ///

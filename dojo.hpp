@@ -140,9 +140,9 @@ struct Primitive {
     U32,
     U64,
     U128,
-    U256,
+    U256_,
 #if defined(TARGET_POINTER_WIDTH_32)
-    U256,
+    U256_,
 #endif
     Bool,
     Felt252,
@@ -191,12 +191,12 @@ struct Primitive {
     uint8_t _0[16];
   };
 
-  struct U256_Body {
+  struct U256__Body {
     uint64_t _0[4];
   };
 
 #if defined(TARGET_POINTER_WIDTH_32)
-  struct U256_Body {
+  struct U256__Body {
     uint32_t _0[8];
   };
 #endif
@@ -233,9 +233,9 @@ struct Primitive {
     U32_Body u32;
     U64_Body u64;
     U128_Body u128;
-    U256_Body u256;
+    U256__Body u256;
 #if defined(TARGET_POINTER_WIDTH_32)
-    U256_Body u256;
+    U256__Body u256;
 #endif
     Bool_Body bool_;
     Felt252_Body felt252;
@@ -358,31 +358,31 @@ struct Primitive {
     return tag == Tag::U128;
   }
 
-  static Primitive U256(const uint64_t (&_0)[4]) {
+  static Primitive U256_(const uint64_t (&_0)[4]) {
     Primitive result;
     for (int i = 0; i < 4; i++) {
       ::new (&result.u256._0[i]) (uint64_t)(_0[i]);
     }
-    result.tag = Tag::U256;
+    result.tag = Tag::U256_;
     return result;
   }
 
-  bool IsU256() const {
-    return tag == Tag::U256;
+  bool IsU256_() const {
+    return tag == Tag::U256_;
   }
 
 #if defined(TARGET_POINTER_WIDTH_32)
-  static Primitive U256(const uint32_t (&_0)[8]) {
+  static Primitive U256_(const uint32_t (&_0)[8]) {
     Primitive result;
     for (int i = 0; i < 8; i++) {
       ::new (&result.u256._0[i]) (uint32_t)(_0[i]);
     }
-    result.tag = Tag::U256;
+    result.tag = Tag::U256_;
     return result;
   }
 
-  bool IsU256() const {
-    return tag == Tag::U256;
+  bool IsU256_() const {
+    return tag == Tag::U256_;
   }
 #endif
 
@@ -940,7 +940,6 @@ extern "C" {
 ///
 /// # Parameters
 /// * `torii_url` - URL of the Torii server
-/// * `rpc_url` - URL of the Starknet RPC endpoint
 /// * `libp2p_relay_url` - URL of the libp2p relay server
 /// * `world` - World address as a FieldElement
 ///
