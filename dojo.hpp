@@ -128,6 +128,10 @@ struct Entity {
   CArray<Struct> models;
 };
 
+struct U256 {
+  uint8_t data[32];
+};
+
 struct Primitive {
   enum class Tag {
     I8,
@@ -141,9 +145,6 @@ struct Primitive {
     U64,
     U128,
     U256_,
-#if defined(TARGET_POINTER_WIDTH_32)
-    U256_,
-#endif
     Bool,
     Felt252,
     ClassHash,
@@ -192,14 +193,8 @@ struct Primitive {
   };
 
   struct U256__Body {
-    uint64_t _0[4];
+    U256 _0;
   };
-
-#if defined(TARGET_POINTER_WIDTH_32)
-  struct U256__Body {
-    uint32_t _0[8];
-  };
-#endif
 
   struct Bool_Body {
     bool _0;
@@ -234,9 +229,6 @@ struct Primitive {
     U64_Body u64;
     U128_Body u128;
     U256__Body u256;
-#if defined(TARGET_POINTER_WIDTH_32)
-    U256__Body u256;
-#endif
     Bool_Body bool_;
     Felt252_Body felt252;
     ClassHash_Body class_hash;
@@ -358,11 +350,9 @@ struct Primitive {
     return tag == Tag::U128;
   }
 
-  static Primitive U256_(const uint64_t (&_0)[4]) {
+  static Primitive U256_(const U256 &_0) {
     Primitive result;
-    for (int i = 0; i < 4; i++) {
-      ::new (&result.u256._0[i]) (uint64_t)(_0[i]);
-    }
+    ::new (&result.u256._0) (U256)(_0);
     result.tag = Tag::U256_;
     return result;
   }
@@ -370,21 +360,6 @@ struct Primitive {
   bool IsU256_() const {
     return tag == Tag::U256_;
   }
-
-#if defined(TARGET_POINTER_WIDTH_32)
-  static Primitive U256_(const uint32_t (&_0)[8]) {
-    Primitive result;
-    for (int i = 0; i < 8; i++) {
-      ::new (&result.u256._0[i]) (uint32_t)(_0[i]);
-    }
-    result.tag = Tag::U256_;
-    return result;
-  }
-
-  bool IsU256_() const {
-    return tag == Tag::U256_;
-  }
-#endif
 
   static Primitive Bool(const bool &_0) {
     Primitive result;
@@ -590,10 +565,6 @@ struct Event {
   CArray<FieldElement> keys;
   CArray<FieldElement> data;
   FieldElement transaction_hash;
-};
-
-struct U256 {
-  uint8_t data[32];
 };
 
 struct Token {

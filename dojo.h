@@ -504,9 +504,6 @@ typedef enum Primitive_Tag {
   U64,
   U128,
   U256_,
-#if defined(TARGET_POINTER_WIDTH_32)
-  U256_,
-#endif
   Bool,
   Felt252,
   ClassHash,
@@ -548,13 +545,8 @@ typedef struct Primitive {
       uint8_t u128[16];
     };
     struct {
-      uint64_t u256[4];
+      struct U256 u256;
     };
-#if defined(TARGET_POINTER_WIDTH_32)
-    struct {
-      uint32_t u256[8];
-    };
-#endif
     struct {
       bool bool_;
     };
