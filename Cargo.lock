@@ -1705,7 +1705,7 @@ dependencies = [
 
 [[package]]
 name = "dojo-c"
-version = "1.2.1"
+version = "1.2.2"
 dependencies = [
  "account_sdk",
  "anyhow",
@@ -1750,8 +1750,8 @@ dependencies = [
 
 [[package]]
 name = "dojo-types"
-version = "1.2.1"
-source = "git+https://github.com/dojoengine/dojo?rev=e9f7e18#e9f7e18f97ec380a31ed85d94a8cb30c83dfdc2c"
+version = "1.2.2"
+source = "git+https://github.com/dojoengine/dojo?rev=60e0a6b#60e0a6ba46109b1cb6aea07eb937509a048eae14"
 dependencies = [
  "anyhow",
  "cainome 0.4.11",
@@ -1772,8 +1772,8 @@ dependencies = [
 
 [[package]]
 name = "dojo-world"
-version = "1.2.1"
-source = "git+https://github.com/dojoengine/dojo?rev=e9f7e18#e9f7e18f97ec380a31ed85d94a8cb30c83dfdc2c"
+version = "1.2.2"
+source = "git+https://github.com/dojoengine/dojo?rev=60e0a6b#60e0a6ba46109b1cb6aea07eb937509a048eae14"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6837,8 +6837,8 @@ dependencies = [
 
 [[package]]
 name = "torii-client"
-version = "1.2.1"
-source = "git+https://github.com/dojoengine/dojo?rev=e9f7e18#e9f7e18f97ec380a31ed85d94a8cb30c83dfdc2c"
+version = "1.2.2"
+source = "git+https://github.com/dojoengine/dojo?rev=60e0a6b#60e0a6ba46109b1cb6aea07eb937509a048eae14"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -6865,8 +6865,8 @@ dependencies = [
 
 [[package]]
 name = "torii-grpc"
-version = "1.2.1"
-source = "git+https://github.com/dojoengine/dojo?rev=e9f7e18#e9f7e18f97ec380a31ed85d94a8cb30c83dfdc2c"
+version = "1.2.2"
+source = "git+https://github.com/dojoengine/dojo?rev=60e0a6b#60e0a6ba46109b1cb6aea07eb937509a048eae14"
 dependencies = [
  "crypto-bigint",
  "dojo-types",
@@ -6904,8 +6904,8 @@ dependencies = [
 
 [[package]]
 name = "torii-relay"
-version = "1.2.1"
-source = "git+https://github.com/dojoengine/dojo?rev=e9f7e18#e9f7e18f97ec380a31ed85d94a8cb30c83dfdc2c"
+version = "1.2.2"
+source = "git+https://github.com/dojoengine/dojo?rev=60e0a6b#60e0a6ba46109b1cb6aea07eb937509a048eae14"
 dependencies = [
  "anyhow",
  "futures",
@@ -6922,8 +6922,8 @@ dependencies = [
 
 [[package]]
 name = "torii-typed-data"
-version = "1.2.1"
-source = "git+https://github.com/dojoengine/dojo?rev=e9f7e18#e9f7e18f97ec380a31ed85d94a8cb30c83dfdc2c"
+version = "1.2.2"
+source = "git+https://github.com/dojoengine/dojo?rev=60e0a6b#60e0a6ba46109b1cb6aea07eb937509a048eae14"
 dependencies = [
  "cainome 0.4.11",
  "crypto-bigint",
