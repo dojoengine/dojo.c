@@ -768,8 +768,9 @@ pub unsafe extern "C" fn client_controllers(
 pub unsafe extern "C" fn client_entities(
     client: *mut ToriiClient,
     query: &Query,
+    historical: bool,
 ) -> Result<CArray<Entity>> {
-    let entities_future = unsafe { (*client).inner.entities(query.into()) };
+    let entities_future = unsafe { (*client).inner.entities(query.into(), historical) };
 
     match RUNTIME.block_on(entities_future) {
         Ok(entities) => {
@@ -840,6 +841,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     client: *mut ToriiClient,
     clauses: *const EntityKeysClause,
     clauses_len: usize,
+    historical: bool,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
@@ -863,7 +865,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv = client_clone.inner.on_entity_updated(clauses.clone()).await;
+            let rcv = client_clone.inner.on_entity_updated(clauses.clone(), historical).await;
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
@@ -907,6 +909,7 @@ pub unsafe extern "C" fn client_update_entity_subscription(
     subscription: *mut Subscription,
     clauses: *const EntityKeysClause,
     clauses_len: usize,
+    historical: bool,
 ) -> Result<bool> {
     let clauses = if clauses.is_null() || clauses_len == 0 {
         Vec::new()
@@ -918,7 +921,7 @@ pub unsafe extern "C" fn client_update_entity_subscription(
     match RUNTIME.block_on(
         (*client)
             .inner
-            .update_entity_subscription((*subscription).id.load(Ordering::SeqCst), clauses),
+            .update_entity_subscription((*subscription).id.load(Ordering::SeqCst), clauses, historical),
     ) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
