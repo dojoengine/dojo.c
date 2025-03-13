@@ -806,18 +806,19 @@ impl ToriiClient {
 
         let results = self
             .inner
-            .entities(torii_grpc::types::Query {
-                limit,
-                offset,
-                clause: None,
-                dont_include_hashed_keys: false,
-                order_by: vec![],
-                entity_models: vec![],
-                entity_updated_after: 0,
-            },
-            historical,
-        )
-        .await;
+            .entities(
+                torii_grpc::types::Query {
+                    limit,
+                    offset,
+                    clause: None,
+                    dont_include_hashed_keys: false,
+                    order_by: vec![],
+                    entity_models: vec![],
+                    entity_updated_after: 0,
+                },
+                historical,
+            )
+            .await;
 
         match results {
             Ok(entities) => Ok((&entities).into()),
@@ -929,11 +930,7 @@ impl ToriiClient {
     ) -> Result<(), JsValue> {
         let clauses = clauses.iter().map(|c| c.into()).collect();
         self.inner
-            .update_entity_subscription(
-                subscription.id.load(Ordering::SeqCst),
-                clauses,
-                historical,
-            )
+            .update_entity_subscription(subscription.id.load(Ordering::SeqCst), clauses, historical)
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }

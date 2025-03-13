@@ -918,11 +918,11 @@ pub unsafe extern "C" fn client_update_entity_subscription(
         clauses.iter().map(|c| c.into()).collect::<Vec<_>>()
     };
 
-    match RUNTIME.block_on(
-        (*client)
-            .inner
-            .update_entity_subscription((*subscription).id.load(Ordering::SeqCst), clauses, historical),
-    ) {
+    match RUNTIME.block_on((*client).inner.update_entity_subscription(
+        (*subscription).id.load(Ordering::SeqCst),
+        clauses,
+        historical,
+    )) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
