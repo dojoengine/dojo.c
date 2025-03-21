@@ -997,7 +997,9 @@ struct ResultCArrayController client_controllers(struct ToriiClient *client,
  * # Returns
  * Result containing array of matching entities or error
  */
-struct ResultCArrayEntity client_entities(struct ToriiClient *client, const struct Query *query);
+struct ResultCArrayEntity client_entities(struct ToriiClient *client,
+                                          const struct Query *query,
+                                          bool historical);
 
 /**
  * Retrieves event messages matching the given query
@@ -1076,7 +1078,6 @@ struct Resultbool client_update_entity_subscription(struct ToriiClient *client,
 struct ResultSubscription client_on_event_message_update(struct ToriiClient *client,
                                                          const struct EntityKeysClause *clauses,
                                                          uintptr_t clauses_len,
-                                                         bool historical,
                                                          void (*callback)(struct FieldElement,
                                                                           struct CArrayStruct));
 
@@ -1096,8 +1097,7 @@ struct ResultSubscription client_on_event_message_update(struct ToriiClient *cli
 struct Resultbool client_update_event_message_subscription(struct ToriiClient *client,
                                                            struct Subscription *subscription,
                                                            const struct EntityKeysClause *clauses,
-                                                           uintptr_t clauses_len,
-                                                           bool historical);
+                                                           uintptr_t clauses_len);
 
 /**
  * Subscribes to Starknet events
