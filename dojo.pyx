@@ -676,7 +676,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing array of matching entities or error
-  ResultCArrayEntity client_entities(ToriiClient *client, const Query *query);
+  ResultCArrayEntity client_entities(ToriiClient *client, const Query *query, bool historical);
 
   # Retrieves event messages matching the given query
   #
@@ -744,7 +744,6 @@ cdef extern from *:
   ResultSubscription client_on_event_message_update(ToriiClient *client,
                                                     const EntityKeysClause *clauses,
                                                     uintptr_t clauses_len,
-                                                    bool historical,
                                                     void (*callback)(FieldElement, CArrayStruct));
 
   # Updates an existing event message subscription
@@ -761,8 +760,7 @@ cdef extern from *:
   Resultbool client_update_event_message_subscription(ToriiClient *client,
                                                       Subscription *subscription,
                                                       const EntityKeysClause *clauses,
-                                                      uintptr_t clauses_len,
-                                                      bool historical);
+                                                      uintptr_t clauses_len);
 
   # Subscribes to Starknet events
   #

@@ -7,16 +7,16 @@ version = "1.2.2"
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
-dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "60e0a6b" }
-dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "60e0a6b"}
-torii-client = { git = "https://github.com/dojoengine/dojo", rev = "60e0a6b" }
+dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "d2436c7" }
+dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "d2436c7"}
+torii-client = { git = "https://github.com/dojoengine/dojo", rev = "d2436c7" }
 torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
     "client",
-], rev = "60e0a6b" }
-torii-typed-data = { git = "https://github.com/dojoengine/dojo", rev = "60e0a6b" }
-torii-relay = { git = "https://github.com/dojoengine/dojo", rev = "60e0a6b" }
+], rev = "d2436c7" }
+torii-typed-data = { git = "https://github.com/dojoengine/dojo", rev = "d2436c7" }
+torii-relay = { git = "https://github.com/dojoengine/dojo", rev = "d2436c7" }
 
-starknet = "0.12.0"
+starknet = "0.13.0"
 starknet-crypto = "0.7.2"
 starknet-types-core = { version = "0.1.6", features = [ "arbitrary" ] }
 
@@ -49,6 +49,7 @@ crypto-bigint = "0.5.5"
 tsify-next = { version = "0.5.4", features = ["js"] }
 instant = { version = "0.1.13", features = ["wasm-bindgen"] }
 gloo-timers = { version = "0.3.0", features = ["futures"] }
+starknet-accounts = "0.11.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 axum = "0.8.1"

@@ -1091,7 +1091,7 @@ Result<CArray<Controller>> client_controllers(ToriiClient *client,
 ///
 /// # Returns
 /// Result containing array of matching entities or error
-Result<CArray<Entity>> client_entities(ToriiClient *client, const Query *query);
+Result<CArray<Entity>> client_entities(ToriiClient *client, const Query *query, bool historical);
 
 /// Retrieves event messages matching the given query
 ///
@@ -1159,7 +1159,6 @@ Result<bool> client_update_entity_subscription(ToriiClient *client,
 Result<Subscription*> client_on_event_message_update(ToriiClient *client,
                                                      const EntityKeysClause *clauses,
                                                      uintptr_t clauses_len,
-                                                     bool historical,
                                                      void (*callback)(FieldElement, CArray<Struct>));
 
 /// Updates an existing event message subscription
@@ -1176,8 +1175,7 @@ Result<Subscription*> client_on_event_message_update(ToriiClient *client,
 Result<bool> client_update_event_message_subscription(ToriiClient *client,
                                                       Subscription *subscription,
                                                       const EntityKeysClause *clauses,
-                                                      uintptr_t clauses_len,
-                                                      bool historical);
+                                                      uintptr_t clauses_len);
 
 /// Subscribes to Starknet events
 ///
