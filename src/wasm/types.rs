@@ -4,14 +4,23 @@ use std::str::FromStr;
 use crypto_bigint::U256;
 use dojo_types::schema::Struct;
 use serde::{Deserialize, Serialize};
-use serde_wasm_bindgen::to_value;
 use starknet::core::types::FunctionCall;
 use starknet::core::utils::get_selector_from_name;
 use starknet_crypto::Felt;
 use tsify_next::{declare, Tsify};
 use wasm_bindgen::prelude::*;
 
-use super::utils::parse_ty_as_json_str;
+use super::utils::{pad_to_hex, parse_ty_as_json_str};
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct WasmU256(pub String);
+
+impl From<&WasmU256> for U256 {
+    fn from(value: &WasmU256) -> Self {
+        U256::from_be_hex(pad_to_hex(value.0.as_str()).unwrap().as_str())
+    }
+}
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
