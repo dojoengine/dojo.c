@@ -798,18 +798,19 @@ impl ToriiClient {
 
         let results = self
             .inner
-            .entities(torii_grpc::types::Query {
-                limit,
-                offset,
-                clause: None,
-                dont_include_hashed_keys: false,
-                order_by: vec![],
-                entity_models: vec![],
-                entity_updated_after: 0,
-            },
-            historical,
-        )
-        .await;
+            .entities(
+                torii_grpc::types::Query {
+                    limit,
+                    offset,
+                    clause: None,
+                    dont_include_hashed_keys: false,
+                    order_by: vec![],
+                    entity_models: vec![],
+                    entity_updated_after: 0,
+                },
+                historical,
+            )
+            .await;
 
         match results {
             Ok(entities) => Ok((&entities).into()),
