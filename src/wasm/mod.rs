@@ -336,7 +336,7 @@ impl Account {
     pub async unsafe fn execute_raw(&self, calldata: Calls) -> Result<String, JsValue> {
         let calldata = calldata.iter().map(|c| c.into()).collect();
 
-        let call = self.0.execute_v1(calldata);
+        let call = self.0.execute_v3(calldata);
 
         let result = call.send().await;
 
@@ -377,7 +377,7 @@ impl Account {
             SingleOwnerAccount::new(provider, signer, address, chain_id, ExecutionEncoding::New);
 
         // deploy the burner
-        let exec = self.0.execute_v1(vec![starknet::core::types::Call {
+        let exec = self.0.execute_v3(vec![starknet::core::types::Call {
             to: constants::UDC_ADDRESS,
             calldata: vec![
                 constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
