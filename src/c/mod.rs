@@ -609,7 +609,7 @@ pub unsafe extern "C" fn controller_execute_raw(
     let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
     let calldata =
         calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::core::types::Call>>();
-    let call = (*controller).account.execute_v1(calldata);
+    let call = (*controller).account.execute_v3(calldata);
 
     match RUNTIME.block_on(call.send()) {
         Ok(result) => Result::Ok((&result.transaction_hash).into()),
@@ -768,8 +768,9 @@ pub unsafe extern "C" fn client_controllers(
 pub unsafe extern "C" fn client_entities(
     client: *mut ToriiClient,
     query: &Query,
+    historical: bool,
 ) -> Result<CArray<Entity>> {
-    let entities_future = unsafe { (*client).inner.entities(query.into()) };
+    let entities_future = unsafe { (*client).inner.entities(query.into(), historical) };
 
     match RUNTIME.block_on(entities_future) {
         Ok(entities) => {
@@ -941,7 +942,6 @@ pub unsafe extern "C" fn client_on_event_message_update(
     client: *mut ToriiClient,
     clauses: *const EntityKeysClause,
     clauses_len: usize,
-    historical: bool,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
@@ -965,8 +965,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv =
-                client_clone.inner.on_event_message_updated(clauses.clone(), historical).await;
+            let rcv = client_clone.inner.on_event_message_updated(clauses.clone()).await;
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
@@ -1011,7 +1010,6 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
     subscription: *mut Subscription,
     clauses: *const EntityKeysClause,
     clauses_len: usize,
-    historical: bool,
 ) -> Result<bool> {
     let clauses = if clauses.is_null() || clauses_len == 0 {
         Vec::new()
@@ -1020,11 +1018,11 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
         clauses.iter().map(|c| c.into()).collect::<Vec<_>>()
     };
 
-    match RUNTIME.block_on((*client).inner.update_event_message_subscription(
-        (*subscription).id.load(Ordering::SeqCst),
-        clauses,
-        historical,
-    )) {
+    match RUNTIME.block_on(
+        (*client)
+            .inner
+            .update_event_message_subscription((*subscription).id.load(Ordering::SeqCst), clauses),
+    ) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
@@ -1870,7 +1868,7 @@ pub unsafe extern "C" fn account_deploy_burner(
     );
 
     // deploy the burner
-    let exec = (*master_account).0.execute_v1(vec![starknet::core::types::Call {
+    let exec = (*master_account).0.execute_v3(vec![starknet::core::types::Call {
         to: constants::UDC_ADDRESS,
         calldata: vec![
             constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
@@ -1963,7 +1961,7 @@ pub unsafe extern "C" fn account_execute_raw(
     let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
     let calldata =
         calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::core::types::Call>>();
-    let call = (*account).0.execute_v1(calldata);
+    let call = (*account).0.execute_v3(calldata);
 
     match RUNTIME.block_on(call.send()) {
         Ok(result) => Result::Ok((&result.transaction_hash).into()),

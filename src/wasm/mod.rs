@@ -336,7 +336,7 @@ impl Account {
     pub async unsafe fn execute_raw(&self, calldata: Calls) -> Result<String, JsValue> {
         let calldata = calldata.iter().map(|c| c.into()).collect();
 
-        let call = self.0.execute_v1(calldata);
+        let call = self.0.execute_v3(calldata);
 
         let result = call.send().await;
 
@@ -377,7 +377,7 @@ impl Account {
             SingleOwnerAccount::new(provider, signer, address, chain_id, ExecutionEncoding::New);
 
         // deploy the burner
-        let exec = self.0.execute_v1(vec![starknet::core::types::Call {
+        let exec = self.0.execute_v3(vec![starknet::core::types::Call {
             to: constants::UDC_ADDRESS,
             calldata: vec![
                 constants::KATANA_ACCOUNT_CLASS_HASH, // class_hash
@@ -766,11 +766,11 @@ impl ToriiClient {
     /// # Returns
     /// Result containing matching entities or error
     #[wasm_bindgen(js_name = getEntities)]
-    pub async fn get_entities(&self, query: Query) -> Result<Entities, JsValue> {
+    pub async fn get_entities(&self, query: Query, historical: bool) -> Result<Entities, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let results = self.inner.entities((&query).into()).await;
+        let results = self.inner.entities((&query).into(), historical).await;
 
         match results {
             Ok(entities) => Ok((&entities).into()),
@@ -787,21 +787,29 @@ impl ToriiClient {
     /// # Returns
     /// Result containing paginated entities or error
     #[wasm_bindgen(js_name = getAllEntities)]
-    pub async fn get_all_entities(&self, limit: u32, offset: u32) -> Result<Entities, JsValue> {
+    pub async fn get_all_entities(
+        &self,
+        limit: u32,
+        offset: u32,
+        historical: bool,
+    ) -> Result<Entities, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let results = self
             .inner
-            .entities(torii_grpc::types::Query {
-                limit,
-                offset,
-                clause: None,
-                dont_include_hashed_keys: false,
-                order_by: vec![],
-                entity_models: vec![],
-                entity_updated_after: 0,
-            })
+            .entities(
+                torii_grpc::types::Query {
+                    limit,
+                    offset,
+                    clause: None,
+                    dont_include_hashed_keys: false,
+                    order_by: vec![],
+                    entity_models: vec![],
+                    entity_updated_after: 0,
+                },
+                historical,
+            )
             .await;
 
         match results {
@@ -921,7 +929,6 @@ impl ToriiClient {
     ///
     /// # Parameters
     /// * `clauses` - Array of key clauses for filtering updates
-    /// * `historical` - Whether to include historical messages
     /// * `callback` - JavaScript function to call on updates
     ///
     /// # Returns
@@ -930,7 +937,6 @@ impl ToriiClient {
     pub fn on_event_message_updated(
         &self,
         clauses: KeysClauses,
-        historical: bool,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
@@ -950,9 +956,7 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                if let Ok(stream) =
-                    client.on_event_message_updated(clauses.clone(), historical).await
-                {
+                if let Ok(stream) = client.on_event_message_updated(clauses.clone()).await {
                     backoff = 1000; // Reset backoff on successful connection
 
                     let mut stream = stream.take_until_if(tripwire.clone());
@@ -987,7 +991,6 @@ impl ToriiClient {
     /// # Parameters
     /// * `subscription` - Existing subscription to update
     /// * `clauses` - New array of key clauses for filtering
-    /// * `historical` - Whether to include historical messages
     ///
     /// # Returns
     /// Result containing unit or error
@@ -996,15 +999,10 @@ impl ToriiClient {
         &self,
         subscription: &Subscription,
         clauses: KeysClauses,
-        historical: bool,
     ) -> Result<(), JsValue> {
         let clauses = clauses.iter().map(|c| c.into()).collect();
         self.inner
-            .update_event_message_subscription(
-                subscription.id.load(Ordering::SeqCst),
-                clauses,
-                historical,
-            )
+            .update_event_message_subscription(subscription.id.load(Ordering::SeqCst), clauses)
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }
