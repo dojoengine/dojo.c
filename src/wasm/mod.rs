@@ -41,7 +41,7 @@ mod types;
 
 use types::{
     BlockId, Call, Calls, ClientConfig, Controller, Controllers, Entities, Entity, IndexerUpdate,
-    KeysClause, KeysClauses, Model, Query, Signature, Token, TokenBalance, TokenBalances, Tokens,
+    KeysClause, KeysClauses, Model, Query, Signature, Token, TokenBalance, TokenBalances, Tokens, WasmU256,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -437,9 +437,9 @@ pub fn hash_get_contract_address(
         .map_err(|err| JsValue::from(format!("failed to parse deployer address: {err}")))?;
 
     let constructor_calldata = constructor_calldata
-        .into_iter()
+        .iter()
         .map(|c| {
-            Felt::from_str(c.as_str()).map_err(|err| {
+            Felt::from_str(c).map_err(|err| {
                 JsValue::from(format!("failed to parse constructor calldata: {err}"))
             })
         })
@@ -491,8 +491,8 @@ pub fn bytearray_serialize(str: &str) -> Result<Vec<String>, JsValue> {
 #[wasm_bindgen(js_name = byteArrayDeserialize)]
 pub fn bytearray_deserialize(felts: Vec<String>) -> Result<String, JsValue> {
     let felts = felts
-        .into_iter()
-        .map(|f| Felt::from_str(f.as_str()))
+        .iter()
+        .map(|f| Felt::from_str(f))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| JsValue::from(format!("failed to parse felts: {e}")))?;
 
@@ -517,8 +517,8 @@ pub fn bytearray_deserialize(felts: Vec<String>) -> Result<String, JsValue> {
 #[wasm_bindgen(js_name = poseidonHash)]
 pub fn poseidon_hash(inputs: Vec<String>) -> Result<String, JsValue> {
     let inputs = inputs
-        .into_iter()
-        .map(|i| Felt::from_str(i.as_str()))
+        .iter()
+        .map(|i| Felt::from_str(i))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| JsValue::from(format!("failed to parse inputs: {e}")))?;
 
@@ -602,8 +602,8 @@ impl ToriiClient {
         contract_addresses: Vec<String>,
     ) -> Result<Controllers, JsValue> {
         let contract_addresses = contract_addresses
-            .into_iter()
-            .map(|c| Felt::from_str(&c))
+            .iter()
+            .map(|c| Felt::from_str(c))
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
 
@@ -627,17 +627,17 @@ impl ToriiClient {
     pub async fn get_tokens(
         &self,
         contract_addresses: Vec<String>,
-        token_ids: Vec<String>,
+        token_ids: Vec<WasmU256>,
     ) -> Result<Tokens, JsValue> {
         let contract_addresses = contract_addresses
-            .into_iter()
-            .map(|c| Felt::from_str(&c))
+            .iter()
+            .map(|c| Felt::from_str(c))
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
 
         let token_ids = token_ids
-            .into_iter()
-            .map(|t| U256::from_be_hex(t.trim_start_matches("0x")))
+            .iter()
+            .map(|t| t.into())
             .collect::<Vec<_>>();
 
         let tokens = self
@@ -661,24 +661,24 @@ impl ToriiClient {
     pub fn on_token_updated(
         &self,
         contract_addresses: Vec<String>,
-        token_ids: Vec<String>,
+        token_ids: Vec<WasmU256>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let contract_addresses = contract_addresses
-            .into_iter()
+            .iter()
             .map(|addr| {
-                Felt::from_str(&addr).map_err(|err| {
+                Felt::from_str(addr).map_err(|err| {
                     JsValue::from(format!("failed to parse contract address: {err}"))
                 })
             })
             .collect::<Result<Vec<_>, _>>()?;
 
         let token_ids = token_ids
-            .into_iter()
-            .map(|t| U256::from_be_hex(t.trim_start_matches("0x")))
+            .iter()
+            .map(|t| t.into())
             .collect::<Vec<_>>();
 
         let subscription_id = Arc::new(AtomicU64::new(0));
@@ -738,23 +738,23 @@ impl ToriiClient {
         &self,
         contract_addresses: Vec<String>,
         account_addresses: Vec<String>,
-        token_ids: Vec<String>,
+        token_ids: Vec<WasmU256>,
     ) -> Result<TokenBalances, JsValue> {
         let account_addresses = account_addresses
-            .into_iter()
-            .map(|a| Felt::from_str(&a))
+            .iter()
+            .map(|a| Felt::from_str(a))
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse account addresses: {e}")))?;
 
         let contract_addresses = contract_addresses
-            .into_iter()
-            .map(|c| Felt::from_str(&c))
+            .iter()
+            .map(|c| Felt::from_str(c))
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
 
         let token_ids = token_ids
-            .into_iter()
-            .map(|t| U256::from_be_hex(t.trim_start_matches("0x")))
+            .iter()
+            .map(|t| t.into())
             .collect::<Vec<_>>();
 
         let token_balances = self
@@ -1152,32 +1152,32 @@ impl ToriiClient {
         &self,
         contract_addresses: Vec<String>,
         account_addresses: Vec<String>,
-        token_ids: Vec<String>,
+        token_ids: Vec<WasmU256>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let account_addresses = account_addresses
-            .into_iter()
+            .iter()
             .map(|addr| {
-                Felt::from_str(&addr)
+                Felt::from_str(addr)
                     .map_err(|err| JsValue::from(format!("failed to parse account address: {err}")))
             })
             .collect::<Result<Vec<_>, _>>()?;
 
         let contract_addresses = contract_addresses
-            .into_iter()
+            .iter()
             .map(|addr| {
-                Felt::from_str(&addr).map_err(|err| {
+                Felt::from_str(addr).map_err(|err| {
                     JsValue::from(format!("failed to parse contract address: {err}"))
                 })
             })
             .collect::<Result<Vec<_>, _>>()?;
 
         let token_ids = token_ids
-            .into_iter()
-            .map(|t| U256::from_be_hex(t.trim_start_matches("0x")))
+            .iter()
+            .map(|t| t.into())
             .collect::<Vec<_>>();
 
         let subscription_id = Arc::new(AtomicU64::new(0));
@@ -1244,28 +1244,28 @@ impl ToriiClient {
         subscription: &Subscription,
         contract_addresses: Vec<String>,
         account_addresses: Vec<String>,
-        token_ids: Vec<String>,
+        token_ids: Vec<WasmU256>,
     ) -> Result<(), JsValue> {
         let account_addresses = account_addresses
-            .into_iter()
+            .iter()
             .map(|addr| {
-                Felt::from_str(&addr)
+                Felt::from_str(addr)
                     .map_err(|err| JsValue::from(format!("failed to parse account address: {err}")))
             })
             .collect::<Result<Vec<_>, _>>()?;
 
         let contract_addresses = contract_addresses
-            .into_iter()
+            .iter()
             .map(|addr| {
-                Felt::from_str(&addr).map_err(|err| {
+                Felt::from_str(addr).map_err(|err| {
                     JsValue::from(format!("failed to parse contract address: {err}"))
                 })
             })
             .collect::<Result<Vec<_>, _>>()?;
 
         let token_ids = token_ids
-            .into_iter()
-            .map(|t| U256::from_be_hex(t.trim_start_matches("0x")))
+            .iter()
+            .map(|t| t.into())
             .collect::<Vec<_>>();
 
         self.inner
