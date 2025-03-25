@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 
 use dojo_types::primitive::Primitive;
+use num_bigint::BigUint;
+use num_traits::Num;
 use wasm_bindgen::JsValue;
 
 use super::types::{EnumValue, Ty};
-
-use num_bigint::BigUint;
-use num_traits::Num;
 
 pub fn parse_ty_as_json_str(ty: &dojo_types::schema::Ty, key: bool) -> Ty {
     match ty {
@@ -120,25 +119,25 @@ pub fn pad_to_hex(input: &str) -> Result<String, String> {
         // Parse hexadecimal with prefix
         match BigUint::from_str_radix(&input[2..], 16) {
             Ok(v) => v,
-            Err(_) => return Err(format!("Invalid hexadecimal input: {}", input))
+            Err(_) => return Err(format!("Invalid hexadecimal input: {}", input)),
         }
     } else if input.chars().all(|c| c.is_digit(16)) && input.chars().any(|c| !c.is_digit(10)) {
         // Input contains non-decimal digits (a-f, A-F) without 0x prefix, assume hex
         match BigUint::from_str_radix(input, 16) {
             Ok(v) => v,
-            Err(_) => return Err(format!("Invalid hexadecimal input: {}", input))
+            Err(_) => return Err(format!("Invalid hexadecimal input: {}", input)),
         }
     } else {
         // Assume decimal otherwise
         match input.parse::<BigUint>() {
             Ok(v) => v,
-            Err(_) => return Err(format!("Invalid numeric input: {}", input))
+            Err(_) => return Err(format!("Invalid numeric input: {}", input)),
         }
     };
 
     // Convert to hex string without 0x prefix
     let hex_string = big_value.to_str_radix(16);
-    
+
     // Pad to 64 characters
     let padded_hex = format!("{:0>64}", hex_string);
 
