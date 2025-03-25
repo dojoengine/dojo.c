@@ -41,7 +41,8 @@ mod types;
 
 use types::{
     BlockId, Call, Calls, ClientConfig, Controller, Controllers, Entities, Entity, IndexerUpdate,
-    KeysClause, KeysClauses, Model, Query, Signature, Token, TokenBalance, TokenBalances, Tokens, WasmU256,
+    KeysClause, KeysClauses, Model, Query, Signature, Token, TokenBalance, TokenBalances, Tokens,
+    WasmU256,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -635,10 +636,7 @@ impl ToriiClient {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
 
-        let token_ids = token_ids
-            .iter()
-            .map(|t| t.into())
-            .collect::<Vec<_>>();
+        let token_ids = token_ids.iter().map(|t| t.into()).collect::<Vec<_>>();
 
         let tokens = self
             .inner
@@ -676,10 +674,7 @@ impl ToriiClient {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let token_ids = token_ids
-            .iter()
-            .map(|t| t.into())
-            .collect::<Vec<_>>();
+        let token_ids = token_ids.iter().map(|t| t.into()).collect::<Vec<_>>();
 
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
@@ -752,10 +747,7 @@ impl ToriiClient {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
 
-        let token_ids = token_ids
-            .iter()
-            .map(|t| t.into())
-            .collect::<Vec<_>>();
+        let token_ids = token_ids.iter().map(|t| t.into()).collect::<Vec<_>>();
 
         let token_balances = self
             .inner
@@ -1175,10 +1167,7 @@ impl ToriiClient {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let token_ids = token_ids
-            .iter()
-            .map(|t| t.into())
-            .collect::<Vec<_>>();
+        let token_ids = token_ids.iter().map(|t| t.into()).collect::<Vec<_>>();
 
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
@@ -1263,10 +1252,7 @@ impl ToriiClient {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let token_ids = token_ids
-            .iter()
-            .map(|t| t.into())
-            .collect::<Vec<_>>();
+        let token_ids = token_ids.iter().map(|t| t.into()).collect::<Vec<_>>();
 
         self.inner
             .update_token_balance_subscription(
