@@ -5,6 +5,9 @@ use wasm_bindgen::JsValue;
 
 use super::types::{EnumValue, Ty};
 
+use num_bigint::BigUint;
+use num_traits::Num;
+
 pub fn parse_ty_as_json_str(ty: &dojo_types::schema::Ty, key: bool) -> Ty {
     match ty {
         dojo_types::schema::Ty::Primitive(primitive) => Ty {
@@ -111,80 +114,33 @@ fn primitive_value_json(primitive: Primitive) -> JsValue {
     }
 }
 
-/// Converts a hexadecimal or decimal string to a padded 64-character hexadecimal string.
-///
-/// # Arguments
-///
-/// * `input` - A string that can be either a hexadecimal (with or without "0x" prefix) or decimal
-///   number
-///
-/// # Returns
-///
-/// * `Result<String, String>` - Ok containing a 64-character hex string without "0x" prefix, or an
-///   Err with error message
-///
-/// # Examples
-///
-/// ```
-/// let hex_result = pad_to_hex("0x1a2b3c");
-/// assert_eq!(
-///     hex_result,
-///     Ok("0000000000000000000000000000000000000000000000000000000000001a2b3c".to_string())
-/// );
-///
-/// let dec_result = pad_to_hex("123456");
-/// assert_eq!(
-///     dec_result,
-///     Ok("000000000000000000000000000000000000000000000000000000000001e240".to_string())
-/// );
-/// ```
 pub fn pad_to_hex(input: &str) -> Result<String, String> {
-    // Try to determine if input is hex or decimal
-    let value = if input.starts_with("0x") || input.starts_with("0X") {
+    // Process the input to determine format and parse accordingly
+    let big_value = if input.starts_with("0x") || input.starts_with("0X") {
         // Parse hexadecimal with prefix
-        match u128::from_str_radix(&input[2..], 16) {
+        match BigUint::from_str_radix(&input[2..], 16) {
             Ok(v) => v,
-            Err(_) => return Err(format!("Invalid hexadecimal input: {}", input)),
+            Err(_) => return Err(format!("Invalid hexadecimal input: {}", input))
         }
     } else if input.chars().all(|c| c.is_digit(16)) && input.chars().any(|c| !c.is_digit(10)) {
         // Input contains non-decimal digits (a-f, A-F) without 0x prefix, assume hex
-        match u128::from_str_radix(input, 16) {
+        match BigUint::from_str_radix(input, 16) {
             Ok(v) => v,
-            Err(_) => return Err(format!("Invalid hexadecimal input: {}", input)),
+            Err(_) => return Err(format!("Invalid hexadecimal input: {}", input))
         }
     } else {
         // Assume decimal otherwise
-        match input.parse::<u128>() {
+        match input.parse::<BigUint>() {
             Ok(v) => v,
-            Err(_) => return Err(format!("Invalid numeric input: {}", input)),
+            Err(_) => return Err(format!("Invalid numeric input: {}", input))
         }
     };
 
-    // Convert to hex string and pad to 64 characters
-    let hex_string = format!("{:x}", value);
+    // Convert to hex string without 0x prefix
+    let hex_string = big_value.to_str_radix(16);
+    
+    // Pad to 64 characters
     let padded_hex = format!("{:0>64}", hex_string);
 
     Ok(padded_hex)
 }
-
-// fn primitive_value_json(primitive: Primitive) -> Value {
-//     match primitive {
-//         Primitive::Bool(Some(value)) => json!(value),
-//         Primitive::I8(Some(value)) => json!(value),
-//         Primitive::I16(Some(value)) => json!(value),
-//         Primitive::I32(Some(value)) => json!(value),
-//         Primitive::U8(Some(value)) => json!(value),
-//         Primitive::U16(Some(value)) => json!(value),
-//         Primitive::U32(Some(value)) => json!(value),
-//         Primitive::USize(Some(value)) => json!(value),
-//         Primitive::I64(Some(value)) => json!(&format!("{value:#x}")),
-//         Primitive::U64(Some(value)) => json!(&format!("{value:#x}")),
-//         Primitive::I128(Some(value)) => json!(&format!("{value:#x}")),
-//         Primitive::U128(Some(value)) => json!(&format!("{value:#x}")),
-//         Primitive::U256(Some(value)) => json!(&format!("{value:#x}")),
-//         Primitive::Felt252(Some(value)) => json!(&format!("{value:#x}")),
-//         Primitive::ClassHash(Some(value)) => json!(&format!("{value:#x}")),
-//         Primitive::ContractAddress(Some(value)) => json!(&format!("{value:#x}")),
-//         _ => Value::Null
-//     }
-// }

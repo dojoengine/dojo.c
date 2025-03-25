@@ -49,6 +49,8 @@ crypto-bigint = "0.5.5"
 tsify-next = { version = "0.5.4", features = ["js"] }
 instant = { version = "0.1.13", features = ["wasm-bindgen"] }
 gloo-timers = { version = "0.3.0", features = ["futures"] }
+num-bigint = "0.4.6"
+num-traits = "0.2.19"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 axum = "0.8.1"
