@@ -33,7 +33,9 @@ use dojo_world::contracts::naming::compute_selector_from_tag;
 use futures::FutureExt;
 use keyring::Entry;
 use lazy_static::lazy_static;
-use starknet::accounts::{Account as StarknetAccount, ConnectedAccount, ExecutionEncoding, SingleOwnerAccount};
+use starknet::accounts::{
+    Account as StarknetAccount, ConnectedAccount, ExecutionEncoding, SingleOwnerAccount,
+};
 use starknet::core::types::FunctionCall;
 use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
@@ -963,8 +965,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv =
-                client_clone.inner.on_event_message_updated(clauses.clone()).await;
+            let rcv = client_clone.inner.on_event_message_updated(clauses.clone()).await;
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
@@ -1017,10 +1018,11 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
         clauses.iter().map(|c| c.into()).collect::<Vec<_>>()
     };
 
-    match RUNTIME.block_on((*client).inner.update_event_message_subscription(
-        (*subscription).id.load(Ordering::SeqCst),
-        clauses,
-    )) {
+    match RUNTIME.block_on(
+        (*client)
+            .inner
+            .update_event_message_subscription((*subscription).id.load(Ordering::SeqCst), clauses),
+    ) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
