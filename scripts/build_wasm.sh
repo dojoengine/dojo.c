@@ -1,1 +1,1 @@
-bunx wasm-pack build --out-dir pkg --release --target no-modules
+npx wasm-pack build --out-dir pkg --release --target no-modules

@@ -1732,6 +1732,8 @@ dependencies = [
  "js-sys",
  "keyring",
  "lazy_static",
+ "num-bigint",
+ "num-traits",
  "open",
  "parking_lot",
  "serde",
