@@ -28,43 +28,13 @@
 
             const client = await createClient(config);
 
-            const is_historical = false;
+            let tokens = await client.getTokens([], []);
 
-            let events = await client.getEventMessages({
-                limit: 10,
-                offset: 0,
-                dont_include_hashed_keys: true,
-                order_by: [],
-                entity_models: [],
-                entity_updated_after: 0,
-                clause: {
-                    Keys: {
-                        keys: [undefined],
-                        pattern_matching: "VariableLen",
-                        models: []
-                    }
-                }
-            }, is_historical);
+            updateManager.displayUpdate("fetch", tokens);
 
-            updateManager.displayUpdate('fetch', events);
-
-            const subscription = await client.onEventMessageUpdated(
-                [
-                    {
-                        Keys: {
-                            keys: [undefined],
-                            pattern_matching: "VariableLen",
-                            models: []
-                        }
-                    }
-                ],
-                is_historical,
-                (entity_id, models) => {
-                    updateManager.displayUpdate('update', {
-                        entity_id: entity_id,
-                        models: models
-                    });
-                });
+            const subscription = await client.onTokenUpdated([], [], (token) => {
+                updateManager.displayUpdate("update", token);
+            });
 
             // Keeps the subscription alive.
             window.addEventListener('beforeunload', () => {
