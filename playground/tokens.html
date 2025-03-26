@@ -29,17 +29,26 @@
             const client = await createClient(config);
 
             let tokens = await client.getTokens([], []);
+            let balances = await client.getTokenBalances([], [], []);
 
-            updateManager.displayUpdate("fetch", tokens);
+            updateManager.displayUpdate("fetch tokens", tokens);
+            updateManager.displayUpdate("fetch balances", balances);
 
             const subscription = await client.onTokenUpdated([], [], (token) => {
-                updateManager.displayUpdate("update", token);
+                updateManager.displayUpdate("update token", token);
+            });
+
+            const balanceSubscription = await client.onTokenBalanceUpdated([], [], [], (balance) => {
+                updateManager.displayUpdate("update balance", balance);
             });
 
             // Keeps the subscription alive.
             window.addEventListener('beforeunload', () => {
                 if (subscription) {
                     subscription.cancel();
+                }
+                if (balanceSubscription) {
+                    balanceSubscription.cancel();
                 }
             });
         }
