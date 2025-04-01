@@ -6,10 +6,10 @@
 
 namespace dojo_bindings {
 
-struct ToriiClient;
 struct Policy;
 struct ControllerAccount;
 struct Call;
+struct ToriiClient;
 struct Ty;
 struct Query;
 struct Subscription;
@@ -907,26 +907,13 @@ struct EntityKeysClause {
 
 extern "C" {
 
-/// Creates a new Torii client instance
-///
-/// # Parameters
-/// * `torii_url` - URL of the Torii server
-/// * `libp2p_relay_url` - URL of the libp2p relay server
-/// * `world` - World address as a FieldElement
-///
-/// # Returns
-/// Result containing pointer to new ToriiClient instance or error
-Result<ToriiClient*> client_new(const char *torii_url,
-                                const char *libp2p_relay_url,
-                                FieldElement world);
-
 /// Initiates a connection to establish a new session account
 ///
 /// This function:
 /// 1. Generates a new signing key pair
-/// 2. Starts a local HTTP server to receive the callback
-/// 3. Opens the keychain session URL in browser
-/// 4. Waits for callback with session details
+/// 2. If redirect_uri is provided: Uses it for callback
+/// 3. If redirect_uri is null: Starts a local HTTP server for callback
+/// 4. Opens the keychain session URL in browser
 /// 5. Creates and stores the session
 /// 6. Calls the provided callback with the new session account
 ///
@@ -941,24 +928,48 @@ Result<ToriiClient*> client_new(const char *torii_url,
 /// * `policies` - Pointer to array of Policy structs defining session permissions
 /// * `policies_len` - Length of the policies array
 /// * `account_callback` - Function pointer called with the new session account when ready
-///
-/// # Example
-/// ```c
-/// void on_account(SessionAccount* account) {
-///     // Handle new session account
-/// }
-///
-/// controller_connect(
-///     "https://rpc.example.com",
-///     policies,
-///     policies_length,
-///     on_account
-/// );
-/// ```
+/// * `redirect_uri` - Optional pointer to null-terminated string containing the redirect URI.
+///                   If provided, will be used for callback instead of starting a local server.
 void controller_connect(const char *rpc_url,
                         const Policy *policies,
                         uintptr_t policies_len,
-                        void (*account_callback)(ControllerAccount*));
+                        void (*account_callback)(ControllerAccount*),
+                        const char *redirect_uri);
+
+/// Initiates a connection to establish a new session account using deep linking
+///
+/// This function:
+/// 1. Generates a new signing key pair
+/// 2. Stores the signing key and callback state
+/// 3. Opens the keychain session URL with redirect URI
+/// 4. Returns immediately - app will be reopened via deep link
+///
+/// # Safety
+/// This function is marked as unsafe because it:
+/// - Handles raw C pointers
+/// - Performs FFI operations
+/// - Manages system keyring entries
+///
+/// # Parameters
+/// * `rpc_url` - Pointer to null-terminated string containing the RPC endpoint URL
+/// * `redirect_uri` - Pointer to null-terminated string containing the deep link URI
+/// * `policies` - Pointer to array of Policy structs defining session permissions
+/// * `policies_len` - Length of the policies array
+/// * `account_callback` - Function pointer called with the new session account when ready
+void controller_connect_mobile(const char *rpc_url,
+                               const char *redirect_uri,
+                               const Policy *policies,
+                               uintptr_t policies_len,
+                               void (*account_callback)(ControllerAccount*));
+
+/// Handles the deep link callback when app is reopened
+///
+/// # Parameters
+/// * `callback_data` - Base64 encoded callback data from the deep link
+///
+/// # Returns
+/// Result containing success boolean or error
+Result<bool> handle_deep_link_callback(const char *callback_data);
 
 /// Retrieves a stored session account if one exists and is valid
 ///

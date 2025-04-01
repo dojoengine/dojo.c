@@ -1,13 +1,13 @@
 mod types;
 
-use std::ffi::{c_void, CStr, CString};
+use std::ffi::{CStr, CString, c_void};
 use std::fs;
 use std::net::SocketAddr;
 use std::ops::Deref;
 use std::os::raw::c_char;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
 use account_sdk::abigen::controller::OutsideExecutionV3;
@@ -19,13 +19,13 @@ use account_sdk::account::session::hash::Session;
 use account_sdk::provider::{CartridgeJsonRpcProvider, CartridgeProvider};
 use account_sdk::signers::Signer;
 use account_sdk::utils::time::get_current_timestamp;
+use axum::Router;
 use axum::extract::State;
-use axum::http::{header, HeaderValue, Method, StatusCode};
+use axum::http::{HeaderValue, Method, StatusCode, header};
 use axum::response::IntoResponse;
 use axum::routing::post;
-use axum::Router;
-use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD as BASE64;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use crypto_bigint::U256;
 use directories::ProjectDirs;
@@ -41,7 +41,7 @@ use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::{poseidon_hash_many, Felt};
+use starknet_crypto::{Felt, poseidon_hash_many};
 use stream_cancel::{StreamExt as _, Tripwire};
 use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
@@ -69,42 +69,11 @@ lazy_static! {
         Arc::new(Runtime::new().expect("Failed to create Tokio runtime"));
 }
 
-/// Creates a new Torii client instance
-///
-/// # Parameters
-/// * `torii_url` - URL of the Torii server
-/// * `libp2p_relay_url` - URL of the libp2p relay server
-/// * `world` - World address as a FieldElement
-///
-/// # Returns
-/// Result containing pointer to new ToriiClient instance or error
-#[no_mangle]
-pub unsafe extern "C" fn client_new(
-    torii_url: *const c_char,
-    libp2p_relay_url: *const c_char,
-    world: types::FieldElement,
-) -> Result<*mut ToriiClient> {
-    let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
-    let libp2p_relay_url =
-        unsafe { CStr::from_ptr(libp2p_relay_url).to_string_lossy().into_owned() };
-
-    let client_future = TClient::new(torii_url, libp2p_relay_url, (&world).into());
-
-    let client = match RUNTIME.block_on(client_future) {
-        Ok(client) => client,
-        Err(e) => return Result::Err(e.into()),
-    };
-
-    let relay_runner = client.relay_runner();
-    RUNTIME.spawn(async move {
-        relay_runner.lock().await.run().await;
-    });
-
-    Result::Ok(Box::into_raw(Box::new(ToriiClient { inner: client, logger: None })))
-}
-
-// State struct to share data with callback handler
 #[derive(Clone)]
+#[cfg_attr(
+    any(target_os = "ios", target_os = "android"),
+    derive(serde::Serialize, serde::Deserialize)
+)]
 struct CallbackState {
     shutdown_tx: tokio::sync::mpsc::Sender<()>,
     rpc_url: String,
@@ -207,9 +176,9 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
 ///
 /// This function:
 /// 1. Generates a new signing key pair
-/// 2. Starts a local HTTP server to receive the callback
-/// 3. Opens the keychain session URL in browser
-/// 4. Waits for callback with session details
+/// 2. If redirect_uri is provided: Uses it for callback
+/// 3. If redirect_uri is null: Starts a local HTTP server for callback
+/// 4. Opens the keychain session URL in browser
 /// 5. Creates and stores the session
 /// 6. Calls the provided callback with the new session account
 ///
@@ -224,26 +193,15 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
 /// * `policies` - Pointer to array of Policy structs defining session permissions
 /// * `policies_len` - Length of the policies array
 /// * `account_callback` - Function pointer called with the new session account when ready
-///
-/// # Example
-/// ```c
-/// void on_account(SessionAccount* account) {
-///     // Handle new session account
-/// }
-///
-/// controller_connect(
-///     "https://rpc.example.com",
-///     policies,
-///     policies_length,
-///     on_account
-/// );
-/// ```
+/// * `redirect_uri` - Optional pointer to null-terminated string containing the redirect URI.
+///                   If provided, will be used for callback instead of starting a local server.
 #[no_mangle]
 pub unsafe extern "C" fn controller_connect(
     rpc_url: *const c_char,
     policies: *const Policy,
     policies_len: usize,
     account_callback: extern "C" fn(*mut ControllerAccount),
+    redirect_uri: *const c_char,
 ) {
     let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
@@ -261,12 +219,120 @@ pub unsafe extern "C" fn controller_connect(
     let keyring = Entry::new("dojo-keyring", &format!("{:#x}", verifying_key)).unwrap();
     keyring.set_password(&format!("{:#x}", signing_key.secret_scalar())).unwrap();
 
-    // Create shutdown channel
-    let (shutdown_tx, mut shutdown_rx) = tokio::sync::mpsc::channel(1);
+    let mut url = url::Url::parse(constants::KEYCHAIN_SESSION_URL).unwrap();
+    if !redirect_uri.is_null() {
+        // Use provided redirect URI
+        url.query_pairs_mut().append_pair("redirect_uri", &unsafe {
+            CStr::from_ptr(redirect_uri).to_string_lossy().into_owned()
+        })
+    } else {
+        // Create shutdown channel
+        let (shutdown_tx, mut shutdown_rx) = tokio::sync::mpsc::channel(1);
 
-    // Create state with RPC URL and shutdown sender
-    let state = CallbackState {
-        shutdown_tx,
+        // Create state with RPC URL and shutdown sender
+        let state = CallbackState {
+            shutdown_tx,
+            rpc_url: rpc_url.clone(),
+            policies: account_policies,
+            private_key: signing_key,
+            public_key: verifying_key,
+            account_callback,
+        };
+
+        // Set up the HTTP callback server with state and CORS
+        let app = Router::new()
+            .route("/callback", post(handle_callback))
+            .layer(
+                CorsLayer::new()
+                    .allow_origin(AllowOrigin::exact(HeaderValue::from_static(
+                        "https://x.cartridge.gg",
+                    )))
+                    .allow_methods([Method::POST])
+                    .allow_headers([header::CONTENT_TYPE]),
+            )
+            .with_state(state);
+
+        // Find an available port by trying to bind to port 0
+        let addr = SocketAddr::from(([127, 0, 0, 1], 0));
+        let listener = RUNTIME.block_on(TcpListener::bind(addr)).unwrap();
+        let bound_addr = listener.local_addr().unwrap();
+
+        let server = axum::serve(listener, app);
+
+        // Spawn server with graceful shutdown
+        RUNTIME.spawn(async move {
+            server
+                .with_graceful_shutdown(async move {
+                    shutdown_rx.recv().await;
+                    println!("Shutting down server");
+                })
+                .await
+                .unwrap();
+        });
+
+        println!("Listening on {}", bound_addr);
+        let callback_url =
+            format!("http://{}/callback", bound_addr).replace("127.0.0.1", "localhost");
+
+        url.query_pairs_mut().append_pair("callback_uri", &callback_url);
+    }
+
+    url.query_pairs_mut()
+        .append_pair("public_key", &format!("{:#x}", verifying_key))
+        .append_pair("rpc_url", &rpc_url)
+        .append_pair("policies", &serde_json::to_string(&policies).unwrap());
+
+    open::that(url.as_str()).unwrap();
+}
+
+/// Initiates a connection to establish a new session account using deep linking
+///
+/// This function:
+/// 1. Generates a new signing key pair
+/// 2. Stores the signing key and callback state
+/// 3. Opens the keychain session URL with redirect URI
+/// 4. Returns immediately - app will be reopened via deep link
+///
+/// # Safety
+/// This function is marked as unsafe because it:
+/// - Handles raw C pointers
+/// - Performs FFI operations
+/// - Manages system keyring entries
+///
+/// # Parameters
+/// * `rpc_url` - Pointer to null-terminated string containing the RPC endpoint URL
+/// * `redirect_uri` - Pointer to null-terminated string containing the deep link URI
+/// * `policies` - Pointer to array of Policy structs defining session permissions
+/// * `policies_len` - Length of the policies array
+/// * `account_callback` - Function pointer called with the new session account when ready
+#[no_mangle]
+pub unsafe extern "C" fn controller_connect_mobile(
+    rpc_url: *const c_char,
+    redirect_uri: *const c_char,
+    policies: *const Policy,
+    policies_len: usize,
+    account_callback: extern "C" fn(*mut ControllerAccount),
+) {
+    let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
+    let redirect_uri = unsafe { CStr::from_ptr(redirect_uri).to_string_lossy().into_owned() };
+    let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
+    let account_policies = policies
+        .iter()
+        .map(|p| account_sdk::account::session::policy::Policy::Call(p.into()))
+        .collect::<Vec<account_sdk::account::session::policy::Policy>>();
+    let policies = policies.iter().map(|p| p.into()).collect::<Vec<crate::types::Policy>>();
+
+    // Generate new random signing key
+    let signing_key = SigningKey::from_random();
+    let verifying_key = signing_key.verifying_key().scalar();
+
+    // Store signing key in system keyring
+    let keyring = Entry::new("dojo-keyring", &format!("{:#x}", verifying_key)).unwrap();
+    keyring.set_password(&format!("{:#x}", signing_key.secret_scalar())).unwrap();
+
+    // Store callback state in keyring
+    let callback_state = CallbackState {
+        shutdown_tx: tokio::sync::mpsc::channel(1).0, // Dummy sender since we don't need shutdown for mobile
         rpc_url: rpc_url.clone(),
         policies: account_policies,
         private_key: signing_key,
@@ -274,48 +340,150 @@ pub unsafe extern "C" fn controller_connect(
         account_callback,
     };
 
-    // Set up the HTTP callback server with state and CORS
-    let app = Router::new()
-        .route("/callback", post(handle_callback))
-        .layer(
-            CorsLayer::new()
-                .allow_origin(AllowOrigin::exact(HeaderValue::from_static(
-                    "https://x.cartridge.gg",
-                )))
-                .allow_methods([Method::POST])
-                .allow_headers([header::CONTENT_TYPE]),
-        )
-        .with_state(state);
+    // Store callback state in keyring using public key as identifier
+    let state_keyring =
+        Entry::new("dojo-callback-state", &format!("{:#x}", verifying_key)).unwrap();
+    state_keyring.set_password(&serde_json::to_string(&callback_state).unwrap()).unwrap();
 
-    // Find an available port by trying to bind to port 0
-    let addr = SocketAddr::from(([127, 0, 0, 1], 0));
-    let listener = RUNTIME.block_on(TcpListener::bind(addr)).unwrap();
-    let bound_addr = listener.local_addr().unwrap();
-
-    let server = axum::serve(listener, app);
-
-    // Spawn server with graceful shutdown
-    RUNTIME.spawn(async move {
-        server
-            .with_graceful_shutdown(async move {
-                shutdown_rx.recv().await;
-                println!("Shutting down server");
-            })
-            .await
-            .unwrap();
-    });
-
-    println!("Listening on {}", bound_addr);
-
-    let callback_url = format!("http://{}/callback", bound_addr).replace("127.0.0.1", "localhost");
     let mut url = url::Url::parse(constants::KEYCHAIN_SESSION_URL).unwrap();
     url.query_pairs_mut()
-        .append_pair("callback_uri", &callback_url)
+        .append_pair("callback_uri", &redirect_uri)
         .append_pair("public_key", &format!("{:#x}", verifying_key))
         .append_pair("rpc_url", &rpc_url)
         .append_pair("policies", &serde_json::to_string(&policies).unwrap());
 
     open::that(url.as_str()).unwrap();
+}
+
+/// Handles the deep link callback when app is reopened
+///
+/// # Parameters
+/// * `callback_data` - Base64 encoded callback data from the deep link
+///
+/// # Returns
+/// Result containing success boolean or error
+#[no_mangle]
+pub unsafe extern "C" fn handle_deep_link_callback(callback_data: *const c_char) -> Result<bool> {
+    let callback_data = unsafe { CStr::from_ptr(callback_data).to_string_lossy().into_owned() };
+
+    // Decode base64 payload
+    let padded = match callback_data.len() % 4 {
+        0 => callback_data,
+        n => callback_data + &"=".repeat(4 - n),
+    };
+    let decoded = match BASE64.decode(padded) {
+        Ok(d) => d,
+        Err(e) => {
+            println!("Failed to decode payload: {}", e);
+            return Result::Err(Error {
+                message: CString::new("Failed to decode callback data").unwrap().into_raw(),
+            });
+        }
+    };
+
+    // Parse JSON from decoded bytes
+    let payload: RegisterSessionResponse = match serde_json::from_slice(&decoded) {
+        Ok(p) => p,
+        Err(e) => {
+            println!("Failed to deserialize payload: {}", e);
+            return Result::Err(Error {
+                message: CString::new("Failed to parse callback data").unwrap().into_raw(),
+            });
+        }
+    };
+
+    // Retrieve callback state using public key from payload
+    let state_keyring = match Entry::new("dojo-keyring", &format!("{:#x}", payload.public_key)) {
+        Ok(k) => k,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to retrieve callback state").unwrap().into_raw(),
+            });
+        }
+    };
+
+    let state_json = match state_keyring.get_password() {
+        Ok(s) => s,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to retrieve callback state data").unwrap().into_raw(),
+            });
+        }
+    };
+
+    let state: CallbackState = match serde_json::from_str(&state_json) {
+        Ok(s) => s,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to parse callback state").unwrap().into_raw(),
+            });
+        }
+    };
+
+    let provider = CartridgeJsonRpcProvider::new(Url::from_str(&state.rpc_url).unwrap());
+    let chain_id = RUNTIME.block_on(provider.chain_id()).unwrap();
+
+    let project_dirs = ProjectDirs::from("org", "dojoengine", "dojo");
+    if let Some(proj_dirs) = project_dirs {
+        let data_dir = proj_dirs.data_dir();
+        fs::create_dir_all(data_dir).unwrap();
+
+        let account_file = data_dir.join("sessions.json");
+        let mut sessions_storage =
+            SessionsStorage::from_file(account_file.clone()).unwrap_or_default();
+
+        sessions_storage.active = format!("{:#x}/{:#x}", payload.address, chain_id);
+        sessions_storage.sessions.entry(sessions_storage.active.clone()).or_default().push(
+            RegisteredSession {
+                public_key: state.public_key,
+                expires_at: payload.expires_at,
+                policies: state.policies.clone(),
+            },
+        );
+        sessions_storage.accounts.insert(
+            sessions_storage.active.clone(),
+            RegisteredAccount {
+                username: payload.username.clone(),
+                address: payload.address,
+                owner_guid: payload.owner_guid,
+                chain_id,
+                rpc_url: state.rpc_url,
+            },
+        );
+
+        fs::write(account_file.clone(), serde_json::to_string_pretty(&sessions_storage).unwrap())
+            .unwrap();
+        println!("Account data saved to {}", account_file.display());
+    }
+
+    let signer = Signer::Starknet(state.private_key);
+    let session = Session::new(
+        state.policies.clone(),
+        payload.expires_at,
+        &signer.clone().into(),
+        Felt::ZERO,
+    )
+    .unwrap();
+
+    let session_account = SessionAccount::new_as_registered(
+        provider,
+        signer,
+        payload.address,
+        chain_id,
+        payload.owner_guid,
+        session,
+    );
+
+    // Call the callback with the new account
+    (state.account_callback)(Box::into_raw(Box::new(ControllerAccount {
+        account: session_account,
+        username: payload.username,
+    })));
+
+    // Clean up the stored callback state
+    let _ = state_keyring.delete_password();
+
+    Result::Ok(true)
 }
 
 /// Retrieves a stored session account if one exists and is valid
@@ -609,7 +777,7 @@ pub unsafe extern "C" fn controller_execute_raw(
     let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
     let calldata =
         calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::core::types::Call>>();
-    let call = (*controller).account.execute_v3(calldata);
+    let call = (*controller).0.execute_v3(calldata);
 
     match RUNTIME.block_on(call.send()) {
         Ok(result) => Result::Ok((&result.transaction_hash).into()),
