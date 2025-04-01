@@ -6,6 +6,7 @@
 
 namespace dojo_bindings {
 
+struct CallbackState;
 struct Policy;
 struct ControllerAccount;
 struct Call;
@@ -911,11 +912,9 @@ extern "C" {
 ///
 /// This function:
 /// 1. Generates a new signing key pair
-/// 2. If redirect_uri is provided: Uses it for callback
+/// 2. If redirect_uri is provided: Returns CallbackState for deep link handling
 /// 3. If redirect_uri is null: Starts a local HTTP server for callback
 /// 4. Opens the keychain session URL in browser
-/// 5. Creates and stores the session
-/// 6. Calls the provided callback with the new session account
 ///
 /// # Safety
 /// This function is marked as unsafe because it:
@@ -930,46 +929,25 @@ extern "C" {
 /// * `account_callback` - Function pointer called with the new session account when ready
 /// * `redirect_uri` - Optional pointer to null-terminated string containing the redirect URI.
 ///                   If provided, will be used for callback instead of starting a local server.
-void controller_connect(const char *rpc_url,
-                        const Policy *policies,
-                        uintptr_t policies_len,
-                        void (*account_callback)(ControllerAccount*),
-                        const char *redirect_uri);
-
-/// Initiates a connection to establish a new session account using deep linking
 ///
-/// This function:
-/// 1. Generates a new signing key pair
-/// 2. Stores the signing key and callback state
-/// 3. Opens the keychain session URL with redirect URI
-/// 4. Returns immediately - app will be reopened via deep link
-///
-/// # Safety
-/// This function is marked as unsafe because it:
-/// - Handles raw C pointers
-/// - Performs FFI operations
-/// - Manages system keyring entries
-///
-/// # Parameters
-/// * `rpc_url` - Pointer to null-terminated string containing the RPC endpoint URL
-/// * `redirect_uri` - Pointer to null-terminated string containing the deep link URI
-/// * `policies` - Pointer to array of Policy structs defining session permissions
-/// * `policies_len` - Length of the policies array
-/// * `account_callback` - Function pointer called with the new session account when ready
-void controller_connect_mobile(const char *rpc_url,
-                               const char *redirect_uri,
-                               const Policy *policies,
-                               uintptr_t policies_len,
-                               void (*account_callback)(ControllerAccount*));
+/// # Returns
+/// If redirect_uri is provided, returns pointer to CallbackState that must be used with handle_deep_link_callback.
+/// If redirect_uri is null, returns null pointer.
+CallbackState *controller_connect(const char *rpc_url,
+                                  const Policy *policies,
+                                  uintptr_t policies_len,
+                                  void (*account_callback)(ControllerAccount*),
+                                  const char *redirect_uri);
 
 /// Handles the deep link callback when app is reopened
 ///
 /// # Parameters
 /// * `callback_data` - Base64 encoded callback data from the deep link
+/// * `state` - CallbackState pointer returned from controller_connect
 ///
 /// # Returns
 /// Result containing success boolean or error
-Result<bool> handle_deep_link_callback(const char *callback_data);
+Result<bool> handle_deep_link_callback(const char *callback_data, CallbackState *state);
 
 /// Retrieves a stored session account if one exists and is valid
 ///
