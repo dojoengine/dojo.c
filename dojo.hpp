@@ -946,8 +946,9 @@ CallbackState *controller_connect(const char *rpc_url,
 /// * `state` - CallbackState pointer returned from controller_connect
 ///
 /// # Returns
-/// Result containing success boolean or error
-Result<bool> handle_deep_link_callback(const char *callback_data, CallbackState *state);
+/// Result containing pointer to ControllerAccount or error
+Result<ControllerAccount*> handle_deep_link_callback(const char *callback_data,
+                                                     CallbackState *state);
 
 /// Retrieves a stored session account if one exists and is valid
 ///

@@ -65,23 +65,6 @@ typedef struct Error {
   char *message;
 } Error;
 
-typedef enum Resultbool_Tag {
-  Okbool,
-  Errbool,
-} Resultbool_Tag;
-
-typedef struct Resultbool {
-  Resultbool_Tag tag;
-  union {
-    struct {
-      bool ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} Resultbool;
-
 typedef enum ResultControllerAccount_Tag {
   OkControllerAccount,
   ErrControllerAccount,
@@ -102,6 +85,23 @@ typedef struct ResultControllerAccount {
 typedef struct FieldElement {
   uint8_t data[32];
 } FieldElement;
+
+typedef enum Resultbool_Tag {
+  Okbool,
+  Errbool,
+} Resultbool_Tag;
+
+typedef struct Resultbool {
+  Resultbool_Tag tag;
+  union {
+    struct {
+      bool ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Resultbool;
 
 typedef enum ResultFieldElement_Tag {
   OkFieldElement,
@@ -810,9 +810,10 @@ struct CallbackState *controller_connect(const char *rpc_url,
  * * `state` - CallbackState pointer returned from controller_connect
  *
  * # Returns
- * Result containing success boolean or error
+ * Result containing pointer to ControllerAccount or error
  */
-struct Resultbool handle_deep_link_callback(const char *callback_data, struct CallbackState *state);
+struct ResultControllerAccount handle_deep_link_callback(const char *callback_data,
+                                                         struct CallbackState *state);
 
 /**
  * Retrieves a stored session account if one exists and is valid

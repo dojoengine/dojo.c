@@ -53,15 +53,6 @@ cdef extern from *:
   cdef struct Error:
     char *message;
 
-  cdef enum Resultbool_Tag:
-    Okbool,
-    Errbool,
-
-  cdef struct Resultbool:
-    Resultbool_Tag tag;
-    bool ok;
-    Error err;
-
   cdef enum ResultControllerAccount_Tag:
     OkControllerAccount,
     ErrControllerAccount,
@@ -73,6 +64,15 @@ cdef extern from *:
 
   cdef struct FieldElement:
     uint8_t data[32];
+
+  cdef enum Resultbool_Tag:
+    Okbool,
+    Errbool,
+
+  cdef struct Resultbool:
+    Resultbool_Tag tag;
+    bool ok;
+    Error err;
 
   cdef enum ResultFieldElement_Tag:
     OkFieldElement,
@@ -524,8 +524,9 @@ cdef extern from *:
   # * `state` - CallbackState pointer returned from controller_connect
   #
   # # Returns
-  # Result containing success boolean or error
-  Resultbool handle_deep_link_callback(const char *callback_data, CallbackState *state);
+  # Result containing pointer to ControllerAccount or error
+  ResultControllerAccount handle_deep_link_callback(const char *callback_data,
+                                                    CallbackState *state);
 
   # Retrieves a stored session account if one exists and is valid
   #

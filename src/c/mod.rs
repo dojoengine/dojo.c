@@ -82,7 +82,7 @@ struct CallbackState {
 async fn process_session_callback(
     state: CallbackState,
     payload: RegisterSessionResponse,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<ControllerAccount> {
     let provider = CartridgeJsonRpcProvider::new(state.rpc_url.clone());
     let chain_id = provider.chain_id().await.unwrap();
 
@@ -137,13 +137,22 @@ async fn process_session_callback(
         session,
     );
 
-    // Call the callback with the new account
-    (state.account_callback)(Box::into_raw(Box::new(ControllerAccount {
+    let controller_account = ControllerAccount {
         account: session_account,
         username: payload.username,
-    })));
+    };
 
-    Ok(())
+    // Call the callback if function pointer is not null
+    let fn_ptr = state.account_callback as *const ();
+    if !fn_ptr.is_null() {
+        let controller_copy = ControllerAccount {
+            account: controller_account.account.clone(),
+            username: controller_account.username.clone(),
+        };
+        (state.account_callback)(Box::into_raw(Box::new(controller_copy)));
+    }
+
+    Ok(controller_account)
 }
 
 // Modify handle_callback to use the shared function
@@ -306,12 +315,12 @@ pub unsafe extern "C" fn controller_connect(
 /// * `state` - CallbackState pointer returned from controller_connect
 ///
 /// # Returns
-/// Result containing success boolean or error
+/// Result containing pointer to ControllerAccount or error
 #[no_mangle]
 pub unsafe extern "C" fn handle_deep_link_callback(
     callback_data: *const c_char,
     state: *mut CallbackState,
-) -> Result<bool> {
+) -> Result<*mut ControllerAccount> {
     let callback_data = unsafe { CStr::from_ptr(callback_data).to_string_lossy().into_owned() };
     let state = unsafe { Box::from_raw(state) };
 
@@ -336,8 +345,13 @@ pub unsafe extern "C" fn handle_deep_link_callback(
         }
     };
 
-    // Process the callback using shared function
-    RUNTIME.block_on(process_callback(*state, payload))
+    // Process the callback using shared function and return the controller account
+    match RUNTIME.block_on(process_session_callback(*state, payload)) {
+        Ok(controller) => Result::Ok(Box::into_raw(Box::new(controller))),
+        Err(e) => Result::Err(Error {
+            message: CString::new(format!("Failed to process callback: {}", e)).unwrap().into_raw(),
+        }),
+    }
 }
 
 /// Retrieves a stored session account if one exists and is valid
