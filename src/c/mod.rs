@@ -1,12 +1,12 @@
 mod types;
 
-use std::ffi::{CStr, CString, c_void};
+use std::ffi::{c_void, CStr, CString};
 use std::fs;
 use std::net::SocketAddr;
 use std::ops::Deref;
 use std::os::raw::c_char;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
 use account_sdk::abigen::controller::OutsideExecutionV3;
@@ -18,13 +18,13 @@ use account_sdk::account::session::hash::Session;
 use account_sdk::provider::{CartridgeJsonRpcProvider, CartridgeProvider};
 use account_sdk::signers::Signer;
 use account_sdk::utils::time::get_current_timestamp;
-use axum::Router;
 use axum::extract::State;
-use axum::http::{HeaderValue, Method, StatusCode, header};
+use axum::http::{header, HeaderValue, Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::post;
-use base64::Engine as _;
+use axum::Router;
 use base64::engine::general_purpose::STANDARD_NO_PAD as BASE64;
+use base64::Engine as _;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use crypto_bigint::U256;
 use directories::ProjectDirs;
@@ -40,7 +40,7 @@ use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::{Felt, poseidon_hash_many};
+use starknet_crypto::{poseidon_hash_many, Felt};
 use stream_cancel::{StreamExt as _, Tripwire};
 use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
@@ -191,12 +191,12 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
 /// * `policies` - Pointer to array of Policy structs defining session permissions
 /// * `policies_len` - Length of the policies array
 /// * `account_callback` - Function pointer called with the new session account when ready
-/// * `redirect_uri` - Optional pointer to null-terminated string containing the redirect URI.
-///                   If provided, will be used for callback instead of starting a local server.
+/// * `redirect_uri` - Optional pointer to null-terminated string containing the redirect URI. If
+///   provided, will be used for callback instead of starting a local server.
 ///
 /// # Returns
-/// If redirect_uri is provided, returns pointer to CallbackState that must be used with handle_deep_link_callback.
-/// If redirect_uri is null, returns null pointer.
+/// If redirect_uri is provided, returns pointer to CallbackState that must be used with
+/// handle_deep_link_callback. If redirect_uri is null, returns null pointer.
 #[no_mangle]
 pub unsafe extern "C" fn controller_connect(
     rpc_url: *const c_char,
@@ -205,7 +205,8 @@ pub unsafe extern "C" fn controller_connect(
     account_callback: extern "C" fn(*mut ControllerAccount),
     redirect_uri: *const c_char,
 ) -> *mut CallbackState {
-    let rpc_url = Url::parse(&unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() }).unwrap();
+    let rpc_url =
+        Url::parse(&unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() }).unwrap();
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
     let account_policies = policies
         .iter()
@@ -341,7 +342,9 @@ pub unsafe extern "C" fn controller_handle_deep_link_callback(
     match RUNTIME.block_on(process_session_callback(*state, payload)) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(Error {
-            message: CString::new(format!("Failed to process session callback: {}", e)).unwrap().into_raw(),
+            message: CString::new(format!("Failed to process session callback: {}", e))
+                .unwrap()
+                .into_raw(),
         }),
     }
 }
