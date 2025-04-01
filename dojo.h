@@ -7,10 +7,11 @@
 namespace dojo_bindings {
 #endif  // __cplusplus
 
-struct ToriiClient;
+struct CallbackState;
 struct Policy;
 struct ControllerAccount;
 struct Call;
+struct ToriiClient;
 struct Controller;
 struct Entity;
 struct Query;
@@ -64,26 +65,22 @@ typedef struct Error {
   char *message;
 } Error;
 
-typedef enum ResultToriiClient_Tag {
-  OkToriiClient,
-  ErrToriiClient,
-} ResultToriiClient_Tag;
+typedef enum Resultbool_Tag {
+  Okbool,
+  Errbool,
+} Resultbool_Tag;
 
-typedef struct ResultToriiClient {
-  ResultToriiClient_Tag tag;
+typedef struct Resultbool {
+  Resultbool_Tag tag;
   union {
     struct {
-      struct ToriiClient *ok;
+      bool ok;
     };
     struct {
       struct Error err;
     };
   };
-} ResultToriiClient;
-
-typedef struct FieldElement {
-  uint8_t data[32];
-} FieldElement;
+} Resultbool;
 
 typedef enum ResultControllerAccount_Tag {
   OkControllerAccount,
@@ -102,22 +99,9 @@ typedef struct ResultControllerAccount {
   };
 } ResultControllerAccount;
 
-typedef enum Resultbool_Tag {
-  Okbool,
-  Errbool,
-} Resultbool_Tag;
-
-typedef struct Resultbool {
-  Resultbool_Tag tag;
-  union {
-    struct {
-      bool ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} Resultbool;
+typedef struct FieldElement {
+  uint8_t data[32];
+} FieldElement;
 
 typedef enum ResultFieldElement_Tag {
   OkFieldElement,
@@ -135,6 +119,23 @@ typedef struct ResultFieldElement {
     };
   };
 } ResultFieldElement;
+
+typedef enum ResultToriiClient_Tag {
+  OkToriiClient,
+  ErrToriiClient,
+} ResultToriiClient_Tag;
+
+typedef struct ResultToriiClient {
+  ResultToriiClient_Tag tag;
+  union {
+    struct {
+      struct ToriiClient *ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultToriiClient;
 
 typedef struct CArrayu8 {
   uint8_t *data;
@@ -786,30 +787,13 @@ extern "C" {
 #endif // __cplusplus
 
 /**
- * Creates a new Torii client instance
- *
- * # Parameters
- * * `torii_url` - URL of the Torii server
- * * `libp2p_relay_url` - URL of the libp2p relay server
- * * `world` - World address as a FieldElement
- *
- * # Returns
- * Result containing pointer to new ToriiClient instance or error
- */
-struct ResultToriiClient client_new(const char *torii_url,
-                                    const char *libp2p_relay_url,
-                                    struct FieldElement world);
-
-/**
  * Initiates a connection to establish a new session account
  *
  * This function:
  * 1. Generates a new signing key pair
- * 2. Starts a local HTTP server to receive the callback
- * 3. Opens the keychain session URL in browser
- * 4. Waits for callback with session details
- * 5. Creates and stores the session
- * 6. Calls the provided callback with the new session account
+ * 2. If redirect_uri is provided: Returns CallbackState for deep link handling
+ * 3. If redirect_uri is null: Starts a local HTTP server for callback
+ * 4. Opens the keychain session URL in browser
  *
  * # Safety
  * This function is marked as unsafe because it:
@@ -822,25 +806,31 @@ struct ResultToriiClient client_new(const char *torii_url,
  * * `policies` - Pointer to array of Policy structs defining session permissions
  * * `policies_len` - Length of the policies array
  * * `account_callback` - Function pointer called with the new session account when ready
+ * * `redirect_uri` - Optional pointer to null-terminated string containing the redirect URI. If
+ *   provided, will be used for callback instead of starting a local server.
  *
- * # Example
- * ```c
- * void on_account(SessionAccount* account) {
- *     // Handle new session account
- * }
- *
- * controller_connect(
- *     "https://rpc.example.com",
- *     policies,
- *     policies_length,
- *     on_account
- * );
- * ```
+ * # Returns
+ * If redirect_uri is provided, returns pointer to CallbackState that must be used with
+ * handle_deep_link_callback. If redirect_uri is null, returns null pointer.
  */
-void controller_connect(const char *rpc_url,
-                        const struct Policy *policies,
-                        uintptr_t policies_len,
-                        void (*account_callback)(struct ControllerAccount*));
+struct CallbackState *controller_connect(const char *rpc_url,
+                                         const struct Policy *policies,
+                                         uintptr_t policies_len,
+                                         void (*account_callback)(struct ControllerAccount*),
+                                         const char *redirect_uri);
+
+/**
+ * Handles the deep link callback when app is reopened
+ *
+ * # Parameters
+ * * `callback_data` - Base64 encoded callback data from the deep link
+ * * `state` - CallbackState pointer returned from controller_connect
+ *
+ * # Returns
+ * Result containing success boolean or error
+ */
+struct Resultbool controller_handle_deep_link_callback(const char *callback_data,
+                                                       struct CallbackState *state);
 
 /**
  * Retrieves a stored session account if one exists and is valid
@@ -954,6 +944,21 @@ struct ResultFieldElement controller_execute_from_outside(struct ControllerAccou
  * * `logger` - Callback function that takes a C string parameter
  */
 void client_set_logger(struct ToriiClient *client, void (*logger)(const char*));
+
+/**
+ * Creates a new Torii client instance
+ *
+ * # Parameters
+ * * `torii_url` - URL of the Torii server
+ * * `libp2p_relay_url` - URL of the libp2p relay server
+ * * `world` - World address as a FieldElement
+ *
+ * # Returns
+ * Result containing pointer to new ToriiClient instance or error
+ */
+struct ResultToriiClient client_new(const char *torii_url,
+                                    const char *libp2p_relay_url,
+                                    struct FieldElement world);
 
 /**
  * Publishes a message to the network

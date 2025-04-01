@@ -5,7 +5,6 @@ use std::fs;
 use std::net::SocketAddr;
 use std::ops::Deref;
 use std::os::raw::c_char;
-use std::str::FromStr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
@@ -24,7 +23,7 @@ use axum::http::{header, HeaderValue, Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::post;
 use axum::Router;
-use base64::engine::general_purpose::STANDARD as BASE64;
+use base64::engine::general_purpose::STANDARD_NO_PAD as BASE64;
 use base64::Engine as _;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use crypto_bigint::U256;
@@ -69,76 +68,21 @@ lazy_static! {
         Arc::new(Runtime::new().expect("Failed to create Tokio runtime"));
 }
 
-/// Creates a new Torii client instance
-///
-/// # Parameters
-/// * `torii_url` - URL of the Torii server
-/// * `libp2p_relay_url` - URL of the libp2p relay server
-/// * `world` - World address as a FieldElement
-///
-/// # Returns
-/// Result containing pointer to new ToriiClient instance or error
-#[no_mangle]
-pub unsafe extern "C" fn client_new(
-    torii_url: *const c_char,
-    libp2p_relay_url: *const c_char,
-    world: types::FieldElement,
-) -> Result<*mut ToriiClient> {
-    let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
-    let libp2p_relay_url =
-        unsafe { CStr::from_ptr(libp2p_relay_url).to_string_lossy().into_owned() };
-
-    let client_future = TClient::new(torii_url, libp2p_relay_url, (&world).into());
-
-    let client = match RUNTIME.block_on(client_future) {
-        Ok(client) => client,
-        Err(e) => return Result::Err(e.into()),
-    };
-
-    let relay_runner = client.relay_runner();
-    RUNTIME.spawn(async move {
-        relay_runner.lock().await.run().await;
-    });
-
-    Result::Ok(Box::into_raw(Box::new(ToriiClient { inner: client, logger: None })))
-}
-
-// State struct to share data with callback handler
 #[derive(Clone)]
-struct CallbackState {
+pub(crate) struct CallbackState {
     shutdown_tx: tokio::sync::mpsc::Sender<()>,
-    rpc_url: String,
+    rpc_url: Url,
     policies: Vec<account_sdk::account::session::policy::Policy>,
     private_key: SigningKey,
     public_key: Felt,
     account_callback: extern "C" fn(*mut ControllerAccount),
 }
 
-// Modify handle_callback to call the callback
-async fn handle_callback(State(state): State<CallbackState>, body: String) -> impl IntoResponse {
-    // Decode base64 payload
-    let padded = match body.len() % 4 {
-        0 => body,
-        n => body + &"=".repeat(4 - n),
-    };
-    let decoded = match BASE64.decode(padded) {
-        Ok(d) => d,
-        Err(e) => {
-            println!("Failed to decode payload: {}", e);
-            return StatusCode::BAD_REQUEST;
-        }
-    };
-
-    // Parse JSON from decoded bytes
-    let payload: RegisterSessionResponse = match serde_json::from_slice(&decoded) {
-        Ok(p) => p,
-        Err(e) => {
-            println!("Failed to deserialize payload: {}", e);
-            return StatusCode::BAD_REQUEST;
-        }
-    };
-
-    let provider = CartridgeJsonRpcProvider::new(Url::from_str(&state.rpc_url).unwrap());
+async fn process_session_callback(
+    state: CallbackState,
+    payload: RegisterSessionResponse,
+) -> anyhow::Result<()> {
+    let provider = CartridgeJsonRpcProvider::new(state.rpc_url.clone());
     let chain_id = provider.chain_id().await.unwrap();
 
     let project_dirs = ProjectDirs::from("org", "dojoengine", "dojo");
@@ -198,20 +142,43 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
         username: payload.username,
     })));
 
-    // Signal shutdown after handling callback
+    // Shutdown the server if we're not using a redirect URI
     state.shutdown_tx.send(()).await.unwrap();
-    StatusCode::OK
+    Ok(())
+}
+
+// Modify handle_callback to use the shared function
+async fn handle_callback(State(state): State<CallbackState>, body: String) -> impl IntoResponse {
+    let decoded = match BASE64.decode(body) {
+        Ok(d) => d,
+        Err(e) => {
+            println!("Failed to decode payload: {}", e);
+            return StatusCode::BAD_REQUEST;
+        }
+    };
+
+    // Parse JSON from decoded bytes
+    let payload: RegisterSessionResponse = match serde_json::from_slice(&decoded) {
+        Ok(p) => p,
+        Err(e) => {
+            println!("Failed to deserialize payload: {}", e);
+            return StatusCode::BAD_REQUEST;
+        }
+    };
+
+    match process_session_callback(state, payload).await {
+        Ok(_) => StatusCode::OK,
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+    }
 }
 
 /// Initiates a connection to establish a new session account
 ///
 /// This function:
 /// 1. Generates a new signing key pair
-/// 2. Starts a local HTTP server to receive the callback
-/// 3. Opens the keychain session URL in browser
-/// 4. Waits for callback with session details
-/// 5. Creates and stores the session
-/// 6. Calls the provided callback with the new session account
+/// 2. If redirect_uri is provided: Returns CallbackState for deep link handling
+/// 3. If redirect_uri is null: Starts a local HTTP server for callback
+/// 4. Opens the keychain session URL in browser
 ///
 /// # Safety
 /// This function is marked as unsafe because it:
@@ -224,28 +191,22 @@ async fn handle_callback(State(state): State<CallbackState>, body: String) -> im
 /// * `policies` - Pointer to array of Policy structs defining session permissions
 /// * `policies_len` - Length of the policies array
 /// * `account_callback` - Function pointer called with the new session account when ready
+/// * `redirect_uri` - Optional pointer to null-terminated string containing the redirect URI. If
+///   provided, will be used for callback instead of starting a local server.
 ///
-/// # Example
-/// ```c
-/// void on_account(SessionAccount* account) {
-///     // Handle new session account
-/// }
-///
-/// controller_connect(
-///     "https://rpc.example.com",
-///     policies,
-///     policies_length,
-///     on_account
-/// );
-/// ```
+/// # Returns
+/// If redirect_uri is provided, returns pointer to CallbackState that must be used with
+/// handle_deep_link_callback. If redirect_uri is null, returns null pointer.
 #[no_mangle]
 pub unsafe extern "C" fn controller_connect(
     rpc_url: *const c_char,
     policies: *const Policy,
     policies_len: usize,
     account_callback: extern "C" fn(*mut ControllerAccount),
-) {
-    let rpc_url = unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() };
+    redirect_uri: *const c_char,
+) -> *mut CallbackState {
+    let rpc_url =
+        Url::parse(&unsafe { CStr::from_ptr(rpc_url).to_string_lossy().into_owned() }).unwrap();
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
     let account_policies = policies
         .iter()
@@ -261,61 +222,131 @@ pub unsafe extern "C" fn controller_connect(
     let keyring = Entry::new("dojo-keyring", &format!("{:#x}", verifying_key)).unwrap();
     keyring.set_password(&format!("{:#x}", signing_key.secret_scalar())).unwrap();
 
-    // Create shutdown channel
-    let (shutdown_tx, mut shutdown_rx) = tokio::sync::mpsc::channel(1);
+    let mut url = url::Url::parse(constants::KEYCHAIN_SESSION_URL).unwrap();
+    let callback_state = if !redirect_uri.is_null() {
+        // Use provided redirect URI
+        url.query_pairs_mut().append_pair("redirect_uri", &unsafe {
+            CStr::from_ptr(redirect_uri).to_string_lossy().into_owned()
+        });
 
-    // Create state with RPC URL and shutdown sender
-    let state = CallbackState {
-        shutdown_tx,
-        rpc_url: rpc_url.clone(),
-        policies: account_policies,
-        private_key: signing_key,
-        public_key: verifying_key,
-        account_callback,
+        // Create callback state for deep link handling
+        let (shutdown_tx, _) = tokio::sync::mpsc::channel(1);
+        let state = CallbackState {
+            shutdown_tx,
+            rpc_url: rpc_url.clone(),
+            policies: account_policies,
+            private_key: signing_key,
+            public_key: verifying_key,
+            account_callback,
+        };
+        Box::into_raw(Box::new(state))
+    } else {
+        // Create shutdown channel
+        let (shutdown_tx, mut shutdown_rx) = tokio::sync::mpsc::channel(1);
+
+        // Create state with RPC URL and shutdown sender
+        let state = CallbackState {
+            shutdown_tx,
+            rpc_url: rpc_url.clone(),
+            policies: account_policies,
+            private_key: signing_key,
+            public_key: verifying_key,
+            account_callback,
+        };
+
+        // Set up the HTTP callback server with state and CORS
+        let app = Router::new()
+            .route("/callback", post(handle_callback))
+            .layer(
+                CorsLayer::new()
+                    .allow_origin(AllowOrigin::exact(HeaderValue::from_static(
+                        "https://x.cartridge.gg",
+                    )))
+                    .allow_methods([Method::POST])
+                    .allow_headers([header::CONTENT_TYPE]),
+            )
+            .with_state(state);
+
+        // Find an available port by trying to bind to port 0
+        let addr = SocketAddr::from(([127, 0, 0, 1], 0));
+        let listener = RUNTIME.block_on(TcpListener::bind(addr)).unwrap();
+        let bound_addr = listener.local_addr().unwrap();
+
+        let server = axum::serve(listener, app);
+
+        // Spawn server with graceful shutdown
+        RUNTIME.spawn(async move {
+            server
+                .with_graceful_shutdown(async move {
+                    shutdown_rx.recv().await;
+                    println!("Shutting down server");
+                })
+                .await
+                .unwrap();
+        });
+
+        println!("Listening on {}", bound_addr);
+        let callback_url =
+            format!("http://{}/callback", bound_addr).replace("127.0.0.1", "localhost");
+        url.query_pairs_mut().append_pair("callback_uri", &callback_url);
+        std::ptr::null_mut()
     };
 
-    // Set up the HTTP callback server with state and CORS
-    let app = Router::new()
-        .route("/callback", post(handle_callback))
-        .layer(
-            CorsLayer::new()
-                .allow_origin(AllowOrigin::exact(HeaderValue::from_static(
-                    "https://x.cartridge.gg",
-                )))
-                .allow_methods([Method::POST])
-                .allow_headers([header::CONTENT_TYPE]),
-        )
-        .with_state(state);
-
-    // Find an available port by trying to bind to port 0
-    let addr = SocketAddr::from(([127, 0, 0, 1], 0));
-    let listener = RUNTIME.block_on(TcpListener::bind(addr)).unwrap();
-    let bound_addr = listener.local_addr().unwrap();
-
-    let server = axum::serve(listener, app);
-
-    // Spawn server with graceful shutdown
-    RUNTIME.spawn(async move {
-        server
-            .with_graceful_shutdown(async move {
-                shutdown_rx.recv().await;
-                println!("Shutting down server");
-            })
-            .await
-            .unwrap();
-    });
-
-    println!("Listening on {}", bound_addr);
-
-    let callback_url = format!("http://{}/callback", bound_addr).replace("127.0.0.1", "localhost");
-    let mut url = url::Url::parse(constants::KEYCHAIN_SESSION_URL).unwrap();
     url.query_pairs_mut()
-        .append_pair("callback_uri", &callback_url)
         .append_pair("public_key", &format!("{:#x}", verifying_key))
-        .append_pair("rpc_url", &rpc_url)
+        .append_pair("rpc_url", &rpc_url.to_string())
         .append_pair("policies", &serde_json::to_string(&policies).unwrap());
 
     open::that(url.as_str()).unwrap();
+    callback_state
+}
+
+/// Handles the deep link callback when app is reopened
+///
+/// # Parameters
+/// * `callback_data` - Base64 encoded callback data from the deep link
+/// * `state` - CallbackState pointer returned from controller_connect
+///
+/// # Returns
+/// Result containing success boolean or error
+#[no_mangle]
+pub unsafe extern "C" fn controller_handle_deep_link_callback(
+    callback_data: *const c_char,
+    state: *mut CallbackState,
+) -> Result<bool> {
+    let callback_data = unsafe { CStr::from_ptr(callback_data).to_string_lossy().into_owned() };
+    let state = unsafe { Box::from_raw(state) };
+
+    let decoded = match BASE64.decode(callback_data) {
+        Ok(d) => d,
+        Err(e) => {
+            println!("Failed to decode payload: {}", e);
+            return Result::Err(Error {
+                message: CString::new("Failed to decode callback data").unwrap().into_raw(),
+            });
+        }
+    };
+
+    // Parse JSON from decoded bytes
+    let payload: RegisterSessionResponse = match serde_json::from_slice(&decoded) {
+        Ok(p) => p,
+        Err(e) => {
+            println!("Failed to deserialize payload: {}", e);
+            return Result::Err(Error {
+                message: CString::new("Failed to parse callback data").unwrap().into_raw(),
+            });
+        }
+    };
+
+    // Process the callback using shared function
+    match RUNTIME.block_on(process_session_callback(*state, payload)) {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(Error {
+            message: CString::new(format!("Failed to process session callback: {}", e))
+                .unwrap()
+                .into_raw(),
+        }),
+    }
 }
 
 /// Retrieves a stored session account if one exists and is valid
@@ -391,7 +422,7 @@ pub unsafe extern "C" fn controller_account(
         let signing_key_hex = keyring.get_password().ok()?;
 
         // Initialize provider and signer
-        let provider = CartridgeJsonRpcProvider::new(Url::from_str(&account.rpc_url).unwrap());
+        let provider = CartridgeJsonRpcProvider::new(account.rpc_url.clone());
         let signing_key = SigningKey::from_secret_scalar(Felt::from_hex(&signing_key_hex).unwrap());
         let signer = Signer::Starknet(signing_key);
 
@@ -613,10 +644,7 @@ pub unsafe extern "C" fn controller_execute_raw(
 
     match RUNTIME.block_on(call.send()) {
         Ok(result) => Result::Ok((&result.transaction_hash).into()),
-        Err(e) => {
-            println!("Error executing call: {:?}", e);
-            Result::Err(e.into())
-        }
+        Err(e) => Result::Err(e.into()),
     }
 }
 
@@ -685,6 +713,40 @@ pub unsafe extern "C" fn client_set_logger(
     unsafe {
         (*client).logger = Some(logger);
     }
+}
+
+/// Creates a new Torii client instance
+///
+/// # Parameters
+/// * `torii_url` - URL of the Torii server
+/// * `libp2p_relay_url` - URL of the libp2p relay server
+/// * `world` - World address as a FieldElement
+///
+/// # Returns
+/// Result containing pointer to new ToriiClient instance or error
+#[no_mangle]
+pub unsafe extern "C" fn client_new(
+    torii_url: *const c_char,
+    libp2p_relay_url: *const c_char,
+    world: types::FieldElement,
+) -> Result<*mut ToriiClient> {
+    let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
+    let libp2p_relay_url =
+        unsafe { CStr::from_ptr(libp2p_relay_url).to_string_lossy().into_owned() };
+
+    let client_future = TClient::new(torii_url, libp2p_relay_url, (&world).into());
+
+    let client = match RUNTIME.block_on(client_future) {
+        Ok(client) => client,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    let relay_runner = client.relay_runner();
+    RUNTIME.spawn(async move {
+        relay_runner.lock().await.run().await;
+    });
+
+    Result::Ok(Box::into_raw(Box::new(ToriiClient { inner: client, logger: None })))
 }
 
 /// Publishes a message to the network

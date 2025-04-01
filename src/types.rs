@@ -14,6 +14,7 @@ use starknet::signers::LocalWallet;
 use starknet_crypto::Felt;
 use stream_cancel::Trigger;
 use torii_client::client::Client;
+use url::Url;
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -63,7 +64,7 @@ pub struct RegisteredAccount {
     pub address: Felt,
     pub owner_guid: Felt,
     pub chain_id: Felt,
-    pub rpc_url: String,
+    pub rpc_url: Url,
 }
 
 impl SessionsStorage {

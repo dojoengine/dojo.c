@@ -35,6 +35,9 @@ cdef extern from *:
   cdef struct Account:
     pass
 
+  cdef struct CallbackState:
+    pass
+
   cdef struct ControllerAccount:
     pass
 
@@ -50,17 +53,14 @@ cdef extern from *:
   cdef struct Error:
     char *message;
 
-  cdef enum ResultToriiClient_Tag:
-    OkToriiClient,
-    ErrToriiClient,
+  cdef enum Resultbool_Tag:
+    Okbool,
+    Errbool,
 
-  cdef struct ResultToriiClient:
-    ResultToriiClient_Tag tag;
-    ToriiClient *ok;
+  cdef struct Resultbool:
+    Resultbool_Tag tag;
+    bool ok;
     Error err;
-
-  cdef struct FieldElement:
-    uint8_t data[32];
 
   cdef enum ResultControllerAccount_Tag:
     OkControllerAccount,
@@ -71,14 +71,8 @@ cdef extern from *:
     ControllerAccount *ok;
     Error err;
 
-  cdef enum Resultbool_Tag:
-    Okbool,
-    Errbool,
-
-  cdef struct Resultbool:
-    Resultbool_Tag tag;
-    bool ok;
-    Error err;
+  cdef struct FieldElement:
+    uint8_t data[32];
 
   cdef enum ResultFieldElement_Tag:
     OkFieldElement,
@@ -87,6 +81,15 @@ cdef extern from *:
   cdef struct ResultFieldElement:
     ResultFieldElement_Tag tag;
     FieldElement ok;
+    Error err;
+
+  cdef enum ResultToriiClient_Tag:
+    OkToriiClient,
+    ErrToriiClient,
+
+  cdef struct ResultToriiClient:
+    ResultToriiClient_Tag tag;
+    ToriiClient *ok;
     Error err;
 
   cdef struct CArrayu8:
@@ -492,28 +495,13 @@ cdef extern from *:
     const char *name;
     Ty *ty;
 
-  # Creates a new Torii client instance
-  #
-  # # Parameters
-  # * `torii_url` - URL of the Torii server
-  # * `libp2p_relay_url` - URL of the libp2p relay server
-  # * `world` - World address as a FieldElement
-  #
-  # # Returns
-  # Result containing pointer to new ToriiClient instance or error
-  ResultToriiClient client_new(const char *torii_url,
-                               const char *libp2p_relay_url,
-                               FieldElement world);
-
   # Initiates a connection to establish a new session account
   #
   # This function:
   # 1. Generates a new signing key pair
-  # 2. Starts a local HTTP server to receive the callback
-  # 3. Opens the keychain session URL in browser
-  # 4. Waits for callback with session details
-  # 5. Creates and stores the session
-  # 6. Calls the provided callback with the new session account
+  # 2. If redirect_uri is provided: Returns CallbackState for deep link handling
+  # 3. If redirect_uri is null: Starts a local HTTP server for callback
+  # 4. Opens the keychain session URL in browser
   #
   # # Safety
   # This function is marked as unsafe because it:
@@ -526,24 +514,27 @@ cdef extern from *:
   # * `policies` - Pointer to array of Policy structs defining session permissions
   # * `policies_len` - Length of the policies array
   # * `account_callback` - Function pointer called with the new session account when ready
+  # * `redirect_uri` - Optional pointer to null-terminated string containing the redirect URI. If
+  #   provided, will be used for callback instead of starting a local server.
   #
-  # # Example
-  # ```c
-  # void on_account(SessionAccount* account) {
-  #     // Handle new session account
-  # }
+  # # Returns
+  # If redirect_uri is provided, returns pointer to CallbackState that must be used with
+  # handle_deep_link_callback. If redirect_uri is null, returns null pointer.
+  CallbackState *controller_connect(const char *rpc_url,
+                                    const Policy *policies,
+                                    uintptr_t policies_len,
+                                    void (*account_callback)(ControllerAccount*),
+                                    const char *redirect_uri);
+
+  # Handles the deep link callback when app is reopened
   #
-  # controller_connect(
-  #     "https://rpc.example.com",
-  #     policies,
-  #     policies_length,
-  #     on_account
-  # );
-  # ```
-  void controller_connect(const char *rpc_url,
-                          const Policy *policies,
-                          uintptr_t policies_len,
-                          void (*account_callback)(ControllerAccount*));
+  # # Parameters
+  # * `callback_data` - Base64 encoded callback data from the deep link
+  # * `state` - CallbackState pointer returned from controller_connect
+  #
+  # # Returns
+  # Result containing success boolean or error
+  Resultbool controller_handle_deep_link_callback(const char *callback_data, CallbackState *state);
 
   # Retrieves a stored session account if one exists and is valid
   #
@@ -639,6 +630,19 @@ cdef extern from *:
   # * `client` - Pointer to ToriiClient instance
   # * `logger` - Callback function that takes a C string parameter
   void client_set_logger(ToriiClient *client, void (*logger)(const char*));
+
+  # Creates a new Torii client instance
+  #
+  # # Parameters
+  # * `torii_url` - URL of the Torii server
+  # * `libp2p_relay_url` - URL of the libp2p relay server
+  # * `world` - World address as a FieldElement
+  #
+  # # Returns
+  # Result containing pointer to new ToriiClient instance or error
+  ResultToriiClient client_new(const char *torii_url,
+                               const char *libp2p_relay_url,
+                               FieldElement world);
 
   # Publishes a message to the network
   #
