@@ -224,7 +224,7 @@ pub unsafe extern "C" fn controller_connect(
         // Use provided redirect URI
         url.query_pairs_mut().append_pair("redirect_uri", &unsafe {
             CStr::from_ptr(redirect_uri).to_string_lossy().into_owned()
-        })
+        });
     } else {
         // Create shutdown channel
         let (shutdown_tx, mut shutdown_rx) = tokio::sync::mpsc::channel(1);
