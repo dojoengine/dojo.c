@@ -1,10 +1,10 @@
-#include "dojo.h"
+#include "../dojo.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 
 // Add this global variable near the top of the file
-static struct SessionAccount* g_session_account = NULL;
+static struct ControllerAccount* g_session_account = NULL;
 
 void on_entity_state_update(FieldElement key, CArrayStruct models)
 {
@@ -52,7 +52,7 @@ void hex_to_bytes(const char *hex, FieldElement *felt)
     }
 }
 
-void on_account_connected(struct SessionAccount *account)
+void on_account_connected(struct ControllerAccount *account)
 {
     // Store the account in our global variable
     g_session_account = account;
@@ -74,7 +74,7 @@ int main()
     FieldElement katana;
     hex_to_bytes("0x03dc18a09d1dc893eb1abce2e0d33b8cc285ea430a4bdd30bccf0c8638e59659", &katana);
 
-    ResultToriiClient resClient = client_new(torii_url, rpc_url, "/ip4/127.0.0.1/tcp/9090", world);
+    ResultToriiClient resClient = client_new(torii_url, "/ip4/127.0.0.1/tcp/9090", world);
     if (resClient.tag == ErrToriiClient)
     {
         printf("Failed to create client: %s\n", resClient.err.message);
@@ -95,12 +95,15 @@ int main()
     }
     struct Provider *controller_provider = resControllerProvider.ok;
 
-    ResultController resSessionAccount = controller_account(policies, 2);
-    if (resSessionAccount.tag == OkController) {
+    FieldElement chain_id;
+    hex_to_bytes("0x534e5f474f45524c49", &chain_id);
+
+    ResultControllerAccount resSessionAccount = controller_account(policies, 2, chain_id);
+    if (resSessionAccount.tag == OkControllerAccount) {
         printf("Session account already connected\n");
         g_session_account = resSessionAccount.ok;
     } else {
-        controller_connect("https://api.cartridge.gg/x/knet-controller/katana", policies, 2, on_account_connected);
+        controller_connect("https://api.cartridge.gg/x/knet-controller/katana", policies, 2, on_account_connected, NULL);
     }
     
     // Wait for the account to be connected
@@ -197,7 +200,7 @@ int main()
     Query query = {};
     query.limit = 100;
     query.clause.tag = NoneClause;
-    ResultCArrayEntity resEntities = client_entities(client, &query);
+    ResultCArrayEntity resEntities = client_entities(client, &query, false);
     if (resEntities.tag == ErrCArrayEntity)
     {
         printf("Failed to get entities: %s\n", resEntities.err.message);

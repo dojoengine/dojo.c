@@ -806,12 +806,12 @@ extern "C" {
  * * `policies` - Pointer to array of Policy structs defining session permissions
  * * `policies_len` - Length of the policies array
  * * `account_callback` - Function pointer called with the new session account when ready
- * * `redirect_uri` - Optional pointer to null-terminated string containing the redirect URI.
- *                   If provided, will be used for callback instead of starting a local server.
+ * * `redirect_uri` - Optional pointer to null-terminated string containing the redirect URI. If
+ *   provided, will be used for callback instead of starting a local server.
  *
  * # Returns
- * If redirect_uri is provided, returns pointer to CallbackState that must be used with handle_deep_link_callback.
- * If redirect_uri is null, returns null pointer.
+ * If redirect_uri is provided, returns pointer to CallbackState that must be used with
+ * handle_deep_link_callback. If redirect_uri is null, returns null pointer.
  */
 struct CallbackState *controller_connect(const char *rpc_url,
                                          const struct Policy *policies,
