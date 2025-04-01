@@ -53,6 +53,15 @@ cdef extern from *:
   cdef struct Error:
     char *message;
 
+  cdef enum Resultbool_Tag:
+    Okbool,
+    Errbool,
+
+  cdef struct Resultbool:
+    Resultbool_Tag tag;
+    bool ok;
+    Error err;
+
   cdef enum ResultControllerAccount_Tag:
     OkControllerAccount,
     ErrControllerAccount,
@@ -65,15 +74,6 @@ cdef extern from *:
   cdef struct FieldElement:
     uint8_t data[32];
 
-  cdef enum Resultbool_Tag:
-    Okbool,
-    Errbool,
-
-  cdef struct Resultbool:
-    Resultbool_Tag tag;
-    bool ok;
-    Error err;
-
   cdef enum ResultFieldElement_Tag:
     OkFieldElement,
     ErrFieldElement,
@@ -81,6 +81,15 @@ cdef extern from *:
   cdef struct ResultFieldElement:
     ResultFieldElement_Tag tag;
     FieldElement ok;
+    Error err;
+
+  cdef enum ResultToriiClient_Tag:
+    OkToriiClient,
+    ErrToriiClient,
+
+  cdef struct ResultToriiClient:
+    ResultToriiClient_Tag tag;
+    ToriiClient *ok;
     Error err;
 
   cdef struct CArrayu8:
@@ -524,9 +533,8 @@ cdef extern from *:
   # * `state` - CallbackState pointer returned from controller_connect
   #
   # # Returns
-  # Result containing pointer to ControllerAccount or error
-  ResultControllerAccount handle_deep_link_callback(const char *callback_data,
-                                                    CallbackState *state);
+  # Result containing success boolean or error
+  Resultbool controller_handle_deep_link_callback(const char *callback_data, CallbackState *state);
 
   # Retrieves a stored session account if one exists and is valid
   #
@@ -622,6 +630,19 @@ cdef extern from *:
   # * `client` - Pointer to ToriiClient instance
   # * `logger` - Callback function that takes a C string parameter
   void client_set_logger(ToriiClient *client, void (*logger)(const char*));
+
+  # Creates a new Torii client instance
+  #
+  # # Parameters
+  # * `torii_url` - URL of the Torii server
+  # * `libp2p_relay_url` - URL of the libp2p relay server
+  # * `world` - World address as a FieldElement
+  #
+  # # Returns
+  # Result containing pointer to new ToriiClient instance or error
+  ResultToriiClient client_new(const char *torii_url,
+                               const char *libp2p_relay_url,
+                               FieldElement world);
 
   # Publishes a message to the network
   #

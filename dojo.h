@@ -65,6 +65,23 @@ typedef struct Error {
   char *message;
 } Error;
 
+typedef enum Resultbool_Tag {
+  Okbool,
+  Errbool,
+} Resultbool_Tag;
+
+typedef struct Resultbool {
+  Resultbool_Tag tag;
+  union {
+    struct {
+      bool ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Resultbool;
+
 typedef enum ResultControllerAccount_Tag {
   OkControllerAccount,
   ErrControllerAccount,
@@ -86,23 +103,6 @@ typedef struct FieldElement {
   uint8_t data[32];
 } FieldElement;
 
-typedef enum Resultbool_Tag {
-  Okbool,
-  Errbool,
-} Resultbool_Tag;
-
-typedef struct Resultbool {
-  Resultbool_Tag tag;
-  union {
-    struct {
-      bool ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} Resultbool;
-
 typedef enum ResultFieldElement_Tag {
   OkFieldElement,
   ErrFieldElement,
@@ -119,6 +119,23 @@ typedef struct ResultFieldElement {
     };
   };
 } ResultFieldElement;
+
+typedef enum ResultToriiClient_Tag {
+  OkToriiClient,
+  ErrToriiClient,
+} ResultToriiClient_Tag;
+
+typedef struct ResultToriiClient {
+  ResultToriiClient_Tag tag;
+  union {
+    struct {
+      struct ToriiClient *ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultToriiClient;
 
 typedef struct CArrayu8 {
   uint8_t *data;
@@ -810,10 +827,10 @@ struct CallbackState *controller_connect(const char *rpc_url,
  * * `state` - CallbackState pointer returned from controller_connect
  *
  * # Returns
- * Result containing pointer to ControllerAccount or error
+ * Result containing success boolean or error
  */
-struct ResultControllerAccount handle_deep_link_callback(const char *callback_data,
-                                                         struct CallbackState *state);
+struct Resultbool controller_handle_deep_link_callback(const char *callback_data,
+                                                       struct CallbackState *state);
 
 /**
  * Retrieves a stored session account if one exists and is valid
@@ -927,6 +944,21 @@ struct ResultFieldElement controller_execute_from_outside(struct ControllerAccou
  * * `logger` - Callback function that takes a C string parameter
  */
 void client_set_logger(struct ToriiClient *client, void (*logger)(const char*));
+
+/**
+ * Creates a new Torii client instance
+ *
+ * # Parameters
+ * * `torii_url` - URL of the Torii server
+ * * `libp2p_relay_url` - URL of the libp2p relay server
+ * * `world` - World address as a FieldElement
+ *
+ * # Returns
+ * Result containing pointer to new ToriiClient instance or error
+ */
+struct ResultToriiClient client_new(const char *torii_url,
+                                    const char *libp2p_relay_url,
+                                    struct FieldElement world);
 
 /**
  * Publishes a message to the network

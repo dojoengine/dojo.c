@@ -5,7 +5,6 @@ use std::fs;
 use std::net::SocketAddr;
 use std::ops::Deref;
 use std::os::raw::c_char;
-use std::str::FromStr;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
@@ -70,7 +69,7 @@ lazy_static! {
 }
 
 #[derive(Clone)]
-struct CallbackState {
+pub(crate) struct CallbackState {
     shutdown_tx: tokio::sync::mpsc::Sender<()>,
     rpc_url: Url,
     policies: Vec<account_sdk::account::session::policy::Policy>,
@@ -82,7 +81,7 @@ struct CallbackState {
 async fn process_session_callback(
     state: CallbackState,
     payload: RegisterSessionResponse,
-) -> anyhow::Result<ControllerAccount> {
+) -> anyhow::Result<()> {
     let provider = CartridgeJsonRpcProvider::new(state.rpc_url.clone());
     let chain_id = provider.chain_id().await.unwrap();
 
@@ -137,22 +136,15 @@ async fn process_session_callback(
         session,
     );
 
-    let controller_account = ControllerAccount {
+    // Call the callback with the new account
+    (state.account_callback)(Box::into_raw(Box::new(ControllerAccount {
         account: session_account,
         username: payload.username,
-    };
+    })));
 
-    // Call the callback if function pointer is not null
-    let fn_ptr = state.account_callback as *const ();
-    if !fn_ptr.is_null() {
-        let controller_copy = ControllerAccount {
-            account: controller_account.account.clone(),
-            username: controller_account.username.clone(),
-        };
-        (state.account_callback)(Box::into_raw(Box::new(controller_copy)));
-    }
-
-    Ok(controller_account)
+    // Shutdown the server if we're not using a redirect URI
+    state.shutdown_tx.send(()).await.unwrap();
+    Ok(())
 }
 
 // Modify handle_callback to use the shared function
@@ -315,12 +307,12 @@ pub unsafe extern "C" fn controller_connect(
 /// * `state` - CallbackState pointer returned from controller_connect
 ///
 /// # Returns
-/// Result containing pointer to ControllerAccount or error
+/// Result containing success boolean or error
 #[no_mangle]
-pub unsafe extern "C" fn handle_deep_link_callback(
+pub unsafe extern "C" fn controller_handle_deep_link_callback(
     callback_data: *const c_char,
     state: *mut CallbackState,
-) -> Result<*mut ControllerAccount> {
+) -> Result<bool> {
     let callback_data = unsafe { CStr::from_ptr(callback_data).to_string_lossy().into_owned() };
     let state = unsafe { Box::from_raw(state) };
 
@@ -345,11 +337,11 @@ pub unsafe extern "C" fn handle_deep_link_callback(
         }
     };
 
-    // Process the callback using shared function and return the controller account
+    // Process the callback using shared function
     match RUNTIME.block_on(process_session_callback(*state, payload)) {
-        Ok(controller) => Result::Ok(Box::into_raw(Box::new(controller))),
+        Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(Error {
-            message: CString::new(format!("Failed to process callback: {}", e)).unwrap().into_raw(),
+            message: CString::new(format!("Failed to process session callback: {}", e)).unwrap().into_raw(),
         }),
     }
 }
@@ -427,7 +419,7 @@ pub unsafe extern "C" fn controller_account(
         let signing_key_hex = keyring.get_password().ok()?;
 
         // Initialize provider and signer
-        let provider = CartridgeJsonRpcProvider::new(Url::from_str(&account.rpc_url).unwrap());
+        let provider = CartridgeJsonRpcProvider::new(account.rpc_url.clone());
         let signing_key = SigningKey::from_secret_scalar(Felt::from_hex(&signing_key_hex).unwrap());
         let signer = Signer::Starknet(signing_key);
 
@@ -718,6 +710,40 @@ pub unsafe extern "C" fn client_set_logger(
     unsafe {
         (*client).logger = Some(logger);
     }
+}
+
+/// Creates a new Torii client instance
+///
+/// # Parameters
+/// * `torii_url` - URL of the Torii server
+/// * `libp2p_relay_url` - URL of the libp2p relay server
+/// * `world` - World address as a FieldElement
+///
+/// # Returns
+/// Result containing pointer to new ToriiClient instance or error
+#[no_mangle]
+pub unsafe extern "C" fn client_new(
+    torii_url: *const c_char,
+    libp2p_relay_url: *const c_char,
+    world: types::FieldElement,
+) -> Result<*mut ToriiClient> {
+    let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
+    let libp2p_relay_url =
+        unsafe { CStr::from_ptr(libp2p_relay_url).to_string_lossy().into_owned() };
+
+    let client_future = TClient::new(torii_url, libp2p_relay_url, (&world).into());
+
+    let client = match RUNTIME.block_on(client_future) {
+        Ok(client) => client,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    let relay_runner = client.relay_runner();
+    RUNTIME.spawn(async move {
+        relay_runner.lock().await.run().await;
+    });
+
+    Result::Ok(Box::into_raw(Box::new(ToriiClient { inner: client, logger: None })))
 }
 
 /// Publishes a message to the network

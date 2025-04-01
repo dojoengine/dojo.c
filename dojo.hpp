@@ -946,9 +946,8 @@ CallbackState *controller_connect(const char *rpc_url,
 /// * `state` - CallbackState pointer returned from controller_connect
 ///
 /// # Returns
-/// Result containing pointer to ControllerAccount or error
-Result<ControllerAccount*> handle_deep_link_callback(const char *callback_data,
-                                                     CallbackState *state);
+/// Result containing success boolean or error
+Result<bool> controller_handle_deep_link_callback(const char *callback_data, CallbackState *state);
 
 /// Retrieves a stored session account if one exists and is valid
 ///
@@ -1044,6 +1043,19 @@ Result<FieldElement> controller_execute_from_outside(ControllerAccount *controll
 /// * `client` - Pointer to ToriiClient instance
 /// * `logger` - Callback function that takes a C string parameter
 void client_set_logger(ToriiClient *client, void (*logger)(const char*));
+
+/// Creates a new Torii client instance
+///
+/// # Parameters
+/// * `torii_url` - URL of the Torii server
+/// * `libp2p_relay_url` - URL of the libp2p relay server
+/// * `world` - World address as a FieldElement
+///
+/// # Returns
+/// Result containing pointer to new ToriiClient instance or error
+Result<ToriiClient*> client_new(const char *torii_url,
+                                const char *libp2p_relay_url,
+                                FieldElement world);
 
 /// Publishes a message to the network
 ///
