@@ -1123,7 +1123,12 @@ pub unsafe extern "C" fn client_tokens(
         ids.iter().map(|f| (&f.clone()).into()).collect::<Vec<U256>>()
     };
 
-    let tokens = match RUNTIME.block_on((*client).inner.tokens(contract_addresses, token_ids, Some(limit), Some(offset))) {
+    let tokens = match RUNTIME.block_on((*client).inner.tokens(
+        contract_addresses,
+        token_ids,
+        Some(limit),
+        Some(offset),
+    )) {
         Ok(tokens) => tokens,
         Err(e) => return Result::Err(e.into()),
     };
