@@ -1106,6 +1106,8 @@ pub unsafe extern "C" fn client_tokens(
     contract_addresses_len: usize,
     token_ids: *const types::U256,
     token_ids_len: usize,
+    limit: u32,
+    offset: u32,
 ) -> Result<CArray<Token>> {
     let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
         Vec::new()
@@ -1121,7 +1123,7 @@ pub unsafe extern "C" fn client_tokens(
         ids.iter().map(|f| (&f.clone()).into()).collect::<Vec<U256>>()
     };
 
-    let tokens = match RUNTIME.block_on((*client).inner.tokens(contract_addresses, token_ids)) {
+    let tokens = match RUNTIME.block_on((*client).inner.tokens(contract_addresses, token_ids, Some(limit), Some(offset))) {
         Ok(tokens) => tokens,
         Err(e) => return Result::Err(e.into()),
     };
@@ -1228,6 +1230,8 @@ pub unsafe extern "C" fn client_token_balances(
     account_addresses_len: usize,
     token_ids: *const types::U256,
     token_ids_len: usize,
+    limit: u32,
+    offset: u32,
 ) -> Result<CArray<TokenBalance>> {
     let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
         Vec::new()
@@ -1256,6 +1260,8 @@ pub unsafe extern "C" fn client_token_balances(
         account_addresses,
         contract_addresses,
         token_ids,
+        Some(limit),
+        Some(offset),
     )) {
         Ok(balances) => balances,
         Err(e) => return Result::Err(e.into()),

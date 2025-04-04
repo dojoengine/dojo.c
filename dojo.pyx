@@ -790,7 +790,9 @@ cdef extern from *:
                                   const FieldElement *contract_addresses,
                                   uintptr_t contract_addresses_len,
                                   const U256 *token_ids,
-                                  uintptr_t token_ids_len);
+                                  uintptr_t token_ids_len,
+                                  uint32_t limit,
+                                  uint32_t offset);
 
   # Subscribes to token updates
   #
@@ -825,7 +827,9 @@ cdef extern from *:
                                                  const FieldElement *account_addresses,
                                                  uintptr_t account_addresses_len,
                                                  const U256 *token_ids,
-                                                 uintptr_t token_ids_len);
+                                                 uintptr_t token_ids_len,
+                                                 uint32_t limit,
+                                                 uint32_t offset);
 
   # Subscribes to indexer updates
   #

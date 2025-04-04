@@ -1131,7 +1131,9 @@ struct ResultCArrayToken client_tokens(struct ToriiClient *client,
                                        const struct FieldElement *contract_addresses,
                                        uintptr_t contract_addresses_len,
                                        const struct U256 *token_ids,
-                                       uintptr_t token_ids_len);
+                                       uintptr_t token_ids_len,
+                                       uint32_t limit,
+                                       uint32_t offset);
 
 /**
  * Subscribes to token updates
@@ -1170,7 +1172,9 @@ struct ResultCArrayTokenBalance client_token_balances(struct ToriiClient *client
                                                       const struct FieldElement *account_addresses,
                                                       uintptr_t account_addresses_len,
                                                       const struct U256 *token_ids,
-                                                      uintptr_t token_ids_len);
+                                                      uintptr_t token_ids_len,
+                                                      uint32_t limit,
+                                                      uint32_t offset);
 
 /**
  * Subscribes to indexer updates

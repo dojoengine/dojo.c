@@ -7,14 +7,14 @@ version = "1.3.1"
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
-dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "271cf44055f2b42e50e898e3dc34a13ae530b329" }
-dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "271cf44055f2b42e50e898e3dc34a13ae530b329"}
-torii-client = { git = "https://github.com/dojoengine/dojo", rev = "271cf44055f2b42e50e898e3dc34a13ae530b329" }
-torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
+dojo-world = { git = "https://github.com/Larkooo/dojo", branch = "pagination-tokens-grpc" }
+dojo-types = { git = "https://github.com/Larkooo/dojo", branch = "pagination-tokens-grpc"}
+torii-client = { git = "https://github.com/Larkooo/dojo", branch = "pagination-tokens-grpc" }
+torii-grpc = { git = "https://github.com/Larkooo/dojo", features = [
     "client",
-], rev = "271cf44055f2b42e50e898e3dc34a13ae530b329" }
-torii-typed-data = { git = "https://github.com/dojoengine/dojo", rev = "271cf44055f2b42e50e898e3dc34a13ae530b329" }
-torii-relay = { git = "https://github.com/dojoengine/dojo", rev = "271cf44055f2b42e50e898e3dc34a13ae530b329" }
+], branch = "pagination-tokens-grpc" }
+torii-typed-data = { git = "https://github.com/Larkooo/dojo", branch = "pagination-tokens-grpc" }
+torii-relay = { git = "https://github.com/Larkooo/dojo", branch = "pagination-tokens-grpc" }
 
 starknet = "0.13.0"
 starknet-crypto = "0.7.2"

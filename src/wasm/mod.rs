@@ -629,6 +629,8 @@ impl ToriiClient {
         &self,
         contract_addresses: Vec<String>,
         token_ids: Vec<WasmU256>,
+        limit: Option<u32>,
+        offset: Option<u32>,
     ) -> Result<Tokens, JsValue> {
         let contract_addresses = contract_addresses
             .iter()
@@ -640,7 +642,7 @@ impl ToriiClient {
 
         let tokens = self
             .inner
-            .tokens(contract_addresses, token_ids)
+            .tokens(contract_addresses, token_ids, limit, offset)
             .await
             .map_err(|e| JsValue::from(format!("failed to get tokens: {e}")))?;
 
@@ -734,6 +736,8 @@ impl ToriiClient {
         contract_addresses: Vec<String>,
         account_addresses: Vec<String>,
         token_ids: Vec<WasmU256>,
+        limit: Option<u32>,
+        offset: Option<u32>,
     ) -> Result<TokenBalances, JsValue> {
         let account_addresses = account_addresses
             .iter()
@@ -751,7 +755,7 @@ impl ToriiClient {
 
         let token_balances = self
             .inner
-            .token_balances(account_addresses, contract_addresses, token_ids)
+            .token_balances(account_addresses, contract_addresses, token_ids, limit, offset)
             .await
             .map_err(|e| JsValue::from(format!("failed to get token balances: {e}")))?;
 
