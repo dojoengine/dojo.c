@@ -627,7 +627,7 @@ impl ToriiClient {
         limit: Option<u32>,
         offset: Option<u32>,
         cursor: Option<String>,
-    ) -> Result<Page<Token>, JsValue> {
+    ) -> Result<Tokens, JsValue> {
         let contract_addresses = contract_addresses
             .iter()
             .map(|c| Felt::from_str(c))
@@ -642,7 +642,7 @@ impl ToriiClient {
             .await
             .map_err(|e| JsValue::from(format!("failed to get tokens: {e}")))?;
 
-        Ok(tokens.into())
+        Ok(Tokens(tokens.into()))
     }
 
     /// Subscribes to token updates
@@ -735,7 +735,7 @@ impl ToriiClient {
         limit: Option<u32>,
         offset: Option<u32>,
         cursor: Option<String>,
-    ) -> Result<Page<TokenBalance>, JsValue> {
+    ) -> Result<TokenBalances, JsValue> {
         let account_addresses = account_addresses
             .iter()
             .map(|a| Felt::from_str(a))
@@ -756,7 +756,7 @@ impl ToriiClient {
             .await
             .map_err(|e| JsValue::from(format!("failed to get token balances: {e}")))?;
 
-        Ok(token_balances.into())
+        Ok(TokenBalances(token_balances.into()))
     }
 
     /// Queries entities based on the provided query parameters

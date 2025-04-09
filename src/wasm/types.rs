@@ -65,11 +65,11 @@ impl From<torii_grpc::types::Controller> for Controller {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct Tokens(pub Vec<Token>);
+pub struct Tokens(pub Page<Token>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct TokenBalances(pub Vec<TokenBalance>);
+pub struct TokenBalances(pub Page<TokenBalance>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
