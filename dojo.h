@@ -451,9 +451,23 @@ typedef struct CArrayToken {
   uintptr_t data_len;
 } CArrayToken;
 
+typedef enum COptionc_char_Tag {
+  Somec_char,
+  Nonec_char,
+} COptionc_char_Tag;
+
+typedef struct COptionc_char {
+  COptionc_char_Tag tag;
+  union {
+    struct {
+      const char *some;
+    };
+  };
+} COptionc_char;
+
 typedef struct PageToken {
   struct CArrayToken items;
-  const char *next_cursor;
+  struct COptionc_char next_cursor;
 } PageToken;
 
 typedef enum ResultPageToken_Tag {
@@ -489,7 +503,7 @@ typedef struct CArrayTokenBalance {
 
 typedef struct PageTokenBalance {
   struct CArrayTokenBalance items;
-  const char *next_cursor;
+  struct COptionc_char next_cursor;
 } PageTokenBalance;
 
 typedef enum ResultPageTokenBalance_Tag {

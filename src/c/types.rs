@@ -8,7 +8,7 @@ use torii_client::client::Client;
 #[repr(C)]
 pub struct Page<T> {
     pub items: CArray<T>,
-    pub next_cursor: *const c_char,
+    pub next_cursor: COption<*const c_char>,
 }
 
 impl<T, U> From<torii_grpc::types::Page<T>> for Page<U>
@@ -17,7 +17,14 @@ where
 {
     fn from(val: torii_grpc::types::Page<T>) -> Self {
         let items = val.items.into_iter().map(|t| t.into()).collect::<Vec<U>>();
-        Page { items: items.into(), next_cursor: CString::new(val.next_cursor).unwrap().into_raw() }
+        Page {
+            items: items.into(),
+            next_cursor: if val.next_cursor.is_empty() {
+                COption::None
+            } else {
+                COption::Some(CString::new(val.next_cursor).unwrap().into_raw())
+            },
+        }
     }
 }
 

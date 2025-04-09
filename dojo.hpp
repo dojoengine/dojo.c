@@ -770,7 +770,7 @@ struct Token {
 template<typename T>
 struct Page {
   CArray<T> items;
-  const char *next_cursor;
+  COption<const char*> next_cursor;
 };
 
 struct TokenBalance {

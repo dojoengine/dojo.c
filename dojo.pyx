@@ -285,9 +285,17 @@ cdef extern from *:
     Token *data;
     uintptr_t data_len;
 
+  cdef enum COptionc_char_Tag:
+    Somec_char,
+    Nonec_char,
+
+  cdef struct COptionc_char:
+    COptionc_char_Tag tag;
+    const char *some;
+
   cdef struct PageToken:
     CArrayToken items;
-    const char *next_cursor;
+    COptionc_char next_cursor;
 
   cdef enum ResultPageToken_Tag:
     OkPageToken,
@@ -312,7 +320,7 @@ cdef extern from *:
 
   cdef struct PageTokenBalance:
     CArrayTokenBalance items;
-    const char *next_cursor;
+    COptionc_char next_cursor;
 
   cdef enum ResultPageTokenBalance_Tag:
     OkPageTokenBalance,
