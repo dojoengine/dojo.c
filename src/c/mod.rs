@@ -1565,7 +1565,7 @@ pub unsafe extern "C" fn poseidon_hash(
     felts_len: usize,
 ) -> types::FieldElement {
     let felts = unsafe { std::slice::from_raw_parts(felts, felts_len) };
-    let felts = felts.into_iter().map(|f| f.clone().into()).collect::<Vec<Felt>>();
+    let felts = felts.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>();
 
     poseidon_hash_many(&felts).into()
 }
