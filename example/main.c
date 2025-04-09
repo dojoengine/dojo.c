@@ -118,15 +118,18 @@ int main()
 
     // Transfer a bit of ETH to another account
     Call create_Game = {
-        .to = katana,
-        .selector = "create_Game",
+        .to = "0x0589634122ff8b84021b3f683cbf9d5adf15482289e1d70b1f8ad3052cc08711",
+        .selector = "move",
         .calldata = {
-            .data = malloc(sizeof(FieldElement) * 1),
-            .data_len = 1,
+            .data = malloc(sizeof(FieldElement) * 2),
+            .data_len = 2,
         }};
 
-    hex_to_bytes("0x01", &create_Game.calldata.data[0]);
+    
+    hex_to_bytes("0x0", &create_Game.calldata.data[0]);
+    hex_to_bytes("0x2", &create_Game.calldata.data[1]);
 
+    // call send_transaction (rpc_url) 
     ResultFieldElement resCreateGame = controller_execute_from_outside(g_session_account, &create_Game, 1);
     if (resCreateGame.tag == ErrFieldElement)
     {

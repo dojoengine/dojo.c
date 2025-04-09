@@ -1761,7 +1761,7 @@ dependencies = [
 [[package]]
 name = "dojo-types"
 version = "1.4.0"
-source = "git+https://github.com/Larkooo/dojo?branch=pagination-tokens-grpc#3927007f5df0908ebdd78b3ddacad6b4df2a0ca0"
+source = "git+https://github.com/dojoengine/dojo?rev=2348232#234823291281c6522ff6a48ea5739d85d59bcdf9"
 dependencies = [
  "anyhow",
  "cainome 0.5.0",
@@ -1783,7 +1783,7 @@ dependencies = [
 [[package]]
 name = "dojo-world"
 version = "1.4.0"
-source = "git+https://github.com/Larkooo/dojo?branch=pagination-tokens-grpc#3927007f5df0908ebdd78b3ddacad6b4df2a0ca0"
+source = "git+https://github.com/dojoengine/dojo?rev=2348232#234823291281c6522ff6a48ea5739d85d59bcdf9"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7191,7 +7191,7 @@ dependencies = [
 [[package]]
 name = "torii-client"
 version = "1.4.0"
-source = "git+https://github.com/Larkooo/dojo?branch=pagination-tokens-grpc#3927007f5df0908ebdd78b3ddacad6b4df2a0ca0"
+source = "git+https://github.com/dojoengine/dojo?rev=2348232#234823291281c6522ff6a48ea5739d85d59bcdf9"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -7219,7 +7219,7 @@ dependencies = [
 [[package]]
 name = "torii-grpc"
 version = "1.4.0"
-source = "git+https://github.com/Larkooo/dojo?branch=pagination-tokens-grpc#3927007f5df0908ebdd78b3ddacad6b4df2a0ca0"
+source = "git+https://github.com/dojoengine/dojo?rev=2348232#234823291281c6522ff6a48ea5739d85d59bcdf9"
 dependencies = [
  "crypto-bigint",
  "dojo-types",
@@ -7258,7 +7258,7 @@ dependencies = [
 [[package]]
 name = "torii-relay"
 version = "1.4.0"
-source = "git+https://github.com/Larkooo/dojo?branch=pagination-tokens-grpc#3927007f5df0908ebdd78b3ddacad6b4df2a0ca0"
+source = "git+https://github.com/dojoengine/dojo?rev=2348232#234823291281c6522ff6a48ea5739d85d59bcdf9"
 dependencies = [
  "anyhow",
  "futures",
@@ -7278,7 +7278,7 @@ dependencies = [
 [[package]]
 name = "torii-typed-data"
 version = "1.4.0"
-source = "git+https://github.com/Larkooo/dojo?branch=pagination-tokens-grpc#3927007f5df0908ebdd78b3ddacad6b4df2a0ca0"
+source = "git+https://github.com/dojoengine/dojo?rev=2348232#234823291281c6522ff6a48ea5739d85d59bcdf9"
 dependencies = [
  "cainome 0.5.0",
  "crypto-bigint",

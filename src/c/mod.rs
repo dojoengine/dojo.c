@@ -52,8 +52,7 @@ use torii_relay::types::Message;
 use torii_typed_data::TypedData;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
-    BlockId, CArray, Call, Controller, Entity, EntityKeysClause, Error, Event, IndexerUpdate,
-    Policy, Query, Result, Signature, Struct, Token, TokenBalance, ToriiClient, Ty, WorldMetadata,
+    BlockId, CArray, Call, Controller, Entity, EntityKeysClause, Error, Event, IndexerUpdate, Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance, ToriiClient, Ty, WorldMetadata
 };
 use url::Url;
 
@@ -88,7 +87,7 @@ pub unsafe extern "C" fn client_new(
     let libp2p_relay_url =
         unsafe { CStr::from_ptr(libp2p_relay_url).to_string_lossy().into_owned() };
 
-    let client_future = TClient::new(torii_url, libp2p_relay_url, (&world).into());
+    let client_future = TClient::new(torii_url, libp2p_relay_url, world.into());
 
     let client = match RUNTIME.block_on(client_future) {
         Ok(client) => client,
@@ -249,9 +248,9 @@ pub unsafe extern "C" fn controller_connect(
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
     let account_policies = policies
         .iter()
-        .map(|p| account_sdk::account::session::policy::Policy::Call(p.into()))
+        .map(|p| account_sdk::account::session::policy::Policy::Call(p.clone().into()))
         .collect::<Vec<account_sdk::account::session::policy::Policy>>();
-    let policies = policies.iter().map(|p| p.into()).collect::<Vec<crate::types::Policy>>();
+    let policies = policies.iter().map(|p| p.clone().into()).collect::<Vec<crate::types::Policy>>();
 
     // Generate new random signing key
     let signing_key = SigningKey::from_random();
@@ -336,10 +335,10 @@ pub unsafe extern "C" fn controller_account(
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
     let account_policies: Vec<account_sdk::account::session::policy::Policy> = policies
         .iter()
-        .map(|p| account_sdk::account::session::policy::Policy::Call(p.into()))
+        .map(|p| account_sdk::account::session::policy::Policy::Call(p.clone().into()))
         .collect();
 
-    let chain_id: Felt = (&chain_id).into();
+    let chain_id: Felt = chain_id.into();
 
     // Get project directories
     let project_dirs = match ProjectDirs::from("org", "dojoengine", "dojo") {
@@ -467,10 +466,10 @@ pub unsafe extern "C" fn controller_clear(
     let policies = unsafe { std::slice::from_raw_parts(policies, policies_len) };
     let account_policies: Vec<account_sdk::account::session::policy::Policy> = policies
         .iter()
-        .map(|p| account_sdk::account::session::policy::Policy::Call(p.into()))
+        .map(|p| account_sdk::account::session::policy::Policy::Call(p.clone().into()))
         .collect();
 
-    let chain_id: Felt = (&chain_id).into();
+    let chain_id: Felt = chain_id.into();
 
     // Get project directories
     let project_dirs = match ProjectDirs::from("org", "dojoengine", "dojo") {
@@ -555,7 +554,7 @@ pub unsafe extern "C" fn controller_username(controller: *mut ControllerAccount)
 pub unsafe extern "C" fn controller_address(
     controller: *mut ControllerAccount,
 ) -> types::FieldElement {
-    (&(*controller).account.address()).into()
+    (*controller).account.address().into()
 }
 
 /// Gets account chain ID
@@ -569,7 +568,7 @@ pub unsafe extern "C" fn controller_address(
 pub unsafe extern "C" fn controller_chain_id(
     controller: *mut ControllerAccount,
 ) -> types::FieldElement {
-    (&(*controller).account.chain_id()).into()
+    (*controller).account.chain_id().into()
 }
 
 /// Gets account nonce
@@ -588,7 +587,7 @@ pub unsafe extern "C" fn controller_nonce(
         Err(e) => return Result::Err(e.into()),
     };
 
-    Result::Ok((&nonce).into())
+    Result::Ok(nonce.into())
 }
 
 /// Executes raw transaction
@@ -608,11 +607,11 @@ pub unsafe extern "C" fn controller_execute_raw(
 ) -> Result<types::FieldElement> {
     let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
     let calldata =
-        calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::core::types::Call>>();
+        calldata.into_iter().map(|c| c.into()).collect::<Vec<starknet::core::types::Call>>();
     let call = (*controller).account.execute_v3(calldata);
 
     match RUNTIME.block_on(call.send()) {
-        Ok(result) => Result::Ok((&result.transaction_hash).into()),
+        Ok(result) => Result::Ok(result.transaction_hash.into()),
         Err(e) => {
             println!("Error executing call: {:?}", e);
             Result::Err(e.into())
@@ -637,7 +636,7 @@ pub unsafe extern "C" fn controller_execute_from_outside(
 ) -> Result<types::FieldElement> {
     let caller = OutsideExecutionCaller::Any;
     let calls = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
-    let calls = calls.iter().map(|c| c.into()).collect::<Vec<starknet::core::types::Call>>();
+    let calls = calls.into_iter().map(|c| c.into()).collect::<Vec<starknet::core::types::Call>>();
     let now = get_current_timestamp();
     let outside_execution = OutsideExecutionV3 {
         caller: caller.into(),
@@ -669,7 +668,7 @@ pub unsafe extern "C" fn controller_execute_from_outside(
             }
         };
 
-    Result::Ok((&res.transaction_hash).into())
+    Result::Ok(res.transaction_hash.into())
 }
 
 /// Sets a logger callback function for the client
@@ -712,7 +711,7 @@ pub unsafe extern "C" fn client_publish_message(
     };
 
     let signature = unsafe { std::slice::from_raw_parts(signature_felts, signature_felts_len) };
-    let signature = signature.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
+    let signature = signature.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>();
 
     let client_future = unsafe { (*client).inner.publish_message(Message { message, signature }) };
 
@@ -742,14 +741,14 @@ pub unsafe extern "C" fn client_controllers(
     } else {
         let addresses =
             unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
     };
 
     let controllers_future = unsafe { (*client).inner.controllers(contract_addresses) };
 
     match RUNTIME.block_on(controllers_future) {
         Ok(controllers) => {
-            let controllers: Vec<Controller> = controllers.iter().map(|c| c.into()).collect();
+            let controllers: Vec<Controller> = controllers.into_iter().map(|c| c.into()).collect();
             Result::Ok(controllers.into())
         }
         Err(e) => Result::Err(e.into()),
@@ -767,14 +766,15 @@ pub unsafe extern "C" fn client_controllers(
 #[no_mangle]
 pub unsafe extern "C" fn client_entities(
     client: *mut ToriiClient,
-    query: &Query,
+    query: Query,
     historical: bool,
 ) -> Result<CArray<Entity>> {
-    let entities_future = unsafe { (*client).inner.entities(query.into(), historical) };
+    let query = query.clone().into();
+    let entities_future = unsafe { (*client).inner.entities(query, historical) };
 
     match RUNTIME.block_on(entities_future) {
         Ok(entities) => {
-            let entities: Vec<Entity> = entities.into_iter().map(|e| (&e).into()).collect();
+            let entities: Vec<Entity> = entities.into_iter().map(|e| e.into()).collect();
 
             Result::Ok(entities.into())
         }
@@ -794,15 +794,16 @@ pub unsafe extern "C" fn client_entities(
 #[no_mangle]
 pub unsafe extern "C" fn client_event_messages(
     client: *mut ToriiClient,
-    query: &Query,
+    query: Query,
     historical: bool,
 ) -> Result<CArray<Entity>> {
-    let event_messages_future = unsafe { (*client).inner.event_messages(query.into(), historical) };
+    let query = query.clone().into();
+    let event_messages_future = unsafe { (*client).inner.event_messages(query, historical) };
 
     match RUNTIME.block_on(event_messages_future) {
         Ok(event_messages) => {
             let event_messages: Vec<Entity> =
-                event_messages.into_iter().map(|e| (&e).into()).collect();
+                event_messages.into_iter().map(|e| e.into()).collect();
 
             Result::Ok(event_messages.into())
         }
@@ -821,7 +822,7 @@ pub unsafe extern "C" fn client_event_messages(
 pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> Result<WorldMetadata> {
     let metadata_future = unsafe { (*client).inner.metadata() };
     match RUNTIME.block_on(metadata_future) {
-        Ok(metadata) => Result::Ok((&metadata).into()),
+        Ok(metadata) => Result::Ok(metadata.into()),
         Err(e) => Result::Err(e.into()),
     }
 }
@@ -848,7 +849,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         Vec::new()
     } else {
         let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-        clauses.iter().map(|c| c.into()).collect::<Vec<_>>()
+        clauses.iter().map(|c| c.clone().into()).collect::<Vec<_>>()
     };
 
     let subscription_id = Arc::new(AtomicU64::new(0));
@@ -872,9 +873,9 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 
                 while let Some(Ok((id, entity))) = rcv.next().await {
                     subscription_id_clone.store(id, Ordering::SeqCst);
-                    let key: types::FieldElement = (&entity.hashed_keys).into();
+                    let key: types::FieldElement = entity.hashed_keys.into();
                     let models: Vec<Struct> =
-                        entity.models.into_iter().map(|e| (&e).into()).collect();
+                        entity.models.into_iter().map(|e| e.into()).collect();
                     callback(key, models.into());
                 }
             }
@@ -913,7 +914,7 @@ pub unsafe extern "C" fn client_update_entity_subscription(
         Vec::new()
     } else {
         let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-        clauses.iter().map(|c| c.into()).collect::<Vec<_>>()
+        clauses.iter().map(|c| c.clone().into()).collect::<Vec<_>>()
     };
 
     match RUNTIME.block_on(
@@ -949,7 +950,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
         Vec::new()
     } else {
         let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-        clauses.iter().map(|c| c.into()).collect::<Vec<_>>()
+        clauses.iter().map(|c| c.clone().into()).collect::<Vec<_>>()
     };
 
     let subscription_id = Arc::new(AtomicU64::new(0));
@@ -973,9 +974,9 @@ pub unsafe extern "C" fn client_on_event_message_update(
 
                 while let Some(Ok((id, entity))) = rcv.next().await {
                     subscription_id_clone.store(id, Ordering::SeqCst);
-                    let key: types::FieldElement = (&entity.hashed_keys).into();
+                    let key: types::FieldElement = entity.hashed_keys.into();
                     let models: Vec<Struct> =
-                        entity.models.into_iter().map(|e| (&e).into()).collect();
+                        entity.models.into_iter().map(|e| e.into()).collect();
                     callback(key, models.into());
                 }
             }
@@ -1015,7 +1016,7 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
         Vec::new()
     } else {
         let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-        clauses.iter().map(|c| c.into()).collect::<Vec<_>>()
+        clauses.iter().map(|c| c.clone().into()).collect::<Vec<_>>()
     };
 
     match RUNTIME.block_on(
@@ -1050,7 +1051,7 @@ pub unsafe extern "C" fn client_on_starknet_event(
         Vec::new()
     } else {
         let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-        clauses.iter().map(|c| c.into()).collect::<Vec<_>>()
+        clauses.iter().map(|c| c.clone().into()).collect::<Vec<_>>()
     };
 
     let subscription_id = Arc::new(AtomicU64::new(0));
@@ -1073,7 +1074,7 @@ pub unsafe extern "C" fn client_on_starknet_event(
                 let mut rcv = rcv.take_until_if(tripwire.clone());
 
                 while let Some(Ok(event)) = rcv.next().await {
-                    callback((&event).into());
+                    callback(event.into());
                 }
             }
 
@@ -1108,32 +1109,37 @@ pub unsafe extern "C" fn client_tokens(
     token_ids_len: usize,
     limit: u32,
     offset: u32,
-) -> Result<CArray<Token>> {
+    cursor: *const c_char,
+) -> Result<Page<Token>> {
     let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
         Vec::new()
     } else {
         let addresses =
             unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
     };
     let token_ids = if token_ids.is_null() || token_ids_len == 0 {
         Vec::new()
     } else {
         let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
-        ids.iter().map(|f| (&f.clone()).into()).collect::<Vec<U256>>()
+        ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
     };
+
+    let limit = if limit == 0 { None } else { Some(limit) };
+    let offset = if offset == 0 { None } else { Some(offset) };
+    let cursor = if cursor.is_null() { None } else { Some(unsafe { std::ffi::CStr::from_ptr(cursor).to_string_lossy().into_owned() }) };
 
     let tokens = match RUNTIME.block_on((*client).inner.tokens(
         contract_addresses,
         token_ids,
-        Some(limit),
-        Some(offset),
+        limit,
+        offset,
+        cursor,
     )) {
         Ok(tokens) => tokens,
         Err(e) => return Result::Err(e.into()),
     };
 
-    let tokens = tokens.iter().map(|t| t.into()).collect::<Vec<Token>>();
     Result::Ok(tokens.into())
 }
 
@@ -1163,14 +1169,14 @@ pub unsafe extern "C" fn client_on_token_update(
     } else {
         let addresses =
             unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
     };
 
     let token_ids = if token_ids.is_null() || token_ids_len == 0 {
         Vec::new()
     } else {
         let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
-        ids.iter().map(|f| (&f.clone()).into()).collect::<Vec<U256>>()
+        ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
     };
 
     let subscription_id = Arc::new(AtomicU64::new(0));
@@ -1197,7 +1203,7 @@ pub unsafe extern "C" fn client_on_token_update(
 
                 while let Some(Ok((id, token))) = rcv.next().await {
                     subscription_id.store(id, Ordering::SeqCst);
-                    let token: Token = (&token).into();
+                    let token: Token = token.into();
                     callback(token);
                 }
             }
@@ -1237,13 +1243,14 @@ pub unsafe extern "C" fn client_token_balances(
     token_ids_len: usize,
     limit: u32,
     offset: u32,
-) -> Result<CArray<TokenBalance>> {
+    cursor: *const c_char,
+) -> Result<Page<TokenBalance>> {
     let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
         Vec::new()
     } else {
         let addresses =
             unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
-        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
     };
 
     let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
@@ -1251,28 +1258,40 @@ pub unsafe extern "C" fn client_token_balances(
     } else {
         let addresses =
             unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
     };
 
     let token_ids = if token_ids.is_null() || token_ids_len == 0 {
         Vec::new()
     } else {
         let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
-        ids.iter().map(|f| (&f.clone()).into()).collect::<Vec<U256>>()
+        ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
     };
-
+    
     let token_balances = match RUNTIME.block_on((*client).inner.token_balances(
         account_addresses,
         contract_addresses,
         token_ids,
-        Some(limit),
-        Some(offset),
+        if limit == 0 {
+            None
+        } else {
+            Some(limit)
+        },
+        if offset == 0 {
+            None
+        } else {
+            Some(offset)
+        },
+        if cursor.is_null() {
+            None
+        } else {
+            Some(unsafe { std::ffi::CStr::from_ptr(cursor).to_string_lossy().into_owned() })
+        },
     )) {
         Ok(balances) => balances,
         Err(e) => return Result::Err(e.into()),
     };
 
-    let token_balances = token_balances.iter().map(|t| t.into()).collect::<Vec<TokenBalance>>();
     Result::Ok(token_balances.into())
 }
 
@@ -1295,7 +1314,7 @@ pub unsafe extern "C" fn on_indexer_update(
     let contract_address = if contract_address.is_null() {
         None
     } else {
-        Some(unsafe { (&*contract_address).into() })
+        Some(unsafe { (*contract_address).clone().into() })
     };
 
     let subscription_id = Arc::new(AtomicU64::new(0));
@@ -1317,7 +1336,7 @@ pub unsafe extern "C" fn on_indexer_update(
                 let mut rcv = rcv.take_until_if(tripwire.clone());
 
                 while let Some(Ok(update)) = rcv.next().await {
-                    callback((&update).into());
+                    callback(update.into());
                 }
             }
 
@@ -1365,7 +1384,7 @@ pub unsafe extern "C" fn client_on_token_balance_update(
     } else {
         let addresses =
             unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
-        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
     };
 
     // Convert contract addresses array to Vec<Felt> if not empty
@@ -1374,14 +1393,14 @@ pub unsafe extern "C" fn client_on_token_balance_update(
     } else {
         let addresses =
             unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
     };
 
     let token_ids = if token_ids.is_null() || token_ids_len == 0 {
         Vec::new()
     } else {
         let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
-        ids.iter().map(|f| (&f.clone()).into()).collect::<Vec<U256>>()
+        ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
     };
 
     let subscription_id = Arc::new(AtomicU64::new(0));
@@ -1412,7 +1431,7 @@ pub unsafe extern "C" fn client_on_token_balance_update(
 
                 while let Some(Ok((id, balance))) = rcv.next().await {
                     subscription_id.store(id, Ordering::SeqCst);
-                    let balance: TokenBalance = (&balance).into();
+                    let balance: TokenBalance = balance.into();
                     callback(balance);
                 }
             }
@@ -1458,7 +1477,7 @@ pub unsafe extern "C" fn client_update_token_balance_subscription(
     } else {
         let addresses =
             unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
     };
 
     let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
@@ -1466,14 +1485,14 @@ pub unsafe extern "C" fn client_update_token_balance_subscription(
     } else {
         let addresses =
             unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
-        addresses.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>()
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
     };
 
     let token_ids = if token_ids.is_null() || token_ids_len == 0 {
         Vec::new()
     } else {
         let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
-        ids.iter().map(|f| (&f.clone()).into()).collect::<Vec<U256>>()
+        ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
     };
 
     match RUNTIME.block_on((*client).inner.update_token_balance_subscription(
@@ -1505,7 +1524,7 @@ pub unsafe extern "C" fn bytearray_serialize(
     };
 
     let felts = cairo_serde::ByteArray::cairo_serialize(&bytearray);
-    let felts = felts.iter().map(|f| f.into()).collect::<Vec<types::FieldElement>>();
+    let felts = felts.into_iter().map(|f| f.into()).collect::<Vec<types::FieldElement>>();
     Result::Ok(felts.into())
 }
 
@@ -1523,7 +1542,7 @@ pub unsafe extern "C" fn bytearray_deserialize(
     felts_len: usize,
 ) -> Result<*const c_char> {
     let felts = unsafe { std::slice::from_raw_parts(felts, felts_len) };
-    let felts = felts.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
+    let felts = felts.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>();
     let bytearray = match cairo_serde::ByteArray::cairo_deserialize(&felts, 0) {
         Ok(bytearray) => bytearray,
         Err(e) => return Result::Err(e.into()),
@@ -1551,9 +1570,9 @@ pub unsafe extern "C" fn poseidon_hash(
     felts_len: usize,
 ) -> types::FieldElement {
     let felts = unsafe { std::slice::from_raw_parts(felts, felts_len) };
-    let felts = felts.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
+    let felts = felts.into_iter().map(|f| f.clone().into()).collect::<Vec<Felt>>();
 
-    (&poseidon_hash_many(&felts)).into()
+    poseidon_hash_many(&felts).into()
 }
 
 /// Gets selector from name string
@@ -1573,7 +1592,7 @@ pub unsafe extern "C" fn get_selector_from_name(
         Err(e) => return Result::Err(e.into()),
     };
 
-    Result::Ok((&selector).into())
+    Result::Ok(selector.into())
 }
 
 /// Gets selector from tag string
@@ -1588,7 +1607,7 @@ pub unsafe extern "C" fn get_selector_from_tag(tag: *const c_char) -> types::Fie
     let tag = unsafe { CStr::from_ptr(tag).to_string_lossy().into_owned() };
     let selector = compute_selector_from_tag(tag.as_str());
 
-    (&selector).into()
+    selector.into()
 }
 
 /// Computes Starknet keccak hash of bytes
@@ -1607,7 +1626,7 @@ pub unsafe extern "C" fn starknet_keccak(
     let bytes = unsafe { std::slice::from_raw_parts(bytes, bytes_len) };
     let hash = starknet::core::utils::starknet_keccak(bytes);
 
-    (&hash).into()
+    hash.into()
 }
 
 /// Converts a short string to field element
@@ -1627,7 +1646,7 @@ pub unsafe extern "C" fn cairo_short_string_to_felt(
         Err(e) => return Result::Err(e.into()),
     };
 
-    Result::Ok((&felt).into())
+    Result::Ok(felt.into())
 }
 
 /// Parses a field element into a short string
@@ -1641,7 +1660,7 @@ pub unsafe extern "C" fn cairo_short_string_to_felt(
 pub unsafe extern "C" fn parse_cairo_short_string(
     felt: types::FieldElement,
 ) -> Result<*const c_char> {
-    let felt = (&felt).into();
+    let felt = felt.into();
     let str = match starknet::core::utils::parse_cairo_short_string(&felt) {
         Ok(str) => str,
         Err(e) => return Result::Err(e.into()),
@@ -1673,13 +1692,13 @@ pub unsafe extern "C" fn typed_data_encode(
         }
     };
 
-    let address = (&address).into();
+    let address = address.into();
     let encoded = match typed_data.encode(address) {
         Ok(encoded) => encoded,
         Err(err) => return Result::Err(err.into()),
     };
 
-    Result::Ok((&encoded).into())
+    Result::Ok(encoded.into())
 }
 
 /// Generates a new signing key
@@ -1689,7 +1708,7 @@ pub unsafe extern "C" fn typed_data_encode(
 #[no_mangle]
 pub unsafe extern "C" fn signing_key_new() -> types::FieldElement {
     let private_key = SigningKey::from_random();
-    (&private_key.secret_scalar()).into()
+    private_key.secret_scalar().into()
 }
 
 /// Signs a hash with a private key
@@ -1705,11 +1724,11 @@ pub unsafe extern "C" fn signing_key_sign(
     private_key: types::FieldElement,
     hash: types::FieldElement,
 ) -> Result<Signature> {
-    let private_key = SigningKey::from_secret_scalar((&private_key).into());
-    let sig = private_key.sign(&(&hash).into());
+    let private_key = SigningKey::from_secret_scalar(private_key.into());
+    let sig = private_key.sign(&hash.into());
 
     match sig {
-        Ok(sig) => Result::Ok((&sig).into()),
+        Ok(sig) => Result::Ok(sig.into()),
         Err(e) => Result::Err(e.into()),
     }
 }
@@ -1725,10 +1744,10 @@ pub unsafe extern "C" fn signing_key_sign(
 pub unsafe extern "C" fn verifying_key_new(
     signing_key: types::FieldElement,
 ) -> types::FieldElement {
-    let signing_key = (&signing_key).into();
+    let signing_key = signing_key.into();
     let verifying_key = starknet_crypto::get_public_key(&signing_key);
 
-    (&verifying_key).into()
+    verifying_key.into()
 }
 
 /// Verifies a signature
@@ -1746,9 +1765,9 @@ pub unsafe extern "C" fn verifying_key_verify(
     hash: types::FieldElement,
     signature: types::Signature,
 ) -> Result<bool> {
-    let verifying_key = VerifyingKey::from_scalar((&verifying_key).into());
-    let signature = &(&signature).into();
-    let hash = &(&hash).into();
+    let verifying_key = VerifyingKey::from_scalar(verifying_key.into());
+    let signature = &signature.into();
+    let hash = &hash.into();
 
     match verifying_key.verify(hash, signature) {
         Ok(result) => Result::Ok(result),
@@ -1803,7 +1822,7 @@ pub unsafe extern "C" fn account_new(
     };
 
     let signer =
-        LocalWallet::from_signing_key(SigningKey::from_secret_scalar((&private_key).into()));
+        LocalWallet::from_signing_key(SigningKey::from_secret_scalar(private_key.into()));
     let account = SingleOwnerAccount::new(
         (*rpc).0.clone(),
         signer,
@@ -1832,14 +1851,13 @@ pub unsafe extern "C" fn starknet_call(
 ) -> Result<CArray<types::FieldElement>> {
     let res =
         match RUNTIME.block_on((*provider).0.call::<FunctionCall, starknet::core::types::BlockId>(
-            (&call).into(),
-            (&block_id).into(),
+            call.into(),
+            block_id.into(),
         )) {
             Ok(res) => res,
             Err(e) => return Result::Err(e.into()),
         };
 
-    let res: Vec<_> = res.iter().map(|f| f.into()).collect::<Vec<_>>();
     Result::Ok(res.into())
 }
 
@@ -1858,7 +1876,7 @@ pub unsafe extern "C" fn account_deploy_burner(
     master_account: *mut Account,
     signing_key: types::FieldElement,
 ) -> Result<*mut Account> {
-    let signing_key = SigningKey::from_secret_scalar((&signing_key).into());
+    let signing_key = SigningKey::from_secret_scalar(signing_key.into());
     let verifying_key = signing_key.verifying_key();
     let address = get_contract_address(
         verifying_key.scalar(),
@@ -1911,7 +1929,7 @@ pub unsafe extern "C" fn account_deploy_burner(
 /// FieldElement containing the account address
 #[no_mangle]
 pub unsafe extern "C" fn account_address(account: *mut Account) -> types::FieldElement {
-    (&(*account).0.address()).into()
+    (*account).0.address().into()
 }
 
 /// Gets account chain ID
@@ -1923,7 +1941,7 @@ pub unsafe extern "C" fn account_address(account: *mut Account) -> types::FieldE
 /// FieldElement containing the chain ID
 #[no_mangle]
 pub unsafe extern "C" fn account_chain_id(account: *mut Account) -> types::FieldElement {
-    (&(*account).0.chain_id()).into()
+    (*account).0.chain_id().into()
 }
 
 /// Sets block ID for account
@@ -1933,7 +1951,7 @@ pub unsafe extern "C" fn account_chain_id(account: *mut Account) -> types::Field
 /// * `block_id` - New block ID
 #[no_mangle]
 pub unsafe extern "C" fn account_set_block_id(account: *mut Account, block_id: BlockId) {
-    let block_id = (&block_id).into();
+    let block_id = block_id.into();
     (*account).0.set_block_id(block_id);
 }
 
@@ -1951,7 +1969,7 @@ pub unsafe extern "C" fn account_nonce(account: *mut Account) -> Result<types::F
         Err(e) => return Result::Err(e.into()),
     };
 
-    Result::Ok((&nonce).into())
+    Result::Ok(nonce.into())
 }
 
 /// Executes raw transaction
@@ -1971,11 +1989,11 @@ pub unsafe extern "C" fn account_execute_raw(
 ) -> Result<types::FieldElement> {
     let calldata = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
     let calldata =
-        calldata.into_iter().map(|c| (&c).into()).collect::<Vec<starknet::core::types::Call>>();
+        calldata.into_iter().map(|c| c.into()).collect::<Vec<starknet::core::types::Call>>();
     let call = (*account).0.execute_v3(calldata);
 
     match RUNTIME.block_on(call.send()) {
-        Ok(result) => Result::Ok((&result.transaction_hash).into()),
+        Ok(result) => Result::Ok(result.transaction_hash.into()),
         Err(e) => Result::Err(e.into()),
     }
 }
@@ -1993,7 +2011,7 @@ pub unsafe extern "C" fn wait_for_transaction(
     rpc: *mut Provider,
     txn_hash: types::FieldElement,
 ) -> Result<bool> {
-    let txn_hash = (&txn_hash).into();
+    let txn_hash = txn_hash.into();
     match RUNTIME.block_on(watch_tx(&(*rpc).0, txn_hash)) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(Error { message: CString::new(e.to_string()).unwrap().into_raw() }),
@@ -2019,18 +2037,18 @@ pub unsafe extern "C" fn hash_get_contract_address(
     constructor_calldata_len: usize,
     deployer_address: types::FieldElement,
 ) -> types::FieldElement {
-    let class_hash = (&class_hash).into();
-    let salt = (&salt).into();
+    let class_hash = class_hash.into();
+    let salt = salt.into();
     let constructor_calldata = unsafe {
         std::slice::from_raw_parts(constructor_calldata, constructor_calldata_len).to_vec()
     };
     let constructor_calldata =
-        constructor_calldata.iter().map(|f| (&f.clone()).into()).collect::<Vec<Felt>>();
-    let deployer_address = (&deployer_address).into();
+        constructor_calldata.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>();
+    let deployer_address = deployer_address.into();
 
     let address = get_contract_address(salt, class_hash, &constructor_calldata, deployer_address);
 
-    (&address).into()
+    address.into()
 }
 
 /// Cancels a subscription
@@ -2080,7 +2098,7 @@ pub unsafe extern "C" fn provider_free(rpc: *mut Provider) {
 #[no_mangle]
 pub unsafe extern "C" fn model_free(model: *mut Struct) {
     if !model.is_null() {
-        let _: dojo_types::schema::Struct = (&*Box::<Struct>::from_raw(model)).into();
+        let _: dojo_types::schema::Struct = (*Box::<Struct>::from_raw(model)).into();
     }
 }
 
@@ -2104,7 +2122,7 @@ pub unsafe extern "C" fn account_free(account: *mut Account) {
 #[no_mangle]
 pub unsafe extern "C" fn ty_free(ty: *mut Ty) {
     if !ty.is_null() {
-        let _: dojo_types::schema::Ty = (&*Box::<Ty>::from_raw(ty)).into();
+        let _: dojo_types::schema::Ty = (*Box::<Ty>::from_raw(ty)).into();
     }
 }
 
@@ -2115,7 +2133,7 @@ pub unsafe extern "C" fn ty_free(ty: *mut Ty) {
 #[no_mangle]
 pub unsafe extern "C" fn entity_free(entity: *mut Entity) {
     if !entity.is_null() {
-        let _: torii_grpc::types::schema::Entity = (&*Box::<Entity>::from_raw(entity)).into();
+        let _: torii_grpc::types::schema::Entity = (*Box::<Entity>::from_raw(entity)).into();
     }
 }
 
@@ -2137,7 +2155,7 @@ pub unsafe extern "C" fn error_free(error: *mut Error) {
 #[no_mangle]
 pub unsafe extern "C" fn world_metadata_free(metadata: *mut WorldMetadata) {
     if !metadata.is_null() {
-        let _: dojo_types::WorldMetadata = (&*Box::<WorldMetadata>::from_raw(metadata)).into();
+        let _: dojo_types::WorldMetadata = (*Box::<WorldMetadata>::from_raw(metadata)).into();
     }
 }
 

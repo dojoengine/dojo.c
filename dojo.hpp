@@ -11,7 +11,6 @@ struct Policy;
 struct ControllerAccount;
 struct Call;
 struct Ty;
-struct Query;
 struct Subscription;
 struct EntityKeysClause;
 struct Provider;
@@ -126,6 +125,50 @@ struct Struct {
 struct Entity {
   FieldElement hashed_keys;
   CArray<Struct> models;
+};
+
+template<typename T>
+struct COption {
+  enum class Tag {
+    Some,
+    None,
+  };
+
+  struct Some_Body {
+    T _0;
+  };
+
+  Tag tag;
+  union {
+    Some_Body some;
+  };
+
+  static COption Some(const T &_0) {
+    COption result;
+    ::new (&result.some._0) (T)(_0);
+    result.tag = Tag::Some;
+    return result;
+  }
+
+  bool IsSome() const {
+    return tag == Tag::Some;
+  }
+
+  static COption None() {
+    COption result;
+    result.tag = Tag::None;
+    return result;
+  }
+
+  bool IsNone() const {
+    return tag == Tag::None;
+  }
+};
+
+struct KeysClause {
+  CArray<COption<FieldElement>> keys;
+  PatternMatching pattern_matching;
+  CArray<const char*> models;
 };
 
 struct U256 {
@@ -417,6 +460,154 @@ struct Primitive {
   }
 };
 
+struct MemberValue {
+  enum class Tag {
+    PrimitiveValue,
+    String,
+    List,
+  };
+
+  struct PrimitiveValue_Body {
+    Primitive _0;
+  };
+
+  struct String_Body {
+    const char *_0;
+  };
+
+  struct List_Body {
+    CArray<MemberValue> _0;
+  };
+
+  Tag tag;
+  union {
+    PrimitiveValue_Body primitive_value;
+    String_Body string;
+    List_Body list;
+  };
+
+  static MemberValue PrimitiveValue(const Primitive &_0) {
+    MemberValue result;
+    ::new (&result.primitive_value._0) (Primitive)(_0);
+    result.tag = Tag::PrimitiveValue;
+    return result;
+  }
+
+  bool IsPrimitiveValue() const {
+    return tag == Tag::PrimitiveValue;
+  }
+
+  static MemberValue String(const char *const &_0) {
+    MemberValue result;
+    ::new (&result.string._0) (const char*)(_0);
+    result.tag = Tag::String;
+    return result;
+  }
+
+  bool IsString() const {
+    return tag == Tag::String;
+  }
+
+  static MemberValue List(const CArray<MemberValue> &_0) {
+    MemberValue result;
+    ::new (&result.list._0) (CArray<MemberValue>)(_0);
+    result.tag = Tag::List;
+    return result;
+  }
+
+  bool IsList() const {
+    return tag == Tag::List;
+  }
+};
+
+struct MemberClause {
+  const char *model;
+  const char *member;
+  ComparisonOperator operator_;
+  MemberValue value;
+};
+
+struct CompositeClause {
+  LogicalOperator operator_;
+  CArray<Clause> clauses;
+};
+
+struct Clause {
+  enum class Tag {
+    Keys,
+    CMember,
+    Composite,
+  };
+
+  struct Keys_Body {
+    KeysClause _0;
+  };
+
+  struct CMember_Body {
+    MemberClause _0;
+  };
+
+  struct Composite_Body {
+    CompositeClause _0;
+  };
+
+  Tag tag;
+  union {
+    Keys_Body keys;
+    CMember_Body c_member;
+    Composite_Body composite;
+  };
+
+  static Clause Keys(const KeysClause &_0) {
+    Clause result;
+    ::new (&result.keys._0) (KeysClause)(_0);
+    result.tag = Tag::Keys;
+    return result;
+  }
+
+  bool IsKeys() const {
+    return tag == Tag::Keys;
+  }
+
+  static Clause CMember(const MemberClause &_0) {
+    Clause result;
+    ::new (&result.c_member._0) (MemberClause)(_0);
+    result.tag = Tag::CMember;
+    return result;
+  }
+
+  bool IsCMember() const {
+    return tag == Tag::CMember;
+  }
+
+  static Clause Composite(const CompositeClause &_0) {
+    Clause result;
+    ::new (&result.composite._0) (CompositeClause)(_0);
+    result.tag = Tag::Composite;
+    return result;
+  }
+
+  bool IsComposite() const {
+    return tag == Tag::Composite;
+  }
+};
+
+struct OrderBy {
+  const char *model;
+  const char *member;
+  OrderDirection direction;
+};
+
+struct Query {
+  uint32_t limit;
+  uint32_t offset;
+  COption<Clause> clause;
+  bool dont_include_hashed_keys;
+  CArray<OrderBy> order_by;
+  CArray<const char*> entity_models;
+  uint64_t entity_updated_after;
+};
+
 struct EnumOption {
   const char *name;
   Ty *ty;
@@ -576,6 +767,12 @@ struct Token {
   const char *metadata;
 };
 
+template<typename T>
+struct Page {
+  CArray<T> items;
+  const char *next_cursor;
+};
+
 struct TokenBalance {
   U256 balance;
   FieldElement account_address;
@@ -668,198 +865,6 @@ struct Policy {
   FieldElement target;
   const char *method;
   const char *description;
-};
-
-template<typename T>
-struct COption {
-  enum class Tag {
-    Some,
-    None,
-  };
-
-  struct Some_Body {
-    T _0;
-  };
-
-  Tag tag;
-  union {
-    Some_Body some;
-  };
-
-  static COption Some(const T &_0) {
-    COption result;
-    ::new (&result.some._0) (T)(_0);
-    result.tag = Tag::Some;
-    return result;
-  }
-
-  bool IsSome() const {
-    return tag == Tag::Some;
-  }
-
-  static COption None() {
-    COption result;
-    result.tag = Tag::None;
-    return result;
-  }
-
-  bool IsNone() const {
-    return tag == Tag::None;
-  }
-};
-
-struct KeysClause {
-  CArray<COption<FieldElement>> keys;
-  PatternMatching pattern_matching;
-  CArray<const char*> models;
-};
-
-struct MemberValue {
-  enum class Tag {
-    PrimitiveValue,
-    String,
-    List,
-  };
-
-  struct PrimitiveValue_Body {
-    Primitive _0;
-  };
-
-  struct String_Body {
-    const char *_0;
-  };
-
-  struct List_Body {
-    CArray<MemberValue> _0;
-  };
-
-  Tag tag;
-  union {
-    PrimitiveValue_Body primitive_value;
-    String_Body string;
-    List_Body list;
-  };
-
-  static MemberValue PrimitiveValue(const Primitive &_0) {
-    MemberValue result;
-    ::new (&result.primitive_value._0) (Primitive)(_0);
-    result.tag = Tag::PrimitiveValue;
-    return result;
-  }
-
-  bool IsPrimitiveValue() const {
-    return tag == Tag::PrimitiveValue;
-  }
-
-  static MemberValue String(const char *const &_0) {
-    MemberValue result;
-    ::new (&result.string._0) (const char*)(_0);
-    result.tag = Tag::String;
-    return result;
-  }
-
-  bool IsString() const {
-    return tag == Tag::String;
-  }
-
-  static MemberValue List(const CArray<MemberValue> &_0) {
-    MemberValue result;
-    ::new (&result.list._0) (CArray<MemberValue>)(_0);
-    result.tag = Tag::List;
-    return result;
-  }
-
-  bool IsList() const {
-    return tag == Tag::List;
-  }
-};
-
-struct MemberClause {
-  const char *model;
-  const char *member;
-  ComparisonOperator operator_;
-  MemberValue value;
-};
-
-struct CompositeClause {
-  LogicalOperator operator_;
-  CArray<Clause> clauses;
-};
-
-struct Clause {
-  enum class Tag {
-    Keys,
-    CMember,
-    Composite,
-  };
-
-  struct Keys_Body {
-    KeysClause _0;
-  };
-
-  struct CMember_Body {
-    MemberClause _0;
-  };
-
-  struct Composite_Body {
-    CompositeClause _0;
-  };
-
-  Tag tag;
-  union {
-    Keys_Body keys;
-    CMember_Body c_member;
-    Composite_Body composite;
-  };
-
-  static Clause Keys(const KeysClause &_0) {
-    Clause result;
-    ::new (&result.keys._0) (KeysClause)(_0);
-    result.tag = Tag::Keys;
-    return result;
-  }
-
-  bool IsKeys() const {
-    return tag == Tag::Keys;
-  }
-
-  static Clause CMember(const MemberClause &_0) {
-    Clause result;
-    ::new (&result.c_member._0) (MemberClause)(_0);
-    result.tag = Tag::CMember;
-    return result;
-  }
-
-  bool IsCMember() const {
-    return tag == Tag::CMember;
-  }
-
-  static Clause Composite(const CompositeClause &_0) {
-    Clause result;
-    ::new (&result.composite._0) (CompositeClause)(_0);
-    result.tag = Tag::Composite;
-    return result;
-  }
-
-  bool IsComposite() const {
-    return tag == Tag::Composite;
-  }
-};
-
-struct OrderBy {
-  const char *model;
-  const char *member;
-  OrderDirection direction;
-};
-
-struct Query {
-  uint32_t limit;
-  uint32_t offset;
-  COption<Clause> clause;
-  bool dont_include_hashed_keys;
-  CArray<OrderBy> order_by;
-  CArray<const char*> entity_models;
-  uint64_t entity_updated_after;
 };
 
 struct EntityKeysClause {
@@ -1091,7 +1096,7 @@ Result<CArray<Controller>> client_controllers(ToriiClient *client,
 ///
 /// # Returns
 /// Result containing array of matching entities or error
-Result<CArray<Entity>> client_entities(ToriiClient *client, const Query *query, bool historical);
+Result<CArray<Entity>> client_entities(ToriiClient *client, Query query, bool historical);
 
 /// Retrieves event messages matching the given query
 ///
@@ -1102,9 +1107,7 @@ Result<CArray<Entity>> client_entities(ToriiClient *client, const Query *query, 
 ///
 /// # Returns
 /// Result containing array of matching event message entities or error
-Result<CArray<Entity>> client_event_messages(ToriiClient *client,
-                                             const Query *query,
-                                             bool historical);
+Result<CArray<Entity>> client_event_messages(ToriiClient *client, Query query, bool historical);
 
 /// Gets the world metadata for the client
 ///
@@ -1201,13 +1204,14 @@ Result<Subscription*> client_on_starknet_event(ToriiClient *client,
 ///
 /// # Returns
 /// Result containing array of Token information or error
-Result<CArray<Token>> client_tokens(ToriiClient *client,
-                                    const FieldElement *contract_addresses,
-                                    uintptr_t contract_addresses_len,
-                                    const U256 *token_ids,
-                                    uintptr_t token_ids_len,
-                                    uint32_t limit,
-                                    uint32_t offset);
+Result<Page<Token>> client_tokens(ToriiClient *client,
+                                  const FieldElement *contract_addresses,
+                                  uintptr_t contract_addresses_len,
+                                  const U256 *token_ids,
+                                  uintptr_t token_ids_len,
+                                  uint32_t limit,
+                                  uint32_t offset,
+                                  const char *cursor);
 
 /// Subscribes to token updates
 ///
@@ -1236,15 +1240,16 @@ Result<Subscription*> client_on_token_update(ToriiClient *client,
 ///
 /// # Returns
 /// Result containing array of TokenBalance information or error
-Result<CArray<TokenBalance>> client_token_balances(ToriiClient *client,
-                                                   const FieldElement *contract_addresses,
-                                                   uintptr_t contract_addresses_len,
-                                                   const FieldElement *account_addresses,
-                                                   uintptr_t account_addresses_len,
-                                                   const U256 *token_ids,
-                                                   uintptr_t token_ids_len,
-                                                   uint32_t limit,
-                                                   uint32_t offset);
+Result<Page<TokenBalance>> client_token_balances(ToriiClient *client,
+                                                 const FieldElement *contract_addresses,
+                                                 uintptr_t contract_addresses_len,
+                                                 const FieldElement *account_addresses,
+                                                 uintptr_t account_addresses_len,
+                                                 const U256 *token_ids,
+                                                 uintptr_t token_ids_len,
+                                                 uint32_t limit,
+                                                 uint32_t offset,
+                                                 const char *cursor);
 
 /// Subscribes to indexer updates
 ///

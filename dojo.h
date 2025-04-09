@@ -13,19 +13,17 @@ struct ControllerAccount;
 struct Call;
 struct Controller;
 struct Entity;
-struct Query;
+struct COptionFieldElement;
+struct OrderBy;
 struct CHashItemFieldElementModelMetadata;
 struct Subscription;
 struct EntityKeysClause;
 struct Struct;
 struct Token;
-struct U256;
 struct TokenBalance;
 struct Provider;
 struct Account;
 struct Ty;
-struct COptionFieldElement;
-struct OrderBy;
 struct Member;
 struct EnumOption;
 
@@ -202,280 +200,6 @@ typedef struct ResultCArrayEntity {
   };
 } ResultCArrayEntity;
 
-typedef struct CArrayCHashItemFieldElementModelMetadata {
-  struct CHashItemFieldElementModelMetadata *data;
-  uintptr_t data_len;
-} CArrayCHashItemFieldElementModelMetadata;
-
-typedef struct WorldMetadata {
-  struct FieldElement world_address;
-  struct CArrayCHashItemFieldElementModelMetadata models;
-} WorldMetadata;
-
-typedef enum ResultWorldMetadata_Tag {
-  OkWorldMetadata,
-  ErrWorldMetadata,
-} ResultWorldMetadata_Tag;
-
-typedef struct ResultWorldMetadata {
-  ResultWorldMetadata_Tag tag;
-  union {
-    struct {
-      struct WorldMetadata ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultWorldMetadata;
-
-typedef enum ResultSubscription_Tag {
-  OkSubscription,
-  ErrSubscription,
-} ResultSubscription_Tag;
-
-typedef struct ResultSubscription {
-  ResultSubscription_Tag tag;
-  union {
-    struct {
-      struct Subscription *ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultSubscription;
-
-typedef struct CArrayStruct {
-  struct Struct *data;
-  uintptr_t data_len;
-} CArrayStruct;
-
-typedef struct CArrayFieldElement {
-  struct FieldElement *data;
-  uintptr_t data_len;
-} CArrayFieldElement;
-
-typedef struct Event {
-  struct CArrayFieldElement keys;
-  struct CArrayFieldElement data;
-  struct FieldElement transaction_hash;
-} Event;
-
-typedef struct CArrayToken {
-  struct Token *data;
-  uintptr_t data_len;
-} CArrayToken;
-
-typedef enum ResultCArrayToken_Tag {
-  OkCArrayToken,
-  ErrCArrayToken,
-} ResultCArrayToken_Tag;
-
-typedef struct ResultCArrayToken {
-  ResultCArrayToken_Tag tag;
-  union {
-    struct {
-      struct CArrayToken ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultCArrayToken;
-
-typedef struct U256 {
-  uint8_t data[32];
-} U256;
-
-typedef struct Token {
-  struct FieldElement contract_address;
-  struct U256 token_id;
-  const char *name;
-  const char *symbol;
-  uint8_t decimals;
-  const char *metadata;
-} Token;
-
-typedef struct CArrayTokenBalance {
-  struct TokenBalance *data;
-  uintptr_t data_len;
-} CArrayTokenBalance;
-
-typedef enum ResultCArrayTokenBalance_Tag {
-  OkCArrayTokenBalance,
-  ErrCArrayTokenBalance,
-} ResultCArrayTokenBalance_Tag;
-
-typedef struct ResultCArrayTokenBalance {
-  ResultCArrayTokenBalance_Tag tag;
-  union {
-    struct {
-      struct CArrayTokenBalance ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultCArrayTokenBalance;
-
-typedef struct IndexerUpdate {
-  int64_t head;
-  int64_t tps;
-  int64_t last_block_timestamp;
-  struct FieldElement contract_address;
-} IndexerUpdate;
-
-typedef struct TokenBalance {
-  struct U256 balance;
-  struct FieldElement account_address;
-  struct FieldElement contract_address;
-  struct U256 token_id;
-} TokenBalance;
-
-typedef enum ResultCArrayFieldElement_Tag {
-  OkCArrayFieldElement,
-  ErrCArrayFieldElement,
-} ResultCArrayFieldElement_Tag;
-
-typedef struct ResultCArrayFieldElement {
-  ResultCArrayFieldElement_Tag tag;
-  union {
-    struct {
-      struct CArrayFieldElement ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultCArrayFieldElement;
-
-typedef enum Resultc_char_Tag {
-  Okc_char,
-  Errc_char,
-} Resultc_char_Tag;
-
-typedef struct Resultc_char {
-  Resultc_char_Tag tag;
-  union {
-    struct {
-      const char *ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} Resultc_char;
-
-typedef struct Signature {
-  /**
-   * The `r` value of a signature
-   */
-  struct FieldElement r;
-  /**
-   * The `s` value of a signature
-   */
-  struct FieldElement s;
-} Signature;
-
-typedef enum ResultSignature_Tag {
-  OkSignature,
-  ErrSignature,
-} ResultSignature_Tag;
-
-typedef struct ResultSignature {
-  ResultSignature_Tag tag;
-  union {
-    struct {
-      struct Signature ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultSignature;
-
-typedef enum ResultProvider_Tag {
-  OkProvider,
-  ErrProvider,
-} ResultProvider_Tag;
-
-typedef struct ResultProvider {
-  ResultProvider_Tag tag;
-  union {
-    struct {
-      struct Provider *ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultProvider;
-
-typedef enum ResultAccount_Tag {
-  OkAccount,
-  ErrAccount,
-} ResultAccount_Tag;
-
-typedef struct ResultAccount {
-  ResultAccount_Tag tag;
-  union {
-    struct {
-      struct Account *ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultAccount;
-
-typedef struct Call {
-  struct FieldElement to;
-  const char *selector;
-  struct CArrayFieldElement calldata;
-} Call;
-
-/**
- * Block hash, number or tag
- */
-typedef enum BlockId_Tag {
-  Hash,
-  Number,
-  BlockTag_,
-} BlockId_Tag;
-
-typedef struct BlockId {
-  BlockId_Tag tag;
-  union {
-    struct {
-      struct FieldElement hash;
-    };
-    struct {
-      uint64_t number;
-    };
-    struct {
-      enum BlockTag block_tag;
-    };
-  };
-} BlockId;
-
-typedef struct Policy {
-  struct FieldElement target;
-  const char *method;
-  const char *description;
-} Policy;
-
-typedef struct Controller {
-  struct FieldElement address;
-  const char *username;
-  uint64_t deployed_at_timestamp;
-} Controller;
-
-typedef struct Entity {
-  struct FieldElement hashed_keys;
-  struct CArrayStruct models;
-} Entity;
-
 typedef struct CArrayCOptionFieldElement {
   struct COptionFieldElement *data;
   uintptr_t data_len;
@@ -491,6 +215,10 @@ typedef struct KeysClause {
   enum PatternMatching pattern_matching;
   struct CArrayc_char models;
 } KeysClause;
+
+typedef struct U256 {
+  uint8_t data[32];
+} U256;
 
 typedef enum Primitive_Tag {
   I8,
@@ -658,6 +386,306 @@ typedef struct Query {
   uint64_t entity_updated_after;
 } Query;
 
+typedef struct CArrayCHashItemFieldElementModelMetadata {
+  struct CHashItemFieldElementModelMetadata *data;
+  uintptr_t data_len;
+} CArrayCHashItemFieldElementModelMetadata;
+
+typedef struct WorldMetadata {
+  struct FieldElement world_address;
+  struct CArrayCHashItemFieldElementModelMetadata models;
+} WorldMetadata;
+
+typedef enum ResultWorldMetadata_Tag {
+  OkWorldMetadata,
+  ErrWorldMetadata,
+} ResultWorldMetadata_Tag;
+
+typedef struct ResultWorldMetadata {
+  ResultWorldMetadata_Tag tag;
+  union {
+    struct {
+      struct WorldMetadata ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultWorldMetadata;
+
+typedef enum ResultSubscription_Tag {
+  OkSubscription,
+  ErrSubscription,
+} ResultSubscription_Tag;
+
+typedef struct ResultSubscription {
+  ResultSubscription_Tag tag;
+  union {
+    struct {
+      struct Subscription *ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultSubscription;
+
+typedef struct CArrayStruct {
+  struct Struct *data;
+  uintptr_t data_len;
+} CArrayStruct;
+
+typedef struct CArrayFieldElement {
+  struct FieldElement *data;
+  uintptr_t data_len;
+} CArrayFieldElement;
+
+typedef struct Event {
+  struct CArrayFieldElement keys;
+  struct CArrayFieldElement data;
+  struct FieldElement transaction_hash;
+} Event;
+
+typedef struct CArrayToken {
+  struct Token *data;
+  uintptr_t data_len;
+} CArrayToken;
+
+typedef struct PageToken {
+  struct CArrayToken items;
+  const char *next_cursor;
+} PageToken;
+
+typedef enum ResultPageToken_Tag {
+  OkPageToken,
+  ErrPageToken,
+} ResultPageToken_Tag;
+
+typedef struct ResultPageToken {
+  ResultPageToken_Tag tag;
+  union {
+    struct {
+      struct PageToken ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultPageToken;
+
+typedef struct Token {
+  struct FieldElement contract_address;
+  struct U256 token_id;
+  const char *name;
+  const char *symbol;
+  uint8_t decimals;
+  const char *metadata;
+} Token;
+
+typedef struct CArrayTokenBalance {
+  struct TokenBalance *data;
+  uintptr_t data_len;
+} CArrayTokenBalance;
+
+typedef struct PageTokenBalance {
+  struct CArrayTokenBalance items;
+  const char *next_cursor;
+} PageTokenBalance;
+
+typedef enum ResultPageTokenBalance_Tag {
+  OkPageTokenBalance,
+  ErrPageTokenBalance,
+} ResultPageTokenBalance_Tag;
+
+typedef struct ResultPageTokenBalance {
+  ResultPageTokenBalance_Tag tag;
+  union {
+    struct {
+      struct PageTokenBalance ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultPageTokenBalance;
+
+typedef struct IndexerUpdate {
+  int64_t head;
+  int64_t tps;
+  int64_t last_block_timestamp;
+  struct FieldElement contract_address;
+} IndexerUpdate;
+
+typedef struct TokenBalance {
+  struct U256 balance;
+  struct FieldElement account_address;
+  struct FieldElement contract_address;
+  struct U256 token_id;
+} TokenBalance;
+
+typedef enum ResultCArrayFieldElement_Tag {
+  OkCArrayFieldElement,
+  ErrCArrayFieldElement,
+} ResultCArrayFieldElement_Tag;
+
+typedef struct ResultCArrayFieldElement {
+  ResultCArrayFieldElement_Tag tag;
+  union {
+    struct {
+      struct CArrayFieldElement ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultCArrayFieldElement;
+
+typedef enum Resultc_char_Tag {
+  Okc_char,
+  Errc_char,
+} Resultc_char_Tag;
+
+typedef struct Resultc_char {
+  Resultc_char_Tag tag;
+  union {
+    struct {
+      const char *ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Resultc_char;
+
+typedef struct Signature {
+  /**
+   * The `r` value of a signature
+   */
+  struct FieldElement r;
+  /**
+   * The `s` value of a signature
+   */
+  struct FieldElement s;
+} Signature;
+
+typedef enum ResultSignature_Tag {
+  OkSignature,
+  ErrSignature,
+} ResultSignature_Tag;
+
+typedef struct ResultSignature {
+  ResultSignature_Tag tag;
+  union {
+    struct {
+      struct Signature ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultSignature;
+
+typedef enum ResultProvider_Tag {
+  OkProvider,
+  ErrProvider,
+} ResultProvider_Tag;
+
+typedef struct ResultProvider {
+  ResultProvider_Tag tag;
+  union {
+    struct {
+      struct Provider *ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultProvider;
+
+typedef enum ResultAccount_Tag {
+  OkAccount,
+  ErrAccount,
+} ResultAccount_Tag;
+
+typedef struct ResultAccount {
+  ResultAccount_Tag tag;
+  union {
+    struct {
+      struct Account *ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultAccount;
+
+typedef struct Call {
+  struct FieldElement to;
+  const char *selector;
+  struct CArrayFieldElement calldata;
+} Call;
+
+/**
+ * Block hash, number or tag
+ */
+typedef enum BlockId_Tag {
+  Hash,
+  Number,
+  BlockTag_,
+} BlockId_Tag;
+
+typedef struct BlockId {
+  BlockId_Tag tag;
+  union {
+    struct {
+      struct FieldElement hash;
+    };
+    struct {
+      uint64_t number;
+    };
+    struct {
+      enum BlockTag block_tag;
+    };
+  };
+} BlockId;
+
+typedef struct Policy {
+  struct FieldElement target;
+  const char *method;
+  const char *description;
+} Policy;
+
+typedef struct Controller {
+  struct FieldElement address;
+  const char *username;
+  uint64_t deployed_at_timestamp;
+} Controller;
+
+typedef struct Entity {
+  struct FieldElement hashed_keys;
+  struct CArrayStruct models;
+} Entity;
+
+typedef enum COptionFieldElement_Tag {
+  SomeFieldElement,
+  NoneFieldElement,
+} COptionFieldElement_Tag;
+
+typedef struct COptionFieldElement {
+  COptionFieldElement_Tag tag;
+  union {
+    struct {
+      struct FieldElement some;
+    };
+  };
+} COptionFieldElement;
+
+typedef struct OrderBy {
+  const char *model;
+  const char *member;
+  enum OrderDirection direction;
+} OrderBy;
+
 typedef struct CArrayMember {
   struct Member *data;
   uintptr_t data_len;
@@ -749,26 +777,6 @@ typedef struct EntityKeysClause {
     };
   };
 } EntityKeysClause;
-
-typedef enum COptionFieldElement_Tag {
-  SomeFieldElement,
-  NoneFieldElement,
-} COptionFieldElement_Tag;
-
-typedef struct COptionFieldElement {
-  COptionFieldElement_Tag tag;
-  union {
-    struct {
-      struct FieldElement some;
-    };
-  };
-} COptionFieldElement;
-
-typedef struct OrderBy {
-  const char *model;
-  const char *member;
-  enum OrderDirection direction;
-} OrderBy;
 
 typedef struct Member {
   const char *name;
@@ -998,7 +1006,7 @@ struct ResultCArrayController client_controllers(struct ToriiClient *client,
  * Result containing array of matching entities or error
  */
 struct ResultCArrayEntity client_entities(struct ToriiClient *client,
-                                          const struct Query *query,
+                                          struct Query query,
                                           bool historical);
 
 /**
@@ -1013,7 +1021,7 @@ struct ResultCArrayEntity client_entities(struct ToriiClient *client,
  * Result containing array of matching event message entities or error
  */
 struct ResultCArrayEntity client_event_messages(struct ToriiClient *client,
-                                                const struct Query *query,
+                                                struct Query query,
                                                 bool historical);
 
 /**
@@ -1127,13 +1135,14 @@ struct ResultSubscription client_on_starknet_event(struct ToriiClient *client,
  * # Returns
  * Result containing array of Token information or error
  */
-struct ResultCArrayToken client_tokens(struct ToriiClient *client,
-                                       const struct FieldElement *contract_addresses,
-                                       uintptr_t contract_addresses_len,
-                                       const struct U256 *token_ids,
-                                       uintptr_t token_ids_len,
-                                       uint32_t limit,
-                                       uint32_t offset);
+struct ResultPageToken client_tokens(struct ToriiClient *client,
+                                     const struct FieldElement *contract_addresses,
+                                     uintptr_t contract_addresses_len,
+                                     const struct U256 *token_ids,
+                                     uintptr_t token_ids_len,
+                                     uint32_t limit,
+                                     uint32_t offset,
+                                     const char *cursor);
 
 /**
  * Subscribes to token updates
@@ -1166,15 +1175,16 @@ struct ResultSubscription client_on_token_update(struct ToriiClient *client,
  * # Returns
  * Result containing array of TokenBalance information or error
  */
-struct ResultCArrayTokenBalance client_token_balances(struct ToriiClient *client,
-                                                      const struct FieldElement *contract_addresses,
-                                                      uintptr_t contract_addresses_len,
-                                                      const struct FieldElement *account_addresses,
-                                                      uintptr_t account_addresses_len,
-                                                      const struct U256 *token_ids,
-                                                      uintptr_t token_ids_len,
-                                                      uint32_t limit,
-                                                      uint32_t offset);
+struct ResultPageTokenBalance client_token_balances(struct ToriiClient *client,
+                                                    const struct FieldElement *contract_addresses,
+                                                    uintptr_t contract_addresses_len,
+                                                    const struct FieldElement *account_addresses,
+                                                    uintptr_t account_addresses_len,
+                                                    const struct U256 *token_ids,
+                                                    uintptr_t token_ids_len,
+                                                    uint32_t limit,
+                                                    uint32_t offset,
+                                                    const char *cursor);
 
 /**
  * Subscribes to indexer updates
