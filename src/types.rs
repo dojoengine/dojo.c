@@ -19,7 +19,7 @@ use wasm_bindgen::prelude::*;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Policy {
     Call(CallPolicy),
-    TypedData(account_sdk::account::session::policy::TypedDataPolicy),
+    TypedData(account_sdk::typed_data::TypedData),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

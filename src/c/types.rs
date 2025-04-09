@@ -94,9 +94,19 @@ pub struct CallPolicy {
     pub description: *const c_char,
 }
 
-impl From<Policy> for crate::types::Policy {
-    fn from(val: Policy) -> Self {
-        crate::types::Policy {
+impl From<CallPolicy> for account_sdk::account::session::policy::CallPolicy {
+    fn from(val: CallPolicy) -> Self {
+        account_sdk::account::session::policy::CallPolicy {
+            contract_address: val.target.into(),
+            selector: get_selector_from_name(&unsafe { CStr::from_ptr(val.method).to_string_lossy().to_string() }).unwrap(),
+            authorized: Some(true),
+        }
+    }
+}
+
+impl From<CallPolicy> for crate::types::CallPolicy {
+    fn from(val: CallPolicy) -> Self {
+        crate::types::CallPolicy {
             target: val.target.into(),
             method: unsafe { CStr::from_ptr(val.method).to_string_lossy().to_string() },
             description: unsafe { CStr::from_ptr(val.description).to_string_lossy().to_string() },
@@ -104,15 +114,20 @@ impl From<Policy> for crate::types::Policy {
     }
 }
 
+impl From<Policy> for crate::types::Policy {
+    fn from(val: Policy) -> Self {
+        match val {
+            Policy::Call(call) => crate::types::Policy::Call(call.into()),
+            Policy::TypedData(typed_data) => crate::types::Policy::TypedData(serde_json::from_str(unsafe { CStr::from_ptr(typed_data).to_string_lossy().to_string().as_str() }).unwrap()),
+        }
+    }
+}
+
 impl From<Policy> for account_sdk::account::session::policy::Policy {
     fn from(val: Policy) -> Self {
-        account_sdk::account::session::policy::CallPolicy {
-            contract_address: val.target.into(),
-            selector: get_selector_from_name(&unsafe {
-                CStr::from_ptr(val.method).to_string_lossy().to_string()
-            })
-            .unwrap(),
-            authorized: Some(true),
+        match val {
+            Policy::Call(call) => account_sdk::account::session::policy::Policy::Call(call.into()),
+            Policy::TypedData(typed_data) => account_sdk::account::session::policy::Policy::TypedData(typed_data.into()),
         }
     }
 }
