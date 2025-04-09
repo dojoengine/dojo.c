@@ -128,176 +128,6 @@ cdef extern from *:
     CArrayEntity ok;
     Error err;
 
-  cdef struct CArrayCHashItemFieldElementModelMetadata:
-    CHashItemFieldElementModelMetadata *data;
-    uintptr_t data_len;
-
-  cdef struct WorldMetadata:
-    FieldElement world_address;
-    CArrayCHashItemFieldElementModelMetadata models;
-
-  cdef enum ResultWorldMetadata_Tag:
-    OkWorldMetadata,
-    ErrWorldMetadata,
-
-  cdef struct ResultWorldMetadata:
-    ResultWorldMetadata_Tag tag;
-    WorldMetadata ok;
-    Error err;
-
-  cdef enum ResultSubscription_Tag:
-    OkSubscription,
-    ErrSubscription,
-
-  cdef struct ResultSubscription:
-    ResultSubscription_Tag tag;
-    Subscription *ok;
-    Error err;
-
-  cdef struct CArrayStruct:
-    Struct *data;
-    uintptr_t data_len;
-
-  cdef struct CArrayFieldElement:
-    FieldElement *data;
-    uintptr_t data_len;
-
-  cdef struct Event:
-    CArrayFieldElement keys;
-    CArrayFieldElement data;
-    FieldElement transaction_hash;
-
-  cdef struct CArrayToken:
-    Token *data;
-    uintptr_t data_len;
-
-  cdef enum ResultCArrayToken_Tag:
-    OkCArrayToken,
-    ErrCArrayToken,
-
-  cdef struct ResultCArrayToken:
-    ResultCArrayToken_Tag tag;
-    CArrayToken ok;
-    Error err;
-
-  cdef struct U256:
-    uint8_t data[32];
-
-  cdef struct Token:
-    FieldElement contract_address;
-    U256 token_id;
-    const char *name;
-    const char *symbol;
-    uint8_t decimals;
-    const char *metadata;
-
-  cdef struct CArrayTokenBalance:
-    TokenBalance *data;
-    uintptr_t data_len;
-
-  cdef enum ResultCArrayTokenBalance_Tag:
-    OkCArrayTokenBalance,
-    ErrCArrayTokenBalance,
-
-  cdef struct ResultCArrayTokenBalance:
-    ResultCArrayTokenBalance_Tag tag;
-    CArrayTokenBalance ok;
-    Error err;
-
-  cdef struct IndexerUpdate:
-    int64_t head;
-    int64_t tps;
-    int64_t last_block_timestamp;
-    FieldElement contract_address;
-
-  cdef struct TokenBalance:
-    U256 balance;
-    FieldElement account_address;
-    FieldElement contract_address;
-    U256 token_id;
-
-  cdef enum ResultCArrayFieldElement_Tag:
-    OkCArrayFieldElement,
-    ErrCArrayFieldElement,
-
-  cdef struct ResultCArrayFieldElement:
-    ResultCArrayFieldElement_Tag tag;
-    CArrayFieldElement ok;
-    Error err;
-
-  cdef enum Resultc_char_Tag:
-    Okc_char,
-    Errc_char,
-
-  cdef struct Resultc_char:
-    Resultc_char_Tag tag;
-    const char *ok;
-    Error err;
-
-  cdef struct Signature:
-    # The `r` value of a signature
-    FieldElement r;
-    # The `s` value of a signature
-    FieldElement s;
-
-  cdef enum ResultSignature_Tag:
-    OkSignature,
-    ErrSignature,
-
-  cdef struct ResultSignature:
-    ResultSignature_Tag tag;
-    Signature ok;
-    Error err;
-
-  cdef enum ResultProvider_Tag:
-    OkProvider,
-    ErrProvider,
-
-  cdef struct ResultProvider:
-    ResultProvider_Tag tag;
-    Provider *ok;
-    Error err;
-
-  cdef enum ResultAccount_Tag:
-    OkAccount,
-    ErrAccount,
-
-  cdef struct ResultAccount:
-    ResultAccount_Tag tag;
-    Account *ok;
-    Error err;
-
-  cdef struct Call:
-    FieldElement to;
-    const char *selector;
-    CArrayFieldElement calldata;
-
-  # Block hash, number or tag
-  cdef enum BlockId_Tag:
-    Hash,
-    Number,
-    BlockTag_,
-
-  cdef struct BlockId:
-    BlockId_Tag tag;
-    FieldElement hash;
-    uint64_t number;
-    BlockTag block_tag;
-
-  cdef struct Policy:
-    FieldElement target;
-    const char *method;
-    const char *description;
-
-  cdef struct Controller:
-    FieldElement address;
-    const char *username;
-    uint64_t deployed_at_timestamp;
-
-  cdef struct Entity:
-    FieldElement hashed_keys;
-    CArrayStruct models;
-
   cdef struct CArrayCOptionFieldElement:
     COptionFieldElement *data;
     uintptr_t data_len;
@@ -310,6 +140,9 @@ cdef extern from *:
     CArrayCOptionFieldElement keys;
     PatternMatching pattern_matching;
     CArrayc_char models;
+
+  cdef struct U256:
+    uint8_t data[32];
 
   cdef enum Primitive_Tag:
     I8,
@@ -409,6 +242,202 @@ cdef extern from *:
     CArrayc_char entity_models;
     uint64_t entity_updated_after;
 
+  cdef struct CArrayCHashItemFieldElementModelMetadata:
+    CHashItemFieldElementModelMetadata *data;
+    uintptr_t data_len;
+
+  cdef struct WorldMetadata:
+    FieldElement world_address;
+    CArrayCHashItemFieldElementModelMetadata models;
+
+  cdef enum ResultWorldMetadata_Tag:
+    OkWorldMetadata,
+    ErrWorldMetadata,
+
+  cdef struct ResultWorldMetadata:
+    ResultWorldMetadata_Tag tag;
+    WorldMetadata ok;
+    Error err;
+
+  cdef enum ResultSubscription_Tag:
+    OkSubscription,
+    ErrSubscription,
+
+  cdef struct ResultSubscription:
+    ResultSubscription_Tag tag;
+    Subscription *ok;
+    Error err;
+
+  cdef struct CArrayStruct:
+    Struct *data;
+    uintptr_t data_len;
+
+  cdef struct CArrayFieldElement:
+    FieldElement *data;
+    uintptr_t data_len;
+
+  cdef struct Event:
+    CArrayFieldElement keys;
+    CArrayFieldElement data;
+    FieldElement transaction_hash;
+
+  cdef struct CArrayToken:
+    Token *data;
+    uintptr_t data_len;
+
+  cdef enum COptionc_char_Tag:
+    Somec_char,
+    Nonec_char,
+
+  cdef struct COptionc_char:
+    COptionc_char_Tag tag;
+    const char *some;
+
+  cdef struct PageToken:
+    CArrayToken items;
+    COptionc_char next_cursor;
+
+  cdef enum ResultPageToken_Tag:
+    OkPageToken,
+    ErrPageToken,
+
+  cdef struct ResultPageToken:
+    ResultPageToken_Tag tag;
+    PageToken ok;
+    Error err;
+
+  cdef struct Token:
+    FieldElement contract_address;
+    U256 token_id;
+    const char *name;
+    const char *symbol;
+    uint8_t decimals;
+    const char *metadata;
+
+  cdef struct CArrayTokenBalance:
+    TokenBalance *data;
+    uintptr_t data_len;
+
+  cdef struct PageTokenBalance:
+    CArrayTokenBalance items;
+    COptionc_char next_cursor;
+
+  cdef enum ResultPageTokenBalance_Tag:
+    OkPageTokenBalance,
+    ErrPageTokenBalance,
+
+  cdef struct ResultPageTokenBalance:
+    ResultPageTokenBalance_Tag tag;
+    PageTokenBalance ok;
+    Error err;
+
+  cdef struct IndexerUpdate:
+    int64_t head;
+    int64_t tps;
+    int64_t last_block_timestamp;
+    FieldElement contract_address;
+
+  cdef struct TokenBalance:
+    U256 balance;
+    FieldElement account_address;
+    FieldElement contract_address;
+    U256 token_id;
+
+  cdef enum ResultCArrayFieldElement_Tag:
+    OkCArrayFieldElement,
+    ErrCArrayFieldElement,
+
+  cdef struct ResultCArrayFieldElement:
+    ResultCArrayFieldElement_Tag tag;
+    CArrayFieldElement ok;
+    Error err;
+
+  cdef enum Resultc_char_Tag:
+    Okc_char,
+    Errc_char,
+
+  cdef struct Resultc_char:
+    Resultc_char_Tag tag;
+    const char *ok;
+    Error err;
+
+  cdef struct Signature:
+    # The `r` value of a signature
+    FieldElement r;
+    # The `s` value of a signature
+    FieldElement s;
+
+  cdef enum ResultSignature_Tag:
+    OkSignature,
+    ErrSignature,
+
+  cdef struct ResultSignature:
+    ResultSignature_Tag tag;
+    Signature ok;
+    Error err;
+
+  cdef enum ResultProvider_Tag:
+    OkProvider,
+    ErrProvider,
+
+  cdef struct ResultProvider:
+    ResultProvider_Tag tag;
+    Provider *ok;
+    Error err;
+
+  cdef enum ResultAccount_Tag:
+    OkAccount,
+    ErrAccount,
+
+  cdef struct ResultAccount:
+    ResultAccount_Tag tag;
+    Account *ok;
+    Error err;
+
+  cdef struct Call:
+    FieldElement to;
+    const char *selector;
+    CArrayFieldElement calldata;
+
+  # Block hash, number or tag
+  cdef enum BlockId_Tag:
+    Hash,
+    Number,
+    BlockTag_,
+
+  cdef struct BlockId:
+    BlockId_Tag tag;
+    FieldElement hash;
+    uint64_t number;
+    BlockTag block_tag;
+
+  cdef struct Policy:
+    FieldElement target;
+    const char *method;
+    const char *description;
+
+  cdef struct Controller:
+    FieldElement address;
+    const char *username;
+    uint64_t deployed_at_timestamp;
+
+  cdef struct Entity:
+    FieldElement hashed_keys;
+    CArrayStruct models;
+
+  cdef enum COptionFieldElement_Tag:
+    SomeFieldElement,
+    NoneFieldElement,
+
+  cdef struct COptionFieldElement:
+    COptionFieldElement_Tag tag;
+    FieldElement some;
+
+  cdef struct OrderBy:
+    const char *model;
+    const char *member;
+    OrderDirection direction;
+
   cdef struct CArrayMember:
     Member *data;
     uintptr_t data_len;
@@ -469,19 +498,6 @@ cdef extern from *:
     EntityKeysClause_Tag tag;
     CArrayFieldElement hashed_keys;
     KeysClause entity_keys;
-
-  cdef enum COptionFieldElement_Tag:
-    SomeFieldElement,
-    NoneFieldElement,
-
-  cdef struct COptionFieldElement:
-    COptionFieldElement_Tag tag;
-    FieldElement some;
-
-  cdef struct OrderBy:
-    const char *model;
-    const char *member;
-    OrderDirection direction;
 
   cdef struct Member:
     const char *name;
@@ -676,7 +692,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing array of matching entities or error
-  ResultCArrayEntity client_entities(ToriiClient *client, const Query *query, bool historical);
+  ResultCArrayEntity client_entities(ToriiClient *client, Query query, bool historical);
 
   # Retrieves event messages matching the given query
   #
@@ -687,9 +703,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing array of matching event message entities or error
-  ResultCArrayEntity client_event_messages(ToriiClient *client,
-                                           const Query *query,
-                                           bool historical);
+  ResultCArrayEntity client_event_messages(ToriiClient *client, Query query, bool historical);
 
   # Gets the world metadata for the client
   #
@@ -786,11 +800,14 @@ cdef extern from *:
   #
   # # Returns
   # Result containing array of Token information or error
-  ResultCArrayToken client_tokens(ToriiClient *client,
-                                  const FieldElement *contract_addresses,
-                                  uintptr_t contract_addresses_len,
-                                  const U256 *token_ids,
-                                  uintptr_t token_ids_len);
+  ResultPageToken client_tokens(ToriiClient *client,
+                                const FieldElement *contract_addresses,
+                                uintptr_t contract_addresses_len,
+                                const U256 *token_ids,
+                                uintptr_t token_ids_len,
+                                uint32_t limit,
+                                uint32_t offset,
+                                const char *cursor);
 
   # Subscribes to token updates
   #
@@ -819,13 +836,16 @@ cdef extern from *:
   #
   # # Returns
   # Result containing array of TokenBalance information or error
-  ResultCArrayTokenBalance client_token_balances(ToriiClient *client,
-                                                 const FieldElement *contract_addresses,
-                                                 uintptr_t contract_addresses_len,
-                                                 const FieldElement *account_addresses,
-                                                 uintptr_t account_addresses_len,
-                                                 const U256 *token_ids,
-                                                 uintptr_t token_ids_len);
+  ResultPageTokenBalance client_token_balances(ToriiClient *client,
+                                               const FieldElement *contract_addresses,
+                                               uintptr_t contract_addresses_len,
+                                               const FieldElement *account_addresses,
+                                               uintptr_t account_addresses_len,
+                                               const U256 *token_ids,
+                                               uintptr_t token_ids_len,
+                                               uint32_t limit,
+                                               uint32_t offset,
+                                               const char *cursor);
 
   # Subscribes to indexer updates
   #

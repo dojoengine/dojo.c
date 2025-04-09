@@ -981,9 +981,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-casm"
-version = "2.9.2"
+version = "2.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3929a38c1d586e35e19dbdf7798b146fba3627b308417a6d373fea8939535b6b"
+checksum = "0e5568d33e98e2af9530d7dc2353699cb2a0cd0d7c32b105114615371d6ee030"
 dependencies = [
  "cairo-lang-utils",
  "indoc",
@@ -995,9 +995,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-eq-solver"
-version = "2.9.2"
+version = "2.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d778ec864e92c82293370a512195715b12775b05981e14065d85eb5dd3dd96b6"
+checksum = "40f01748564e51d96074f1ce6cd85c46a525954637143c083aaeaa5cbe969257"
 dependencies = [
  "cairo-lang-utils",
  "good_lp",
@@ -1005,9 +1005,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra"
-version = "2.9.2"
+version = "2.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "075c6457642ada82b32cf657d871a8545ae7a9d61c78dd5588a794c8c905abdc"
+checksum = "95ce5b707226e42868dc8da9a63c6c5baef6a13c54be22b70080361e686d5e0d"
 dependencies = [
  "anyhow",
  "cairo-lang-utils",
@@ -1032,9 +1032,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-ap-change"
-version = "2.9.2"
+version = "2.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b69172fe8354b1dd564bba318ccb5233aa78f70d57145b8c92a0b1cf009fa0fc"
+checksum = "78c228f0ad5bb6ae8d8086b53fca1c64d5298dc33cd590e9ab15dc85d4e800ce"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
@@ -1048,9 +1048,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-gas"
-version = "2.9.2"
+version = "2.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42b571b73d9b02103f780aeee05dbf9a71d68d8a16341a04aa1dd581d0db3ad6"
+checksum = "241ba43dc88925635dbae05fccdb471e3bcdb44a6284b6499993ee63517d4171"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
@@ -1064,9 +1064,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-to-casm"
-version = "2.9.2"
+version = "2.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "add264b156dfb01f18292282a6037070c078acca3bccde05787da1e1c997b78c"
+checksum = "4ebcfc50dfc0f926ba87a51931b75ff234aa8e8e965a9dbbdb2776fa38cfb903"
 dependencies = [
  "assert_matches",
  "cairo-lang-casm",
@@ -1085,9 +1085,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-type-size"
-version = "2.9.2"
+version = "2.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bda5388ef862bc26388e999ac7ad62dd8ab3064720c3483b81fd761b051e627"
+checksum = "403e2524c27f28423405ecc160a8000f45e5a450c1d3015989e20fb4c5e55df9"
 dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-utils",
@@ -1095,9 +1095,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-starknet-classes"
-version = "2.9.2"
+version = "2.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe691200b431e51e3d6cfa84f256a3dd2e8405f44d182843fbe124f803d085ff"
+checksum = "3295bc0e3ead98195d5e280dbaf280bc458ee42ef2dccf77d5a1c8ce71a40953"
 dependencies = [
  "cairo-lang-casm",
  "cairo-lang-sierra",
@@ -1118,9 +1118,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-utils"
-version = "2.9.2"
+version = "2.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff5d7609abc99c15de7d7f90b8441b27e2bd52e930a3014c95a9b620e5d3211a"
+checksum = "34609db9f2589340e217cd02254548d6e65dad1d0306fa17af1afba949509692"
 dependencies = [
  "hashbrown 0.14.5",
  "indexmap 2.7.0",
@@ -1760,8 +1760,8 @@ dependencies = [
 
 [[package]]
 name = "dojo-types"
-version = "1.3.1"
-source = "git+https://github.com/dojoengine/dojo?rev=271cf44055f2b42e50e898e3dc34a13ae530b329#271cf44055f2b42e50e898e3dc34a13ae530b329"
+version = "1.4.0"
+source = "git+https://github.com/dojoengine/dojo?rev=2348232#234823291281c6522ff6a48ea5739d85d59bcdf9"
 dependencies = [
  "anyhow",
  "cainome 0.5.0",
@@ -1782,8 +1782,8 @@ dependencies = [
 
 [[package]]
 name = "dojo-world"
-version = "1.3.1"
-source = "git+https://github.com/dojoengine/dojo?rev=271cf44055f2b42e50e898e3dc34a13ae530b329#271cf44055f2b42e50e898e3dc34a13ae530b329"
+version = "1.4.0"
+source = "git+https://github.com/dojoengine/dojo?rev=2348232#234823291281c6522ff6a48ea5739d85d59bcdf9"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7190,8 +7190,8 @@ dependencies = [
 
 [[package]]
 name = "torii-client"
-version = "1.3.1"
-source = "git+https://github.com/dojoengine/dojo?rev=271cf44055f2b42e50e898e3dc34a13ae530b329#271cf44055f2b42e50e898e3dc34a13ae530b329"
+version = "1.4.0"
+source = "git+https://github.com/dojoengine/dojo?rev=2348232#234823291281c6522ff6a48ea5739d85d59bcdf9"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -7218,8 +7218,8 @@ dependencies = [
 
 [[package]]
 name = "torii-grpc"
-version = "1.3.1"
-source = "git+https://github.com/dojoengine/dojo?rev=271cf44055f2b42e50e898e3dc34a13ae530b329#271cf44055f2b42e50e898e3dc34a13ae530b329"
+version = "1.4.0"
+source = "git+https://github.com/dojoengine/dojo?rev=2348232#234823291281c6522ff6a48ea5739d85d59bcdf9"
 dependencies = [
  "crypto-bigint",
  "dojo-types",
@@ -7257,8 +7257,8 @@ dependencies = [
 
 [[package]]
 name = "torii-relay"
-version = "1.3.1"
-source = "git+https://github.com/dojoengine/dojo?rev=271cf44055f2b42e50e898e3dc34a13ae530b329#271cf44055f2b42e50e898e3dc34a13ae530b329"
+version = "1.4.0"
+source = "git+https://github.com/dojoengine/dojo?rev=2348232#234823291281c6522ff6a48ea5739d85d59bcdf9"
 dependencies = [
  "anyhow",
  "futures",
@@ -7277,8 +7277,8 @@ dependencies = [
 
 [[package]]
 name = "torii-typed-data"
-version = "1.3.1"
-source = "git+https://github.com/dojoengine/dojo?rev=271cf44055f2b42e50e898e3dc34a13ae530b329#271cf44055f2b42e50e898e3dc34a13ae530b329"
+version = "1.4.0"
+source = "git+https://github.com/dojoengine/dojo?rev=2348232#234823291281c6522ff6a48ea5739d85d59bcdf9"
 dependencies = [
  "cainome 0.5.0",
  "crypto-bigint",

@@ -41,8 +41,8 @@ mod types;
 
 use types::{
     BlockId, Call, Calls, ClientConfig, Controller, Controllers, Entities, Entity, IndexerUpdate,
-    KeysClause, KeysClauses, Model, Query, Signature, Token, TokenBalance, TokenBalances, Tokens,
-    WasmU256,
+    KeysClause, KeysClauses, Model, Page, Query, Signature, Token, TokenBalance, TokenBalances,
+    Tokens, WasmU256,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -114,7 +114,7 @@ pub fn signing_key_sign(private_key: &str, hash: &str) -> Result<Signature, JsVa
     let sig = private_key.sign(&hash.unwrap());
 
     match sig {
-        Ok(sig) => Result::Ok(Signature::from(&sig)),
+        Ok(sig) => Result::Ok(Signature::from(sig)),
         Err(e) => Err(JsValue::from(format!("failed to sign: {e}"))),
     }
 }
@@ -167,9 +167,7 @@ pub fn verifying_key_verify(
 
     let hash = &hash.unwrap();
 
-    let signature = &starknet::core::crypto::Signature::from(&signature);
-
-    match verifying_key.verify(hash, signature) {
+    match verifying_key.verify(hash, &signature.into()) {
         Ok(result) => Result::Ok(result),
         Err(e) => Err(JsValue::from(format!("failed to verify: {e}"))),
     }
@@ -256,10 +254,7 @@ impl Provider {
     pub async unsafe fn call(&self, call: Call, block_id: BlockId) -> Result<Array, JsValue> {
         let result = self
             .0
-            .call::<FunctionCall, starknet::core::types::BlockId>(
-                (&call).into(),
-                (&block_id).into(),
-            )
+            .call::<FunctionCall, starknet::core::types::BlockId>(call.into(), block_id.into())
             .await;
 
         match result {
@@ -334,7 +329,7 @@ impl Account {
     /// Result containing transaction hash as hex string or error
     #[wasm_bindgen(js_name = executeRaw)]
     pub async unsafe fn execute_raw(&self, calldata: Calls) -> Result<String, JsValue> {
-        let calldata = calldata.iter().map(|c| c.into()).collect();
+        let calldata = calldata.into_iter().map(|c| c.into()).collect();
 
         let call = self.0.execute_v3(calldata);
 
@@ -614,7 +609,7 @@ impl ToriiClient {
             .await
             .map_err(|e| JsValue::from(format!("failed to get controllers: {e}")))?;
 
-        Ok(Controllers(controllers.iter().map(|c| c.into()).collect()))
+        Ok(Controllers(controllers.into_iter().map(|c| c.into()).collect()))
     }
 
     /// Gets token information for the given contract addresses
@@ -629,6 +624,9 @@ impl ToriiClient {
         &self,
         contract_addresses: Vec<String>,
         token_ids: Vec<WasmU256>,
+        limit: Option<u32>,
+        offset: Option<u32>,
+        cursor: Option<String>,
     ) -> Result<Tokens, JsValue> {
         let contract_addresses = contract_addresses
             .iter()
@@ -636,15 +634,15 @@ impl ToriiClient {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
 
-        let token_ids = token_ids.iter().map(|t| t.into()).collect::<Vec<_>>();
+        let token_ids = token_ids.into_iter().map(|t| t.into()).collect::<Vec<_>>();
 
         let tokens = self
             .inner
-            .tokens(contract_addresses, token_ids)
+            .tokens(contract_addresses, token_ids, limit, offset, cursor)
             .await
             .map_err(|e| JsValue::from(format!("failed to get tokens: {e}")))?;
 
-        Ok(Tokens(tokens.iter().map(|t| t.into()).collect()))
+        Ok(Tokens(tokens.into()))
     }
 
     /// Subscribes to token updates
@@ -674,7 +672,7 @@ impl ToriiClient {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let token_ids = token_ids.iter().map(|t| t.into()).collect::<Vec<_>>();
+        let token_ids = token_ids.into_iter().map(|t| t.into()).collect::<Vec<_>>();
 
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
@@ -698,7 +696,7 @@ impl ToriiClient {
 
                     while let Some(Ok((id, token))) = stream.next().await {
                         subscription_id_clone.store(id, Ordering::SeqCst);
-                        let token: Token = (&token).into();
+                        let token: Token = token.into();
 
                         let _ = callback.call1(
                             &JsValue::null(),
@@ -734,6 +732,9 @@ impl ToriiClient {
         contract_addresses: Vec<String>,
         account_addresses: Vec<String>,
         token_ids: Vec<WasmU256>,
+        limit: Option<u32>,
+        offset: Option<u32>,
+        cursor: Option<String>,
     ) -> Result<TokenBalances, JsValue> {
         let account_addresses = account_addresses
             .iter()
@@ -747,15 +748,15 @@ impl ToriiClient {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
 
-        let token_ids = token_ids.iter().map(|t| t.into()).collect::<Vec<_>>();
+        let token_ids = token_ids.into_iter().map(|t| t.into()).collect::<Vec<_>>();
 
         let token_balances = self
             .inner
-            .token_balances(account_addresses, contract_addresses, token_ids)
+            .token_balances(account_addresses, contract_addresses, token_ids, limit, offset, cursor)
             .await
             .map_err(|e| JsValue::from(format!("failed to get token balances: {e}")))?;
 
-        Ok(TokenBalances(token_balances.iter().map(|t| t.into()).collect()))
+        Ok(TokenBalances(token_balances.into()))
     }
 
     /// Queries entities based on the provided query parameters
@@ -770,10 +771,10 @@ impl ToriiClient {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let results = self.inner.entities((&query).into(), historical).await;
+        let results = self.inner.entities(query.into(), historical).await;
 
         match results {
-            Ok(entities) => Ok((&entities).into()),
+            Ok(entities) => Ok(entities.into()),
             Err(err) => Err(JsValue::from(format!("failed to get entities: {err}"))),
         }
     }
@@ -813,7 +814,7 @@ impl ToriiClient {
             .await;
 
         match results {
-            Ok(entities) => Ok((&entities).into()),
+            Ok(entities) => Ok(entities.into()),
             Err(err) => Err(JsValue::from(format!("failed to get entities: {err}"))),
         }
     }
@@ -835,10 +836,10 @@ impl ToriiClient {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let results = self.inner.event_messages((&query).into(), historical).await;
+        let results = self.inner.event_messages(query.into(), historical).await;
 
         match results {
-            Ok(event_messages) => Ok((&event_messages).into()),
+            Ok(event_messages) => Ok(event_messages.into()),
             Err(err) => Err(JsValue::from(format!("failed to get event_messages: {err}"))),
         }
     }
@@ -860,7 +861,7 @@ impl ToriiClient {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let clauses: Vec<_> = clauses.iter().map(|c| c.into()).collect();
+        let clauses: Vec<_> = clauses.into_iter().map(|c| c.into()).collect();
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
 
@@ -881,11 +882,12 @@ impl ToriiClient {
 
                     while let Some(Ok((id, entity))) = stream.next().await {
                         subscription_id_clone.store(id, Ordering::SeqCst);
-                        let models: Entity = (&entity).into();
+                        let hashed_keys = entity.hashed_keys.clone();
+                        let models: Entity = entity.into();
 
                         let _ = callback.call2(
                             &JsValue::null(),
-                            &JsValue::from_str(&format!("{:#x}", entity.hashed_keys)),
+                            &JsValue::from_str(&format!("{:#x}", hashed_keys)),
                             &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                         );
                     }
@@ -918,7 +920,7 @@ impl ToriiClient {
         subscription: &Subscription,
         clauses: KeysClauses,
     ) -> Result<(), JsValue> {
-        let clauses = clauses.iter().map(|c| c.into()).collect();
+        let clauses = clauses.into_iter().map(|c| c.into()).collect();
         self.inner
             .update_entity_subscription(subscription.id.load(Ordering::SeqCst), clauses)
             .await
@@ -942,7 +944,7 @@ impl ToriiClient {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let clauses: Vec<_> = clauses.iter().map(|c| c.into()).collect();
+        let clauses: Vec<_> = clauses.into_iter().map(|c| c.into()).collect();
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
 
@@ -963,11 +965,12 @@ impl ToriiClient {
 
                     while let Some(Ok((id, entity))) = stream.next().await {
                         subscription_id_clone.store(id, Ordering::SeqCst);
-                        let models: Entity = (&entity).into();
+                        let hashed_keys = entity.hashed_keys.clone();
+                        let models: Entity = entity.into();
 
                         let _ = callback.call2(
                             &JsValue::null(),
-                            &JsValue::from_str(&format!("{:#x}", entity.hashed_keys)),
+                            &JsValue::from_str(&format!("{:#x}", hashed_keys)),
                             &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                         );
                     }
@@ -1000,7 +1003,7 @@ impl ToriiClient {
         subscription: &Subscription,
         clauses: KeysClauses,
     ) -> Result<(), JsValue> {
-        let clauses = clauses.iter().map(|c| c.into()).collect();
+        let clauses = clauses.into_iter().map(|c| c.into()).collect();
         self.inner
             .update_event_message_subscription(subscription.id.load(Ordering::SeqCst), clauses)
             .await
@@ -1024,7 +1027,7 @@ impl ToriiClient {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let clauses: Vec<_> = clauses.iter().map(|c| c.into()).collect();
+        let clauses: Vec<_> = clauses.into_iter().map(|c| c.into()).collect();
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
 
@@ -1106,7 +1109,7 @@ impl ToriiClient {
                     let mut stream = stream.take_until_if(tripwire.clone());
 
                     while let Some(Ok(update)) = stream.next().await {
-                        let update: IndexerUpdate = (&update).into();
+                        let update: IndexerUpdate = update.into();
 
                         let _ = callback.call1(
                             &JsValue::null(),
@@ -1165,7 +1168,7 @@ impl ToriiClient {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let token_ids = token_ids.iter().map(|t| t.into()).collect::<Vec<_>>();
+        let token_ids = token_ids.into_iter().map(|t| t.into()).collect::<Vec<_>>();
 
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
@@ -1194,7 +1197,7 @@ impl ToriiClient {
 
                     while let Some(Ok((id, balance))) = stream.next().await {
                         subscription_id_clone.store(id, Ordering::SeqCst);
-                        let balance: TokenBalance = (&balance).into();
+                        let balance: TokenBalance = balance.into();
 
                         let _ = callback.call1(
                             &JsValue::null(),
@@ -1250,7 +1253,7 @@ impl ToriiClient {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let token_ids = token_ids.iter().map(|t| t.into()).collect::<Vec<_>>();
+        let token_ids = token_ids.into_iter().map(|t| t.into()).collect::<Vec<_>>();
 
         self.inner
             .update_token_balance_subscription(
