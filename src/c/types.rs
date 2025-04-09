@@ -263,10 +263,7 @@ impl From<BlockTag> for starknet::core::types::BlockTag {
 impl From<Call> for starknet::core::types::Call {
     fn from(val: Call) -> Self {
         let selector = unsafe { CStr::from_ptr(val.selector).to_string_lossy().to_string() };
-
-        let calldata: Vec<FieldElement> = val.calldata.into();
-        let calldata = std::mem::ManuallyDrop::new(calldata);
-        let calldata = calldata.iter().map(|c| c.clone().into()).collect();
+        let calldata: Vec<_> = val.calldata.into();
 
         starknet::core::types::Call {
             to: val.to.into(),
@@ -279,10 +276,7 @@ impl From<Call> for starknet::core::types::Call {
 impl From<Call> for starknet::core::types::FunctionCall {
     fn from(val: Call) -> Self {
         let selector = unsafe { CStr::from_ptr(val.selector).to_string_lossy().to_string() };
-
-        let calldata: Vec<FieldElement> = val.calldata.into();
-        let calldata = std::mem::ManuallyDrop::new(calldata);
-        let calldata = calldata.iter().map(|c| c.clone().into()).collect();
+        let calldata: Vec<_> = val.calldata.into();
 
         starknet::core::types::FunctionCall {
             contract_address: val.to.into(),
@@ -1132,12 +1126,11 @@ impl From<torii_grpc::types::KeysClause> for KeysClause {
 
 impl From<ModelKeysClause> for torii_grpc::types::ModelKeysClause {
     fn from(val: ModelKeysClause) -> Self {
-        let keys: Vec<FieldElement> = val.keys.into();
-        let keys = std::mem::ManuallyDrop::new(keys);
+        let keys: Vec<_> = val.keys.into();
 
         torii_grpc::types::ModelKeysClause {
             model: unsafe { CStr::from_ptr(val.model).to_string_lossy().to_string() },
-            keys: keys.iter().map(|k| k.clone().into()).collect(),
+            keys
         }
     }
 }
@@ -1354,15 +1347,12 @@ pub struct Event {
 
 impl From<Event> for torii_grpc::types::Event {
     fn from(val: Event) -> Self {
-        let keys: Vec<FieldElement> = val.keys.into();
-        let keys = std::mem::ManuallyDrop::new(keys);
-
-        let data: Vec<FieldElement> = val.data.into();
-        let data = std::mem::ManuallyDrop::new(data);
+        let keys: Vec<_> = val.keys.into();
+        let data: Vec<_> = val.data.into();
 
         torii_grpc::types::Event {
-            keys: keys.iter().map(|k| k.clone().into()).collect(),
-            data: data.iter().map(|k| k.clone().into()).collect(),
+            keys,
+            data,
             transaction_hash: val.transaction_hash.into(),
         }
     }
