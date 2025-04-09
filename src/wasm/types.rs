@@ -14,10 +14,29 @@ use super::utils::{pad_to_hex, parse_ty_as_json_str};
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Page<T> {
+    pub items: Vec<T>,
+    pub next_cursor: Option<String>,
+}
+
+impl<T, U> From<torii_grpc::types::Page<T>> for Page<U>
+where
+    U: From<T>,
+{
+    fn from(value: torii_grpc::types::Page<T>) -> Self {
+        Self {
+            items: value.items.into_iter().map(|t| t.into()).collect(),
+            next_cursor: if value.next_cursor.is_empty() { None } else { Some(value.next_cursor) },
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct WasmU256(pub String);
 
-impl From<&WasmU256> for U256 {
-    fn from(value: &WasmU256) -> Self {
+impl From<WasmU256> for U256 {
+    fn from(value: WasmU256) -> Self {
         U256::from_be_hex(pad_to_hex(value.0.as_str()).unwrap().as_str())
     }
 }
@@ -34,8 +53,8 @@ pub struct Controller {
     pub deployed_at_timestamp: u64,
 }
 
-impl From<&torii_grpc::types::Controller> for Controller {
-    fn from(value: &torii_grpc::types::Controller) -> Self {
+impl From<torii_grpc::types::Controller> for Controller {
+    fn from(value: torii_grpc::types::Controller) -> Self {
         Self {
             address: format!("{:#x}", value.address),
             username: value.username.clone(),
@@ -63,8 +82,8 @@ pub struct Token {
     pub metadata: String,
 }
 
-impl From<&torii_grpc::types::Token> for Token {
-    fn from(value: &torii_grpc::types::Token) -> Self {
+impl From<torii_grpc::types::Token> for Token {
+    fn from(value: torii_grpc::types::Token) -> Self {
         Self {
             contract_address: format!("{:#x}", value.contract_address),
             token_id: format!("0x{:x}", value.token_id),
@@ -85,8 +104,8 @@ pub struct TokenBalance {
     pub token_id: String,
 }
 
-impl From<&torii_grpc::types::TokenBalance> for TokenBalance {
-    fn from(value: &torii_grpc::types::TokenBalance) -> Self {
+impl From<torii_grpc::types::TokenBalance> for TokenBalance {
+    fn from(value: torii_grpc::types::TokenBalance) -> Self {
         Self {
             balance: format!("0x{:x}", value.balance),
             account_address: format!("{:#x}", value.account_address),
@@ -105,8 +124,8 @@ pub struct IndexerUpdate {
     pub contract_address: String,
 }
 
-impl From<&IndexerUpdate> for torii_grpc::types::IndexerUpdate {
-    fn from(value: &IndexerUpdate) -> Self {
+impl From<IndexerUpdate> for torii_grpc::types::IndexerUpdate {
+    fn from(value: IndexerUpdate) -> Self {
         Self {
             head: value.head,
             tps: value.tps,
@@ -116,8 +135,8 @@ impl From<&IndexerUpdate> for torii_grpc::types::IndexerUpdate {
     }
 }
 
-impl From<&torii_grpc::types::IndexerUpdate> for IndexerUpdate {
-    fn from(value: &torii_grpc::types::IndexerUpdate) -> Self {
+impl From<torii_grpc::types::IndexerUpdate> for IndexerUpdate {
+    fn from(value: torii_grpc::types::IndexerUpdate) -> Self {
         Self {
             head: value.head,
             tps: value.tps,
@@ -173,14 +192,14 @@ pub struct Signature {
     pub s: String,
 }
 
-impl From<&starknet::core::crypto::Signature> for Signature {
-    fn from(value: &starknet::core::crypto::Signature) -> Self {
+impl From<starknet::core::crypto::Signature> for Signature {
+    fn from(value: starknet::core::crypto::Signature) -> Self {
         Self { r: format!("{:#x}", value.r), s: format!("{:#x}", value.s) }
     }
 }
 
-impl From<&Signature> for starknet::core::crypto::Signature {
-    fn from(value: &Signature) -> Self {
+impl From<Signature> for starknet::core::crypto::Signature {
+    fn from(value: Signature) -> Self {
         Self {
             r: Felt::from_str(value.r.as_str()).unwrap(),
             s: Felt::from_str(value.s.as_str()).unwrap(),
@@ -195,8 +214,8 @@ pub type Calls = Vec<Call>;
 #[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
 pub struct Model(pub HashMap<String, Ty>);
 
-impl From<&Struct> for Model {
-    fn from(value: &Struct) -> Self {
+impl From<Struct> for Model {
+    fn from(value: Struct) -> Self {
         Self(
             value
                 .children
@@ -211,13 +230,13 @@ impl From<&Struct> for Model {
 #[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
 pub struct Entity(pub HashMap<String, Model>);
 
-impl From<&torii_grpc::types::schema::Entity> for Entity {
-    fn from(value: &torii_grpc::types::schema::Entity) -> Self {
+impl From<torii_grpc::types::schema::Entity> for Entity {
+    fn from(value: torii_grpc::types::schema::Entity) -> Self {
         let mut seen_models = HashMap::new();
         Self(
             value
                 .models
-                .iter()
+                .into_iter()
                 .map(|m| {
                     let count = seen_models.entry(m.name.clone()).or_insert(0);
                     let name =
@@ -234,11 +253,11 @@ impl From<&torii_grpc::types::schema::Entity> for Entity {
 #[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
 pub struct Entities(pub HashMap<String, Entity>);
 
-impl From<&Vec<torii_grpc::types::schema::Entity>> for Entities {
-    fn from(value: &Vec<torii_grpc::types::schema::Entity>) -> Self {
+impl From<Vec<torii_grpc::types::schema::Entity>> for Entities {
+    fn from(value: Vec<torii_grpc::types::schema::Entity>) -> Self {
         Self(
             value
-                .iter()
+                .into_iter()
                 .enumerate()
                 .map(|(i, e)| {
                     (
@@ -263,8 +282,8 @@ pub struct Call {
     pub calldata: Vec<String>,
 }
 
-impl From<&Call> for starknet::core::types::Call {
-    fn from(value: &Call) -> Self {
+impl From<Call> for starknet::core::types::Call {
+    fn from(value: Call) -> Self {
         Self {
             to: Felt::from_str(value.to.as_str()).unwrap(),
             selector: get_selector_from_name(value.selector.as_str()).unwrap(),
@@ -273,8 +292,8 @@ impl From<&Call> for starknet::core::types::Call {
     }
 }
 
-impl From<&Call> for FunctionCall {
-    fn from(value: &Call) -> Self {
+impl From<Call> for FunctionCall {
+    fn from(value: Call) -> Self {
         Self {
             contract_address: Felt::from_str(value.to.as_str()).unwrap(),
             entry_point_selector: get_selector_from_name(value.selector.as_str()).unwrap(),
@@ -290,8 +309,8 @@ pub enum BlockTag {
     Pending,
 }
 
-impl From<&BlockTag> for starknet::core::types::BlockTag {
-    fn from(value: &BlockTag) -> Self {
+impl From<BlockTag> for starknet::core::types::BlockTag {
+    fn from(value: BlockTag) -> Self {
         match value {
             BlockTag::Latest => starknet::core::types::BlockTag::Latest,
             BlockTag::Pending => starknet::core::types::BlockTag::Pending,
@@ -307,13 +326,13 @@ pub enum BlockId {
     BlockTag(BlockTag),
 }
 
-impl From<&BlockId> for starknet::core::types::BlockId {
-    fn from(value: &BlockId) -> Self {
+impl From<BlockId> for starknet::core::types::BlockId {
+    fn from(value: BlockId) -> Self {
         match value {
             BlockId::Hash(hash) => {
                 starknet::core::types::BlockId::Hash(Felt::from_str(hash.as_str()).unwrap())
             }
-            BlockId::Number(number) => starknet::core::types::BlockId::Number(*number),
+            BlockId::Number(number) => starknet::core::types::BlockId::Number(number),
             BlockId::BlockTag(tag) => starknet::core::types::BlockId::Tag(tag.into()),
         }
     }
@@ -339,12 +358,12 @@ pub struct OrderBy {
     pub direction: OrderDirection,
 }
 
-impl From<&OrderBy> for torii_grpc::types::OrderBy {
-    fn from(value: &OrderBy) -> Self {
+impl From<OrderBy> for torii_grpc::types::OrderBy {
+    fn from(value: OrderBy) -> Self {
         Self {
             model: value.model.clone(),
             member: value.member.clone(),
-            direction: (&value.direction).into(),
+            direction: value.direction.into(),
         }
     }
 }
@@ -356,8 +375,8 @@ pub enum OrderDirection {
     Desc,
 }
 
-impl From<&OrderDirection> for torii_grpc::types::OrderDirection {
-    fn from(value: &OrderDirection) -> Self {
+impl From<OrderDirection> for torii_grpc::types::OrderDirection {
+    fn from(value: OrderDirection) -> Self {
         match value {
             OrderDirection::Asc => Self::Asc,
             OrderDirection::Desc => Self::Desc,
@@ -365,14 +384,14 @@ impl From<&OrderDirection> for torii_grpc::types::OrderDirection {
     }
 }
 
-impl From<&Query> for torii_grpc::types::Query {
-    fn from(value: &Query) -> Self {
+impl From<Query> for torii_grpc::types::Query {
+    fn from(value: Query) -> Self {
         Self {
             limit: value.limit,
             offset: value.offset,
-            clause: value.clause.as_ref().map(|c| c.into()),
+            clause: value.clause.map(|c| c.into()),
             dont_include_hashed_keys: value.dont_include_hashed_keys,
-            order_by: value.order_by.iter().map(|o| o.into()).collect(),
+            order_by: value.order_by.into_iter().map(|o| o.into()).collect(),
             entity_models: value.entity_models.iter().map(|m| m.to_string()).collect(),
             entity_updated_after: value.entity_updated_after,
         }
@@ -407,8 +426,8 @@ pub enum PatternMatching {
     VariableLen = 1,
 }
 
-impl From<&PatternMatching> for torii_grpc::types::PatternMatching {
-    fn from(value: &PatternMatching) -> Self {
+impl From<PatternMatching> for torii_grpc::types::PatternMatching {
+    fn from(value: PatternMatching) -> Self {
         match value {
             PatternMatching::FixedLen => Self::FixedLen,
             PatternMatching::VariableLen => Self::VariableLen,
@@ -423,8 +442,8 @@ pub enum EntityKeysClause {
     Keys(KeysClause),
 }
 
-impl From<&EntityKeysClause> for torii_grpc::types::EntityKeysClause {
-    fn from(value: &EntityKeysClause) -> Self {
+impl From<EntityKeysClause> for torii_grpc::types::EntityKeysClause {
+    fn from(value: EntityKeysClause) -> Self {
         match value {
             EntityKeysClause::HashedKeys(keys) => {
                 Self::HashedKeys(keys.iter().map(|k| Felt::from_str(k.as_str()).unwrap()).collect())
@@ -450,16 +469,18 @@ pub enum MemberValue {
     List(Vec<MemberValue>),
 }
 
-impl From<&MemberValue> for torii_grpc::types::MemberValue {
-    fn from(value: &MemberValue) -> Self {
+impl From<MemberValue> for torii_grpc::types::MemberValue {
+    fn from(value: MemberValue) -> Self {
         match value {
             MemberValue::Primitive(primitive) => {
                 torii_grpc::types::MemberValue::Primitive(primitive.into())
             }
             MemberValue::String(string) => torii_grpc::types::MemberValue::String(string.clone()),
             MemberValue::List(list) => {
-                let values =
-                    list.iter().map(|v| v.into()).collect::<Vec<torii_grpc::types::MemberValue>>();
+                let values = list
+                    .into_iter()
+                    .map(|v| v.into())
+                    .collect::<Vec<torii_grpc::types::MemberValue>>();
                 torii_grpc::types::MemberValue::List(values)
             }
         }
@@ -482,8 +503,8 @@ pub struct CompositeClause {
     pub clauses: Vec<Clause>,
 }
 
-impl From<&ModelKeysClause> for torii_grpc::types::ModelKeysClause {
-    fn from(value: &ModelKeysClause) -> Self {
+impl From<ModelKeysClause> for torii_grpc::types::ModelKeysClause {
+    fn from(value: ModelKeysClause) -> Self {
         Self {
             model: value.model.to_string(),
             keys: value.keys.iter().map(|k| Felt::from_str(k.as_str()).unwrap()).collect(),
@@ -491,8 +512,8 @@ impl From<&ModelKeysClause> for torii_grpc::types::ModelKeysClause {
     }
 }
 
-impl From<&KeysClause> for torii_grpc::types::KeysClause {
-    fn from(value: &KeysClause) -> Self {
+impl From<KeysClause> for torii_grpc::types::KeysClause {
+    fn from(value: KeysClause) -> Self {
         Self {
             keys: value
                 .keys
@@ -500,33 +521,33 @@ impl From<&KeysClause> for torii_grpc::types::KeysClause {
                 .map(|o| o.as_ref().map(|k| Felt::from_str(k.as_str()).unwrap()))
                 .collect(),
             models: value.models.iter().map(|m| m.to_string()).collect(),
-            pattern_matching: (&value.pattern_matching).into(),
+            pattern_matching: value.pattern_matching.into(),
         }
     }
 }
 
-impl From<&MemberClause> for torii_grpc::types::MemberClause {
-    fn from(value: &MemberClause) -> Self {
+impl From<MemberClause> for torii_grpc::types::MemberClause {
+    fn from(value: MemberClause) -> Self {
         Self {
             model: value.model.to_string(),
             member: value.member.to_string(),
-            operator: (&value.operator).into(),
-            value: (&value.value).into(),
+            operator: value.operator.into(),
+            value: value.value.into(),
         }
     }
 }
 
-impl From<&CompositeClause> for torii_grpc::types::CompositeClause {
-    fn from(value: &CompositeClause) -> Self {
+impl From<CompositeClause> for torii_grpc::types::CompositeClause {
+    fn from(value: CompositeClause) -> Self {
         Self {
-            operator: (&value.operator).into(),
-            clauses: value.clauses.iter().map(|c| c.into()).collect(),
+            operator: value.operator.into(),
+            clauses: value.clauses.into_iter().map(|c| c.into()).collect(),
         }
     }
 }
 
-impl From<&Clause> for torii_grpc::types::Clause {
-    fn from(value: &Clause) -> Self {
+impl From<Clause> for torii_grpc::types::Clause {
+    fn from(value: Clause) -> Self {
         match value {
             Clause::Keys(keys) => Self::Keys(keys.into()),
             Clause::Member(member) => Self::Member(member.into()),
@@ -542,8 +563,8 @@ pub enum LogicalOperator {
     Or,
 }
 
-impl From<&LogicalOperator> for torii_grpc::types::LogicalOperator {
-    fn from(value: &LogicalOperator) -> Self {
+impl From<LogicalOperator> for torii_grpc::types::LogicalOperator {
+    fn from(value: LogicalOperator) -> Self {
         match value {
             LogicalOperator::And => Self::And,
             LogicalOperator::Or => Self::Or,
@@ -564,8 +585,8 @@ pub enum ComparisonOperator {
     NotIn,
 }
 
-impl From<&ComparisonOperator> for torii_grpc::types::ComparisonOperator {
-    fn from(value: &ComparisonOperator) -> Self {
+impl From<ComparisonOperator> for torii_grpc::types::ComparisonOperator {
+    fn from(value: ComparisonOperator) -> Self {
         match value {
             ComparisonOperator::Eq => Self::Eq,
             ComparisonOperator::Neq => Self::Neq,
@@ -586,12 +607,9 @@ pub struct Value {
     pub value_type: ValueType,
 }
 
-impl From<&Value> for torii_grpc::types::Value {
-    fn from(value: &Value) -> Self {
-        Self {
-            primitive_type: (&value.primitive_type).into(),
-            value_type: (&value.value_type).into(),
-        }
+impl From<Value> for torii_grpc::types::Value {
+    fn from(value: Value) -> Self {
+        Self { primitive_type: value.primitive_type.into(), value_type: value.value_type.into() }
     }
 }
 
@@ -605,8 +623,8 @@ pub enum ValueType {
     Bytes(Vec<u8>),
 }
 
-impl From<&ValueType> for torii_grpc::types::ValueType {
-    fn from(value: &ValueType) -> Self {
+impl From<ValueType> for torii_grpc::types::ValueType {
+    fn from(value: ValueType) -> Self {
         match &value {
             ValueType::String(s) => Self::String(s.to_string()),
             ValueType::Int(i) => Self::Int(*i),
@@ -638,30 +656,36 @@ pub enum Primitive {
     EthAddress(Option<String>),
 }
 
-impl From<&Primitive> for dojo_types::primitive::Primitive {
-    fn from(value: &Primitive) -> Self {
+impl From<Primitive> for dojo_types::primitive::Primitive {
+    fn from(value: Primitive) -> Self {
         match value {
-            Primitive::I8(Some(value)) => Self::I8(Some(*value)),
-            Primitive::I16(Some(value)) => Self::I16(Some(*value)),
-            Primitive::I32(Some(value)) => Self::I32(Some(*value)),
-            Primitive::I64(Some(value)) => Self::I64(Some(*value)),
-            Primitive::I128(Some(value)) => Self::I128(Some(i128::from_str(value).unwrap())),
-            Primitive::U8(Some(value)) => Self::U8(Some(*value)),
-            Primitive::U16(Some(value)) => Self::U16(Some(*value)),
-            Primitive::U32(Some(value)) => Self::U32(Some(*value)),
-            Primitive::U64(Some(value)) => Self::U64(Some(*value)),
-            Primitive::U128(Some(value)) => Self::U128(Some(u128::from_str(value).unwrap())),
+            Primitive::I8(Some(value)) => Self::I8(Some(value)),
+            Primitive::I16(Some(value)) => Self::I16(Some(value)),
+            Primitive::I32(Some(value)) => Self::I32(Some(value)),
+            Primitive::I64(Some(value)) => Self::I64(Some(value)),
+            Primitive::I128(Some(value)) => {
+                Self::I128(Some(i128::from_str(value.as_str()).unwrap()))
+            }
+            Primitive::U8(Some(value)) => Self::U8(Some(value)),
+            Primitive::U16(Some(value)) => Self::U16(Some(value)),
+            Primitive::U32(Some(value)) => Self::U32(Some(value)),
+            Primitive::U64(Some(value)) => Self::U64(Some(value)),
+            Primitive::U128(Some(value)) => {
+                Self::U128(Some(u128::from_str(value.as_str()).unwrap()))
+            }
             Primitive::U256(Some(value)) => Self::U256(Some(U256::from_be_hex(value.as_str()))),
-            Primitive::Bool(Some(value)) => Self::Bool(Some(*value)),
-            Primitive::Felt252(Some(value)) => Self::Felt252(Some(Felt::from_str(value).unwrap())),
+            Primitive::Bool(Some(value)) => Self::Bool(Some(value)),
+            Primitive::Felt252(Some(value)) => {
+                Self::Felt252(Some(Felt::from_str(value.as_str()).unwrap()))
+            }
             Primitive::ClassHash(Some(value)) => {
-                Self::ClassHash(Some(Felt::from_str(value).unwrap()))
+                Self::ClassHash(Some(Felt::from_str(value.as_str()).unwrap()))
             }
             Primitive::ContractAddress(Some(value)) => {
-                Self::ContractAddress(Some(Felt::from_str(value).unwrap()))
+                Self::ContractAddress(Some(Felt::from_str(value.as_str()).unwrap()))
             }
             Primitive::EthAddress(Some(value)) => {
-                Self::EthAddress(Some(Felt::from_str(value).unwrap()))
+                Self::EthAddress(Some(Felt::from_str(value.as_str()).unwrap()))
             }
             _ => unimplemented!(),
         }
