@@ -52,7 +52,8 @@ use torii_relay::types::Message;
 use torii_typed_data::TypedData;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
-    BlockId, CArray, Call, Controller, Entity, EntityKeysClause, Error, Event, IndexerUpdate, Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance, ToriiClient, Ty, WorldMetadata
+    BlockId, CArray, Call, Controller, Entity, EntityKeysClause, Error, Event, IndexerUpdate, Page,
+    Policy, Query, Result, Signature, Struct, Token, TokenBalance, ToriiClient, Ty, WorldMetadata,
 };
 use url::Url;
 
@@ -874,8 +875,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
                 while let Some(Ok((id, entity))) = rcv.next().await {
                     subscription_id_clone.store(id, Ordering::SeqCst);
                     let key: types::FieldElement = entity.hashed_keys.into();
-                    let models: Vec<Struct> =
-                        entity.models.into_iter().map(|e| e.into()).collect();
+                    let models: Vec<Struct> = entity.models.into_iter().map(|e| e.into()).collect();
                     callback(key, models.into());
                 }
             }
@@ -975,8 +975,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
                 while let Some(Ok((id, entity))) = rcv.next().await {
                     subscription_id_clone.store(id, Ordering::SeqCst);
                     let key: types::FieldElement = entity.hashed_keys.into();
-                    let models: Vec<Struct> =
-                        entity.models.into_iter().map(|e| e.into()).collect();
+                    let models: Vec<Struct> = entity.models.into_iter().map(|e| e.into()).collect();
                     callback(key, models.into());
                 }
             }
@@ -1127,7 +1126,11 @@ pub unsafe extern "C" fn client_tokens(
 
     let limit = if limit == 0 { None } else { Some(limit) };
     let offset = if offset == 0 { None } else { Some(offset) };
-    let cursor = if cursor.is_null() { None } else { Some(unsafe { std::ffi::CStr::from_ptr(cursor).to_string_lossy().into_owned() }) };
+    let cursor = if cursor.is_null() {
+        None
+    } else {
+        Some(unsafe { std::ffi::CStr::from_ptr(cursor).to_string_lossy().into_owned() })
+    };
 
     let tokens = match RUNTIME.block_on((*client).inner.tokens(
         contract_addresses,
@@ -1267,21 +1270,13 @@ pub unsafe extern "C" fn client_token_balances(
         let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
         ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
     };
-    
+
     let token_balances = match RUNTIME.block_on((*client).inner.token_balances(
         account_addresses,
         contract_addresses,
         token_ids,
-        if limit == 0 {
-            None
-        } else {
-            Some(limit)
-        },
-        if offset == 0 {
-            None
-        } else {
-            Some(offset)
-        },
+        if limit == 0 { None } else { Some(limit) },
+        if offset == 0 { None } else { Some(offset) },
         if cursor.is_null() {
             None
         } else {
@@ -1821,8 +1816,7 @@ pub unsafe extern "C" fn account_new(
         Err(e) => return Result::Err(e.into()),
     };
 
-    let signer =
-        LocalWallet::from_signing_key(SigningKey::from_secret_scalar(private_key.into()));
+    let signer = LocalWallet::from_signing_key(SigningKey::from_secret_scalar(private_key.into()));
     let account = SingleOwnerAccount::new(
         (*rpc).0.clone(),
         signer,
@@ -1849,14 +1843,14 @@ pub unsafe extern "C" fn starknet_call(
     call: Call,
     block_id: BlockId,
 ) -> Result<CArray<types::FieldElement>> {
-    let res =
-        match RUNTIME.block_on((*provider).0.call::<FunctionCall, starknet::core::types::BlockId>(
-            call.into(),
-            block_id.into(),
-        )) {
-            Ok(res) => res,
-            Err(e) => return Result::Err(e.into()),
-        };
+    let res = match RUNTIME.block_on(
+        (*provider)
+            .0
+            .call::<FunctionCall, starknet::core::types::BlockId>(call.into(), block_id.into()),
+    ) {
+        Ok(res) => res,
+        Err(e) => return Result::Err(e.into()),
+    };
 
     Result::Ok(res.into())
 }

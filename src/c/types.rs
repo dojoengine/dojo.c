@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString, c_char};
+use std::ffi::{c_char, CStr, CString};
 
 use crypto_bigint::Encoding;
 use starknet::core::utils::get_selector_from_name;
@@ -1130,7 +1130,7 @@ impl From<ModelKeysClause> for torii_grpc::types::ModelKeysClause {
 
         torii_grpc::types::ModelKeysClause {
             model: unsafe { CStr::from_ptr(val.model).to_string_lossy().to_string() },
-            keys
+            keys,
         }
     }
 }
@@ -1350,11 +1350,7 @@ impl From<Event> for torii_grpc::types::Event {
         let keys: Vec<_> = val.keys.into();
         let data: Vec<_> = val.data.into();
 
-        torii_grpc::types::Event {
-            keys,
-            data,
-            transaction_hash: val.transaction_hash.into(),
-        }
+        torii_grpc::types::Event { keys, data, transaction_hash: val.transaction_hash.into() }
     }
 }
 
