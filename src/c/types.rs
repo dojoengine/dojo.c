@@ -81,7 +81,14 @@ impl<T> From<COption<T>> for Option<T> {
 
 #[derive(Debug, Clone)]
 #[repr(C)]
-pub struct Policy {
+pub enum Policy {
+    Call(CallPolicy),
+    TypedData(*const c_char),
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct CallPolicy {
     pub target: FieldElement,
     pub method: *const c_char,
     pub description: *const c_char,
@@ -97,7 +104,7 @@ impl From<Policy> for crate::types::Policy {
     }
 }
 
-impl From<Policy> for account_sdk::account::session::policy::CallPolicy {
+impl From<Policy> for account_sdk::account::session::policy::Policy {
     fn from(val: Policy) -> Self {
         account_sdk::account::session::policy::CallPolicy {
             contract_address: val.target.into(),

@@ -17,7 +17,13 @@ use torii_client::client::Client;
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Policy {
+pub enum Policy {
+    Call(CallPolicy),
+    TypedData(account_sdk::account::session::policy::TypedDataPolicy),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CallPolicy {
     pub target: Felt,
     pub method: String,
     pub description: String,

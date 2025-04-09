@@ -663,10 +663,27 @@ typedef struct BlockId {
   };
 } BlockId;
 
-typedef struct Policy {
+typedef struct CallPolicy {
   struct FieldElement target;
   const char *method;
   const char *description;
+} CallPolicy;
+
+typedef enum Policy_Tag {
+  Call,
+  TypedData,
+} Policy_Tag;
+
+typedef struct Policy {
+  Policy_Tag tag;
+  union {
+    struct {
+      struct CallPolicy call;
+    };
+    struct {
+      const char *typed_data;
+    };
+  };
 } Policy;
 
 typedef struct Controller {

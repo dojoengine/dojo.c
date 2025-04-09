@@ -411,10 +411,19 @@ cdef extern from *:
     uint64_t number;
     BlockTag block_tag;
 
-  cdef struct Policy:
+  cdef struct CallPolicy:
     FieldElement target;
     const char *method;
     const char *description;
+
+  cdef enum Policy_Tag:
+    Call,
+    TypedData,
+
+  cdef struct Policy:
+    Policy_Tag tag;
+    CallPolicy call;
+    const char *typed_data;
 
   cdef struct Controller:
     FieldElement address;
