@@ -13,8 +13,8 @@ struct ControllerAccount;
 struct Call;
 struct Controller;
 struct Entity;
-struct COptionFieldElement;
 struct OrderBy;
+struct COptionFieldElement;
 struct CHashItemFieldElementModelMetadata;
 struct Subscription;
 struct EntityKeysClause;
@@ -52,6 +52,11 @@ typedef enum OrderDirection {
   Asc,
   Desc,
 } OrderDirection;
+
+typedef enum PaginationDirection {
+  Forward,
+  Backward,
+} PaginationDirection;
 
 typedef enum PatternMatching {
   FixedLen = 0,
@@ -183,22 +188,53 @@ typedef struct CArrayEntity {
   uintptr_t data_len;
 } CArrayEntity;
 
-typedef enum ResultCArrayEntity_Tag {
-  OkCArrayEntity,
-  ErrCArrayEntity,
-} ResultCArrayEntity_Tag;
+typedef enum COptionc_char_Tag {
+  Somec_char,
+  Nonec_char,
+} COptionc_char_Tag;
 
-typedef struct ResultCArrayEntity {
-  ResultCArrayEntity_Tag tag;
+typedef struct COptionc_char {
+  COptionc_char_Tag tag;
   union {
     struct {
-      struct CArrayEntity ok;
+      const char *some;
+    };
+  };
+} COptionc_char;
+
+typedef struct PageEntity {
+  struct CArrayEntity items;
+  struct COptionc_char next_cursor;
+} PageEntity;
+
+typedef enum ResultPageEntity_Tag {
+  OkPageEntity,
+  ErrPageEntity,
+} ResultPageEntity_Tag;
+
+typedef struct ResultPageEntity {
+  ResultPageEntity_Tag tag;
+  union {
+    struct {
+      struct PageEntity ok;
     };
     struct {
       struct Error err;
     };
   };
-} ResultCArrayEntity;
+} ResultPageEntity;
+
+typedef struct CArrayOrderBy {
+  struct OrderBy *data;
+  uintptr_t data_len;
+} CArrayOrderBy;
+
+typedef struct Pagination {
+  struct COptionc_char cursor;
+  uint32_t limit;
+  enum PaginationDirection direction;
+  struct CArrayOrderBy order_by;
+} Pagination;
 
 typedef struct CArrayCOptionFieldElement {
   struct COptionFieldElement *data;
@@ -371,19 +407,12 @@ typedef struct COptionClause {
   };
 } COptionClause;
 
-typedef struct CArrayOrderBy {
-  struct OrderBy *data;
-  uintptr_t data_len;
-} CArrayOrderBy;
-
 typedef struct Query {
-  uint32_t limit;
-  uint32_t offset;
+  struct Pagination pagination;
   struct COptionClause clause;
-  bool dont_include_hashed_keys;
-  struct CArrayOrderBy order_by;
-  struct CArrayc_char entity_models;
-  uint64_t entity_updated_after;
+  bool no_hashed_keys;
+  struct CArrayc_char models;
+  bool historical;
 } Query;
 
 typedef struct CArrayCHashItemFieldElementModelMetadata {
@@ -450,20 +479,6 @@ typedef struct CArrayToken {
   struct Token *data;
   uintptr_t data_len;
 } CArrayToken;
-
-typedef enum COptionc_char_Tag {
-  Somec_char,
-  Nonec_char,
-} COptionc_char_Tag;
-
-typedef struct COptionc_char {
-  COptionc_char_Tag tag;
-  union {
-    struct {
-      const char *some;
-    };
-  };
-} COptionc_char;
 
 typedef struct PageToken {
   struct CArrayToken items;
@@ -680,6 +695,12 @@ typedef struct Entity {
   struct CArrayStruct models;
 } Entity;
 
+typedef struct OrderBy {
+  const char *model;
+  const char *member;
+  enum OrderDirection direction;
+} OrderBy;
+
 typedef enum COptionFieldElement_Tag {
   SomeFieldElement,
   NoneFieldElement,
@@ -693,12 +714,6 @@ typedef struct COptionFieldElement {
     };
   };
 } COptionFieldElement;
-
-typedef struct OrderBy {
-  const char *model;
-  const char *member;
-  enum OrderDirection direction;
-} OrderBy;
 
 typedef struct CArrayMember {
   struct Member *data;
@@ -1019,9 +1034,7 @@ struct ResultCArrayController client_controllers(struct ToriiClient *client,
  * # Returns
  * Result containing array of matching entities or error
  */
-struct ResultCArrayEntity client_entities(struct ToriiClient *client,
-                                          struct Query query,
-                                          bool historical);
+struct ResultPageEntity client_entities(struct ToriiClient *client, struct Query query);
 
 /**
  * Retrieves event messages matching the given query
@@ -1034,9 +1047,7 @@ struct ResultCArrayEntity client_entities(struct ToriiClient *client,
  * # Returns
  * Result containing array of matching event message entities or error
  */
-struct ResultCArrayEntity client_event_messages(struct ToriiClient *client,
-                                                struct Query query,
-                                                bool historical);
+struct ResultPageEntity client_event_messages(struct ToriiClient *client, struct Query query);
 
 /**
  * Gets the world metadata for the client
@@ -1091,7 +1102,6 @@ struct Resultbool client_update_entity_subscription(struct ToriiClient *client,
  * * `client` - Pointer to ToriiClient instance
  * * `clauses` - Array of entity key clauses to filter updates
  * * `clauses_len` - Length of clauses array
- * * `historical` - Whether to include historical messages
  * * `callback` - Function called when updates occur
  *
  * # Returns
@@ -1111,7 +1121,6 @@ struct ResultSubscription client_on_event_message_update(struct ToriiClient *cli
  * * `subscription` - Pointer to existing Subscription
  * * `clauses` - New array of entity key clauses
  * * `clauses_len` - Length of new clauses array
- * * `historical` - Whether to include historical messages
  *
  * # Returns
  * Result containing success boolean or error
@@ -1145,6 +1154,10 @@ struct ResultSubscription client_on_starknet_event(struct ToriiClient *client,
  * * `client` - Pointer to ToriiClient instance
  * * `contract_addresses` - Array of contract addresses
  * * `contract_addresses_len` - Length of addresses array
+ * * `token_ids` - Array of token ids
+ * * `token_ids_len` - Length of token ids array
+ * * `limit` - Maximum number of tokens to return
+ * * `cursor` - Cursor to start from
  *
  * # Returns
  * Result containing array of Token information or error
@@ -1155,8 +1168,7 @@ struct ResultPageToken client_tokens(struct ToriiClient *client,
                                      const struct U256 *token_ids,
                                      uintptr_t token_ids_len,
                                      uint32_t limit,
-                                     uint32_t offset,
-                                     const char *cursor);
+                                     struct COptionc_char cursor);
 
 /**
  * Subscribes to token updates
@@ -1185,6 +1197,10 @@ struct ResultSubscription client_on_token_update(struct ToriiClient *client,
  * * `contract_addresses_len` - Length of contract addresses array
  * * `account_addresses` - Array of account addresses
  * * `account_addresses_len` - Length of account addresses array
+ * * `token_ids` - Array of token ids
+ * * `token_ids_len` - Length of token ids array
+ * * `limit` - Maximum number of token balances to return
+ * * `cursor` - Cursor to start from
  *
  * # Returns
  * Result containing array of TokenBalance information or error
@@ -1197,8 +1213,7 @@ struct ResultPageTokenBalance client_token_balances(struct ToriiClient *client,
                                                     const struct U256 *token_ids,
                                                     uintptr_t token_ids_len,
                                                     uint32_t limit,
-                                                    uint32_t offset,
-                                                    const char *cursor);
+                                                    struct COptionc_char cursor);
 
 /**
  * Subscribes to indexer updates
