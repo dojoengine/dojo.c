@@ -616,6 +616,9 @@ impl ToriiClient {
     ///
     /// # Parameters
     /// * `contract_addresses` - Array of contract addresses as hex strings
+    /// * `token_ids` - Array of token ids
+    /// * `limit` - Maximum number of tokens to return
+    /// * `cursor` - Cursor to start from
     ///
     /// # Returns
     /// Result containing token information or error
@@ -625,7 +628,6 @@ impl ToriiClient {
         contract_addresses: Vec<String>,
         token_ids: Vec<WasmU256>,
         limit: Option<u32>,
-        offset: Option<u32>,
         cursor: Option<String>,
     ) -> Result<Tokens, JsValue> {
         let contract_addresses = contract_addresses
@@ -638,7 +640,7 @@ impl ToriiClient {
 
         let tokens = self
             .inner
-            .tokens(contract_addresses, token_ids, limit, offset, cursor)
+            .tokens(contract_addresses, token_ids, limit, cursor)
             .await
             .map_err(|e| JsValue::from(format!("failed to get tokens: {e}")))?;
 
@@ -723,6 +725,9 @@ impl ToriiClient {
     /// # Parameters
     /// * `contract_addresses` - Array of contract addresses as hex strings
     /// * `account_addresses` - Array of account addresses as hex strings
+    /// * `token_ids` - Array of token ids
+    /// * `limit` - Maximum number of token balances to return
+    /// * `cursor` - Cursor to start from
     ///
     /// # Returns
     /// Result containing token balances or error
@@ -733,7 +738,6 @@ impl ToriiClient {
         account_addresses: Vec<String>,
         token_ids: Vec<WasmU256>,
         limit: Option<u32>,
-        offset: Option<u32>,
         cursor: Option<String>,
     ) -> Result<TokenBalances, JsValue> {
         let account_addresses = account_addresses
@@ -752,7 +756,7 @@ impl ToriiClient {
 
         let token_balances = self
             .inner
-            .token_balances(account_addresses, contract_addresses, token_ids, limit, offset, cursor)
+            .token_balances(account_addresses, contract_addresses, token_ids, limit, cursor)
             .await
             .map_err(|e| JsValue::from(format!("failed to get token balances: {e}")))?;
 
@@ -767,14 +771,14 @@ impl ToriiClient {
     /// # Returns
     /// Result containing matching entities or error
     #[wasm_bindgen(js_name = getEntities)]
-    pub async fn get_entities(&self, query: Query, historical: bool) -> Result<Entities, JsValue> {
+    pub async fn get_entities(&self, query: Query) -> Result<Entities, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let results = self.inner.entities(query.into(), historical).await;
+        let results = self.inner.entities(query.into()).await;
 
         match results {
-            Ok(entities) => Ok(entities.into()),
+            Ok(entities) => Ok(Entities(entities.into())),
             Err(err) => Err(JsValue::from(format!("failed to get entities: {err}"))),
         }
     }
@@ -783,7 +787,7 @@ impl ToriiClient {
     ///
     /// # Parameters
     /// * `limit` - Maximum number of entities to return
-    /// * `offset` - Number of entities to skip
+    /// * `cursor` - Cursor to start from
     ///
     /// # Returns
     /// Result containing paginated entities or error
@@ -791,30 +795,29 @@ impl ToriiClient {
     pub async fn get_all_entities(
         &self,
         limit: u32,
-        offset: u32,
-        historical: bool,
+        cursor: Option<String>,
     ) -> Result<Entities, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let results = self
             .inner
-            .entities(
-                torii_grpc::types::Query {
+            .entities(torii_grpc::types::Query {
+                pagination: torii_grpc::types::Pagination {
                     limit,
-                    offset,
-                    clause: None,
-                    dont_include_hashed_keys: false,
+                    cursor,
+                    direction: torii_grpc::types::PaginationDirection::Forward,
                     order_by: vec![],
-                    entity_models: vec![],
-                    entity_updated_after: 0,
                 },
-                historical,
-            )
+                no_hashed_keys: false,
+                models: vec![],
+                historical: false,
+                clause: None,
+            })
             .await;
 
         match results {
-            Ok(entities) => Ok(entities.into()),
+            Ok(entities) => Ok(Entities(entities.into())),
             Err(err) => Err(JsValue::from(format!("failed to get entities: {err}"))),
         }
     }
@@ -823,23 +826,18 @@ impl ToriiClient {
     ///
     /// # Parameters
     /// * `query` - Query parameters for filtering messages
-    /// * `historical` - Whether to include historical messages
     ///
     /// # Returns
     /// Result containing matching event messages or error
     #[wasm_bindgen(js_name = getEventMessages)]
-    pub async fn get_event_messages(
-        &self,
-        query: Query,
-        historical: bool,
-    ) -> Result<Entities, JsValue> {
+    pub async fn get_event_messages(&self, query: Query) -> Result<Entities, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let results = self.inner.event_messages(query.into(), historical).await;
+        let results = self.inner.event_messages(query.into()).await;
 
         match results {
-            Ok(event_messages) => Ok(event_messages.into()),
+            Ok(event_messages) => Ok(Entities(event_messages.into())),
             Err(err) => Err(JsValue::from(format!("failed to get event_messages: {err}"))),
         }
     }

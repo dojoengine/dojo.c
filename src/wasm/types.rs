@@ -26,7 +26,7 @@ where
     fn from(value: torii_grpc::types::Page<T>) -> Self {
         Self {
             items: value.items.into_iter().map(|t| t.into()).collect(),
-            next_cursor: if value.next_cursor.is_empty() { None } else { Some(value.next_cursor) },
+            next_cursor: value.next_cursor,
         }
     }
 }
@@ -157,14 +157,6 @@ pub struct ClientConfig {
     pub world_address: String,
 }
 
-#[wasm_bindgen]
-impl ClientConfig {
-    #[wasm_bindgen(constructor)]
-    pub fn new(torii_url: String, relay_url: String, world_address: String) -> Self {
-        Self { torii_url, relay_url, world_address }
-    }
-}
-
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
 pub struct Ty {
@@ -251,28 +243,7 @@ impl From<torii_grpc::types::schema::Entity> for Entity {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
-pub struct Entities(pub HashMap<String, Entity>);
-
-impl From<Vec<torii_grpc::types::schema::Entity>> for Entities {
-    fn from(value: Vec<torii_grpc::types::schema::Entity>) -> Self {
-        Self(
-            value
-                .into_iter()
-                .enumerate()
-                .map(|(i, e)| {
-                    (
-                        if e.hashed_keys != Felt::ZERO {
-                            format!("{:#x}", e.hashed_keys)
-                        } else {
-                            format!("{:#x}", i)
-                        },
-                        e.into(),
-                    )
-                })
-                .collect(),
-        )
-    }
-}
+pub struct Entities(pub Page<Entity>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -341,13 +312,47 @@ impl From<BlockId> for starknet::core::types::BlockId {
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Query {
-    pub limit: u32,
-    pub offset: u32,
+    pub pagination: Pagination,
     pub clause: Option<Clause>,
-    pub dont_include_hashed_keys: bool,
+    pub no_hashed_keys: bool,
+    pub models: Vec<String>,
+    pub historical: bool,
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Pagination {
+    pub limit: u32,
+    pub cursor: Option<String>,
+    pub direction: PaginationDirection,
     pub order_by: Vec<OrderBy>,
-    pub entity_models: Vec<String>,
-    pub entity_updated_after: u64,
+}
+
+impl From<Pagination> for torii_grpc::types::Pagination {
+    fn from(value: Pagination) -> Self {
+        Self {
+            limit: value.limit,
+            cursor: value.cursor.map(|c| c.to_string()),
+            direction: value.direction.into(),
+            order_by: value.order_by.into_iter().map(|o| o.into()).collect(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum PaginationDirection {
+    Forward,
+    Backward,
+}
+
+impl From<PaginationDirection> for torii_grpc::types::PaginationDirection {
+    fn from(value: PaginationDirection) -> Self {
+        match value {
+            PaginationDirection::Forward => Self::Forward,
+            PaginationDirection::Backward => Self::Backward,
+        }
+    }
 }
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
@@ -387,13 +392,11 @@ impl From<OrderDirection> for torii_grpc::types::OrderDirection {
 impl From<Query> for torii_grpc::types::Query {
     fn from(value: Query) -> Self {
         Self {
-            limit: value.limit,
-            offset: value.offset,
+            pagination: value.pagination.into(),
             clause: value.clause.map(|c| c.into()),
-            dont_include_hashed_keys: value.dont_include_hashed_keys,
-            order_by: value.order_by.into_iter().map(|o| o.into()).collect(),
-            entity_models: value.entity_models.iter().map(|m| m.to_string()).collect(),
-            entity_updated_after: value.entity_updated_after,
+            no_hashed_keys: value.no_hashed_keys,
+            models: value.models,
+            historical: value.historical,
         }
     }
 }

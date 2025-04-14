@@ -52,7 +52,9 @@ use torii_relay::types::Message;
 use torii_typed_data::TypedData;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
-    BlockId, CArray, COption, Call, Controller, Entity, EntityKeysClause, Error, Event, IndexerUpdate, Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance, ToriiClient, Ty, WorldMetadata
+    BlockId, CArray, COption, Call, Controller, Entity, EntityKeysClause, Error, Event,
+    IndexerUpdate, Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance,
+    ToriiClient, Ty, WorldMetadata,
 };
 use url::Url;
 
@@ -1114,12 +1116,16 @@ pub unsafe extern "C" fn client_tokens(
     };
 
     let limit = if limit == 0 { None } else { Some(limit) };
-    let tokens = match RUNTIME.block_on((*client).inner.tokens(
-        contract_addresses,
-        token_ids,
-        limit,
-        cursor.map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() }).into(),
-    )) {
+    let tokens = match RUNTIME.block_on(
+        (*client).inner.tokens(
+            contract_addresses,
+            token_ids,
+            limit,
+            cursor
+                .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
+                .into(),
+        ),
+    ) {
         Ok(tokens) => tokens,
         Err(e) => return Result::Err(e.into()),
     };
@@ -1255,13 +1261,17 @@ pub unsafe extern "C" fn client_token_balances(
         ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
     };
 
-    let token_balances = match RUNTIME.block_on((*client).inner.token_balances(
-        account_addresses,
-        contract_addresses,
-        token_ids,
-        if limit == 0 { None } else { Some(limit) },
-        cursor.map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() }).into(),
-    )) {
+    let token_balances = match RUNTIME.block_on(
+        (*client).inner.token_balances(
+            account_addresses,
+            contract_addresses,
+            token_ids,
+            if limit == 0 { None } else { Some(limit) },
+            cursor
+                .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
+                .into(),
+        ),
+    ) {
         Ok(balances) => balances,
         Err(e) => return Result::Err(e.into()),
     };

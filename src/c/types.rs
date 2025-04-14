@@ -19,7 +19,10 @@ where
         let items = val.items.into_iter().map(|t| t.into()).collect::<Vec<U>>();
         Page {
             items: items.into(),
-            next_cursor: val.next_cursor.map(|c| CString::new(c).unwrap().into_raw() as *const c_char).into(),
+            next_cursor: val
+                .next_cursor
+                .map(|c| CString::new(c).unwrap().into_raw() as *const c_char)
+                .into(),
         }
     }
 }
@@ -450,7 +453,10 @@ pub struct Pagination {
 impl From<Pagination> for torii_grpc::types::Pagination {
     fn from(val: Pagination) -> Self {
         torii_grpc::types::Pagination {
-            cursor: val.cursor.map(|c| unsafe { CStr::from_ptr(c).to_string_lossy().to_string() }).into(),
+            cursor: val
+                .cursor
+                .map(|c| unsafe { CStr::from_ptr(c).to_string_lossy().to_string() })
+                .into(),
             limit: val.limit,
             direction: val.direction.into(),
             order_by: val.order_by.into(),
