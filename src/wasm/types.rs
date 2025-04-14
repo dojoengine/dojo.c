@@ -220,24 +220,17 @@ impl From<Struct> for Model {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
-pub struct Entity(pub HashMap<String, Model>);
+pub struct Entity {
+    pub hashed_keys: String,
+    pub models: HashMap<String, Model>,
+}
 
 impl From<torii_grpc::types::schema::Entity> for Entity {
     fn from(value: torii_grpc::types::schema::Entity) -> Self {
-        let mut seen_models = HashMap::new();
-        Self(
-            value
-                .models
-                .into_iter()
-                .map(|m| {
-                    let count = seen_models.entry(m.name.clone()).or_insert(0);
-                    let name =
-                        if *count == 0 { m.name.clone() } else { format!("{}-{}", m.name, count) };
-                    *count += 1;
-                    (name, m.into())
-                })
-                .collect(),
-        )
+        Self {
+            hashed_keys: format!("{:#x}", value.hashed_keys),
+            models: value.models.into_iter().map(|m| (m.name.clone(), m.into())).collect(),
+        }
     }
 }
 
