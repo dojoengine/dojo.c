@@ -19,11 +19,7 @@ where
         let items = val.items.into_iter().map(|t| t.into()).collect::<Vec<U>>();
         Page {
             items: items.into(),
-            next_cursor: if val.next_cursor.is_empty() {
-                COption::None
-            } else {
-                COption::Some(CString::new(val.next_cursor).unwrap().into_raw())
-            },
+            next_cursor: val.next_cursor.map(|c| CString::new(c).unwrap().into_raw() as *const c_char).into(),
         }
     }
 }
@@ -435,15 +431,68 @@ impl From<starknet::core::types::Felt> for FieldElement {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Query {
-    pub limit: u32,
-    pub offset: u32,
+    pub pagination: Pagination,
     pub clause: COption<Clause>,
-    pub dont_include_hashed_keys: bool,
-    pub order_by: CArray<OrderBy>,
-    pub entity_models: CArray<*const c_char>,
-    pub entity_updated_after: u64,
+    pub no_hashed_keys: bool,
+    pub models: CArray<*const c_char>,
+    pub historical: bool,
 }
 
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct Pagination {
+    pub cursor: COption<*const c_char>,
+    pub limit: u32,
+    pub direction: PaginationDirection,
+    pub order_by: CArray<OrderBy>,
+}
+
+impl From<Pagination> for torii_grpc::types::Pagination {
+    fn from(val: Pagination) -> Self {
+        torii_grpc::types::Pagination {
+            cursor: val.cursor.map(|c| unsafe { CStr::from_ptr(c).to_string_lossy().to_string() }).into(),
+            limit: val.limit,
+            direction: val.direction.into(),
+            order_by: val.order_by.into(),
+        }
+    }
+}
+
+impl From<torii_grpc::types::Pagination> for Pagination {
+    fn from(val: torii_grpc::types::Pagination) -> Self {
+        Pagination {
+            cursor: val.cursor.map(|c| CString::new(c).unwrap().into_raw() as *const c_char).into(),
+            limit: val.limit,
+            direction: val.direction.into(),
+            order_by: val.order_by.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub enum PaginationDirection {
+    Forward,
+    Backward,
+}
+
+impl From<PaginationDirection> for torii_grpc::types::PaginationDirection {
+    fn from(val: PaginationDirection) -> Self {
+        match val {
+            PaginationDirection::Forward => torii_grpc::types::PaginationDirection::Forward,
+            PaginationDirection::Backward => torii_grpc::types::PaginationDirection::Backward,
+        }
+    }
+}
+
+impl From<torii_grpc::types::PaginationDirection> for PaginationDirection {
+    fn from(val: torii_grpc::types::PaginationDirection) -> Self {
+        match val {
+            torii_grpc::types::PaginationDirection::Forward => PaginationDirection::Forward,
+            torii_grpc::types::PaginationDirection::Backward => PaginationDirection::Backward,
+        }
+    }
+}
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct OrderBy {
@@ -980,62 +1029,29 @@ impl From<dojo_types::primitive::Primitive> for Primitive {
 
 impl From<Query> for torii_grpc::types::Query {
     fn from(val: Query) -> Self {
-        let order_by: Vec<torii_grpc::types::OrderBy> = val.order_by.into();
-        let entity_models: Vec<String> = CStringArray(val.entity_models).into();
+        let models: Vec<String> = CStringArray(val.models).into();
+        let clause = val.clause.map(|c| c.into()).into();
 
-        match val.clause {
-            COption::Some(clause) => {
-                let clause = clause.into();
-                torii_grpc::types::Query {
-                    limit: val.limit,
-                    offset: val.offset,
-                    clause: Option::Some(clause),
-                    dont_include_hashed_keys: val.dont_include_hashed_keys,
-                    order_by,
-                    entity_models,
-                    entity_updated_after: val.entity_updated_after,
-                }
-            }
-            COption::None => torii_grpc::types::Query {
-                limit: val.limit,
-                offset: val.offset,
-                clause: Option::None,
-                dont_include_hashed_keys: val.dont_include_hashed_keys,
-                order_by,
-                entity_models,
-                entity_updated_after: val.entity_updated_after,
-            },
+        torii_grpc::types::Query {
+            pagination: val.pagination.into(),
+            clause,
+            models,
+            no_hashed_keys: val.no_hashed_keys,
+            historical: val.historical,
         }
     }
 }
 
 impl From<torii_grpc::types::Query> for Query {
     fn from(val: torii_grpc::types::Query) -> Self {
-        let order_by = val.order_by.into_iter().map(|o| o.into()).collect::<Vec<OrderBy>>();
-        let entity_models = StringVec(val.entity_models).into();
+        let models = StringVec(val.models).into();
 
-        match val.clause {
-            Option::Some(clause) => {
-                let clause = clause.into();
-                Query {
-                    limit: val.limit,
-                    offset: val.offset,
-                    clause: COption::Some(clause),
-                    dont_include_hashed_keys: val.dont_include_hashed_keys,
-                    order_by: order_by.into(),
-                    entity_models,
-                    entity_updated_after: val.entity_updated_after,
-                }
-            }
-            Option::None => Query {
-                limit: val.limit,
-                offset: val.offset,
-                clause: COption::None,
-                dont_include_hashed_keys: val.dont_include_hashed_keys,
-                order_by: order_by.into(),
-                entity_models,
-                entity_updated_after: val.entity_updated_after,
-            },
+        Query {
+            pagination: val.pagination.into(),
+            clause: val.clause.into(),
+            models,
+            no_hashed_keys: val.no_hashed_keys,
+            historical: val.historical,
         }
     }
 }
