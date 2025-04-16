@@ -1760,8 +1760,8 @@ dependencies = [
 
 [[package]]
 name = "dojo-types"
-version = "1.4.0"
-source = "git+https://github.com/Larkooo/dojo?branch=no-webrtc-node#22947306b47b7a05dd7c7e06e2897e4c027ba17a"
+version = "1.4.1"
+source = "git+https://github.com/dojoengine/dojo?rev=6300eb4#6300eb467bb245e2455f31846f7cacf213dbf9e0"
 dependencies = [
  "anyhow",
  "cainome 0.5.0",
@@ -1782,8 +1782,8 @@ dependencies = [
 
 [[package]]
 name = "dojo-world"
-version = "1.4.0"
-source = "git+https://github.com/Larkooo/dojo?branch=no-webrtc-node#22947306b47b7a05dd7c7e06e2897e4c027ba17a"
+version = "1.4.1"
+source = "git+https://github.com/dojoengine/dojo?rev=6300eb4#6300eb467bb245e2455f31846f7cacf213dbf9e0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7184,8 +7184,8 @@ dependencies = [
 
 [[package]]
 name = "torii-client"
-version = "1.4.0"
-source = "git+https://github.com/Larkooo/dojo?branch=no-webrtc-node#22947306b47b7a05dd7c7e06e2897e4c027ba17a"
+version = "1.4.1"
+source = "git+https://github.com/dojoengine/dojo?rev=6300eb4#6300eb467bb245e2455f31846f7cacf213dbf9e0"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -7212,8 +7212,8 @@ dependencies = [
 
 [[package]]
 name = "torii-grpc"
-version = "1.4.0"
-source = "git+https://github.com/Larkooo/dojo?branch=no-webrtc-node#22947306b47b7a05dd7c7e06e2897e4c027ba17a"
+version = "1.4.1"
+source = "git+https://github.com/dojoengine/dojo?rev=6300eb4#6300eb467bb245e2455f31846f7cacf213dbf9e0"
 dependencies = [
  "crypto-bigint",
  "dojo-types",
@@ -7251,8 +7251,8 @@ dependencies = [
 
 [[package]]
 name = "torii-relay"
-version = "1.4.0"
-source = "git+https://github.com/Larkooo/dojo?branch=no-webrtc-node#22947306b47b7a05dd7c7e06e2897e4c027ba17a"
+version = "1.4.1"
+source = "git+https://github.com/dojoengine/dojo?rev=6300eb4#6300eb467bb245e2455f31846f7cacf213dbf9e0"
 dependencies = [
  "anyhow",
  "futures",
@@ -7272,8 +7272,8 @@ dependencies = [
 
 [[package]]
 name = "torii-typed-data"
-version = "1.4.0"
-source = "git+https://github.com/Larkooo/dojo?branch=no-webrtc-node#22947306b47b7a05dd7c7e06e2897e4c027ba17a"
+version = "1.4.1"
+source = "git+https://github.com/dojoengine/dojo?rev=6300eb4#6300eb467bb245e2455f31846f7cacf213dbf9e0"
 dependencies = [
  "cainome 0.5.0",
  "crypto-bigint",
