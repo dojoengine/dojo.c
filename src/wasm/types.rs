@@ -157,13 +157,6 @@ pub struct ClientConfig {
     pub world_address: String,
 }
 
-#[wasm_bindgen]
-impl ClientConfig {
-    pub fn new(torii_url: String, relay_url: String, world_address: String) -> Self {
-        Self { torii_url, relay_url, world_address }
-    }
-}
-
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
 pub struct Ty {
