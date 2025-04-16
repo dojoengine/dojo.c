@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use starknet::core::types::FunctionCall;
 use starknet::core::utils::get_selector_from_name;
 use starknet_crypto::Felt;
-use tsify_next::{declare, Tsify};
+use tsify_next::{Tsify, declare};
 use wasm_bindgen::prelude::*;
 
 use super::utils::{pad_to_hex, parse_ty_as_json_str};
@@ -159,7 +159,6 @@ pub struct ClientConfig {
 
 #[wasm_bindgen]
 impl ClientConfig {
-    #[wasm_bindgen(constructor)]
     pub fn new(torii_url: String, relay_url: String, world_address: String) -> Self {
         Self { torii_url, relay_url, world_address }
     }
