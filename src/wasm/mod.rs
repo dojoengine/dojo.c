@@ -18,7 +18,6 @@ use futures::{FutureExt, StreamExt};
 use js_sys::Array;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use slog::{self, o, Discard, Logger};
 use starknet::accounts::{
     Account as _, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount,
 };
@@ -79,8 +78,30 @@ impl SigningKey {
         SigningKey(private_key)
     }
 
-    pub fn scalar(&self) -> String {
-        format!("{:#x}", self.0.secret_scalar())
+    /// Initializes a new signing key from a secret scalar
+    ///
+    /// # Parameters
+    /// * `secret_scalar` - Secret scalar as hex string
+    ///
+    /// # Returns
+    /// Result containing signing key or error
+    pub fn from_secret_scalar(secret_scalar: &str) -> Result<SigningKey, JsValue> {
+        let secret_scalar = Felt::from_str(secret_scalar);
+        if let Err(e) = secret_scalar {
+            return Err(JsValue::from(format!("failed to parse secret scalar: {e}")));
+        }
+
+        let secret_scalar = secret_scalar.unwrap();
+        let private_key = starknet::signers::SigningKey::from_secret_scalar(secret_scalar);
+        Ok(SigningKey(private_key))
+    }
+
+    /// Returns the secret scalar of the signing key
+    ///
+    /// # Returns
+    /// Result containing secret scalar as hex string or error
+    pub fn secret_scalar(&self) -> Result<String, JsValue> {
+        Ok(format!("{:#x}", self.0.secret_scalar()))
     }
 
     /// Signs a message hash with a private key
@@ -107,6 +128,14 @@ impl SigningKey {
             Err(e) => Err(JsValue::from(format!("failed to sign: {e}"))),
         }
     }
+
+    /// Returns the verifying key of the signing key
+    ///
+    /// # Returns
+    /// Result containing verifying key or error
+    pub fn verifying_key(&self) -> Result<VerifyingKey, JsValue> {
+        Ok(VerifyingKey(starknet::signers::VerifyingKey::from_scalar(self.0.secret_scalar())))
+    }
 }
 
 #[wasm_bindgen]
@@ -130,8 +159,12 @@ impl VerifyingKey {
         Ok(VerifyingKey(starknet::signers::VerifyingKey::from_scalar(verifying_key)))
     }
 
-    pub fn scalar(&self) -> String {
-        format!("{:#x}", self.0.scalar())
+    /// Returns the scalar of the verifying key
+    ///
+    /// # Returns
+    /// Result containing scalar as hex string or error
+    pub fn scalar(&self) -> Result<String, JsValue> {
+        Ok(format!("{:#x}", self.0.scalar()))
     }
 
     /// Verifies a signature against a message hash using a verifying key
