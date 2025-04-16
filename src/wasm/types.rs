@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use starknet::core::types::FunctionCall;
 use starknet::core::utils::get_selector_from_name;
 use starknet_crypto::Felt;
-use tsify_next::{Tsify, declare};
+use tsify_next::{declare, Tsify};
 use wasm_bindgen::prelude::*;
 
 use super::utils::{pad_to_hex, parse_ty_as_json_str};
