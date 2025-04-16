@@ -266,7 +266,7 @@ impl Account {
     /// # Returns
     /// Result containing Account instance or error
     #[wasm_bindgen(constructor)]
-    pub async unsafe fn create_account(
+    pub async unsafe fn new(
         provider: &Provider,
         private_key: &str,
         address: &str,
