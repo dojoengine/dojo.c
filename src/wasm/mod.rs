@@ -85,6 +85,7 @@ impl SigningKey {
     ///
     /// # Returns
     /// Result containing signing key or error
+    #[wasm_bindgen(js_name = fromSecretScalar)]
     pub fn from_secret_scalar(secret_scalar: &str) -> Result<SigningKey, JsValue> {
         let secret_scalar = Felt::from_str(secret_scalar);
         if let Err(e) = secret_scalar {
@@ -100,6 +101,7 @@ impl SigningKey {
     ///
     /// # Returns
     /// Result containing secret scalar as hex string or error
+    #[wasm_bindgen(js_name = secretScalar)]
     pub fn secret_scalar(&self) -> Result<String, JsValue> {
         Ok(format!("{:#x}", self.0.secret_scalar()))
     }
@@ -133,6 +135,7 @@ impl SigningKey {
     ///
     /// # Returns
     /// Result containing verifying key or error
+    #[wasm_bindgen(js_name = verifyingKey)]
     pub fn verifying_key(&self) -> Result<VerifyingKey, JsValue> {
         Ok(VerifyingKey(starknet::signers::VerifyingKey::from_scalar(self.0.secret_scalar())))
     }
