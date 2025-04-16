@@ -18,7 +18,7 @@ use futures::{FutureExt, StreamExt};
 use js_sys::Array;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use slog::{self, Discard, Logger, o};
+use slog::{self, o, Discard, Logger};
 use starknet::accounts::{
     Account as _, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount,
 };
@@ -127,9 +127,7 @@ impl VerifyingKey {
 
         let verifying_key = starknet_crypto::get_public_key(&signing_key.unwrap());
 
-        Ok(VerifyingKey(starknet::signers::VerifyingKey::from_scalar(
-            verifying_key,
-        )))
+        Ok(VerifyingKey(starknet::signers::VerifyingKey::from_scalar(verifying_key)))
     }
 
     pub fn scalar(&self) -> String {
@@ -292,7 +290,9 @@ impl Account {
 
         let chain_id = chain_id.unwrap();
 
-        let signer = LocalWallet::from_signing_key(starknet::signers::SigningKey::from_secret_scalar(private_key));
+        let signer = LocalWallet::from_signing_key(
+            starknet::signers::SigningKey::from_secret_scalar(private_key),
+        );
         let account = SingleOwnerAccount::new(
             provider.0.clone(),
             signer,
@@ -375,7 +375,8 @@ impl Account {
         };
 
         let signing_key = starknet::signers::SigningKey::from_secret_scalar(private_key);
-        let verifying_key = starknet::signers::VerifyingKey::from_scalar(signing_key.secret_scalar());
+        let verifying_key =
+            starknet::signers::VerifyingKey::from_scalar(signing_key.secret_scalar());
         let address = get_contract_address(
             verifying_key.scalar(),
             constants::KATANA_ACCOUNT_CLASS_HASH,
@@ -628,10 +629,8 @@ impl ToriiClient {
         wasm_bindgen_futures::spawn_local(async move {
             relay_runner.lock().await.run().await;
         });
-        
-        Ok(ToriiClient {
-            inner: Arc::new(client),
-        })
+
+        Ok(ToriiClient { inner: Arc::new(client) })
     }
 
     /// Gets controllers along with their usernames for the given contract addresses
