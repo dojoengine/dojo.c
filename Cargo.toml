@@ -7,14 +7,14 @@ version = "1.3.1"
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
-dojo-world = { git = "https://github.com/Larkooo/dojo", branch = "no-webrtc-node" }
-dojo-types = { git = "https://github.com/Larkooo/dojo", branch = "no-webrtc-node" }
-torii-client = { git = "https://github.com/Larkooo/dojo", branch = "no-webrtc-node" }
-torii-grpc = { git = "https://github.com/Larkooo/dojo", features = [
+dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "6300eb4" }
+dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "6300eb4" }
+torii-client = { git = "https://github.com/dojoengine/dojo", rev = "6300eb4" }
+torii-grpc = { git = "https://github.com/dojoengine/dojo", features = [
   "client",
-], branch = "no-webrtc-node" }
-torii-typed-data = { git = "https://github.com/Larkooo/dojo", branch = "no-webrtc-node" }
-torii-relay = { git = "https://github.com/Larkooo/dojo", branch = "no-webrtc-node" }
+], rev = "6300eb4" }
+torii-typed-data = { git = "https://github.com/dojoengine/dojo", rev = "6300eb4" }
+torii-relay = { git = "https://github.com/dojoengine/dojo", rev = "6300eb4" }
 
 starknet = "0.13.0"
 starknet-crypto = "0.7.2"
