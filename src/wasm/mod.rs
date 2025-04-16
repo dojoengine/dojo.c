@@ -18,6 +18,7 @@ use futures::{FutureExt, StreamExt};
 use js_sys::Array;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use slog::{self, Discard, Logger, o};
 use starknet::accounts::{
     Account as _, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount,
 };
@@ -25,11 +26,11 @@ use starknet::core::types::{Felt, FunctionCall};
 use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
-use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
+use starknet::signers::LocalWallet;
 use starknet_crypto::poseidon_hash_many;
 use stream_cancel::{StreamExt as _, Tripwire};
+use tokio::runtime::Runtime;
 use torii_relay::types::Message;
-use torii_typed_data::TypedData;
 use tsify_next::Tsify;
 use wasm_bindgen::prelude::*;
 
@@ -57,189 +58,159 @@ extern "C" {
     fn error(s: &str);
 }
 
-/// Encodes typed data according to Starknet's typed data specification
-///
-/// # Parameters
-/// * `typed_data` - JSON string containing the typed data
-/// * `address` - Address as hex string
-///
-/// # Returns
-/// Result containing encoded data as hex string or error
-#[wasm_bindgen(js_name = typedDataEncode)]
-pub fn typed_data_encode(typed_data: &str, address: &str) -> Result<String, JsValue> {
-    let typed_data = serde_json::from_str::<TypedData>(&typed_data)
-        .map_err(|err| JsValue::from(format!("failed to parse typed data: {err}")))?;
+#[wasm_bindgen]
+pub struct SigningKey(starknet::signers::SigningKey);
 
-    let address = Felt::from_str(&address)
-        .map_err(|err| JsValue::from(format!("failed to parse address: {err}")))?;
+#[wasm_bindgen]
+pub struct VerifyingKey(starknet::signers::VerifyingKey);
 
-    typed_data
-        .encode(address)
-        .map(|felt| format!("{:#x}", felt))
-        .map_err(|err| JsValue::from(err.to_string()))
-}
+#[wasm_bindgen]
+pub struct TypedData(torii_typed_data::TypedData);
 
-/// Generates a new random signing key
-///
-/// # Returns
-/// Private key as hex string
-#[wasm_bindgen(js_name = signingKeyNew)]
-pub fn signing_key_new() -> String {
-    let private_key: SigningKey = SigningKey::from_random();
-
-    format!("{:#x}", private_key.secret_scalar())
-}
-
-/// Signs a message hash with a private key
-///
-/// # Parameters
-/// * `private_key` - Private key as hex string
-/// * `hash` - Message hash as hex string
-///
-/// # Returns
-/// Result containing signature or error
-#[wasm_bindgen(js_name = signingKeySign)]
-pub fn signing_key_sign(private_key: &str, hash: &str) -> Result<Signature, JsValue> {
-    let private_key = Felt::from_str(private_key);
-    if let Err(e) = private_key {
-        return Err(JsValue::from(format!("failed to parse private key: {e}")));
+#[wasm_bindgen]
+impl SigningKey {
+    /// Generates a new random signing key
+    ///
+    /// # Returns
+    /// Private key as hex string
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> SigningKey {
+        let private_key = starknet::signers::SigningKey::from_random();
+        SigningKey(private_key)
     }
 
-    let hash = Felt::from_str(hash);
-    if let Err(e) = hash {
-        return Err(JsValue::from(format!("failed to parse hash: {e}")));
+    pub fn scalar(&self) -> String {
+        format!("{:#x}", self.0.secret_scalar())
     }
 
-    let private_key = SigningKey::from_secret_scalar(private_key.unwrap());
-    let sig = private_key.sign(&hash.unwrap());
+    /// Signs a message hash with a private key
+    ///
+    /// # Parameters
+    /// * `private_key` - Private key as hex string
+    /// * `hash` - Message hash as hex string
+    ///
+    /// # Returns
+    /// Result containing signature or error
+    #[wasm_bindgen]
+    pub fn sign(&self, hash: &str) -> Result<Signature, JsValue> {
+        let hash = Felt::from_str(hash);
+        if let Err(e) = hash {
+            return Err(JsValue::from(format!("failed to parse hash: {e}")));
+        }
 
-    match sig {
-        Ok(sig) => Result::Ok(Signature::from(sig)),
-        Err(e) => Err(JsValue::from(format!("failed to sign: {e}"))),
+        let hash = hash.unwrap();
+
+        let sig = self.0.sign(&hash);
+
+        match sig {
+            Ok(sig) => Result::Ok(Signature::from(sig)),
+            Err(e) => Err(JsValue::from(format!("failed to sign: {e}"))),
+        }
     }
 }
 
-/// Derives a verifying (public) key from a signing (private) key
-///
-/// # Parameters
-/// * `signing_key` - Signing key as hex string
-///
-/// # Returns
-/// Result containing verifying key as hex string or error
-#[wasm_bindgen(js_name = verifyingKeyNew)]
-pub fn verifying_key_new(signing_key: &str) -> Result<String, JsValue> {
-    let signing_key = Felt::from_str(signing_key);
-    if let Err(e) = signing_key {
-        return Err(JsValue::from(format!("failed to parse signing key: {e}")));
+#[wasm_bindgen]
+impl VerifyingKey {
+    /// Derives a verifying (public) key from a signing (private) key
+    ///
+    /// # Parameters
+    /// * `signing_key` - Signing key as hex string
+    ///
+    /// # Returns
+    /// Result containing verifying key as hex string or error
+    #[wasm_bindgen(constructor)]
+    pub fn new(signing_key: &str) -> Result<VerifyingKey, JsValue> {
+        let signing_key = Felt::from_str(signing_key);
+        if let Err(e) = signing_key {
+            return Err(JsValue::from(format!("failed to parse signing key: {e}")));
+        }
+
+        let verifying_key = starknet_crypto::get_public_key(&signing_key.unwrap());
+
+        Ok(VerifyingKey(starknet::signers::VerifyingKey::from_scalar(
+            verifying_key,
+        )))
     }
 
-    let verifying_key = starknet_crypto::get_public_key(&signing_key.unwrap());
-
-    Ok(format!("{:#x}", verifying_key))
-}
-
-/// Verifies a signature against a message hash using a verifying key
-///
-/// # Parameters
-/// * `verifying_key` - Verifying key as hex string
-/// * `hash` - Message hash as hex string
-/// * `signature` - Signature to verify
-///
-/// # Returns
-/// Result containing verification success boolean or error
-#[wasm_bindgen(js_name = verifyingKeyVerify)]
-pub fn verifying_key_verify(
-    verifying_key: &str,
-    hash: &str,
-    signature: Signature,
-) -> Result<bool, JsValue> {
-    let verifying_key = Felt::from_str(verifying_key);
-    if let Err(e) = verifying_key {
-        return Err(JsValue::from(format!("failed to parse verifying key: {e}")));
+    pub fn scalar(&self) -> String {
+        format!("{:#x}", self.0.scalar())
     }
 
-    let verifying_key = VerifyingKey::from_scalar(verifying_key.unwrap());
+    /// Verifies a signature against a message hash using a verifying key
+    ///
+    /// # Parameters
+    /// * `verifying_key` - Verifying key as hex string
+    /// * `hash` - Message hash as hex string
+    /// * `signature` - Signature to verify
+    ///
+    /// # Returns
+    /// Result containing verification success boolean or error
+    #[wasm_bindgen]
+    pub fn verify(self, hash: &str, signature: Signature) -> Result<bool, JsValue> {
+        let hash = Felt::from_str(hash);
+        if let Err(e) = hash {
+            return Err(JsValue::from(format!("failed to parse hash: {e}")));
+        }
 
-    let hash = Felt::from_str(hash);
-    if let Err(e) = hash {
-        return Err(JsValue::from(format!("failed to parse hash: {e}")));
-    }
+        let hash = &hash.unwrap();
 
-    let hash = &hash.unwrap();
-
-    match verifying_key.verify(hash, &signature.into()) {
-        Ok(result) => Result::Ok(result),
-        Err(e) => Err(JsValue::from(format!("failed to verify: {e}"))),
+        match self.0.verify(hash, &signature.into()) {
+            Ok(result) => Result::Ok(result),
+            Err(e) => Err(JsValue::from(format!("failed to verify: {e}"))),
+        }
     }
 }
 
-/// Creates a new Starknet provider instance for a given RPC URL
-///
-/// # Parameters
-/// * `rpc_url` - URL of the RPC endpoint
-///
-/// # Returns
-/// Result containing Provider instance or error
-#[wasm_bindgen(js_name = createProvider)]
-pub unsafe fn create_provider(rpc_url: &str) -> Result<Provider, JsValue> {
-    let rpc_url = url::Url::parse(rpc_url);
-    if let Err(e) = rpc_url {
-        return Err(JsValue::from(format!("failed to parse rpc url: {e}")));
+#[wasm_bindgen]
+impl TypedData {
+    #[wasm_bindgen(constructor)]
+    pub fn new(typed_data: &str) -> Result<TypedData, JsValue> {
+        let typed_data = serde_json::from_str::<torii_typed_data::TypedData>(typed_data)
+            .map_err(|err| JsValue::from(format!("failed to parse typed data: {err}")))?;
+
+        Ok(TypedData(typed_data))
     }
-    let rpc_url = rpc_url.unwrap();
 
-    let rpc = JsonRpcClient::new(HttpTransport::new(rpc_url));
+    /// Encodes typed data according to Starknet's typed data specification
+    ///
+    /// # Parameters
+    /// * `typed_data` - JSON string containing the typed data
+    /// * `address` - Address as hex string
+    ///
+    /// # Returns
+    /// Result containing encoded data as hex string or error
+    #[wasm_bindgen]
+    pub fn encode(&self, address: &str) -> Result<String, JsValue> {
+        let address = Felt::from_str(&address)
+            .map_err(|err| JsValue::from(format!("failed to parse address: {err}")))?;
 
-    Result::Ok(Provider(Arc::new(rpc)))
+        self.0
+            .encode(address)
+            .map(|felt| format!("{:#x}", felt))
+            .map_err(|err| JsValue::from(err.to_string()))
+    }
 }
 
 #[wasm_bindgen]
 impl Provider {
-    /// Creates a new account instance with the given private key and address
+    /// Creates a new Starknet provider instance for a given RPC URL
     ///
     /// # Parameters
-    /// * `private_key` - Private key as hex string
-    /// * `address` - Account address as hex string
+    /// * `rpc_url` - URL of the RPC endpoint
     ///
     /// # Returns
-    /// Result containing Account instance or error
-    #[wasm_bindgen(js_name = createAccount)]
-    pub async unsafe fn create_account(
-        &self,
-        private_key: &str,
-        address: &str,
-    ) -> Result<Account, JsValue> {
-        let private_key = Felt::from_str(private_key);
-        if let Err(e) = private_key {
-            return Err(JsValue::from(format!("failed to parse private key: {e}")));
+    /// Result containing Provider instance or error
+    #[wasm_bindgen(constructor)]
+    pub fn new(rpc_url: &str) -> Result<Provider, JsValue> {
+        let rpc_url = url::Url::parse(rpc_url);
+        if let Err(e) = rpc_url {
+            return Err(JsValue::from(format!("failed to parse rpc url: {e}")));
         }
+        let rpc_url = rpc_url.unwrap();
 
-        let private_key = private_key.unwrap();
+        let rpc = JsonRpcClient::new(HttpTransport::new(rpc_url));
 
-        let address = Felt::from_str(address);
-        if let Err(e) = address {
-            return Err(JsValue::from(format!("failed to parse address: {e}")));
-        }
-
-        let address = address.unwrap();
-
-        let chain_id = self.0.chain_id().await;
-        if let Err(e) = chain_id {
-            return Err(JsValue::from(format!("failed to get chain id: {e}")));
-        }
-
-        let chain_id = chain_id.unwrap();
-
-        let signer = LocalWallet::from_signing_key(SigningKey::from_secret_scalar(private_key));
-        let account = SingleOwnerAccount::new(
-            self.0.clone(),
-            signer,
-            address,
-            chain_id,
-            ExecutionEncoding::New,
-        );
-
-        Result::Ok(Account(account))
+        Result::Ok(Provider(Arc::new(rpc)))
     }
 
     /// Calls a Starknet contract view function
@@ -285,6 +256,54 @@ impl Provider {
 
 #[wasm_bindgen]
 impl Account {
+    /// Creates a new account instance with the given private key and address
+    ///
+    /// # Parameters
+    /// * `provider` - Provider instance
+    /// * `private_key` - Private key as hex string
+    /// * `address` - Account address as hex string
+    ///
+    /// # Returns
+    /// Result containing Account instance or error
+    #[wasm_bindgen(constructor)]
+    pub async unsafe fn create_account(
+        provider: &Provider,
+        private_key: &str,
+        address: &str,
+    ) -> Result<Account, JsValue> {
+        let private_key = Felt::from_str(private_key);
+        if let Err(e) = private_key {
+            return Err(JsValue::from(format!("failed to parse private key: {e}")));
+        }
+
+        let private_key = private_key.unwrap();
+
+        let address = Felt::from_str(address);
+        if let Err(e) = address {
+            return Err(JsValue::from(format!("failed to parse address: {e}")));
+        }
+
+        let address = address.unwrap();
+
+        let chain_id = provider.0.chain_id().await;
+        if let Err(e) = chain_id {
+            return Err(JsValue::from(format!("failed to get chain id: {e}")));
+        }
+
+        let chain_id = chain_id.unwrap();
+
+        let signer = LocalWallet::from_signing_key(starknet::signers::SigningKey::from_secret_scalar(private_key));
+        let account = SingleOwnerAccount::new(
+            provider.0.clone(),
+            signer,
+            address,
+            chain_id,
+            ExecutionEncoding::New,
+        );
+
+        Result::Ok(Account(account))
+    }
+
     /// Returns the account's address
     ///
     /// # Returns
@@ -355,8 +374,8 @@ impl Account {
             Err(e) => return Err(JsValue::from(format!("failed to parse private key: {e}"))),
         };
 
-        let signing_key = SigningKey::from_secret_scalar(private_key);
-        let verifying_key = signing_key.verifying_key();
+        let signing_key = starknet::signers::SigningKey::from_secret_scalar(private_key);
+        let verifying_key = starknet::signers::VerifyingKey::from_scalar(signing_key.secret_scalar());
         let address = get_contract_address(
             verifying_key.scalar(),
             constants::KATANA_ACCOUNT_CLASS_HASH,
@@ -584,6 +603,37 @@ pub fn parse_cairo_short_string(str: &str) -> Result<String, JsValue> {
 
 #[wasm_bindgen]
 impl ToriiClient {
+    /// Creates a new Torii client with the given configuration
+    ///
+    /// # Parameters
+    /// * `config` - Client configuration including URLs and world address
+    ///
+    /// # Returns
+    /// Result containing ToriiClient instance or error
+    #[wasm_bindgen(constructor)]
+    pub async fn new(config: ClientConfig) -> Result<ToriiClient, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        let ClientConfig { torii_url, relay_url, world_address } = config;
+
+        let world_address = Felt::from_str(&world_address)
+            .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
+
+        let client = torii_client::client::Client::new(torii_url, relay_url, world_address)
+            .await
+            .map_err(|err| JsValue::from(format!("failed to build client: {err}")))?;
+
+        let relay_runner = client.relay_runner();
+        wasm_bindgen_futures::spawn_local(async move {
+            relay_runner.lock().await.run().await;
+        });
+        
+        Ok(ToriiClient {
+            inner: Arc::new(client),
+        })
+    }
+
     /// Gets controllers along with their usernames for the given contract addresses
     ///
     /// # Parameters
@@ -1308,34 +1358,4 @@ impl Subscription {
     pub fn cancel(self) {
         self.trigger.cancel();
     }
-}
-
-/// Creates a new Torii client with the given configuration
-///
-/// # Parameters
-/// * `config` - Client configuration including URLs and world address
-///
-/// # Returns
-/// Result containing ToriiClient instance or error
-#[wasm_bindgen(js_name = createClient)]
-#[allow(non_snake_case)]
-pub async fn create_client(config: ClientConfig) -> Result<ToriiClient, JsValue> {
-    #[cfg(feature = "console-error-panic")]
-    console_error_panic_hook::set_once();
-
-    let ClientConfig { torii_url, relay_url, world_address } = config;
-
-    let world_address = Felt::from_str(&world_address)
-        .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
-
-    let client = torii_client::client::Client::new(torii_url, relay_url, world_address)
-        .await
-        .map_err(|err| JsValue::from(format!("failed to build client: {err}")))?;
-
-    let relay_runner = client.relay_runner();
-    wasm_bindgen_futures::spawn_local(async move {
-        relay_runner.lock().await.run().await;
-    });
-
-    Ok(ToriiClient { inner: Arc::new(client) })
 }
