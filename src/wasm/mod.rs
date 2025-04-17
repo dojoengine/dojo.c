@@ -11,7 +11,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
-use cainome::cairo_serde::{self, ByteArray, CairoSerde};
+use cainome::cairo_serde::{self, CairoSerde};
 use crypto_bigint::U256;
 use dojo_world::contracts::naming::compute_selector_from_tag;
 use futures::{FutureExt, StreamExt};
@@ -65,6 +65,9 @@ pub struct VerifyingKey(starknet::signers::VerifyingKey);
 
 #[wasm_bindgen]
 pub struct TypedData(torii_typed_data::TypedData);
+
+#[wasm_bindgen]
+pub struct ByteArray(cainome::cairo_serde::ByteArray);
 
 #[wasm_bindgen]
 impl SigningKey {
@@ -474,8 +477,8 @@ impl Account {
 ///
 /// # Returns
 /// Result containing computed contract address as hex string or error
-#[wasm_bindgen(js_name = hashGetContractAddress)]
-pub fn hash_get_contract_address(
+#[wasm_bindgen(js_name = getContractAddress)]
+pub fn get_contract_address(
     class_hash: &str,
     salt: &str,
     constructor_calldata: Vec<String>,
@@ -515,47 +518,62 @@ pub fn get_selector_from_tag(tag: &str) -> String {
     format!("{:#x}", selector)
 }
 
-/// Serializes a string into a Cairo byte array
-///
-/// # Parameters
-/// * `str` - String to serialize
-///
-/// # Returns
-/// Result containing array of field elements as hex strings or error
-#[wasm_bindgen(js_name = byteArraySerialize)]
-pub fn bytearray_serialize(str: &str) -> Result<Vec<String>, JsValue> {
-    let bytearray = match ByteArray::from_string(str) {
-        Ok(bytearray) => bytearray,
-        Err(e) => return Err(JsValue::from(format!("failed to parse bytearray: {e}"))),
-    };
-    let felts = cairo_serde::ByteArray::cairo_serialize(&bytearray);
 
-    Ok(felts.iter().map(|f| format!("{:#x}", f)).collect())
-}
+#[wasm_bindgen]
+impl ByteArray {
+    /// Serializes a string into a Cairo byte array
+    ///
+    /// # Parameters
+    /// * `str` - String to serialize
+    ///
+    /// # Returns
+    /// Result containing array of field elements as hex strings or error
+    #[wasm_bindgen(constructor)]
+    pub fn new(str: &str) -> Result<ByteArray, JsValue> {
+        let bytearray = match cainome::cairo_serde::ByteArray::from_string(str) {
+            Ok(bytearray) => bytearray,
+            Err(e) => return Err(JsValue::from(format!("failed to parse bytearray: {e}"))),
+        };
+        Ok(ByteArray(bytearray))
+    }
 
-/// Deserializes a Cairo byte array into a string
-///
-/// # Parameters
-/// * `felts` - Array of field elements as hex strings
-///
-/// # Returns
-/// Result containing deserialized string or error
-#[wasm_bindgen(js_name = byteArrayDeserialize)]
-pub fn bytearray_deserialize(felts: Vec<String>) -> Result<String, JsValue> {
-    let felts = felts
-        .iter()
-        .map(|f| Felt::from_str(f))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| JsValue::from(format!("failed to parse felts: {e}")))?;
+    /// Serializes a Cairo byte array into a vector of field elements as hex strings
+    ///
+    /// # Returns
+    /// Result containing vector of field elements as hex strings or error
+    #[wasm_bindgen(js_name = toRaw)]
+    pub fn to_raw(&self) -> Result<Vec<String>, JsValue> {
+        let felts = cairo_serde::ByteArray::cairo_serialize(&self.0);
+        Ok(felts.iter().map(|f| format!("{:#x}", f)).collect())
+    }
 
-    let bytearray = match cairo_serde::ByteArray::cairo_deserialize(&felts, 0) {
-        Ok(bytearray) => bytearray,
-        Err(e) => return Err(JsValue::from(format!("failed to deserialize bytearray: {e}"))),
-    };
+    /// Deserializes a Cairo byte array into a string
+    ///
+    /// # Parameters
+    /// * `felts` - Array of field elements as hex strings
+    ///
+    /// # Returns
+    /// Result containing deserialized string or error
+    #[wasm_bindgen(js_name = fromRaw)]
+    pub fn from_raw(felts: Vec<String>) -> Result<ByteArray, JsValue> {
+        let felts = felts.iter().map(|f| Felt::from_str(f)).collect::<Result<Vec<_>, _>>()
+            .map_err(|e| JsValue::from(format!("failed to parse felts: {e}")))?;
+        match cainome::cairo_serde::ByteArray::cairo_deserialize(&felts, 0) {
+            Ok(bytearray) => Ok(ByteArray(bytearray)),
+            Err(e) => Err(JsValue::from(format!("failed to deserialize bytearray: {e}"))),
+        }
+    }
 
-    match bytearray.to_string() {
-        Ok(s) => Ok(s),
-        Err(e) => Err(JsValue::from(format!("failed to serialize bytearray: {e}"))),
+    /// Converts a Cairo byte array to a string
+    ///
+    /// # Returns
+    /// Result containing string representation of the byte array or error
+    #[wasm_bindgen(js_name = toString)]
+    pub fn to_string(&self) -> Result<String, JsValue> {
+        match self.0.to_string() {
+            Ok(s) => Ok(s),
+            Err(e) => Err(JsValue::from(format!("failed to serialize bytearray: {e}"))),
+        }
     }
 }
 
