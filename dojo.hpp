@@ -861,10 +861,53 @@ struct BlockId {
   }
 };
 
-struct Policy {
+struct CallPolicy {
   FieldElement target;
   const char *method;
   const char *description;
+};
+
+struct Policy {
+  enum class Tag {
+    Call,
+    TypedData,
+  };
+
+  struct Call_Body {
+    CallPolicy _0;
+  };
+
+  struct TypedData_Body {
+    const char *_0;
+  };
+
+  Tag tag;
+  union {
+    Call_Body call;
+    TypedData_Body typed_data;
+  };
+
+  static Policy Call(const CallPolicy &_0) {
+    Policy result;
+    ::new (&result.call._0) (CallPolicy)(_0);
+    result.tag = Tag::Call;
+    return result;
+  }
+
+  bool IsCall() const {
+    return tag == Tag::Call;
+  }
+
+  static Policy TypedData(const char *const &_0) {
+    Policy result;
+    ::new (&result.typed_data._0) (const char*)(_0);
+    result.tag = Tag::TypedData;
+    return result;
+  }
+
+  bool IsTypedData() const {
+    return tag == Tag::TypedData;
+  }
 };
 
 struct EntityKeysClause {
