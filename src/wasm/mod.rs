@@ -22,7 +22,6 @@ use starknet::accounts::{
     Account as _, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount,
 };
 use starknet::core::types::{Felt, FunctionCall};
-use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::LocalWallet;
@@ -416,7 +415,7 @@ impl Account {
         let signing_key = starknet::signers::SigningKey::from_secret_scalar(private_key);
         let verifying_key =
             starknet::signers::VerifyingKey::from_scalar(signing_key.secret_scalar());
-        let address = get_contract_address(
+        let address = starknet::core::utils::get_contract_address(
             verifying_key.scalar(),
             constants::KATANA_ACCOUNT_CLASS_HASH,
             &[verifying_key.scalar()],
@@ -500,7 +499,12 @@ pub fn get_contract_address(
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    let address = get_contract_address(salt, class_hash, &constructor_calldata, deployer_address);
+    let address = starknet::core::utils::get_contract_address(
+        salt,
+        class_hash,
+        &constructor_calldata,
+        deployer_address,
+    );
 
     Ok(format!("{:#x}", address))
 }
@@ -517,7 +521,6 @@ pub fn get_selector_from_tag(tag: &str) -> String {
     let selector = compute_selector_from_tag(tag);
     format!("{:#x}", selector)
 }
-
 
 #[wasm_bindgen]
 impl ByteArray {
@@ -556,7 +559,10 @@ impl ByteArray {
     /// Result containing deserialized string or error
     #[wasm_bindgen(js_name = fromRaw)]
     pub fn from_raw(felts: Vec<String>) -> Result<ByteArray, JsValue> {
-        let felts = felts.iter().map(|f| Felt::from_str(f)).collect::<Result<Vec<_>, _>>()
+        let felts = felts
+            .iter()
+            .map(|f| Felt::from_str(f))
+            .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse felts: {e}")))?;
         match cainome::cairo_serde::ByteArray::cairo_deserialize(&felts, 0) {
             Ok(bytearray) => Ok(ByteArray(bytearray)),
