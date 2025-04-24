@@ -28,7 +28,7 @@ use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
 use starknet_crypto::poseidon_hash_many;
 use stream_cancel::{StreamExt as _, Tripwire};
-use torii_relay::types::Message;
+use torii_libp2p_types::Message;
 use torii_typed_data::TypedData;
 use tsify_next::Tsify;
 use wasm_bindgen::prelude::*;
@@ -802,11 +802,11 @@ impl ToriiClient {
 
         let results = self
             .inner
-            .entities(torii_grpc::types::Query {
-                pagination: torii_grpc::types::Pagination {
+            .entities(torii_grpc_client::types::Query {
+                pagination: torii_grpc_client::types::Pagination {
                     limit,
                     cursor,
-                    direction: torii_grpc::types::PaginationDirection::Forward,
+                    direction: torii_grpc_client::types::PaginationDirection::Forward,
                     order_by: vec![],
                 },
                 no_hashed_keys: false,
@@ -1326,7 +1326,7 @@ pub async fn create_client(config: ClientConfig) -> Result<ToriiClient, JsValue>
     let world_address = Felt::from_str(&world_address)
         .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
 
-    let client = torii_client::client::Client::new(torii_url, relay_url, world_address)
+    let client = torii_client::Client::new(torii_url, relay_url, world_address)
         .await
         .map_err(|err| JsValue::from(format!("failed to build client: {err}")))?;
 

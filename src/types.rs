@@ -13,7 +13,7 @@ use starknet::providers::JsonRpcClient;
 use starknet::signers::LocalWallet;
 use starknet_crypto::Felt;
 use stream_cancel::Trigger;
-use torii_client::client::Client;
+use torii_client::Client;
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

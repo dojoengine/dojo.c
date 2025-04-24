@@ -2,7 +2,7 @@ use std::ffi::{c_char, CStr, CString};
 
 use crypto_bigint::Encoding;
 use starknet::core::utils::get_selector_from_name;
-use torii_client::client::Client;
+use torii_client::Client;
 
 #[derive(Debug, Clone)]
 #[repr(C)]
@@ -11,11 +11,11 @@ pub struct Page<T> {
     pub next_cursor: COption<*const c_char>,
 }
 
-impl<T, U> From<torii_grpc::types::Page<T>> for Page<U>
+impl<T, U> From<torii_grpc_client::types::Page<T>> for Page<U>
 where
     U: From<T>,
 {
-    fn from(val: torii_grpc::types::Page<T>) -> Self {
+    fn from(val: torii_grpc_client::types::Page<T>) -> Self {
         let items = val.items.into_iter().map(|t| t.into()).collect::<Vec<U>>();
         Page {
             items: items.into(),
@@ -117,8 +117,8 @@ pub struct Controller {
     pub deployed_at_timestamp: u64,
 }
 
-impl From<torii_grpc::types::Controller> for Controller {
-    fn from(val: torii_grpc::types::Controller) -> Self {
+impl From<torii_grpc_client::types::Controller> for Controller {
+    fn from(val: torii_grpc_client::types::Controller) -> Self {
         Controller {
             address: val.address.into(),
             username: CString::new(val.username.clone()).unwrap().into_raw(),
@@ -138,8 +138,8 @@ pub struct Token {
     pub metadata: *const c_char,
 }
 
-impl From<torii_grpc::types::Token> for Token {
-    fn from(val: torii_grpc::types::Token) -> Self {
+impl From<torii_grpc_client::types::Token> for Token {
+    fn from(val: torii_grpc_client::types::Token) -> Self {
         Token {
             token_id: val.token_id.into(),
             contract_address: val.contract_address.into(),
@@ -160,8 +160,8 @@ pub struct TokenBalance {
     pub token_id: U256,
 }
 
-impl From<torii_grpc::types::TokenBalance> for TokenBalance {
-    fn from(val: torii_grpc::types::TokenBalance) -> Self {
+impl From<torii_grpc_client::types::TokenBalance> for TokenBalance {
+    fn from(val: torii_grpc_client::types::TokenBalance) -> Self {
         TokenBalance {
             balance: val.balance.into(),
             account_address: val.account_address.into(),
@@ -180,9 +180,9 @@ pub struct IndexerUpdate {
     pub contract_address: FieldElement,
 }
 
-impl From<IndexerUpdate> for torii_grpc::types::IndexerUpdate {
+impl From<IndexerUpdate> for torii_grpc_client::types::IndexerUpdate {
     fn from(val: IndexerUpdate) -> Self {
-        torii_grpc::types::IndexerUpdate {
+        torii_grpc_client::types::IndexerUpdate {
             head: val.head,
             tps: val.tps,
             last_block_timestamp: val.last_block_timestamp,
@@ -191,8 +191,8 @@ impl From<IndexerUpdate> for torii_grpc::types::IndexerUpdate {
     }
 }
 
-impl From<torii_grpc::types::IndexerUpdate> for IndexerUpdate {
-    fn from(val: torii_grpc::types::IndexerUpdate) -> Self {
+impl From<torii_grpc_client::types::IndexerUpdate> for IndexerUpdate {
+    fn from(val: torii_grpc_client::types::IndexerUpdate) -> Self {
         IndexerUpdate {
             head: val.head,
             tps: val.tps,
@@ -450,9 +450,9 @@ pub struct Pagination {
     pub order_by: CArray<OrderBy>,
 }
 
-impl From<Pagination> for torii_grpc::types::Pagination {
+impl From<Pagination> for torii_grpc_client::types::Pagination {
     fn from(val: Pagination) -> Self {
-        torii_grpc::types::Pagination {
+        torii_grpc_client::types::Pagination {
             cursor: val
                 .cursor
                 .map(|c| unsafe { CStr::from_ptr(c).to_string_lossy().to_string() })
@@ -464,8 +464,8 @@ impl From<Pagination> for torii_grpc::types::Pagination {
     }
 }
 
-impl From<torii_grpc::types::Pagination> for Pagination {
-    fn from(val: torii_grpc::types::Pagination) -> Self {
+impl From<torii_grpc_client::types::Pagination> for Pagination {
+    fn from(val: torii_grpc_client::types::Pagination) -> Self {
         Pagination {
             cursor: val.cursor.map(|c| CString::new(c).unwrap().into_raw() as *const c_char).into(),
             limit: val.limit,
@@ -482,20 +482,24 @@ pub enum PaginationDirection {
     Backward,
 }
 
-impl From<PaginationDirection> for torii_grpc::types::PaginationDirection {
+impl From<PaginationDirection> for torii_grpc_client::types::PaginationDirection {
     fn from(val: PaginationDirection) -> Self {
         match val {
-            PaginationDirection::Forward => torii_grpc::types::PaginationDirection::Forward,
-            PaginationDirection::Backward => torii_grpc::types::PaginationDirection::Backward,
+            PaginationDirection::Forward => torii_grpc_client::types::PaginationDirection::Forward,
+            PaginationDirection::Backward => {
+                torii_grpc_client::types::PaginationDirection::Backward
+            }
         }
     }
 }
 
-impl From<torii_grpc::types::PaginationDirection> for PaginationDirection {
-    fn from(val: torii_grpc::types::PaginationDirection) -> Self {
+impl From<torii_grpc_client::types::PaginationDirection> for PaginationDirection {
+    fn from(val: torii_grpc_client::types::PaginationDirection) -> Self {
         match val {
-            torii_grpc::types::PaginationDirection::Forward => PaginationDirection::Forward,
-            torii_grpc::types::PaginationDirection::Backward => PaginationDirection::Backward,
+            torii_grpc_client::types::PaginationDirection::Forward => PaginationDirection::Forward,
+            torii_grpc_client::types::PaginationDirection::Backward => {
+                PaginationDirection::Backward
+            }
         }
     }
 }
@@ -507,9 +511,9 @@ pub struct OrderBy {
     pub direction: OrderDirection,
 }
 
-impl From<OrderBy> for torii_grpc::types::OrderBy {
+impl From<OrderBy> for torii_grpc_client::types::OrderBy {
     fn from(val: OrderBy) -> Self {
-        torii_grpc::types::OrderBy {
+        torii_grpc_client::types::OrderBy {
             model: unsafe { CStr::from_ptr(val.model).to_string_lossy().to_string() },
             member: unsafe { CStr::from_ptr(val.member).to_string_lossy().to_string() },
             direction: val.direction.into(),
@@ -517,8 +521,8 @@ impl From<OrderBy> for torii_grpc::types::OrderBy {
     }
 }
 
-impl From<torii_grpc::types::OrderBy> for OrderBy {
-    fn from(val: torii_grpc::types::OrderBy) -> Self {
+impl From<torii_grpc_client::types::OrderBy> for OrderBy {
+    fn from(val: torii_grpc_client::types::OrderBy) -> Self {
         OrderBy {
             model: CString::new(val.model.clone()).unwrap().into_raw(),
             member: CString::new(val.member.clone()).unwrap().into_raw(),
@@ -534,20 +538,20 @@ pub enum OrderDirection {
     Desc,
 }
 
-impl From<OrderDirection> for torii_grpc::types::OrderDirection {
+impl From<OrderDirection> for torii_grpc_client::types::OrderDirection {
     fn from(val: OrderDirection) -> Self {
         match val {
-            OrderDirection::Asc => torii_grpc::types::OrderDirection::Asc,
-            OrderDirection::Desc => torii_grpc::types::OrderDirection::Desc,
+            OrderDirection::Asc => torii_grpc_client::types::OrderDirection::Asc,
+            OrderDirection::Desc => torii_grpc_client::types::OrderDirection::Desc,
         }
     }
 }
 
-impl From<torii_grpc::types::OrderDirection> for OrderDirection {
-    fn from(val: torii_grpc::types::OrderDirection) -> Self {
+impl From<torii_grpc_client::types::OrderDirection> for OrderDirection {
+    fn from(val: torii_grpc_client::types::OrderDirection) -> Self {
         match val {
-            torii_grpc::types::OrderDirection::Asc => OrderDirection::Asc,
-            torii_grpc::types::OrderDirection::Desc => OrderDirection::Desc,
+            torii_grpc_client::types::OrderDirection::Asc => OrderDirection::Asc,
+            torii_grpc_client::types::OrderDirection::Desc => OrderDirection::Desc,
         }
     }
 }
@@ -584,26 +588,19 @@ pub struct KeysClause {
 
 #[derive(Clone, Debug)]
 #[repr(C)]
-pub struct ModelKeysClause {
-    pub keys: CArray<FieldElement>,
-    pub model: *const c_char,
-}
-
-#[derive(Clone, Debug)]
-#[repr(C)]
 pub enum MemberValue {
     PrimitiveValue(Primitive),
     String(*const c_char),
     List(CArray<MemberValue>),
 }
 
-impl From<MemberValue> for torii_grpc::types::MemberValue {
+impl From<MemberValue> for torii_grpc_client::types::MemberValue {
     fn from(val: MemberValue) -> Self {
         match val {
             MemberValue::PrimitiveValue(primitive) => {
-                torii_grpc::types::MemberValue::Primitive(primitive.into())
+                torii_grpc_client::types::MemberValue::Primitive(primitive.into())
             }
-            MemberValue::String(string) => torii_grpc::types::MemberValue::String(unsafe {
+            MemberValue::String(string) => torii_grpc_client::types::MemberValue::String(unsafe {
                 CStr::from_ptr(string).to_string_lossy().to_string()
             }),
             MemberValue::List(list) => {
@@ -611,23 +608,23 @@ impl From<MemberValue> for torii_grpc::types::MemberValue {
                 let values = values
                     .into_iter()
                     .map(|v| v.into())
-                    .collect::<Vec<torii_grpc::types::MemberValue>>();
-                torii_grpc::types::MemberValue::List(values)
+                    .collect::<Vec<torii_grpc_client::types::MemberValue>>();
+                torii_grpc_client::types::MemberValue::List(values)
             }
         }
     }
 }
 
-impl From<torii_grpc::types::MemberValue> for MemberValue {
-    fn from(val: torii_grpc::types::MemberValue) -> Self {
+impl From<torii_grpc_client::types::MemberValue> for MemberValue {
+    fn from(val: torii_grpc_client::types::MemberValue) -> Self {
         match val {
-            torii_grpc::types::MemberValue::Primitive(primitive) => {
+            torii_grpc_client::types::MemberValue::Primitive(primitive) => {
                 MemberValue::PrimitiveValue(primitive.into())
             }
-            torii_grpc::types::MemberValue::String(string) => {
+            torii_grpc_client::types::MemberValue::String(string) => {
                 MemberValue::String(CString::new(string.clone()).unwrap().into_raw())
             }
-            torii_grpc::types::MemberValue::List(list) => {
+            torii_grpc_client::types::MemberValue::List(list) => {
                 let values = list.into_iter().map(|v| v.into()).collect::<Vec<MemberValue>>();
                 MemberValue::List(values.into())
             }
@@ -695,52 +692,52 @@ pub struct Entity {
     pub models: CArray<Struct>,
 }
 
-impl From<Entity> for torii_grpc::types::schema::Entity {
+impl From<Entity> for torii_grpc_client::types::schema::Entity {
     fn from(val: Entity) -> Self {
         let models: Vec<Struct> = val.models.into();
         let models = models.into_iter().map(|m| m.into()).collect();
 
-        torii_grpc::types::schema::Entity { hashed_keys: val.hashed_keys.into(), models }
+        torii_grpc_client::types::schema::Entity { hashed_keys: val.hashed_keys.into(), models }
     }
 }
 
-impl From<torii_grpc::types::schema::Entity> for Entity {
-    fn from(val: torii_grpc::types::schema::Entity) -> Self {
+impl From<torii_grpc_client::types::schema::Entity> for Entity {
+    fn from(val: torii_grpc_client::types::schema::Entity) -> Self {
         let models = val.models.into_iter().map(|m| m.into()).collect::<Vec<Struct>>();
 
         Entity { hashed_keys: val.hashed_keys.into(), models: models.into() }
     }
 }
 
-impl From<ValueType> for torii_grpc::types::ValueType {
+impl From<ValueType> for torii_grpc_client::types::ValueType {
     fn from(value: ValueType) -> Self {
         match value {
             ValueType::String(v) => {
                 let v = unsafe { CStr::from_ptr(v).to_string_lossy().into_owned() };
-                torii_grpc::types::ValueType::String(v)
+                torii_grpc_client::types::ValueType::String(v)
             }
-            ValueType::Int(v) => torii_grpc::types::ValueType::Int(v),
-            ValueType::UInt(v) => torii_grpc::types::ValueType::UInt(v),
-            ValueType::VBool(v) => torii_grpc::types::ValueType::Bool(v),
+            ValueType::Int(v) => torii_grpc_client::types::ValueType::Int(v),
+            ValueType::UInt(v) => torii_grpc_client::types::ValueType::UInt(v),
+            ValueType::VBool(v) => torii_grpc_client::types::ValueType::Bool(v),
             ValueType::Bytes(v) => {
                 let v = v.into();
-                torii_grpc::types::ValueType::Bytes(v)
+                torii_grpc_client::types::ValueType::Bytes(v)
             }
         }
     }
 }
 
-impl From<torii_grpc::types::ValueType> for ValueType {
-    fn from(value: torii_grpc::types::ValueType) -> Self {
+impl From<torii_grpc_client::types::ValueType> for ValueType {
+    fn from(value: torii_grpc_client::types::ValueType) -> Self {
         match value {
-            torii_grpc::types::ValueType::String(v) => {
+            torii_grpc_client::types::ValueType::String(v) => {
                 let v = CString::new(v.clone()).unwrap().into_raw();
                 ValueType::String(v)
             }
-            torii_grpc::types::ValueType::Int(v) => ValueType::Int(v),
-            torii_grpc::types::ValueType::UInt(v) => ValueType::UInt(v),
-            torii_grpc::types::ValueType::Bool(v) => ValueType::VBool(v),
-            torii_grpc::types::ValueType::Bytes(v) => {
+            torii_grpc_client::types::ValueType::Int(v) => ValueType::Int(v),
+            torii_grpc_client::types::ValueType::UInt(v) => ValueType::UInt(v),
+            torii_grpc_client::types::ValueType::Bool(v) => ValueType::VBool(v),
+            torii_grpc_client::types::ValueType::Bytes(v) => {
                 let v = v.clone().into();
                 ValueType::Bytes(v)
             }
@@ -1033,12 +1030,12 @@ impl From<dojo_types::primitive::Primitive> for Primitive {
     }
 }
 
-impl From<Query> for torii_grpc::types::Query {
+impl From<Query> for torii_grpc_client::types::Query {
     fn from(val: Query) -> Self {
         let models: Vec<String> = CStringArray(val.models).into();
         let clause = val.clause.map(|c| c.into()).into();
 
-        torii_grpc::types::Query {
+        torii_grpc_client::types::Query {
             pagination: val.pagination.into(),
             clause,
             models,
@@ -1048,8 +1045,8 @@ impl From<Query> for torii_grpc::types::Query {
     }
 }
 
-impl From<torii_grpc::types::Query> for Query {
-    fn from(val: torii_grpc::types::Query) -> Self {
+impl From<torii_grpc_client::types::Query> for Query {
+    fn from(val: torii_grpc_client::types::Query) -> Self {
         let models = StringVec(val.models).into();
 
         Query {
@@ -1062,80 +1059,84 @@ impl From<torii_grpc::types::Query> for Query {
     }
 }
 
-impl From<Clause> for torii_grpc::types::Clause {
+impl From<Clause> for torii_grpc_client::types::Clause {
     fn from(val: Clause) -> Self {
         match val {
-            Clause::Keys(keys) => torii_grpc::types::Clause::Keys(keys.into()),
-            Clause::CMember(member) => torii_grpc::types::Clause::Member(member.into()),
-            Clause::Composite(composite) => torii_grpc::types::Clause::Composite(composite.into()),
+            Clause::Keys(keys) => torii_grpc_client::types::Clause::Keys(keys.into()),
+            Clause::CMember(member) => torii_grpc_client::types::Clause::Member(member.into()),
+            Clause::Composite(composite) => {
+                torii_grpc_client::types::Clause::Composite(composite.into())
+            }
         }
     }
 }
 
-impl From<torii_grpc::types::Clause> for Clause {
-    fn from(val: torii_grpc::types::Clause) -> Self {
+impl From<torii_grpc_client::types::Clause> for Clause {
+    fn from(val: torii_grpc_client::types::Clause) -> Self {
         match val {
-            torii_grpc::types::Clause::Keys(keys) => Clause::Keys(keys.into()),
-            torii_grpc::types::Clause::Member(member) => Clause::CMember(member.into()),
-            torii_grpc::types::Clause::Composite(composite) => Clause::Composite(composite.into()),
+            torii_grpc_client::types::Clause::Keys(keys) => Clause::Keys(keys.into()),
+            torii_grpc_client::types::Clause::Member(member) => Clause::CMember(member.into()),
+            torii_grpc_client::types::Clause::Composite(composite) => {
+                Clause::Composite(composite.into())
+            }
         }
     }
 }
 
-impl From<PatternMatching> for torii_grpc::types::PatternMatching {
+impl From<PatternMatching> for torii_grpc_client::types::PatternMatching {
     fn from(val: PatternMatching) -> Self {
         match val {
-            PatternMatching::FixedLen => torii_grpc::types::PatternMatching::FixedLen,
-            PatternMatching::VariableLen => torii_grpc::types::PatternMatching::VariableLen,
+            PatternMatching::FixedLen => torii_grpc_client::types::PatternMatching::FixedLen,
+            PatternMatching::VariableLen => torii_grpc_client::types::PatternMatching::VariableLen,
         }
     }
 }
 
-impl From<torii_grpc::types::PatternMatching> for PatternMatching {
-    fn from(val: torii_grpc::types::PatternMatching) -> Self {
+impl From<torii_grpc_client::types::PatternMatching> for PatternMatching {
+    fn from(val: torii_grpc_client::types::PatternMatching) -> Self {
         match val {
-            torii_grpc::types::PatternMatching::FixedLen => PatternMatching::FixedLen,
-            torii_grpc::types::PatternMatching::VariableLen => PatternMatching::VariableLen,
+            torii_grpc_client::types::PatternMatching::FixedLen => PatternMatching::FixedLen,
+            torii_grpc_client::types::PatternMatching::VariableLen => PatternMatching::VariableLen,
         }
     }
 }
 
-impl From<EntityKeysClause> for torii_grpc::types::EntityKeysClause {
+impl From<EntityKeysClause> for torii_grpc_client::types::EntityKeysClause {
     fn from(val: EntityKeysClause) -> Self {
         match val {
             EntityKeysClause::HashedKeys(keys) => {
                 let keys: Vec<FieldElement> = keys.into();
                 let keys = keys.into_iter().map(|k| k.into()).collect();
 
-                torii_grpc::types::EntityKeysClause::HashedKeys(keys)
+                torii_grpc_client::types::EntityKeysClause::HashedKeys(keys)
             }
             EntityKeysClause::EntityKeys(keys) => {
-                torii_grpc::types::EntityKeysClause::Keys(keys.into())
+                torii_grpc_client::types::EntityKeysClause::Keys(keys.into())
             }
         }
     }
 }
 
-impl From<torii_grpc::types::EntityKeysClause> for EntityKeysClause {
-    fn from(val: torii_grpc::types::EntityKeysClause) -> Self {
+impl From<torii_grpc_client::types::EntityKeysClause> for EntityKeysClause {
+    fn from(val: torii_grpc_client::types::EntityKeysClause) -> Self {
         match val {
-            torii_grpc::types::EntityKeysClause::HashedKeys(keys) => {
+            torii_grpc_client::types::EntityKeysClause::HashedKeys(keys) => {
                 let keys = keys.into_iter().map(|k| k.into()).collect::<Vec<FieldElement>>();
                 EntityKeysClause::HashedKeys(keys.into())
             }
-            torii_grpc::types::EntityKeysClause::Keys(keys) => {
+            torii_grpc_client::types::EntityKeysClause::Keys(keys) => {
                 EntityKeysClause::EntityKeys(keys.into())
             }
         }
     }
 }
 
-impl From<KeysClause> for torii_grpc::types::KeysClause {
+impl From<KeysClause> for torii_grpc_client::types::KeysClause {
     fn from(val: KeysClause) -> Self {
         let keys: Vec<Option<starknet_crypto::Felt>> = COptionArray(val.keys).into();
         let models: Vec<String> = CStringArray(val.models).into();
 
-        torii_grpc::types::KeysClause {
+        torii_grpc_client::types::KeysClause {
             keys,
             pattern_matching: val.pattern_matching.into(),
             models,
@@ -1143,8 +1144,8 @@ impl From<KeysClause> for torii_grpc::types::KeysClause {
     }
 }
 
-impl From<torii_grpc::types::KeysClause> for KeysClause {
-    fn from(val: torii_grpc::types::KeysClause) -> Self {
+impl From<torii_grpc_client::types::KeysClause> for KeysClause {
+    fn from(val: torii_grpc_client::types::KeysClause) -> Self {
         KeysClause {
             models: StringVec(val.models).into(),
             keys: val.keys.into(),
@@ -1153,31 +1154,9 @@ impl From<torii_grpc::types::KeysClause> for KeysClause {
     }
 }
 
-impl From<ModelKeysClause> for torii_grpc::types::ModelKeysClause {
-    fn from(val: ModelKeysClause) -> Self {
-        let keys: Vec<_> = val.keys.into();
-
-        torii_grpc::types::ModelKeysClause {
-            model: unsafe { CStr::from_ptr(val.model).to_string_lossy().to_string() },
-            keys,
-        }
-    }
-}
-
-impl From<torii_grpc::types::ModelKeysClause> for ModelKeysClause {
-    fn from(val: torii_grpc::types::ModelKeysClause) -> Self {
-        let keys = val.keys.into_iter().map(|k| k.into()).collect::<Vec<FieldElement>>();
-
-        ModelKeysClause {
-            model: CString::new(val.model.clone()).unwrap().into_raw(),
-            keys: keys.into(),
-        }
-    }
-}
-
-impl From<MemberClause> for torii_grpc::types::MemberClause {
+impl From<MemberClause> for torii_grpc_client::types::MemberClause {
     fn from(val: MemberClause) -> Self {
-        torii_grpc::types::MemberClause {
+        torii_grpc_client::types::MemberClause {
             member: unsafe { CString::from_raw(val.member as *mut c_char).into_string().unwrap() },
             model: unsafe { CString::from_raw(val.model as *mut c_char).into_string().unwrap() },
             operator: val.operator.into(),
@@ -1186,8 +1165,8 @@ impl From<MemberClause> for torii_grpc::types::MemberClause {
     }
 }
 
-impl From<torii_grpc::types::MemberClause> for MemberClause {
-    fn from(val: torii_grpc::types::MemberClause) -> Self {
+impl From<torii_grpc_client::types::MemberClause> for MemberClause {
+    fn from(val: torii_grpc_client::types::MemberClause) -> Self {
         MemberClause {
             model: CString::new(val.model.clone()).unwrap().into_raw(),
             member: CString::new(val.member.clone()).unwrap().into_raw(),
@@ -1197,17 +1176,17 @@ impl From<torii_grpc::types::MemberClause> for MemberClause {
     }
 }
 
-impl From<CompositeClause> for torii_grpc::types::CompositeClause {
+impl From<CompositeClause> for torii_grpc_client::types::CompositeClause {
     fn from(val: CompositeClause) -> Self {
         let operator = val.operator.into();
         let clauses = val.clauses.into();
 
-        torii_grpc::types::CompositeClause { operator, clauses }
+        torii_grpc_client::types::CompositeClause { operator, clauses }
     }
 }
 
-impl From<torii_grpc::types::CompositeClause> for CompositeClause {
-    fn from(val: torii_grpc::types::CompositeClause) -> Self {
+impl From<torii_grpc_client::types::CompositeClause> for CompositeClause {
+    fn from(val: torii_grpc_client::types::CompositeClause) -> Self {
         let operator = val.operator.into();
         let clauses = val.clauses.into();
 
@@ -1215,65 +1194,65 @@ impl From<torii_grpc::types::CompositeClause> for CompositeClause {
     }
 }
 
-impl From<LogicalOperator> for torii_grpc::types::LogicalOperator {
+impl From<LogicalOperator> for torii_grpc_client::types::LogicalOperator {
     fn from(val: LogicalOperator) -> Self {
         match val {
-            LogicalOperator::And => torii_grpc::types::LogicalOperator::And,
-            LogicalOperator::Or => torii_grpc::types::LogicalOperator::Or,
+            LogicalOperator::And => torii_grpc_client::types::LogicalOperator::And,
+            LogicalOperator::Or => torii_grpc_client::types::LogicalOperator::Or,
         }
     }
 }
 
-impl From<torii_grpc::types::LogicalOperator> for LogicalOperator {
-    fn from(val: torii_grpc::types::LogicalOperator) -> Self {
+impl From<torii_grpc_client::types::LogicalOperator> for LogicalOperator {
+    fn from(val: torii_grpc_client::types::LogicalOperator) -> Self {
         match val {
-            torii_grpc::types::LogicalOperator::And => LogicalOperator::And,
-            torii_grpc::types::LogicalOperator::Or => LogicalOperator::Or,
+            torii_grpc_client::types::LogicalOperator::And => LogicalOperator::And,
+            torii_grpc_client::types::LogicalOperator::Or => LogicalOperator::Or,
         }
     }
 }
 
-impl From<ComparisonOperator> for torii_grpc::types::ComparisonOperator {
+impl From<ComparisonOperator> for torii_grpc_client::types::ComparisonOperator {
     fn from(val: ComparisonOperator) -> Self {
         match val {
-            ComparisonOperator::Eq => torii_grpc::types::ComparisonOperator::Eq,
-            ComparisonOperator::Neq => torii_grpc::types::ComparisonOperator::Neq,
-            ComparisonOperator::Gt => torii_grpc::types::ComparisonOperator::Gt,
-            ComparisonOperator::Gte => torii_grpc::types::ComparisonOperator::Gte,
-            ComparisonOperator::Lt => torii_grpc::types::ComparisonOperator::Lt,
-            ComparisonOperator::Lte => torii_grpc::types::ComparisonOperator::Lte,
-            ComparisonOperator::In => torii_grpc::types::ComparisonOperator::In,
-            ComparisonOperator::NotIn => torii_grpc::types::ComparisonOperator::NotIn,
+            ComparisonOperator::Eq => torii_grpc_client::types::ComparisonOperator::Eq,
+            ComparisonOperator::Neq => torii_grpc_client::types::ComparisonOperator::Neq,
+            ComparisonOperator::Gt => torii_grpc_client::types::ComparisonOperator::Gt,
+            ComparisonOperator::Gte => torii_grpc_client::types::ComparisonOperator::Gte,
+            ComparisonOperator::Lt => torii_grpc_client::types::ComparisonOperator::Lt,
+            ComparisonOperator::Lte => torii_grpc_client::types::ComparisonOperator::Lte,
+            ComparisonOperator::In => torii_grpc_client::types::ComparisonOperator::In,
+            ComparisonOperator::NotIn => torii_grpc_client::types::ComparisonOperator::NotIn,
         }
     }
 }
 
-impl From<torii_grpc::types::ComparisonOperator> for ComparisonOperator {
-    fn from(val: torii_grpc::types::ComparisonOperator) -> Self {
+impl From<torii_grpc_client::types::ComparisonOperator> for ComparisonOperator {
+    fn from(val: torii_grpc_client::types::ComparisonOperator) -> Self {
         match val {
-            torii_grpc::types::ComparisonOperator::Eq => ComparisonOperator::Eq,
-            torii_grpc::types::ComparisonOperator::Neq => ComparisonOperator::Neq,
-            torii_grpc::types::ComparisonOperator::Gt => ComparisonOperator::Gt,
-            torii_grpc::types::ComparisonOperator::Gte => ComparisonOperator::Gte,
-            torii_grpc::types::ComparisonOperator::Lt => ComparisonOperator::Lt,
-            torii_grpc::types::ComparisonOperator::Lte => ComparisonOperator::Lte,
-            torii_grpc::types::ComparisonOperator::In => ComparisonOperator::In,
-            torii_grpc::types::ComparisonOperator::NotIn => ComparisonOperator::NotIn,
+            torii_grpc_client::types::ComparisonOperator::Eq => ComparisonOperator::Eq,
+            torii_grpc_client::types::ComparisonOperator::Neq => ComparisonOperator::Neq,
+            torii_grpc_client::types::ComparisonOperator::Gt => ComparisonOperator::Gt,
+            torii_grpc_client::types::ComparisonOperator::Gte => ComparisonOperator::Gte,
+            torii_grpc_client::types::ComparisonOperator::Lt => ComparisonOperator::Lt,
+            torii_grpc_client::types::ComparisonOperator::Lte => ComparisonOperator::Lte,
+            torii_grpc_client::types::ComparisonOperator::In => ComparisonOperator::In,
+            torii_grpc_client::types::ComparisonOperator::NotIn => ComparisonOperator::NotIn,
         }
     }
 }
 
-impl From<Value> for torii_grpc::types::Value {
+impl From<Value> for torii_grpc_client::types::Value {
     fn from(val: Value) -> Self {
-        torii_grpc::types::Value {
+        torii_grpc_client::types::Value {
             primitive_type: val.primitive_type.into(),
             value_type: val.value_type.into(),
         }
     }
 }
 
-impl From<torii_grpc::types::Value> for Value {
-    fn from(val: torii_grpc::types::Value) -> Self {
+impl From<torii_grpc_client::types::Value> for Value {
+    fn from(val: torii_grpc_client::types::Value) -> Self {
         Value { primitive_type: val.primitive_type.into(), value_type: val.value_type.into() }
     }
 }
@@ -1374,17 +1353,21 @@ pub struct Event {
     pub transaction_hash: FieldElement,
 }
 
-impl From<Event> for torii_grpc::types::Event {
+impl From<Event> for torii_grpc_client::types::Event {
     fn from(val: Event) -> Self {
         let keys: Vec<_> = val.keys.into();
         let data: Vec<_> = val.data.into();
 
-        torii_grpc::types::Event { keys, data, transaction_hash: val.transaction_hash.into() }
+        torii_grpc_client::types::Event {
+            keys,
+            data,
+            transaction_hash: val.transaction_hash.into(),
+        }
     }
 }
 
-impl From<torii_grpc::types::Event> for Event {
-    fn from(val: torii_grpc::types::Event) -> Self {
+impl From<torii_grpc_client::types::Event> for Event {
+    fn from(val: torii_grpc_client::types::Event) -> Self {
         let keys = val.keys.into_iter().map(|k| k.into()).collect::<Vec<FieldElement>>();
         let data = val.data.into_iter().map(|k| k.into()).collect::<Vec<FieldElement>>();
 

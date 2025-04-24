@@ -7,14 +7,12 @@ version = "1.3.1"
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
-dojo-world = { git = "https://github.com/Larkooo/dojo", branch = "cursor-grpc" }
-dojo-types = { git = "https://github.com/Larkooo/dojo", branch = "cursor-grpc" }
-torii-client = { git = "https://github.com/Larkooo/dojo", branch = "cursor-grpc" }
-torii-grpc = { git = "https://github.com/Larkooo/dojo", features = [
-    "client",
-], branch = "cursor-grpc" }
-torii-typed-data = { git = "https://github.com/Larkooo/dojo", branch = "cursor-grpc" }
-torii-relay = { git = "https://github.com/Larkooo/dojo", branch = "cursor-grpc" }
+dojo-world = { git = "https://github.com/dojoengine/dojo", tag = "v1.4.1" }
+dojo-types = { git = "https://github.com/dojoengine/dojo", tag = "v1.4.1" }
+torii-client = { git = "https://github.com/dojoengine/torii", rev = "4dbb084" }
+torii-grpc-client = { git = "https://github.com/dojoengine/torii", rev = "4dbb084" }
+torii-typed-data = { git = "https://github.com/dojoengine/torii", rev = "4dbb084" }
+torii-libp2p-types = { git = "https://github.com/dojoengine/torii", rev = "4dbb084" }
 
 starknet = "0.13.0"
 starknet-crypto = "0.7.2"
@@ -37,13 +35,13 @@ account_sdk = { git = "https://github.com/cartridge-gg/controller", rev = "dbbe0
 
 serde-wasm-bindgen = "0.6.3"
 wasm-bindgen-futures = "0.4.39"
-js-sys = "0.3.70"
-web-sys = { version = "0.3.70", features = [
-    'MessageEvent',
-    'Window',
-    'Worker',
-    'WorkerGlobalScope',
-    'console',
+js-sys = "0.3.77"
+web-sys = { version = "0.3.77", features = [
+  'MessageEvent',
+  'Window',
+  'Worker',
+  'WorkerGlobalScope',
+  'console',
 ] }
 crypto-bigint = "0.5.5"
 tsify-next = { version = "0.5.4", features = ["js"] }
@@ -57,9 +55,9 @@ axum = "0.8.1"
 open = "5.3.2"
 urlencoding = "2.1.3"
 keyring = { version = "3.6.1", features = [
-    "apple-native",
-    "windows-native",
-    "sync-secret-service",
+  "apple-native",
+  "windows-native",
+  "sync-secret-service",
 ] }
 directories = "6.0.0"
 tower-http = { version = "0.6.2", features = ["cors"] }

@@ -47,8 +47,8 @@ use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
 use tokio::time::sleep;
 use tokio_stream::StreamExt;
-use torii_client::client::Client as TClient;
-use torii_relay::types::Message;
+use torii_client::Client as TClient;
+use torii_libp2p_types::Message;
 use torii_typed_data::TypedData;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
@@ -2116,7 +2116,7 @@ pub unsafe extern "C" fn ty_free(ty: *mut Ty) {
 #[no_mangle]
 pub unsafe extern "C" fn entity_free(entity: *mut Entity) {
     if !entity.is_null() {
-        let _: torii_grpc::types::schema::Entity = (*Box::<Entity>::from_raw(entity)).into();
+        let _: torii_grpc_client::types::schema::Entity = (*Box::<Entity>::from_raw(entity)).into();
     }
 }
 
