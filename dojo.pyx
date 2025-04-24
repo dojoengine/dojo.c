@@ -28,6 +28,10 @@ cdef extern from *:
     Asc,
     Desc,
 
+  cdef enum PaginationDirection:
+    Forward,
+    Backward,
+
   cdef enum PatternMatching:
     FixedLen # = 0,
     VariableLen # = 1,
@@ -119,14 +123,36 @@ cdef extern from *:
     Entity *data;
     uintptr_t data_len;
 
-  cdef enum ResultCArrayEntity_Tag:
-    OkCArrayEntity,
-    ErrCArrayEntity,
+  cdef enum COptionc_char_Tag:
+    Somec_char,
+    Nonec_char,
 
-  cdef struct ResultCArrayEntity:
-    ResultCArrayEntity_Tag tag;
-    CArrayEntity ok;
+  cdef struct COptionc_char:
+    COptionc_char_Tag tag;
+    const char *some;
+
+  cdef struct PageEntity:
+    CArrayEntity items;
+    COptionc_char next_cursor;
+
+  cdef enum ResultPageEntity_Tag:
+    OkPageEntity,
+    ErrPageEntity,
+
+  cdef struct ResultPageEntity:
+    ResultPageEntity_Tag tag;
+    PageEntity ok;
     Error err;
+
+  cdef struct CArrayOrderBy:
+    OrderBy *data;
+    uintptr_t data_len;
+
+  cdef struct Pagination:
+    COptionc_char cursor;
+    uint32_t limit;
+    PaginationDirection direction;
+    CArrayOrderBy order_by;
 
   cdef struct CArrayCOptionFieldElement:
     COptionFieldElement *data;
@@ -229,18 +255,12 @@ cdef extern from *:
     COptionClause_Tag tag;
     Clause some;
 
-  cdef struct CArrayOrderBy:
-    OrderBy *data;
-    uintptr_t data_len;
-
   cdef struct Query:
-    uint32_t limit;
-    uint32_t offset;
+    Pagination pagination;
     COptionClause clause;
-    bool dont_include_hashed_keys;
-    CArrayOrderBy order_by;
-    CArrayc_char entity_models;
-    uint64_t entity_updated_after;
+    bool no_hashed_keys;
+    CArrayc_char models;
+    bool historical;
 
   cdef struct CArrayCHashItemFieldElementModelMetadata:
     CHashItemFieldElementModelMetadata *data;
@@ -284,14 +304,6 @@ cdef extern from *:
   cdef struct CArrayToken:
     Token *data;
     uintptr_t data_len;
-
-  cdef enum COptionc_char_Tag:
-    Somec_char,
-    Nonec_char,
-
-  cdef struct COptionc_char:
-    COptionc_char_Tag tag;
-    const char *some;
 
   cdef struct PageToken:
     CArrayToken items;
@@ -425,6 +437,11 @@ cdef extern from *:
     FieldElement hashed_keys;
     CArrayStruct models;
 
+  cdef struct OrderBy:
+    const char *model;
+    const char *member;
+    OrderDirection direction;
+
   cdef enum COptionFieldElement_Tag:
     SomeFieldElement,
     NoneFieldElement,
@@ -432,11 +449,6 @@ cdef extern from *:
   cdef struct COptionFieldElement:
     COptionFieldElement_Tag tag;
     FieldElement some;
-
-  cdef struct OrderBy:
-    const char *model;
-    const char *member;
-    OrderDirection direction;
 
   cdef struct CArrayMember:
     Member *data;
@@ -692,7 +704,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing array of matching entities or error
-  ResultCArrayEntity client_entities(ToriiClient *client, Query query, bool historical);
+  ResultPageEntity client_entities(ToriiClient *client, Query query);
 
   # Retrieves event messages matching the given query
   #
@@ -703,7 +715,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing array of matching event message entities or error
-  ResultCArrayEntity client_event_messages(ToriiClient *client, Query query, bool historical);
+  ResultPageEntity client_event_messages(ToriiClient *client, Query query);
 
   # Gets the world metadata for the client
   #
@@ -750,7 +762,6 @@ cdef extern from *:
   # * `client` - Pointer to ToriiClient instance
   # * `clauses` - Array of entity key clauses to filter updates
   # * `clauses_len` - Length of clauses array
-  # * `historical` - Whether to include historical messages
   # * `callback` - Function called when updates occur
   #
   # # Returns
@@ -767,7 +778,6 @@ cdef extern from *:
   # * `subscription` - Pointer to existing Subscription
   # * `clauses` - New array of entity key clauses
   # * `clauses_len` - Length of new clauses array
-  # * `historical` - Whether to include historical messages
   #
   # # Returns
   # Result containing success boolean or error
@@ -797,6 +807,10 @@ cdef extern from *:
   # * `client` - Pointer to ToriiClient instance
   # * `contract_addresses` - Array of contract addresses
   # * `contract_addresses_len` - Length of addresses array
+  # * `token_ids` - Array of token ids
+  # * `token_ids_len` - Length of token ids array
+  # * `limit` - Maximum number of tokens to return
+  # * `cursor` - Cursor to start from
   #
   # # Returns
   # Result containing array of Token information or error
@@ -806,8 +820,7 @@ cdef extern from *:
                                 const U256 *token_ids,
                                 uintptr_t token_ids_len,
                                 uint32_t limit,
-                                uint32_t offset,
-                                const char *cursor);
+                                COptionc_char cursor);
 
   # Subscribes to token updates
   #
@@ -833,6 +846,10 @@ cdef extern from *:
   # * `contract_addresses_len` - Length of contract addresses array
   # * `account_addresses` - Array of account addresses
   # * `account_addresses_len` - Length of account addresses array
+  # * `token_ids` - Array of token ids
+  # * `token_ids_len` - Length of token ids array
+  # * `limit` - Maximum number of token balances to return
+  # * `cursor` - Cursor to start from
   #
   # # Returns
   # Result containing array of TokenBalance information or error
@@ -844,8 +861,7 @@ cdef extern from *:
                                                const U256 *token_ids,
                                                uintptr_t token_ids_len,
                                                uint32_t limit,
-                                               uint32_t offset,
-                                               const char *cursor);
+                                               COptionc_char cursor);
 
   # Subscribes to indexer updates
   #

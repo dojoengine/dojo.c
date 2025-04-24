@@ -47,13 +47,14 @@ use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
 use tokio::time::sleep;
 use tokio_stream::StreamExt;
-use torii_client::client::Client as TClient;
-use torii_relay::types::Message;
+use torii_client::Client as TClient;
+use torii_libp2p_types::Message;
 use torii_typed_data::TypedData;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
-    BlockId, CArray, Call, Controller, Entity, EntityKeysClause, Error, Event, IndexerUpdate, Page,
-    Policy, Query, Result, Signature, Struct, Token, TokenBalance, ToriiClient, Ty, WorldMetadata,
+    BlockId, CArray, COption, Call, Controller, Entity, EntityKeysClause, Error, Event,
+    IndexerUpdate, Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance,
+    ToriiClient, Ty, WorldMetadata,
 };
 use url::Url;
 
@@ -768,17 +769,12 @@ pub unsafe extern "C" fn client_controllers(
 pub unsafe extern "C" fn client_entities(
     client: *mut ToriiClient,
     query: Query,
-    historical: bool,
-) -> Result<CArray<Entity>> {
+) -> Result<Page<Entity>> {
     let query = query.clone().into();
-    let entities_future = unsafe { (*client).inner.entities(query, historical) };
+    let entities_future = unsafe { (*client).inner.entities(query) };
 
     match RUNTIME.block_on(entities_future) {
-        Ok(entities) => {
-            let entities: Vec<Entity> = entities.into_iter().map(|e| e.into()).collect();
-
-            Result::Ok(entities.into())
-        }
+        Ok(entities) => Result::Ok(entities.into()),
         Err(e) => Result::Err(e.into()),
     }
 }
@@ -796,18 +792,12 @@ pub unsafe extern "C" fn client_entities(
 pub unsafe extern "C" fn client_event_messages(
     client: *mut ToriiClient,
     query: Query,
-    historical: bool,
-) -> Result<CArray<Entity>> {
+) -> Result<Page<Entity>> {
     let query = query.clone().into();
-    let event_messages_future = unsafe { (*client).inner.event_messages(query, historical) };
+    let event_messages_future = unsafe { (*client).inner.event_messages(query) };
 
     match RUNTIME.block_on(event_messages_future) {
-        Ok(event_messages) => {
-            let event_messages: Vec<Entity> =
-                event_messages.into_iter().map(|e| e.into()).collect();
-
-            Result::Ok(event_messages.into())
-        }
+        Ok(event_messages) => Result::Ok(event_messages.into()),
         Err(e) => Result::Err(e.into()),
     }
 }
@@ -933,7 +923,6 @@ pub unsafe extern "C" fn client_update_entity_subscription(
 /// * `client` - Pointer to ToriiClient instance
 /// * `clauses` - Array of entity key clauses to filter updates
 /// * `clauses_len` - Length of clauses array
-/// * `historical` - Whether to include historical messages
 /// * `callback` - Function called when updates occur
 ///
 /// # Returns
@@ -1000,7 +989,6 @@ pub unsafe extern "C" fn client_on_event_message_update(
 /// * `subscription` - Pointer to existing Subscription
 /// * `clauses` - New array of entity key clauses
 /// * `clauses_len` - Length of new clauses array
-/// * `historical` - Whether to include historical messages
 ///
 /// # Returns
 /// Result containing success boolean or error
@@ -1096,6 +1084,10 @@ pub unsafe extern "C" fn client_on_starknet_event(
 /// * `client` - Pointer to ToriiClient instance
 /// * `contract_addresses` - Array of contract addresses
 /// * `contract_addresses_len` - Length of addresses array
+/// * `token_ids` - Array of token ids
+/// * `token_ids_len` - Length of token ids array
+/// * `limit` - Maximum number of tokens to return
+/// * `cursor` - Cursor to start from
 ///
 /// # Returns
 /// Result containing array of Token information or error
@@ -1107,8 +1099,7 @@ pub unsafe extern "C" fn client_tokens(
     token_ids: *const types::U256,
     token_ids_len: usize,
     limit: u32,
-    offset: u32,
-    cursor: *const c_char,
+    cursor: COption<*const c_char>,
 ) -> Result<Page<Token>> {
     let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
         Vec::new()
@@ -1125,20 +1116,16 @@ pub unsafe extern "C" fn client_tokens(
     };
 
     let limit = if limit == 0 { None } else { Some(limit) };
-    let offset = if offset == 0 { None } else { Some(offset) };
-    let cursor = if cursor.is_null() {
-        None
-    } else {
-        Some(unsafe { std::ffi::CStr::from_ptr(cursor).to_string_lossy().into_owned() })
-    };
-
-    let tokens = match RUNTIME.block_on((*client).inner.tokens(
-        contract_addresses,
-        token_ids,
-        limit,
-        offset,
-        cursor,
-    )) {
+    let tokens = match RUNTIME.block_on(
+        (*client).inner.tokens(
+            contract_addresses,
+            token_ids,
+            limit,
+            cursor
+                .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
+                .into(),
+        ),
+    ) {
         Ok(tokens) => tokens,
         Err(e) => return Result::Err(e.into()),
     };
@@ -1232,6 +1219,10 @@ pub unsafe extern "C" fn client_on_token_update(
 /// * `contract_addresses_len` - Length of contract addresses array
 /// * `account_addresses` - Array of account addresses
 /// * `account_addresses_len` - Length of account addresses array
+/// * `token_ids` - Array of token ids
+/// * `token_ids_len` - Length of token ids array
+/// * `limit` - Maximum number of token balances to return
+/// * `cursor` - Cursor to start from
 ///
 /// # Returns
 /// Result containing array of TokenBalance information or error
@@ -1245,8 +1236,7 @@ pub unsafe extern "C" fn client_token_balances(
     token_ids: *const types::U256,
     token_ids_len: usize,
     limit: u32,
-    offset: u32,
-    cursor: *const c_char,
+    cursor: COption<*const c_char>,
 ) -> Result<Page<TokenBalance>> {
     let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
         Vec::new()
@@ -1271,18 +1261,17 @@ pub unsafe extern "C" fn client_token_balances(
         ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
     };
 
-    let token_balances = match RUNTIME.block_on((*client).inner.token_balances(
-        account_addresses,
-        contract_addresses,
-        token_ids,
-        if limit == 0 { None } else { Some(limit) },
-        if offset == 0 { None } else { Some(offset) },
-        if cursor.is_null() {
-            None
-        } else {
-            Some(unsafe { std::ffi::CStr::from_ptr(cursor).to_string_lossy().into_owned() })
-        },
-    )) {
+    let token_balances = match RUNTIME.block_on(
+        (*client).inner.token_balances(
+            account_addresses,
+            contract_addresses,
+            token_ids,
+            if limit == 0 { None } else { Some(limit) },
+            cursor
+                .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
+                .into(),
+        ),
+    ) {
         Ok(balances) => balances,
         Err(e) => return Result::Err(e.into()),
     };
@@ -2127,7 +2116,7 @@ pub unsafe extern "C" fn ty_free(ty: *mut Ty) {
 #[no_mangle]
 pub unsafe extern "C" fn entity_free(entity: *mut Entity) {
     if !entity.is_null() {
-        let _: torii_grpc::types::schema::Entity = (*Box::<Entity>::from_raw(entity)).into();
+        let _: torii_grpc_client::types::schema::Entity = (*Box::<Entity>::from_raw(entity)).into();
     }
 }
 

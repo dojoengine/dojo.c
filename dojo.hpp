@@ -42,6 +42,11 @@ enum class OrderDirection {
   Desc,
 };
 
+enum class PaginationDirection {
+  Forward,
+  Backward,
+};
+
 enum class PatternMatching {
   FixedLen = 0,
   VariableLen = 1,
@@ -163,6 +168,25 @@ struct COption {
   bool IsNone() const {
     return tag == Tag::None;
   }
+};
+
+template<typename T>
+struct Page {
+  CArray<T> items;
+  COption<const char*> next_cursor;
+};
+
+struct OrderBy {
+  const char *model;
+  const char *member;
+  OrderDirection direction;
+};
+
+struct Pagination {
+  COption<const char*> cursor;
+  uint32_t limit;
+  PaginationDirection direction;
+  CArray<OrderBy> order_by;
 };
 
 struct KeysClause {
@@ -592,20 +616,12 @@ struct Clause {
   }
 };
 
-struct OrderBy {
-  const char *model;
-  const char *member;
-  OrderDirection direction;
-};
-
 struct Query {
-  uint32_t limit;
-  uint32_t offset;
+  Pagination pagination;
   COption<Clause> clause;
-  bool dont_include_hashed_keys;
-  CArray<OrderBy> order_by;
-  CArray<const char*> entity_models;
-  uint64_t entity_updated_after;
+  bool no_hashed_keys;
+  CArray<const char*> models;
+  bool historical;
 };
 
 struct EnumOption {
@@ -765,12 +781,6 @@ struct Token {
   const char *symbol;
   uint8_t decimals;
   const char *metadata;
-};
-
-template<typename T>
-struct Page {
-  CArray<T> items;
-  COption<const char*> next_cursor;
 };
 
 struct TokenBalance {
@@ -1096,7 +1106,7 @@ Result<CArray<Controller>> client_controllers(ToriiClient *client,
 ///
 /// # Returns
 /// Result containing array of matching entities or error
-Result<CArray<Entity>> client_entities(ToriiClient *client, Query query, bool historical);
+Result<Page<Entity>> client_entities(ToriiClient *client, Query query);
 
 /// Retrieves event messages matching the given query
 ///
@@ -1107,7 +1117,7 @@ Result<CArray<Entity>> client_entities(ToriiClient *client, Query query, bool hi
 ///
 /// # Returns
 /// Result containing array of matching event message entities or error
-Result<CArray<Entity>> client_event_messages(ToriiClient *client, Query query, bool historical);
+Result<Page<Entity>> client_event_messages(ToriiClient *client, Query query);
 
 /// Gets the world metadata for the client
 ///
@@ -1154,7 +1164,6 @@ Result<bool> client_update_entity_subscription(ToriiClient *client,
 /// * `client` - Pointer to ToriiClient instance
 /// * `clauses` - Array of entity key clauses to filter updates
 /// * `clauses_len` - Length of clauses array
-/// * `historical` - Whether to include historical messages
 /// * `callback` - Function called when updates occur
 ///
 /// # Returns
@@ -1171,7 +1180,6 @@ Result<Subscription*> client_on_event_message_update(ToriiClient *client,
 /// * `subscription` - Pointer to existing Subscription
 /// * `clauses` - New array of entity key clauses
 /// * `clauses_len` - Length of new clauses array
-/// * `historical` - Whether to include historical messages
 ///
 /// # Returns
 /// Result containing success boolean or error
@@ -1201,6 +1209,10 @@ Result<Subscription*> client_on_starknet_event(ToriiClient *client,
 /// * `client` - Pointer to ToriiClient instance
 /// * `contract_addresses` - Array of contract addresses
 /// * `contract_addresses_len` - Length of addresses array
+/// * `token_ids` - Array of token ids
+/// * `token_ids_len` - Length of token ids array
+/// * `limit` - Maximum number of tokens to return
+/// * `cursor` - Cursor to start from
 ///
 /// # Returns
 /// Result containing array of Token information or error
@@ -1210,8 +1222,7 @@ Result<Page<Token>> client_tokens(ToriiClient *client,
                                   const U256 *token_ids,
                                   uintptr_t token_ids_len,
                                   uint32_t limit,
-                                  uint32_t offset,
-                                  const char *cursor);
+                                  COption<const char*> cursor);
 
 /// Subscribes to token updates
 ///
@@ -1237,6 +1248,10 @@ Result<Subscription*> client_on_token_update(ToriiClient *client,
 /// * `contract_addresses_len` - Length of contract addresses array
 /// * `account_addresses` - Array of account addresses
 /// * `account_addresses_len` - Length of account addresses array
+/// * `token_ids` - Array of token ids
+/// * `token_ids_len` - Length of token ids array
+/// * `limit` - Maximum number of token balances to return
+/// * `cursor` - Cursor to start from
 ///
 /// # Returns
 /// Result containing array of TokenBalance information or error
@@ -1248,8 +1263,7 @@ Result<Page<TokenBalance>> client_token_balances(ToriiClient *client,
                                                  const U256 *token_ids,
                                                  uintptr_t token_ids_len,
                                                  uint32_t limit,
-                                                 uint32_t offset,
-                                                 const char *cursor);
+                                                 COption<const char*> cursor);
 
 /// Subscribes to indexer updates
 ///
