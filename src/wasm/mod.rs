@@ -28,7 +28,6 @@ use starknet::signers::LocalWallet;
 use starknet_crypto::poseidon_hash_many;
 use stream_cancel::{StreamExt as _, Tripwire};
 use torii_libp2p_types::Message;
-use torii_typed_data::TypedData;
 use tsify_next::Tsify;
 use wasm_bindgen::prelude::*;
 
