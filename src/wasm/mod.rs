@@ -745,11 +745,8 @@ impl ToriiClient {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
 
-        let token_ids = token_ids
-            .unwrap_or_default()
-            .into_iter()
-            .map(|t| t.into())
-            .collect::<Vec<_>>();
+        let token_ids =
+            token_ids.unwrap_or_default().into_iter().map(|t| t.into()).collect::<Vec<_>>();
 
         let tokens = self
             .inner
@@ -788,11 +785,8 @@ impl ToriiClient {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let token_ids = token_ids
-            .unwrap_or_default()
-            .into_iter()
-            .map(|t| t.into())
-            .collect::<Vec<_>>();
+        let token_ids =
+            token_ids.unwrap_or_default().into_iter().map(|t| t.into()).collect::<Vec<_>>();
 
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
@@ -872,11 +866,8 @@ impl ToriiClient {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
 
-        let token_ids = token_ids
-            .unwrap_or_default()
-            .into_iter()
-            .map(|t| t.into())
-            .collect::<Vec<_>>();
+        let token_ids =
+            token_ids.unwrap_or_default().into_iter().map(|t| t.into()).collect::<Vec<_>>();
 
         let token_balances = self
             .inner
@@ -1292,11 +1283,8 @@ impl ToriiClient {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let token_ids = token_ids
-            .unwrap_or_default()
-            .into_iter()
-            .map(|t| t.into())
-            .collect::<Vec<_>>();
+        let token_ids =
+            token_ids.unwrap_or_default().into_iter().map(|t| t.into()).collect::<Vec<_>>();
 
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
