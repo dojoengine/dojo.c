@@ -733,18 +733,23 @@ impl ToriiClient {
     #[wasm_bindgen(js_name = getTokens)]
     pub async fn get_tokens(
         &self,
-        contract_addresses: Vec<String>,
-        token_ids: Vec<WasmU256>,
+        contract_addresses: Option<Vec<String>>,
+        token_ids: Option<Vec<WasmU256>>,
         limit: Option<u32>,
         cursor: Option<String>,
     ) -> Result<Tokens, JsValue> {
         let contract_addresses = contract_addresses
+            .unwrap_or_default()
             .iter()
             .map(|c| Felt::from_str(c))
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
 
-        let token_ids = token_ids.into_iter().map(|t| t.into()).collect::<Vec<_>>();
+        let token_ids = token_ids
+            .unwrap_or_default()
+            .into_iter()
+            .map(|t| t.into())
+            .collect::<Vec<_>>();
 
         let tokens = self
             .inner
@@ -766,14 +771,15 @@ impl ToriiClient {
     #[wasm_bindgen(js_name = onTokenUpdated)]
     pub fn on_token_updated(
         &self,
-        contract_addresses: Vec<String>,
-        token_ids: Vec<WasmU256>,
+        contract_addresses: Option<Vec<String>>,
+        token_ids: Option<Vec<WasmU256>>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let contract_addresses = contract_addresses
+            .unwrap_or_default()
             .iter()
             .map(|addr| {
                 Felt::from_str(addr).map_err(|err| {
@@ -782,7 +788,11 @@ impl ToriiClient {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let token_ids = token_ids.into_iter().map(|t| t.into()).collect::<Vec<_>>();
+        let token_ids = token_ids
+            .unwrap_or_default()
+            .into_iter()
+            .map(|t| t.into())
+            .collect::<Vec<_>>();
 
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
@@ -842,25 +852,31 @@ impl ToriiClient {
     #[wasm_bindgen(js_name = getTokenBalances)]
     pub async fn get_token_balances(
         &self,
-        contract_addresses: Vec<String>,
-        account_addresses: Vec<String>,
-        token_ids: Vec<WasmU256>,
+        contract_addresses: Option<Vec<String>>,
+        account_addresses: Option<Vec<String>>,
+        token_ids: Option<Vec<WasmU256>>,
         limit: Option<u32>,
         cursor: Option<String>,
     ) -> Result<TokenBalances, JsValue> {
         let account_addresses = account_addresses
+            .unwrap_or_default()
             .iter()
             .map(|a| Felt::from_str(a))
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse account addresses: {e}")))?;
 
         let contract_addresses = contract_addresses
+            .unwrap_or_default()
             .iter()
             .map(|c| Felt::from_str(c))
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
 
-        let token_ids = token_ids.into_iter().map(|t| t.into()).collect::<Vec<_>>();
+        let token_ids = token_ids
+            .unwrap_or_default()
+            .into_iter()
+            .map(|t| t.into())
+            .collect::<Vec<_>>();
 
         let token_balances = self
             .inner
@@ -1249,15 +1265,16 @@ impl ToriiClient {
     #[wasm_bindgen(js_name = onTokenBalanceUpdated)]
     pub fn on_token_balance_updated(
         &self,
-        contract_addresses: Vec<String>,
-        account_addresses: Vec<String>,
-        token_ids: Vec<WasmU256>,
+        contract_addresses: Option<Vec<String>>,
+        account_addresses: Option<Vec<String>>,
+        token_ids: Option<Vec<WasmU256>>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let account_addresses = account_addresses
+            .unwrap_or_default()
             .iter()
             .map(|addr| {
                 Felt::from_str(addr)
@@ -1266,6 +1283,7 @@ impl ToriiClient {
             .collect::<Result<Vec<_>, _>>()?;
 
         let contract_addresses = contract_addresses
+            .unwrap_or_default()
             .iter()
             .map(|addr| {
                 Felt::from_str(addr).map_err(|err| {
@@ -1274,7 +1292,11 @@ impl ToriiClient {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let token_ids = token_ids.into_iter().map(|t| t.into()).collect::<Vec<_>>();
+        let token_ids = token_ids
+            .unwrap_or_default()
+            .into_iter()
+            .map(|t| t.into())
+            .collect::<Vec<_>>();
 
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
