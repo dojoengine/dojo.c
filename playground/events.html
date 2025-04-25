@@ -11,7 +11,7 @@
 
 <body>
     <script type="module">
-        import init, { createClient, ClientConfig } from '../pkg/dojo_c.js';
+        import init, { ToriiClient, ClientConfig } from '../pkg/dojo_c.js';
         import { ThemeManager, UpdateManager } from './setup.js';
 
         const themeManager = new ThemeManager();
@@ -26,25 +26,30 @@
                 worldAddress: '0x064613f376f05242dfcc9fe360fa2ce1fdd6b00b1ce73dae2ea649ea118fd9be'
             }
 
-            const client = await createClient(config);
+            const client = new ToriiClient(config);
 
             const is_historical = false;
 
-            let events = await client.getEventMessages({
-                limit: 10,
-                offset: 0,
-                dont_include_hashed_keys: true,
-                order_by: [],
-                entity_models: [],
-                entity_updated_after: 0,
+            const query = {
+                pagination: {
+                    limit: 10,
+                    cursor: undefined,
+                    direction: "Forward",
+                    order_by: []
+                },
                 clause: {
                     Keys: {
                         keys: [undefined],
                         pattern_matching: "VariableLen",
                         models: []
                     }
-                }
-            }, is_historical);
+                },
+                no_hashed_keys: true,
+                models: [],
+                historical: is_historical
+            };
+
+            let events = await client.getEventMessages(query);
 
             updateManager.displayUpdate('fetch', events);
 
@@ -58,7 +63,6 @@
                         }
                     }
                 ],
-                is_historical,
                 (entity_id, models) => {
                     updateManager.displayUpdate('update', {
                         entity_id: entity_id,
