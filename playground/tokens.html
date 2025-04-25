@@ -11,7 +11,7 @@
 
 <body>
     <script type="module">
-        import init, { createClient, ClientConfig } from '../pkg/dojo_c.js';
+        import init, { ToriiClient } from '../pkg/dojo_c.js';
         import { ThemeManager, UpdateManager } from './setup.js';
 
         const themeManager = new ThemeManager();
@@ -26,10 +26,10 @@
                 worldAddress: '0x064613f376f05242dfcc9fe360fa2ce1fdd6b00b1ce73dae2ea649ea118fd9be'
             }
 
-            const client = await createClient(config);
+            const client = await new ToriiClient(config);
 
-            let tokens = await client.getTokens([], []);
-            let balances = await client.getTokenBalances([], [], []);
+            let tokens = await client.getTokens([], [], undefined, undefined);
+            let balances = await client.getTokenBalances([], [], [], undefined, undefined);
 
             updateManager.displayUpdate("fetch tokens", tokens);
             updateManager.displayUpdate("fetch balances", balances);

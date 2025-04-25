@@ -1,0 +1,1 @@
+npx wasm-pack build --out-dir playground/pkg --release --target web 

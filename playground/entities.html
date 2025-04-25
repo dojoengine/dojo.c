@@ -10,7 +10,7 @@
 
   <body>
     <script type="module">
-      import init, { createClient, ClientConfig } from "../pkg/dojo_c.js";
+      import init, { ToriiClient } from "../pkg/dojo_c.js";
       import { ThemeManager, UpdateManager } from "./setup.js";
 
       const themeManager = new ThemeManager();
@@ -26,16 +26,24 @@
             "0x064613f376f05242dfcc9fe360fa2ce1fdd6b00b1ce73dae2ea649ea118fd9be",
         };
 
-        const client = await createClient(config);
+        const client = await new ToriiClient(config);
 
-        let entities = await client.getEntities({
-          limit: 10,
-          offset: 0,
-          dont_include_hashed_keys: true,
-          order_by: [],
-          entity_models: [],
-          entity_updated_after: 0,
-        });
+        // Construct the Query object for getEntities
+        const query = {
+          pagination: {
+              limit: 10,
+              cursor: undefined, // Offset likely maps to cursor, using undefined for start
+              direction: "Forward", // Default direction
+              order_by: [] // Assuming order_by maps here
+          },
+          clause: undefined, // No specific clause was used before
+          no_hashed_keys: true, // Map from dont_include_hashed_keys
+          models: [], // Assuming entity_models maps here
+          historical: false // Default value
+          // entity_updated_after: 0, // No direct mapping found
+        };
+
+        let entities = await client.getEntities(query);
 
         updateManager.displayUpdate("fetch", entities);
 
