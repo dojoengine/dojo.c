@@ -917,11 +917,11 @@ impl ToriiClient {
 
         let results = self
             .inner
-            .entities(torii_grpc_client::types::Query {
-                pagination: torii_grpc_client::types::Pagination {
+            .entities(torii_proto::Query {
+                pagination: torii_proto::Pagination {
                     limit,
                     cursor,
-                    direction: torii_grpc_client::types::PaginationDirection::Forward,
+                    direction: torii_proto::PaginationDirection::Forward,
                     order_by: vec![],
                 },
                 no_hashed_keys: false,

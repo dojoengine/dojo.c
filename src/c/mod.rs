@@ -2116,7 +2116,7 @@ pub unsafe extern "C" fn ty_free(ty: *mut Ty) {
 #[no_mangle]
 pub unsafe extern "C" fn entity_free(entity: *mut Entity) {
     if !entity.is_null() {
-        let _: torii_grpc_client::types::schema::Entity = (*Box::<Entity>::from_raw(entity)).into();
+        let _: torii_proto::schema::Entity = (*Box::<Entity>::from_raw(entity)).into();
     }
 }
 
