@@ -559,6 +559,7 @@ impl From<torii_proto::OrderDirection> for OrderDirection {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub enum Clause {
+    HashedKeys(CArray<FieldElement>),
     Keys(KeysClause),
     CMember(MemberClause),
     Composite(CompositeClause),
@@ -1055,6 +1056,7 @@ impl From<torii_proto::Query> for Query {
 impl From<Clause> for torii_proto::Clause {
     fn from(val: Clause) -> Self {
         match val {
+            Clause::HashedKeys(keys) => torii_proto::Clause::HashedKeys(keys.into()),
             Clause::Keys(keys) => torii_proto::Clause::Keys(keys.into()),
             Clause::CMember(member) => torii_proto::Clause::Member(member.into()),
             Clause::Composite(composite) => {
@@ -1067,6 +1069,7 @@ impl From<Clause> for torii_proto::Clause {
 impl From<torii_proto::Clause> for Clause {
     fn from(val: torii_proto::Clause) -> Self {
         match val {
+            torii_proto::Clause::HashedKeys(keys) => Clause::HashedKeys(keys.into()),
             torii_proto::Clause::Keys(keys) => Clause::Keys(keys.into()),
             torii_proto::Clause::Member(member) => Clause::CMember(member.into()),
             torii_proto::Clause::Composite(composite) => {

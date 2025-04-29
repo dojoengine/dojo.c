@@ -17,7 +17,6 @@ struct OrderBy;
 struct COptionFieldElement;
 struct CHashItemFieldElementModelMetadata;
 struct Subscription;
-struct EntityKeysClause;
 struct Struct;
 struct Token;
 struct TokenBalance;
@@ -236,6 +235,11 @@ typedef struct Pagination {
   struct CArrayOrderBy order_by;
 } Pagination;
 
+typedef struct CArrayFieldElement {
+  struct FieldElement *data;
+  uintptr_t data_len;
+} CArrayFieldElement;
+
 typedef struct CArrayCOptionFieldElement {
   struct COptionFieldElement *data;
   uintptr_t data_len;
@@ -373,6 +377,7 @@ typedef struct CompositeClause {
 } CompositeClause;
 
 typedef enum Clause_Tag {
+  HashedKeys,
   Keys,
   CMember,
   Composite,
@@ -381,6 +386,9 @@ typedef enum Clause_Tag {
 typedef struct Clause {
   Clause_Tag tag;
   union {
+    struct {
+      struct CArrayFieldElement hashed_keys;
+    };
     struct {
       struct KeysClause keys;
     };
@@ -463,11 +471,6 @@ typedef struct CArrayStruct {
   struct Struct *data;
   uintptr_t data_len;
 } CArrayStruct;
-
-typedef struct CArrayFieldElement {
-  struct FieldElement *data;
-  uintptr_t data_len;
-} CArrayFieldElement;
 
 typedef struct Event {
   struct CArrayFieldElement keys;
@@ -790,23 +793,6 @@ typedef struct CHashItemFieldElementModelMetadata {
   struct ModelMetadata value;
 } CHashItemFieldElementModelMetadata;
 
-typedef enum EntityKeysClause_Tag {
-  HashedKeys,
-  EntityKeys,
-} EntityKeysClause_Tag;
-
-typedef struct EntityKeysClause {
-  EntityKeysClause_Tag tag;
-  union {
-    struct {
-      struct CArrayFieldElement hashed_keys;
-    };
-    struct {
-      struct KeysClause entity_keys;
-    };
-  };
-} EntityKeysClause;
-
 typedef struct Member {
   const char *name;
   struct Ty *ty;
@@ -1073,8 +1059,7 @@ struct ResultWorldMetadata client_metadata(struct ToriiClient *client);
  * Result containing pointer to Subscription or error
  */
 struct ResultSubscription client_on_entity_state_update(struct ToriiClient *client,
-                                                        const struct EntityKeysClause *clauses,
-                                                        uintptr_t clauses_len,
+                                                        struct COptionClause clause,
                                                         void (*callback)(struct FieldElement,
                                                                          struct CArrayStruct));
 
@@ -1092,8 +1077,7 @@ struct ResultSubscription client_on_entity_state_update(struct ToriiClient *clie
  */
 struct Resultbool client_update_entity_subscription(struct ToriiClient *client,
                                                     struct Subscription *subscription,
-                                                    const struct EntityKeysClause *clauses,
-                                                    uintptr_t clauses_len);
+                                                    struct COptionClause clause);
 
 /**
  * Subscribes to event message updates
@@ -1108,8 +1092,7 @@ struct Resultbool client_update_entity_subscription(struct ToriiClient *client,
  * Result containing pointer to Subscription or error
  */
 struct ResultSubscription client_on_event_message_update(struct ToriiClient *client,
-                                                         const struct EntityKeysClause *clauses,
-                                                         uintptr_t clauses_len,
+                                                         struct COptionClause clause,
                                                          void (*callback)(struct FieldElement,
                                                                           struct CArrayStruct));
 
@@ -1127,8 +1110,7 @@ struct ResultSubscription client_on_event_message_update(struct ToriiClient *cli
  */
 struct Resultbool client_update_event_message_subscription(struct ToriiClient *client,
                                                            struct Subscription *subscription,
-                                                           const struct EntityKeysClause *clauses,
-                                                           uintptr_t clauses_len);
+                                                           struct COptionClause clause);
 
 /**
  * Subscribes to Starknet events
@@ -1143,7 +1125,7 @@ struct Resultbool client_update_event_message_subscription(struct ToriiClient *c
  * Result containing pointer to Subscription or error
  */
 struct ResultSubscription client_on_starknet_event(struct ToriiClient *client,
-                                                   const struct EntityKeysClause *clauses,
+                                                   const struct KeysClause *clauses,
                                                    uintptr_t clauses_len,
                                                    void (*callback)(struct Event));
 

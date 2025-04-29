@@ -1,13 +1,13 @@
 mod types;
 
-use std::ffi::{c_void, CStr, CString};
+use std::ffi::{CStr, CString, c_void};
 use std::fs;
 use std::net::SocketAddr;
 use std::ops::Deref;
 use std::os::raw::c_char;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
 use account_sdk::abigen::controller::OutsideExecutionV3;
@@ -19,13 +19,13 @@ use account_sdk::account::session::hash::Session;
 use account_sdk::provider::{CartridgeJsonRpcProvider, CartridgeProvider};
 use account_sdk::signers::Signer;
 use account_sdk::utils::time::get_current_timestamp;
+use axum::Router;
 use axum::extract::State;
-use axum::http::{header, HeaderValue, Method, StatusCode};
+use axum::http::{HeaderValue, Method, StatusCode, header};
 use axum::response::IntoResponse;
 use axum::routing::post;
-use axum::Router;
-use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD as BASE64;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use crypto_bigint::U256;
 use directories::ProjectDirs;
@@ -41,7 +41,7 @@ use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::{poseidon_hash_many, Felt};
+use starknet_crypto::{Felt, poseidon_hash_many};
 use stream_cancel::{StreamExt as _, Tripwire};
 use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
@@ -52,9 +52,9 @@ use torii_libp2p_types::Message;
 use torii_typed_data::TypedData;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
-    BlockId, CArray, COption, Call, Controller, Entity, EntityKeysClause, Error, Event,
-    IndexerUpdate, Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance,
-    ToriiClient, Ty, WorldMetadata,
+    BlockId, CArray, COption, Call, Clause, Controller, Entity, Error, Event, IndexerUpdate,
+    KeysClause, Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance, ToriiClient,
+    Ty, WorldMetadata,
 };
 use url::Url;
 
@@ -831,22 +831,15 @@ pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> Result<Wor
 #[no_mangle]
 pub unsafe extern "C" fn client_on_entity_state_update(
     client: *mut ToriiClient,
-    clauses: *const EntityKeysClause,
-    clauses_len: usize,
+    clause: COption<Clause>,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
-    let clauses = if clauses.is_null() || clauses_len == 0 {
-        Vec::new()
-    } else {
-        let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-        clauses.iter().map(|c| c.clone().into()).collect::<Vec<_>>()
-    };
-
     let subscription_id = Arc::new(AtomicU64::new(0));
     let (trigger, tripwire) = Tripwire::new();
 
     let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
+    let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
 
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
@@ -856,7 +849,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv = client_clone.inner.on_entity_updated(clauses.clone()).await;
+            let rcv = client_clone.inner.on_entity_updated(clause.clone()).await;
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
@@ -897,20 +890,14 @@ pub unsafe extern "C" fn client_on_entity_state_update(
 pub unsafe extern "C" fn client_update_entity_subscription(
     client: *mut ToriiClient,
     subscription: *mut Subscription,
-    clauses: *const EntityKeysClause,
-    clauses_len: usize,
+    clause: COption<Clause>,
 ) -> Result<bool> {
-    let clauses = if clauses.is_null() || clauses_len == 0 {
-        Vec::new()
-    } else {
-        let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-        clauses.iter().map(|c| c.clone().into()).collect::<Vec<_>>()
-    };
+    let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
 
     match RUNTIME.block_on(
         (*client)
             .inner
-            .update_entity_subscription((*subscription).id.load(Ordering::SeqCst), clauses),
+            .update_entity_subscription((*subscription).id.load(Ordering::SeqCst), clause),
     ) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
@@ -930,17 +917,11 @@ pub unsafe extern "C" fn client_update_entity_subscription(
 #[no_mangle]
 pub unsafe extern "C" fn client_on_event_message_update(
     client: *mut ToriiClient,
-    clauses: *const EntityKeysClause,
-    clauses_len: usize,
+    clause: COption<Clause>,
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
-    let clauses = if clauses.is_null() || clauses_len == 0 {
-        Vec::new()
-    } else {
-        let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-        clauses.iter().map(|c| c.clone().into()).collect::<Vec<_>>()
-    };
+    let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
 
     let subscription_id = Arc::new(AtomicU64::new(0));
     let (trigger, tripwire) = Tripwire::new();
@@ -955,7 +936,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv = client_clone.inner.on_event_message_updated(clauses.clone()).await;
+            let rcv = client_clone.inner.on_event_message_updated(clause.clone()).await;
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
@@ -996,20 +977,14 @@ pub unsafe extern "C" fn client_on_event_message_update(
 pub unsafe extern "C" fn client_update_event_message_subscription(
     client: *mut ToriiClient,
     subscription: *mut Subscription,
-    clauses: *const EntityKeysClause,
-    clauses_len: usize,
+    clause: COption<Clause>,
 ) -> Result<bool> {
-    let clauses = if clauses.is_null() || clauses_len == 0 {
-        Vec::new()
-    } else {
-        let clauses = unsafe { std::slice::from_raw_parts(clauses, clauses_len) };
-        clauses.iter().map(|c| c.clone().into()).collect::<Vec<_>>()
-    };
+    let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
 
     match RUNTIME.block_on(
         (*client)
             .inner
-            .update_event_message_subscription((*subscription).id.load(Ordering::SeqCst), clauses),
+            .update_event_message_subscription((*subscription).id.load(Ordering::SeqCst), clause),
     ) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
@@ -1029,7 +1004,7 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
 #[no_mangle]
 pub unsafe extern "C" fn client_on_starknet_event(
     client: *mut ToriiClient,
-    clauses: *const EntityKeysClause,
+    clauses: *const KeysClause,
     clauses_len: usize,
     callback: unsafe extern "C" fn(Event),
 ) -> Result<*mut Subscription> {

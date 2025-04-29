@@ -12,7 +12,6 @@ struct ControllerAccount;
 struct Call;
 struct Ty;
 struct Subscription;
-struct EntityKeysClause;
 struct Provider;
 struct Account;
 
@@ -558,9 +557,14 @@ struct CompositeClause {
 
 struct Clause {
   enum class Tag {
+    HashedKeys,
     Keys,
     CMember,
     Composite,
+  };
+
+  struct HashedKeys_Body {
+    CArray<FieldElement> _0;
   };
 
   struct Keys_Body {
@@ -577,10 +581,22 @@ struct Clause {
 
   Tag tag;
   union {
+    HashedKeys_Body hashed_keys;
     Keys_Body keys;
     CMember_Body c_member;
     Composite_Body composite;
   };
+
+  static Clause HashedKeys(const CArray<FieldElement> &_0) {
+    Clause result;
+    ::new (&result.hashed_keys._0) (CArray<FieldElement>)(_0);
+    result.tag = Tag::HashedKeys;
+    return result;
+  }
+
+  bool IsHashedKeys() const {
+    return tag == Tag::HashedKeys;
+  }
 
   static Clause Keys(const KeysClause &_0) {
     Clause result;
@@ -877,49 +893,6 @@ struct Policy {
   const char *description;
 };
 
-struct EntityKeysClause {
-  enum class Tag {
-    HashedKeys,
-    EntityKeys,
-  };
-
-  struct HashedKeys_Body {
-    CArray<FieldElement> _0;
-  };
-
-  struct EntityKeys_Body {
-    KeysClause _0;
-  };
-
-  Tag tag;
-  union {
-    HashedKeys_Body hashed_keys;
-    EntityKeys_Body entity_keys;
-  };
-
-  static EntityKeysClause HashedKeys(const CArray<FieldElement> &_0) {
-    EntityKeysClause result;
-    ::new (&result.hashed_keys._0) (CArray<FieldElement>)(_0);
-    result.tag = Tag::HashedKeys;
-    return result;
-  }
-
-  bool IsHashedKeys() const {
-    return tag == Tag::HashedKeys;
-  }
-
-  static EntityKeysClause EntityKeys(const KeysClause &_0) {
-    EntityKeysClause result;
-    ::new (&result.entity_keys._0) (KeysClause)(_0);
-    result.tag = Tag::EntityKeys;
-    return result;
-  }
-
-  bool IsEntityKeys() const {
-    return tag == Tag::EntityKeys;
-  }
-};
-
 extern "C" {
 
 /// Creates a new Torii client instance
@@ -1139,8 +1112,7 @@ Result<WorldMetadata> client_metadata(ToriiClient *client);
 /// # Returns
 /// Result containing pointer to Subscription or error
 Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
-                                                    const EntityKeysClause *clauses,
-                                                    uintptr_t clauses_len,
+                                                    COption<Clause> clause,
                                                     void (*callback)(FieldElement, CArray<Struct>));
 
 /// Updates an existing entity subscription with new clauses
@@ -1155,8 +1127,7 @@ Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
 /// Result containing success boolean or error
 Result<bool> client_update_entity_subscription(ToriiClient *client,
                                                Subscription *subscription,
-                                               const EntityKeysClause *clauses,
-                                               uintptr_t clauses_len);
+                                               COption<Clause> clause);
 
 /// Subscribes to event message updates
 ///
@@ -1169,8 +1140,7 @@ Result<bool> client_update_entity_subscription(ToriiClient *client,
 /// # Returns
 /// Result containing pointer to Subscription or error
 Result<Subscription*> client_on_event_message_update(ToriiClient *client,
-                                                     const EntityKeysClause *clauses,
-                                                     uintptr_t clauses_len,
+                                                     COption<Clause> clause,
                                                      void (*callback)(FieldElement, CArray<Struct>));
 
 /// Updates an existing event message subscription
@@ -1185,8 +1155,7 @@ Result<Subscription*> client_on_event_message_update(ToriiClient *client,
 /// Result containing success boolean or error
 Result<bool> client_update_event_message_subscription(ToriiClient *client,
                                                       Subscription *subscription,
-                                                      const EntityKeysClause *clauses,
-                                                      uintptr_t clauses_len);
+                                                      COption<Clause> clause);
 
 /// Subscribes to Starknet events
 ///
@@ -1199,7 +1168,7 @@ Result<bool> client_update_event_message_subscription(ToriiClient *client,
 /// # Returns
 /// Result containing pointer to Subscription or error
 Result<Subscription*> client_on_starknet_event(ToriiClient *client,
-                                               const EntityKeysClause *clauses,
+                                               const KeysClause *clauses,
                                                uintptr_t clauses_len,
                                                void (*callback)(Event));
 
