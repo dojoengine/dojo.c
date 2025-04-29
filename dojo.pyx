@@ -154,6 +154,10 @@ cdef extern from *:
     PaginationDirection direction;
     CArrayOrderBy order_by;
 
+  cdef struct CArrayFieldElement:
+    FieldElement *data;
+    uintptr_t data_len;
+
   cdef struct CArrayCOptionFieldElement:
     COptionFieldElement *data;
     uintptr_t data_len;
@@ -237,12 +241,14 @@ cdef extern from *:
     CArrayClause clauses;
 
   cdef enum Clause_Tag:
+    HashedKeys,
     Keys,
     CMember,
     Composite,
 
   cdef struct Clause:
     Clause_Tag tag;
+    CArrayFieldElement hashed_keys;
     KeysClause keys;
     MemberClause c_member;
     CompositeClause composite;
@@ -290,10 +296,6 @@ cdef extern from *:
 
   cdef struct CArrayStruct:
     Struct *data;
-    uintptr_t data_len;
-
-  cdef struct CArrayFieldElement:
-    FieldElement *data;
     uintptr_t data_len;
 
   cdef struct Event:
@@ -501,15 +503,6 @@ cdef extern from *:
   cdef struct CHashItemFieldElementModelMetadata:
     FieldElement key;
     ModelMetadata value;
-
-  cdef enum EntityKeysClause_Tag:
-    HashedKeys,
-    EntityKeys,
-
-  cdef struct EntityKeysClause:
-    EntityKeysClause_Tag tag;
-    CArrayFieldElement hashed_keys;
-    KeysClause entity_keys;
 
   cdef struct Member:
     const char *name;
@@ -737,8 +730,7 @@ cdef extern from *:
   # # Returns
   # Result containing pointer to Subscription or error
   ResultSubscription client_on_entity_state_update(ToriiClient *client,
-                                                   const EntityKeysClause *clauses,
-                                                   uintptr_t clauses_len,
+                                                   COptionClause clause,
                                                    void (*callback)(FieldElement, CArrayStruct));
 
   # Updates an existing entity subscription with new clauses
@@ -753,8 +745,7 @@ cdef extern from *:
   # Result containing success boolean or error
   Resultbool client_update_entity_subscription(ToriiClient *client,
                                                Subscription *subscription,
-                                               const EntityKeysClause *clauses,
-                                               uintptr_t clauses_len);
+                                               COptionClause clause);
 
   # Subscribes to event message updates
   #
@@ -767,8 +758,7 @@ cdef extern from *:
   # # Returns
   # Result containing pointer to Subscription or error
   ResultSubscription client_on_event_message_update(ToriiClient *client,
-                                                    const EntityKeysClause *clauses,
-                                                    uintptr_t clauses_len,
+                                                    COptionClause clause,
                                                     void (*callback)(FieldElement, CArrayStruct));
 
   # Updates an existing event message subscription
@@ -783,8 +773,7 @@ cdef extern from *:
   # Result containing success boolean or error
   Resultbool client_update_event_message_subscription(ToriiClient *client,
                                                       Subscription *subscription,
-                                                      const EntityKeysClause *clauses,
-                                                      uintptr_t clauses_len);
+                                                      COptionClause clause);
 
   # Subscribes to Starknet events
   #
@@ -797,7 +786,7 @@ cdef extern from *:
   # # Returns
   # Result containing pointer to Subscription or error
   ResultSubscription client_on_starknet_event(ToriiClient *client,
-                                              const EntityKeysClause *clauses,
+                                              const KeysClause *clauses,
                                               uintptr_t clauses_len,
                                               void (*callback)(Event));
 

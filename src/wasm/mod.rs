@@ -38,9 +38,9 @@ use crate::utils::watch_tx;
 mod types;
 
 use types::{
-    BlockId, Call, Calls, ClientConfig, Controller, Controllers, Entities, Entity, IndexerUpdate,
-    KeysClause, KeysClauses, Model, Page, Query, Signature, Token, TokenBalance, TokenBalances,
-    Tokens, WasmU256,
+    BlockId, Call, Calls, Clause, ClientConfig, Controller, Controllers, Entities, Entity,
+    IndexerUpdate, KeysClause, KeysClauses, Model, Page, Query, Signature, Token, TokenBalance,
+    TokenBalances, Tokens, WasmU256,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -917,11 +917,11 @@ impl ToriiClient {
 
         let results = self
             .inner
-            .entities(torii_grpc_client::types::Query {
-                pagination: torii_grpc_client::types::Pagination {
+            .entities(torii_proto::Query {
+                pagination: torii_proto::Pagination {
                     limit,
                     cursor,
-                    direction: torii_grpc_client::types::PaginationDirection::Forward,
+                    direction: torii_proto::PaginationDirection::Forward,
                     order_by: vec![],
                 },
                 no_hashed_keys: false,
@@ -968,13 +968,13 @@ impl ToriiClient {
     #[wasm_bindgen(js_name = onEntityUpdated)]
     pub fn on_entity_updated(
         &self,
-        clauses: KeysClauses,
+        clause: Option<Clause>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let clauses: Vec<_> = clauses.into_iter().map(|c| c.into()).collect();
+        let clause = clause.map(|c| c.into());
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
 
@@ -988,7 +988,7 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                if let Ok(stream) = client.on_entity_updated(clauses.clone()).await {
+                if let Ok(stream) = client.on_entity_updated(clause.clone()).await {
                     backoff = 1000; // Reset backoff on successful connection
 
                     let mut stream = stream.take_until_if(tripwire.clone());
@@ -1031,11 +1031,11 @@ impl ToriiClient {
     pub async fn update_entity_subscription(
         &self,
         subscription: &Subscription,
-        clauses: KeysClauses,
+        clause: Option<Clause>,
     ) -> Result<(), JsValue> {
-        let clauses = clauses.into_iter().map(|c| c.into()).collect();
+        let clause = clause.map(|c| c.into());
         self.inner
-            .update_entity_subscription(subscription.id.load(Ordering::SeqCst), clauses)
+            .update_entity_subscription(subscription.id.load(Ordering::SeqCst), clause)
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }
@@ -1051,13 +1051,13 @@ impl ToriiClient {
     #[wasm_bindgen(js_name = onEventMessageUpdated)]
     pub fn on_event_message_updated(
         &self,
-        clauses: KeysClauses,
+        clause: Option<Clause>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let clauses: Vec<_> = clauses.into_iter().map(|c| c.into()).collect();
+        let clause = clause.map(|c| c.into());
         let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
 
@@ -1071,7 +1071,7 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                if let Ok(stream) = client.on_event_message_updated(clauses.clone()).await {
+                if let Ok(stream) = client.on_event_message_updated(clause.clone()).await {
                     backoff = 1000; // Reset backoff on successful connection
 
                     let mut stream = stream.take_until_if(tripwire.clone());
@@ -1114,11 +1114,11 @@ impl ToriiClient {
     pub async fn update_event_message_subscription(
         &self,
         subscription: &Subscription,
-        clauses: KeysClauses,
+        clause: Option<Clause>,
     ) -> Result<(), JsValue> {
-        let clauses = clauses.into_iter().map(|c| c.into()).collect();
+        let clause = clause.map(|c| c.into());
         self.inner
-            .update_event_message_subscription(subscription.id.load(Ordering::SeqCst), clauses)
+            .update_event_message_subscription(subscription.id.load(Ordering::SeqCst), clause)
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }
