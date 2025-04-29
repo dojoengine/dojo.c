@@ -62,9 +62,6 @@ pub struct SigningKey(starknet::signers::SigningKey);
 pub struct VerifyingKey(starknet::signers::VerifyingKey);
 
 #[wasm_bindgen]
-pub struct TypedData(torii_typed_data::TypedData);
-
-#[wasm_bindgen]
 pub struct ByteArray(cainome::cairo_serde::ByteArray);
 
 #[wasm_bindgen]

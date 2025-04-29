@@ -427,6 +427,21 @@ pub struct KeysClause {
     pub models: Vec<String>,
 }
 
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
+pub struct TypedData {
+    pub domain: 
+    pub message: String,
+    pub primary_type: String,
+    pub types: String,
+}
+
+impl From<TypedData> for torii_typed_data::TypedData {
+    fn from(value: TypedData) -> Self {
+        Self { domain: value.domain.into(), message: value.message.into(), primary_type: value.primary_type.into(), types: value.types.into() }
+    }
+}
+
 #[declare]
 pub type KeysClauses = Vec<KeysClause>;
 
