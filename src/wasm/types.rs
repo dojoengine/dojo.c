@@ -397,13 +397,11 @@ impl From<Query> for torii_proto::Query {
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub enum Clause {
+    HashedKeys(Vec<String>),
     Keys(KeysClause),
     Member(MemberClause),
     Composite(CompositeClause),
 }
-
-#[declare]
-pub type KeysClauses = Vec<EntityKeysClause>;
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -423,29 +421,14 @@ impl From<PatternMatching> for torii_proto::PatternMatching {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub enum EntityKeysClause {
-    HashedKeys(Vec<String>),
-    Keys(KeysClause),
-}
-
-impl From<EntityKeysClause> for torii_proto::EntityKeysClause {
-    fn from(value: EntityKeysClause) -> Self {
-        match value {
-            EntityKeysClause::HashedKeys(keys) => {
-                Self::HashedKeys(keys.iter().map(|k| Felt::from_str(k.as_str()).unwrap()).collect())
-            }
-            EntityKeysClause::Keys(keys) => Self::Keys(keys.into()),
-        }
-    }
-}
-
-#[derive(Tsify, Serialize, Deserialize, Debug)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct KeysClause {
     pub keys: Vec<Option<String>>,
     pub pattern_matching: PatternMatching,
     pub models: Vec<String>,
 }
+
+#[declare]
+pub type KeysClauses = Vec<KeysClause>;
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -461,14 +444,10 @@ impl From<MemberValue> for torii_proto::MemberValue {
             MemberValue::Primitive(primitive) => {
                 torii_proto::MemberValue::Primitive(primitive.into())
             }
-            MemberValue::String(string) => {
-                torii_proto::MemberValue::String(string.clone())
-            }
+            MemberValue::String(string) => torii_proto::MemberValue::String(string.clone()),
             MemberValue::List(list) => {
-                let values = list
-                    .into_iter()
-                    .map(|v| v.into())
-                    .collect::<Vec<torii_proto::MemberValue>>();
+                let values =
+                    list.into_iter().map(|v| v.into()).collect::<Vec<torii_proto::MemberValue>>();
                 torii_proto::MemberValue::List(values)
             }
         }
@@ -528,6 +507,9 @@ impl From<CompositeClause> for torii_proto::CompositeClause {
 impl From<Clause> for torii_proto::Clause {
     fn from(value: Clause) -> Self {
         match value {
+            Clause::HashedKeys(keys) => {
+                Self::HashedKeys(keys.iter().map(|k| Felt::from_str(k.as_str()).unwrap()).collect())
+            }
             Clause::Keys(keys) => Self::Keys(keys.into()),
             Clause::Member(member) => Self::Member(member.into()),
             Clause::Composite(composite) => Self::Composite(composite.into()),

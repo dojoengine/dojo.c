@@ -486,9 +486,7 @@ impl From<PaginationDirection> for torii_proto::PaginationDirection {
     fn from(val: PaginationDirection) -> Self {
         match val {
             PaginationDirection::Forward => torii_proto::PaginationDirection::Forward,
-            PaginationDirection::Backward => {
-                torii_proto::PaginationDirection::Backward
-            }
+            PaginationDirection::Backward => torii_proto::PaginationDirection::Backward,
         }
     }
 }
@@ -497,9 +495,7 @@ impl From<torii_proto::PaginationDirection> for PaginationDirection {
     fn from(val: torii_proto::PaginationDirection) -> Self {
         match val {
             torii_proto::PaginationDirection::Forward => PaginationDirection::Forward,
-            torii_proto::PaginationDirection::Backward => {
-                PaginationDirection::Backward
-            }
+            torii_proto::PaginationDirection::Backward => PaginationDirection::Backward,
         }
     }
 }
@@ -599,10 +595,8 @@ impl From<MemberValue> for torii_proto::MemberValue {
             }),
             MemberValue::List(list) => {
                 let values: Vec<MemberValue> = list.into();
-                let values = values
-                    .into_iter()
-                    .map(|v| v.into())
-                    .collect::<Vec<torii_proto::MemberValue>>();
+                let values =
+                    values.into_iter().map(|v| v.into()).collect::<Vec<torii_proto::MemberValue>>();
                 torii_proto::MemberValue::List(values)
             }
         }
@@ -1059,9 +1053,7 @@ impl From<Clause> for torii_proto::Clause {
             Clause::HashedKeys(keys) => torii_proto::Clause::HashedKeys(keys.into()),
             Clause::Keys(keys) => torii_proto::Clause::Keys(keys.into()),
             Clause::CMember(member) => torii_proto::Clause::Member(member.into()),
-            Clause::Composite(composite) => {
-                torii_proto::Clause::Composite(composite.into())
-            }
+            Clause::Composite(composite) => torii_proto::Clause::Composite(composite.into()),
         }
     }
 }
@@ -1072,9 +1064,7 @@ impl From<torii_proto::Clause> for Clause {
             torii_proto::Clause::HashedKeys(keys) => Clause::HashedKeys(keys.into()),
             torii_proto::Clause::Keys(keys) => Clause::Keys(keys.into()),
             torii_proto::Clause::Member(member) => Clause::CMember(member.into()),
-            torii_proto::Clause::Composite(composite) => {
-                Clause::Composite(composite.into())
-            }
+            torii_proto::Clause::Composite(composite) => Clause::Composite(composite.into()),
         }
     }
 }
@@ -1102,11 +1092,7 @@ impl From<KeysClause> for torii_proto::KeysClause {
         let keys: Vec<Option<starknet_crypto::Felt>> = COptionArray(val.keys).into();
         let models: Vec<String> = CStringArray(val.models).into();
 
-        torii_proto::KeysClause {
-            keys,
-            pattern_matching: val.pattern_matching.into(),
-            models,
-        }
+        torii_proto::KeysClause { keys, pattern_matching: val.pattern_matching.into(), models }
     }
 }
 
@@ -1324,11 +1310,7 @@ impl From<Event> for torii_proto::Event {
         let keys: Vec<_> = val.keys.into();
         let data: Vec<_> = val.data.into();
 
-        torii_proto::Event {
-            keys,
-            data,
-            transaction_hash: val.transaction_hash.into(),
-        }
+        torii_proto::Event { keys, data, transaction_hash: val.transaction_hash.into() }
     }
 }
 
