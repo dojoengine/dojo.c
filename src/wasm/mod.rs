@@ -1017,13 +1017,11 @@ impl ToriiClient {
 
                     while let Some(Ok((id, entity))) = stream.next().await {
                         subscription_id_clone.store(id, Ordering::SeqCst);
-                        let hashed_keys = entity.hashed_keys.clone();
-                        let models: Entity = entity.into();
+                        let entity: Entity = entity.into();
 
                         let _ = callback.call2(
                             &JsValue::null(),
-                            &JsValue::from_str(&format!("{:#x}", hashed_keys)),
-                            &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            &entity.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                         );
                     }
                 }
@@ -1100,13 +1098,11 @@ impl ToriiClient {
 
                     while let Some(Ok((id, entity))) = stream.next().await {
                         subscription_id_clone.store(id, Ordering::SeqCst);
-                        let hashed_keys = entity.hashed_keys.clone();
-                        let models: Entity = entity.into();
+                        let entity: Entity = entity.into();
 
                         let _ = callback.call2(
                             &JsValue::null(),
-                            &JsValue::from_str(&format!("{:#x}", hashed_keys)),
-                            &models.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            &entity.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                         );
                     }
                 }
