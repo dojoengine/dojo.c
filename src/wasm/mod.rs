@@ -314,7 +314,7 @@ impl Account {
     /// # Returns
     /// Result containing Account instance or error
     #[wasm_bindgen(constructor)]
-    pub async unsafe fn new(
+    pub async fn new(
         provider: &Provider,
         private_key: &str,
         address: &str,
@@ -475,6 +475,15 @@ impl Account {
     pub async unsafe fn nonce(&self) -> Result<String, JsValue> {
         let nonce = self.0.get_nonce().await.map_err(|e| JsValue::from(e.to_string()))?;
         Ok(format!("{:#x}", nonce))
+    }
+
+    /// Gets the provider of the account
+    ///
+    /// # Returns
+    /// Result containing provider as hex string or error
+    #[wasm_bindgen(js_name = provider)]
+    pub fn provider(&self) -> Provider {
+        Provider(self.0.provider().clone())
     }
 }
 
