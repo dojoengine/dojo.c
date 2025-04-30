@@ -144,23 +144,35 @@ impl SigningKey {
 
 #[wasm_bindgen]
 impl VerifyingKey {
-    /// Derives a verifying (public) key from a signing (private) key
+    /// Initializes a new verifying key from a scalar
+    ///
+    /// # Parameters
+    /// * `verifying_key` - Verifying key as hex string
+    ///
+    /// # Returns
+    /// Result containing verifying key or error
+    #[wasm_bindgen(constructor)]
+    pub fn new(verifying_key: &str) -> Result<VerifyingKey, JsValue> {
+        let verifying_key = Felt::from_str(verifying_key);
+        if let Err(e) = verifying_key {
+            return Err(JsValue::from(format!("failed to parse verifying key: {e}")));
+        }
+
+        Ok(VerifyingKey(starknet::signers::VerifyingKey::from_scalar(verifying_key)))
+    }
+
+    /// Derives a verifying key from a signing key
     ///
     /// # Parameters
     /// * `signing_key` - Signing key as hex string
     ///
     /// # Returns
-    /// Result containing verifying key as hex string or error
-    #[wasm_bindgen(constructor)]
-    pub fn new(signing_key: &str) -> Result<VerifyingKey, JsValue> {
-        let signing_key = Felt::from_str(signing_key);
-        if let Err(e) = signing_key {
-            return Err(JsValue::from(format!("failed to parse signing key: {e}")));
-        }
-
-        let verifying_key = starknet_crypto::get_public_key(&signing_key.unwrap());
-
-        Ok(VerifyingKey(starknet::signers::VerifyingKey::from_scalar(verifying_key)))
+    /// Result containing verifying key or error
+    #[wasm_bindgen(js_name = fromSigningKey)]
+    pub fn from_signing_key(signing_key: &SigningKey) -> Result<VerifyingKey, JsValue> {
+        Ok(VerifyingKey(starknet::signers::VerifyingKey::from_scalar(
+            signing_key.0.secret_scalar(),
+        )))
     }
 
     /// Returns the scalar of the verifying key
