@@ -1019,7 +1019,7 @@ impl ToriiClient {
                         subscription_id_clone.store(id, Ordering::SeqCst);
                         let entity: Entity = entity.into();
 
-                        let _ = callback.call2(
+                        let _ = callback.call1(
                             &JsValue::null(),
                             &entity.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                         );
@@ -1100,7 +1100,7 @@ impl ToriiClient {
                         subscription_id_clone.store(id, Ordering::SeqCst);
                         let entity: Entity = entity.into();
 
-                        let _ = callback.call2(
+                        let _ = callback.call1(
                             &JsValue::null(),
                             &entity.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                         );
