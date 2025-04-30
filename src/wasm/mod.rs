@@ -158,6 +158,7 @@ impl VerifyingKey {
             return Err(JsValue::from(format!("failed to parse verifying key: {e}")));
         }
 
+        let verifying_key = verifying_key.unwrap();
         Ok(VerifyingKey(starknet::signers::VerifyingKey::from_scalar(verifying_key)))
     }
 
