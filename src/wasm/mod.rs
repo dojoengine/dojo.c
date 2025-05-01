@@ -300,6 +300,16 @@ impl Provider {
             Err(e) => Err(JsValue::from_str(&e.to_string())),
         }
     }
+
+    /// Gets the chain id of the provider
+    ///
+    /// # Returns
+    /// Result containing chain id as hex string or error
+    #[wasm_bindgen(js_name = chainId)]
+    pub fn chain_id(&self) -> Result<String, JsValue> {
+        let chain_id = self.0.chain_id();
+        Ok(format!("{:#x}", chain_id))
+    }
 }
 
 #[wasm_bindgen]
