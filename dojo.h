@@ -696,6 +696,11 @@ typedef struct Controller {
 typedef struct Entity {
   struct FieldElement hashed_keys;
   struct CArrayStruct models;
+  const char *event_id;
+  uint64_t executed_at_timestamp;
+  uint64_t created_at_timestamp;
+  uint64_t updated_at_timestamp;
+  bool is_deleted;
 } Entity;
 
 typedef struct OrderBy {
