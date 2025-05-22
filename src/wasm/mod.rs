@@ -306,8 +306,8 @@ impl Provider {
     /// # Returns
     /// Result containing chain id as hex string or error
     #[wasm_bindgen(js_name = chainId)]
-    pub fn chain_id(&self) -> Result<String, JsValue> {
-        let chain_id = self.0.chain_id();
+    pub async fn chain_id(&self) -> Result<String, JsValue> {
+        let chain_id = self.0.chain_id().await.map_err(|e| JsValue::from(e.to_string()))?;
         Ok(format!("{:#x}", chain_id))
     }
 }
