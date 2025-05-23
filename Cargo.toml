@@ -9,11 +9,11 @@ crate-type = ["cdylib", "rlib", "staticlib"]
 [dependencies]
 dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "4145801" }
 dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "4145801" }
-torii-proto = { git = "https://github.com/dojoengine/torii", rev = "3ae9b23" }
-torii-client = { git = "https://github.com/dojoengine/torii", rev = "3ae9b23" }
-torii-grpc-client = { git = "https://github.com/dojoengine/torii", rev = "3ae9b23" }
-torii-typed-data = { git = "https://github.com/dojoengine/torii", rev = "3ae9b23" }
-torii-libp2p-types = { git = "https://github.com/dojoengine/torii", rev = "3ae9b23" }
+torii-proto = { git = "https://github.com/dojoengine/torii", rev = "ae0420b" }
+torii-client = { git = "https://github.com/dojoengine/torii", rev = "ae0420b" }
+torii-grpc-client = { git = "https://github.com/dojoengine/torii", rev = "ae0420b" }
+torii-typed-data = { git = "https://github.com/dojoengine/torii", rev = "ae0420b" }
+torii-libp2p-types = { git = "https://github.com/dojoengine/torii", rev = "ae0420b" }
 
 starknet = "0.13.0"
 starknet-crypto = "0.7.2"
@@ -50,6 +50,7 @@ instant = { version = "0.1.13", features = ["wasm-bindgen"] }
 gloo-timers = { version = "0.3.0", features = ["futures"] }
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
+chrono = "0.4.41"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 axum = "0.8.1"

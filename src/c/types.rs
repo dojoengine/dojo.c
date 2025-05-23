@@ -1,4 +1,4 @@
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{CStr, CString, c_char};
 
 use crypto_bigint::Encoding;
 use starknet::core::utils::get_selector_from_name;
@@ -678,6 +678,11 @@ pub enum ValueType {
 pub struct Entity {
     pub hashed_keys: FieldElement,
     pub models: CArray<Struct>,
+    pub event_id: *const c_char,
+    pub executed_at_timestamp: u64,
+    pub created_at_timestamp: u64,
+    pub updated_at_timestamp: u64,
+    pub is_deleted: bool,
 }
 
 impl From<Entity> for torii_proto::schema::Entity {
@@ -685,7 +690,15 @@ impl From<Entity> for torii_proto::schema::Entity {
         let models: Vec<Struct> = val.models.into();
         let models = models.into_iter().map(|m| m.into()).collect();
 
-        torii_proto::schema::Entity { hashed_keys: val.hashed_keys.into(), models }
+        torii_proto::schema::Entity {
+            hashed_keys: val.hashed_keys.into(),
+            models,
+            event_id: unsafe { CStr::from_ptr(val.event_id).to_string_lossy().to_string() },
+            executed_at: val.executed_at_timestamp,
+            created_at: val.created_at_timestamp,
+            updated_at: val.updated_at_timestamp,
+            is_deleted: val.is_deleted,
+        }
     }
 }
 
@@ -693,7 +706,15 @@ impl From<torii_proto::schema::Entity> for Entity {
     fn from(val: torii_proto::schema::Entity) -> Self {
         let models = val.models.into_iter().map(|m| m.into()).collect::<Vec<Struct>>();
 
-        Entity { hashed_keys: val.hashed_keys.into(), models: models.into() }
+        Entity {
+            hashed_keys: val.hashed_keys.into(),
+            models: models.into(),
+            event_id: CString::new(val.event_id.clone()).unwrap().into_raw(),
+            executed_at_timestamp: val.executed_at.timestamp() as u64,
+            created_at_timestamp: val.created_at.timestamp() as u64,
+            updated_at_timestamp: val.updated_at.timestamp() as u64,
+            is_deleted: val.is_deleted,
+        }
     }
 }
 

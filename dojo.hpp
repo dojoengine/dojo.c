@@ -129,6 +129,11 @@ struct Struct {
 struct Entity {
   FieldElement hashed_keys;
   CArray<Struct> models;
+  const char *event_id;
+  uint64_t executed_at_timestamp;
+  uint64_t created_at_timestamp;
+  uint64_t updated_at_timestamp;
+  bool is_deleted;
 };
 
 template<typename T>

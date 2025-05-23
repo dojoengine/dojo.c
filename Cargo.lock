@@ -1102,14 +1102,16 @@ dependencies = [
 
 [[package]]
 name = "chrono"
-version = "0.4.40"
+version = "0.4.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a7964611d71df112cb1730f2ee67324fcf4d0fc6606acbbe9bfe06df124637c"
+checksum = "c469d952047f47f91b68d1cba3f10d63c11d73e4636f24f08daf0278abf01c4d"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
+ "js-sys",
  "num-traits",
  "serde",
+ "wasm-bindgen",
  "windows-link",
 ]
 
@@ -1606,6 +1608,7 @@ dependencies = [
  "base64 0.22.1",
  "cainome 0.2.3",
  "cbindgen",
+ "chrono",
  "crypto-bigint",
  "directories",
  "dojo-types",
@@ -6648,8 +6651,8 @@ dependencies = [
 
 [[package]]
 name = "torii-client"
-version = "1.5.0-alpha.1"
-source = "git+https://github.com/dojoengine/torii?rev=3ae9b23#3ae9b231b17fd22c211317c242555b31b5322c81"
+version = "1.5.4"
+source = "git+https://github.com/dojoengine/torii?rev=ae0420b#ae0420b1cbf11748724f96f7e509d17392abe095"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -6674,8 +6677,8 @@ dependencies = [
 
 [[package]]
 name = "torii-grpc-client"
-version = "1.5.0-alpha.1"
-source = "git+https://github.com/dojoengine/torii?rev=3ae9b23#3ae9b231b17fd22c211317c242555b31b5322c81"
+version = "1.5.4"
+source = "git+https://github.com/dojoengine/torii?rev=ae0420b#ae0420b1cbf11748724f96f7e509d17392abe095"
 dependencies = [
  "crypto-bigint",
  "dojo-types",
@@ -6700,8 +6703,8 @@ dependencies = [
 
 [[package]]
 name = "torii-libp2p-client"
-version = "1.5.0-alpha.1"
-source = "git+https://github.com/dojoengine/torii?rev=3ae9b23#3ae9b231b17fd22c211317c242555b31b5322c81"
+version = "1.5.4"
+source = "git+https://github.com/dojoengine/torii?rev=ae0420b#ae0420b1cbf11748724f96f7e509d17392abe095"
 dependencies = [
  "anyhow",
  "futures",
@@ -6723,8 +6726,8 @@ dependencies = [
 
 [[package]]
 name = "torii-libp2p-types"
-version = "1.5.0-alpha.1"
-source = "git+https://github.com/dojoengine/torii?rev=3ae9b23#3ae9b231b17fd22c211317c242555b31b5322c81"
+version = "1.5.4"
+source = "git+https://github.com/dojoengine/torii?rev=ae0420b#ae0420b1cbf11748724f96f7e509d17392abe095"
 dependencies = [
  "serde",
  "starknet 0.12.0",
@@ -6733,9 +6736,10 @@ dependencies = [
 
 [[package]]
 name = "torii-proto"
-version = "1.5.0-alpha.1"
-source = "git+https://github.com/dojoengine/torii?rev=3ae9b23#3ae9b231b17fd22c211317c242555b31b5322c81"
+version = "1.5.4"
+source = "git+https://github.com/dojoengine/torii?rev=ae0420b#ae0420b1cbf11748724f96f7e509d17392abe095"
 dependencies = [
+ "chrono",
  "crypto-bigint",
  "dojo-types",
  "dojo-world",
@@ -6755,8 +6759,8 @@ dependencies = [
 
 [[package]]
 name = "torii-typed-data"
-version = "1.5.0-alpha.1"
-source = "git+https://github.com/dojoengine/torii?rev=3ae9b23#3ae9b231b17fd22c211317c242555b31b5322c81"
+version = "1.5.4"
+source = "git+https://github.com/dojoengine/torii?rev=ae0420b#ae0420b1cbf11748724f96f7e509d17392abe095"
 dependencies = [
  "cainome 0.5.1",
  "crypto-bigint",

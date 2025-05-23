@@ -438,6 +438,11 @@ cdef extern from *:
   cdef struct Entity:
     FieldElement hashed_keys;
     CArrayStruct models;
+    const char *event_id;
+    uint64_t executed_at_timestamp;
+    uint64_t created_at_timestamp;
+    uint64_t updated_at_timestamp;
+    bool is_deleted;
 
   cdef struct OrderBy:
     const char *model;
