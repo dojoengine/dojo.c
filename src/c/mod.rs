@@ -52,8 +52,8 @@ use torii_libp2p_types::Message;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
     BlockId, CArray, COption, Call, Clause, Controller, Entity, Error, Event, IndexerUpdate,
-    KeysClause, Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance, ToriiClient,
-    Ty, WorldMetadata,
+    KeysClause, Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance,
+    TokenCollection, ToriiClient, Ty, WorldMetadata,
 };
 use url::Url;
 
@@ -1253,6 +1253,74 @@ pub unsafe extern "C" fn client_token_balances(
     };
 
     Result::Ok(token_balances.into())
+}
+
+/// Gets token collections for given accounts and contracts
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `contract_addresses` - Array of contract addresses
+/// * `contract_addresses_len` - Length of contract addresses array
+/// * `account_addresses` - Array of account addresses
+/// * `account_addresses_len` - Length of account addresses array
+/// * `token_ids` - Array of token ids
+/// * `token_ids_len` - Length of token ids array
+/// * `limit` - Maximum number of token balances to return
+/// * `cursor` - Cursor to start from
+///
+/// # Returns
+/// Result containing array of TokenBalance information or error
+#[no_mangle]
+pub unsafe extern "C" fn client_token_collections(
+    client: *mut ToriiClient,
+    contract_addresses: *const types::FieldElement,
+    contract_addresses_len: usize,
+    account_addresses: *const types::FieldElement,
+    account_addresses_len: usize,
+    token_ids: *const types::U256,
+    token_ids_len: usize,
+    limit: u32,
+    cursor: COption<*const c_char>,
+) -> Result<Page<TokenCollection>> {
+    let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses =
+            unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses =
+            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    let token_ids = if token_ids.is_null() || token_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
+        ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
+    };
+
+    let token_collections = match RUNTIME.block_on(
+        (*client).inner.token_collections(
+            account_addresses,
+            contract_addresses,
+            token_ids,
+            if limit == 0 { None } else { Some(limit) },
+            cursor
+                .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
+                .into(),
+        ),
+    ) {
+        Ok(collections) => collections,
+        Err(e) => return Result::Err(e.into()),
+    };
+
+    Result::Ok(token_collections.into())
 }
 
 /// Subscribes to indexer updates

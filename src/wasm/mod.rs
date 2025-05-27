@@ -40,7 +40,7 @@ mod types;
 use types::{
     BlockId, Call, Calls, Clause, ClientConfig, Controller, Controllers, Entities, Entity,
     IndexerUpdate, KeysClause, KeysClauses, Model, Page, Query, Signature, Token, TokenBalance,
-    TokenBalances, Tokens, WasmU256,
+    TokenBalances, TokenCollections, Tokens, WasmU256,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -893,6 +893,52 @@ impl ToriiClient {
             .map_err(|e| JsValue::from(format!("failed to get token balances: {e}")))?;
 
         Ok(TokenBalances(token_balances.into()))
+    }
+
+    /// Gets token collections for given accounts and contracts
+    ///
+    /// # Parameters
+    /// * `contract_addresses` - Array of contract addresses as hex strings
+    /// * `account_addresses` - Array of account addresses as hex strings
+    /// * `token_ids` - Array of token ids
+    /// * `limit` - Maximum number of token balances to return
+    /// * `cursor` - Cursor to start from
+    ///
+    /// # Returns
+    /// Result containing token balances or error
+    #[wasm_bindgen(js_name = getTokenCollections)]
+    pub async fn get_token_collections(
+        &self,
+        contract_addresses: Option<Vec<String>>,
+        account_addresses: Option<Vec<String>>,
+        token_ids: Option<Vec<WasmU256>>,
+        limit: Option<u32>,
+        cursor: Option<String>,
+    ) -> Result<TokenCollections, JsValue> {
+        let account_addresses = account_addresses
+            .unwrap_or_default()
+            .iter()
+            .map(|a| Felt::from_str(a))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| JsValue::from(format!("failed to parse account addresses: {e}")))?;
+
+        let contract_addresses = contract_addresses
+            .unwrap_or_default()
+            .iter()
+            .map(|c| Felt::from_str(c))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
+
+        let token_ids =
+            token_ids.unwrap_or_default().into_iter().map(|t| t.into()).collect::<Vec<_>>();
+
+        let token_collections = self
+            .inner
+            .token_collections(account_addresses, contract_addresses, token_ids, limit, cursor)
+            .await
+            .map_err(|e| JsValue::from(format!("failed to get token collections: {e}")))?;
+
+        Ok(TokenCollections(token_collections.into()))
     }
 
     /// Queries entities based on the provided query parameters

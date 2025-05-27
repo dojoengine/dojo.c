@@ -806,6 +806,15 @@ struct TokenBalance {
   U256 token_id;
 };
 
+struct TokenCollection {
+  FieldElement contract_address;
+  const char *name;
+  const char *symbol;
+  uint8_t decimals;
+  uint32_t count;
+  const char *metadata;
+};
+
 struct IndexerUpdate {
   int64_t head;
   int64_t tps;
@@ -1233,6 +1242,31 @@ Result<Page<TokenBalance>> client_token_balances(ToriiClient *client,
                                                  uintptr_t token_ids_len,
                                                  uint32_t limit,
                                                  COption<const char*> cursor);
+
+/// Gets token collections for given accounts and contracts
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `contract_addresses` - Array of contract addresses
+/// * `contract_addresses_len` - Length of contract addresses array
+/// * `account_addresses` - Array of account addresses
+/// * `account_addresses_len` - Length of account addresses array
+/// * `token_ids` - Array of token ids
+/// * `token_ids_len` - Length of token ids array
+/// * `limit` - Maximum number of token balances to return
+/// * `cursor` - Cursor to start from
+///
+/// # Returns
+/// Result containing array of TokenBalance information or error
+Result<Page<TokenCollection>> client_token_collections(ToriiClient *client,
+                                                       const FieldElement *contract_addresses,
+                                                       uintptr_t contract_addresses_len,
+                                                       const FieldElement *account_addresses,
+                                                       uintptr_t account_addresses_len,
+                                                       const U256 *token_ids,
+                                                       uintptr_t token_ids_len,
+                                                       uint32_t limit,
+                                                       COption<const char*> cursor);
 
 /// Subscribes to indexer updates
 ///

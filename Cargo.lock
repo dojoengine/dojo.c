@@ -1634,6 +1634,7 @@ dependencies = [
  "torii-grpc-client",
  "torii-libp2p-types",
  "torii-proto",
+ "torii-typed-data",
  "tower-http 0.6.2",
  "tsify-next",
  "url",
@@ -6648,7 +6649,7 @@ dependencies = [
 [[package]]
 name = "torii-client"
 version = "1.5.5-preview.3"
-source = "git+https://github.com/dojoengine/torii?rev=9a3f85b#9a3f85b881ab36823bbff94cf1f7c6ac4ed09a74"
+source = "git+https://github.com/dojoengine/torii?rev=4231d80#4231d8007dde4e2805a2ec3e9e456119d75fe77e"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -6674,7 +6675,7 @@ dependencies = [
 [[package]]
 name = "torii-grpc-client"
 version = "1.5.5-preview.3"
-source = "git+https://github.com/dojoengine/torii?rev=9a3f85b#9a3f85b881ab36823bbff94cf1f7c6ac4ed09a74"
+source = "git+https://github.com/dojoengine/torii?rev=4231d80#4231d8007dde4e2805a2ec3e9e456119d75fe77e"
 dependencies = [
  "crypto-bigint",
  "dojo-types",
@@ -6700,7 +6701,7 @@ dependencies = [
 [[package]]
 name = "torii-libp2p-client"
 version = "1.5.5-preview.3"
-source = "git+https://github.com/dojoengine/torii?rev=9a3f85b#9a3f85b881ab36823bbff94cf1f7c6ac4ed09a74"
+source = "git+https://github.com/dojoengine/torii?rev=4231d80#4231d8007dde4e2805a2ec3e9e456119d75fe77e"
 dependencies = [
  "anyhow",
  "futures",
@@ -6722,7 +6723,7 @@ dependencies = [
 [[package]]
 name = "torii-libp2p-types"
 version = "1.5.5-preview.3"
-source = "git+https://github.com/dojoengine/torii?rev=9a3f85b#9a3f85b881ab36823bbff94cf1f7c6ac4ed09a74"
+source = "git+https://github.com/dojoengine/torii?rev=4231d80#4231d8007dde4e2805a2ec3e9e456119d75fe77e"
 dependencies = [
  "serde",
  "starknet 0.12.0",
@@ -6731,7 +6732,7 @@ dependencies = [
 [[package]]
 name = "torii-proto"
 version = "1.5.5-preview.3"
-source = "git+https://github.com/dojoengine/torii?rev=9a3f85b#9a3f85b881ab36823bbff94cf1f7c6ac4ed09a74"
+source = "git+https://github.com/dojoengine/torii?rev=4231d80#4231d8007dde4e2805a2ec3e9e456119d75fe77e"
 dependencies = [
  "crypto-bigint",
  "dojo-types",
@@ -6748,6 +6749,22 @@ dependencies = [
  "tonic 0.12.3",
  "tonic-build 0.11.0",
  "tonic-build 0.12.3",
+]
+
+[[package]]
+name = "torii-typed-data"
+version = "1.5.5-preview.3"
+source = "git+https://github.com/dojoengine/torii?rev=4231d80#4231d8007dde4e2805a2ec3e9e456119d75fe77e"
+dependencies = [
+ "cainome 0.5.1",
+ "crypto-bigint",
+ "dojo-types",
+ "indexmap 2.9.0",
+ "serde",
+ "serde_json",
+ "starknet 0.12.0",
+ "starknet-crypto",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
