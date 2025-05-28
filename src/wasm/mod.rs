@@ -421,8 +421,7 @@ impl Account {
         };
 
         let signing_key = starknet::signers::SigningKey::from_secret_scalar(private_key);
-        let verifying_key =
-            starknet::signers::VerifyingKey::from_scalar(signing_key.secret_scalar());
+        let verifying_key = signing_key.verifying_key();
         let address = starknet::core::utils::get_contract_address(
             verifying_key.scalar(),
             constants::KATANA_ACCOUNT_CLASS_HASH,
