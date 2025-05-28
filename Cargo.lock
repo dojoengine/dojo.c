@@ -1625,7 +1625,6 @@ dependencies = [
  "serde-wasm-bindgen",
  "serde_json",
  "starknet 0.13.0",
- "starknet-core 0.12.3",
  "starknet-crypto",
  "starknet-types-core",
  "stream-cancel",

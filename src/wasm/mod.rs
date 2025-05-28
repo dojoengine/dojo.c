@@ -62,7 +62,7 @@ pub struct SigningKey(starknet::signers::SigningKey);
 pub struct VerifyingKey(starknet::signers::VerifyingKey);
 
 #[wasm_bindgen]
-pub struct TypedData(torii_typed_data::TypedData);
+pub struct TypedData(starknet::core::types::TypedData);
 
 #[wasm_bindgen]
 pub struct ByteArray(cainome::cairo_serde::ByteArray);
@@ -199,7 +199,7 @@ impl VerifyingKey {
 impl TypedData {
     #[wasm_bindgen(constructor)]
     pub fn new(typed_data: &str) -> Result<TypedData, JsValue> {
-        let typed_data = serde_json::from_str::<torii_typed_data::TypedData>(typed_data)
+        let typed_data = serde_json::from_str::<starknet::core::types::TypedData>(typed_data)
             .map_err(|err| JsValue::from(format!("failed to parse typed data: {err}")))?;
 
         Ok(TypedData(typed_data))
@@ -219,7 +219,7 @@ impl TypedData {
             .map_err(|err| JsValue::from(format!("failed to parse address: {err}")))?;
 
         self.0
-            .encode(address)
+            .message_hash(address)
             .map(|felt| format!("{:#x}", felt))
             .map_err(|err| JsValue::from(err.to_string()))
     }
@@ -1413,9 +1413,6 @@ impl ToriiClient {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let message = serde_json::from_str(message)
-            .map_err(|err| JsValue::from(format!("failed to parse message: {err}")))?;
-
         let signature = signature
             .iter()
             .map(|s| Felt::from_str(s.as_str()))
@@ -1424,7 +1421,7 @@ impl ToriiClient {
 
         let message_id = self
             .inner
-            .publish_message(Message { message, signature })
+            .publish_message(Message { message: message.to_string(), signature })
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
 

@@ -706,10 +706,12 @@ pub unsafe extern "C" fn client_publish_message(
     signature_felts_len: usize,
 ) -> Result<CArray<u8>> {
     let message = unsafe { CStr::from_ptr(message).to_string_lossy().into_owned() };
-    let message = match serde_json::from_str::<TypedData>(message.as_str()) {
-        Ok(message) => message,
-        Err(e) => return Result::Err(e.into()),
-    };
+    // Should we validate the message here?
+    // Not sure if it's worth the added latency
+    // match serde_json::from_str::<TypedData>(message.as_str()) {
+    //     Ok(_) => {},
+    //     Err(e) => return Result::Err(e.into()),
+    // };
 
     let signature = unsafe { std::slice::from_raw_parts(signature_felts, signature_felts_len) };
     let signature = signature.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>();

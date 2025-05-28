@@ -17,7 +17,6 @@ torii-libp2p-types = { git = "https://github.com/dojoengine/torii", rev = "9a3f8
 starknet = "0.13.0"
 starknet-crypto = "0.7.2"
 starknet-types-core = { version = "0.1.6", features = ["arbitrary"] }
-starknet-core = "0.12.3"
 
 parking_lot = "0.12.1"
 tokio = { version = "1.39.2", default-features = false, features = ["rt"] }
