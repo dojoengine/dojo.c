@@ -1634,7 +1634,6 @@ dependencies = [
  "torii-grpc-client",
  "torii-libp2p-types",
  "torii-proto",
- "torii-typed-data",
  "tower-http 0.6.2",
  "tsify-next",
  "url",
@@ -5730,7 +5729,7 @@ checksum = "6f0c9ac3809cc7630784e8c8565fa3013af819d83c97aa2720d566016d439011"
 dependencies = [
  "starknet-accounts 0.11.0",
  "starknet-contract 0.11.0",
- "starknet-core 0.12.2",
+ "starknet-core 0.12.3",
  "starknet-crypto",
  "starknet-macros",
  "starknet-providers 0.12.1",
@@ -5745,7 +5744,7 @@ checksum = "bc9b221c99a1ea1d65fb130e5b0dbaa6d362698430232902ebeb2a898a1ab531"
 dependencies = [
  "starknet-accounts 0.12.0",
  "starknet-contract 0.12.0",
- "starknet-core 0.12.2",
+ "starknet-core 0.12.3",
  "starknet-core-derive",
  "starknet-crypto",
  "starknet-macros",
@@ -5776,7 +5775,7 @@ checksum = "0ee27ded58ade61da410fccafd57ed5429b0e79a9d62a4ae8b65818cb9d6f400"
 dependencies = [
  "async-trait",
  "auto_impl",
- "starknet-core 0.12.2",
+ "starknet-core 0.12.3",
  "starknet-crypto",
  "starknet-providers 0.12.1",
  "starknet-signers 0.10.2",
@@ -5791,7 +5790,7 @@ checksum = "b3fc4364f5684e4a5dcb100847a9ea023deae3815f45526721a6fa94ab595651"
 dependencies = [
  "async-trait",
  "auto_impl",
- "starknet-core 0.12.2",
+ "starknet-core 0.12.3",
  "starknet-crypto",
  "starknet-providers 0.12.1",
  "starknet-signers 0.10.2",
@@ -5823,7 +5822,7 @@ dependencies = [
  "serde_json",
  "serde_with 3.12.0",
  "starknet-accounts 0.11.0",
- "starknet-core 0.12.2",
+ "starknet-core 0.12.3",
  "starknet-providers 0.12.1",
  "thiserror 1.0.69",
 ]
@@ -5838,7 +5837,7 @@ dependencies = [
  "serde_json",
  "serde_with 3.12.0",
  "starknet-accounts 0.12.0",
- "starknet-core 0.12.2",
+ "starknet-core 0.12.3",
  "starknet-providers 0.12.1",
  "thiserror 1.0.69",
 ]
@@ -5864,9 +5863,9 @@ dependencies = [
 
 [[package]]
 name = "starknet-core"
-version = "0.12.2"
+version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab44b2157b7f4697d58375cc8b8dbac8dfb6be79f13fd80c9f59634d2ac972c7"
+checksum = "977ce5d61089de1f4e425ad033162154a0da2cf000f0ed100484ebcbc54b6ff4"
 dependencies = [
  "base64 0.21.7",
  "crypto-bigint",
@@ -5994,7 +5993,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with 3.12.0",
- "starknet-core 0.12.2",
+ "starknet-core 0.12.3",
  "thiserror 1.0.69",
  "url",
 ]
@@ -6028,7 +6027,7 @@ dependencies = [
  "eth-keystore",
  "getrandom 0.2.16",
  "rand 0.8.5",
- "starknet-core 0.12.2",
+ "starknet-core 0.12.3",
  "starknet-crypto",
  "thiserror 1.0.69",
 ]
@@ -6648,8 +6647,8 @@ dependencies = [
 
 [[package]]
 name = "torii-client"
-version = "1.5.0-alpha.1"
-source = "git+https://github.com/dojoengine/torii?rev=3ae9b23#3ae9b231b17fd22c211317c242555b31b5322c81"
+version = "1.5.5-preview.3"
+source = "git+https://github.com/dojoengine/torii?rev=9a3f85b#9a3f85b881ab36823bbff94cf1f7c6ac4ed09a74"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -6674,8 +6673,8 @@ dependencies = [
 
 [[package]]
 name = "torii-grpc-client"
-version = "1.5.0-alpha.1"
-source = "git+https://github.com/dojoengine/torii?rev=3ae9b23#3ae9b231b17fd22c211317c242555b31b5322c81"
+version = "1.5.5-preview.3"
+source = "git+https://github.com/dojoengine/torii?rev=9a3f85b#9a3f85b881ab36823bbff94cf1f7c6ac4ed09a74"
 dependencies = [
  "crypto-bigint",
  "dojo-types",
@@ -6700,8 +6699,8 @@ dependencies = [
 
 [[package]]
 name = "torii-libp2p-client"
-version = "1.5.0-alpha.1"
-source = "git+https://github.com/dojoengine/torii?rev=3ae9b23#3ae9b231b17fd22c211317c242555b31b5322c81"
+version = "1.5.5-preview.3"
+source = "git+https://github.com/dojoengine/torii?rev=9a3f85b#9a3f85b881ab36823bbff94cf1f7c6ac4ed09a74"
 dependencies = [
  "anyhow",
  "futures",
@@ -6716,25 +6715,23 @@ dependencies = [
  "starknet 0.12.0",
  "thiserror 1.0.69",
  "torii-libp2p-types",
- "torii-typed-data",
  "tracing",
  "web-sys",
 ]
 
 [[package]]
 name = "torii-libp2p-types"
-version = "1.5.0-alpha.1"
-source = "git+https://github.com/dojoengine/torii?rev=3ae9b23#3ae9b231b17fd22c211317c242555b31b5322c81"
+version = "1.5.5-preview.3"
+source = "git+https://github.com/dojoengine/torii?rev=9a3f85b#9a3f85b881ab36823bbff94cf1f7c6ac4ed09a74"
 dependencies = [
  "serde",
  "starknet 0.12.0",
- "torii-typed-data",
 ]
 
 [[package]]
 name = "torii-proto"
-version = "1.5.0-alpha.1"
-source = "git+https://github.com/dojoengine/torii?rev=3ae9b23#3ae9b231b17fd22c211317c242555b31b5322c81"
+version = "1.5.5-preview.3"
+source = "git+https://github.com/dojoengine/torii?rev=9a3f85b#9a3f85b881ab36823bbff94cf1f7c6ac4ed09a74"
 dependencies = [
  "crypto-bigint",
  "dojo-types",
@@ -6751,22 +6748,6 @@ dependencies = [
  "tonic 0.12.3",
  "tonic-build 0.11.0",
  "tonic-build 0.12.3",
-]
-
-[[package]]
-name = "torii-typed-data"
-version = "1.5.0-alpha.1"
-source = "git+https://github.com/dojoengine/torii?rev=3ae9b23#3ae9b231b17fd22c211317c242555b31b5322c81"
-dependencies = [
- "cainome 0.5.1",
- "crypto-bigint",
- "dojo-types",
- "indexmap 2.9.0",
- "serde",
- "serde_json",
- "starknet 0.12.0",
- "starknet-crypto",
- "thiserror 1.0.69",
 ]
 
 [[package]]

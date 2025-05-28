@@ -36,7 +36,7 @@ use lazy_static::lazy_static;
 use starknet::accounts::{
     Account as StarknetAccount, ConnectedAccount, ExecutionEncoding, SingleOwnerAccount,
 };
-use starknet::core::types::FunctionCall;
+use starknet::core::types::{FunctionCall, TypedData};
 use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
@@ -49,7 +49,6 @@ use tokio::time::sleep;
 use tokio_stream::StreamExt;
 use torii_client::Client as TClient;
 use torii_libp2p_types::Message;
-use torii_typed_data::TypedData;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
     BlockId, CArray, COption, Call, Clause, Controller, Entity, Error, Event, IndexerUpdate,
@@ -707,10 +706,12 @@ pub unsafe extern "C" fn client_publish_message(
     signature_felts_len: usize,
 ) -> Result<CArray<u8>> {
     let message = unsafe { CStr::from_ptr(message).to_string_lossy().into_owned() };
-    let message = match serde_json::from_str::<TypedData>(message.as_str()) {
-        Ok(message) => message,
-        Err(e) => return Result::Err(e.into()),
-    };
+    // Should we validate the message here?
+    // Not sure if it's worth the added latency
+    // match serde_json::from_str::<TypedData>(message.as_str()) {
+    //     Ok(_) => {},
+    //     Err(e) => return Result::Err(e.into()),
+    // };
 
     let signature = unsafe { std::slice::from_raw_parts(signature_felts, signature_felts_len) };
     let signature = signature.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>();
@@ -1652,7 +1653,7 @@ pub unsafe extern "C" fn typed_data_encode(
     };
 
     let address = address.into();
-    let encoded = match typed_data.encode(address) {
+    let encoded = match typed_data.message_hash(address) {
         Ok(encoded) => encoded,
         Err(err) => return Result::Err(err.into()),
     };
