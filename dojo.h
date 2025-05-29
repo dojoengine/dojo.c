@@ -20,6 +20,7 @@ struct Subscription;
 struct Struct;
 struct Token;
 struct TokenBalance;
+struct TokenCollection;
 struct Provider;
 struct Account;
 struct Ty;
@@ -541,6 +542,33 @@ typedef struct ResultPageTokenBalance {
   };
 } ResultPageTokenBalance;
 
+typedef struct CArrayTokenCollection {
+  struct TokenCollection *data;
+  uintptr_t data_len;
+} CArrayTokenCollection;
+
+typedef struct PageTokenCollection {
+  struct CArrayTokenCollection items;
+  struct COptionc_char next_cursor;
+} PageTokenCollection;
+
+typedef enum ResultPageTokenCollection_Tag {
+  OkPageTokenCollection,
+  ErrPageTokenCollection,
+} ResultPageTokenCollection_Tag;
+
+typedef struct ResultPageTokenCollection {
+  ResultPageTokenCollection_Tag tag;
+  union {
+    struct {
+      struct PageTokenCollection ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultPageTokenCollection;
+
 typedef struct IndexerUpdate {
   int64_t head;
   int64_t tps;
@@ -792,6 +820,15 @@ typedef struct CHashItemFieldElementModelMetadata {
   struct FieldElement key;
   struct ModelMetadata value;
 } CHashItemFieldElementModelMetadata;
+
+typedef struct TokenCollection {
+  struct FieldElement contract_address;
+  const char *name;
+  const char *symbol;
+  uint8_t decimals;
+  uint32_t count;
+  const char *metadata;
+} TokenCollection;
 
 typedef struct Member {
   const char *name;
@@ -1196,6 +1233,33 @@ struct ResultPageTokenBalance client_token_balances(struct ToriiClient *client,
                                                     uintptr_t token_ids_len,
                                                     uint32_t limit,
                                                     struct COptionc_char cursor);
+
+/**
+ * Gets token collections for given accounts and contracts
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `contract_addresses` - Array of contract addresses
+ * * `contract_addresses_len` - Length of contract addresses array
+ * * `account_addresses` - Array of account addresses
+ * * `account_addresses_len` - Length of account addresses array
+ * * `token_ids` - Array of token ids
+ * * `token_ids_len` - Length of token ids array
+ * * `limit` - Maximum number of token balances to return
+ * * `cursor` - Cursor to start from
+ *
+ * # Returns
+ * Result containing array of TokenBalance information or error
+ */
+struct ResultPageTokenCollection client_token_collections(struct ToriiClient *client,
+                                                          const struct FieldElement *contract_addresses,
+                                                          uintptr_t contract_addresses_len,
+                                                          const struct FieldElement *account_addresses,
+                                                          uintptr_t account_addresses_len,
+                                                          const struct U256 *token_ids,
+                                                          uintptr_t token_ids_len,
+                                                          uint32_t limit,
+                                                          struct COptionc_char cursor);
 
 /**
  * Subscribes to indexer updates

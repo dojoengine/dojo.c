@@ -73,6 +73,10 @@ pub struct TokenBalances(pub Page<TokenBalance>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TokenCollections(pub Page<TokenCollection>);
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Token {
     pub contract_address: String,
     pub token_id: String,
@@ -90,6 +94,42 @@ impl From<torii_proto::Token> for Token {
             name: value.name.clone(),
             symbol: value.symbol.clone(),
             decimals: value.decimals,
+            metadata: value.metadata.clone(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TokenCollection {
+    pub contract_address: String,
+    pub name: String,
+    pub symbol: String,
+    pub decimals: u8,
+    pub count: u32,
+    pub metadata: String,
+}
+
+impl From<torii_proto::TokenCollection> for TokenCollection {
+    fn from(value: torii_proto::TokenCollection) -> Self {
+        Self {
+            contract_address: format!("{:#x}", value.contract_address),
+            name: value.name.clone(),
+            symbol: value.symbol.clone(),
+            decimals: value.decimals,
+            count: value.count,
+            metadata: value.metadata.clone(),
+        }
+    }
+}
+impl From<torii_proto::Token> for TokenCollection {
+    fn from(value: torii_proto::Token) -> Self {
+        Self {
+            contract_address: format!("{:#x}", value.contract_address),
+            name: value.name.clone(),
+            symbol: value.symbol.clone(),
+            decimals: value.decimals,
+            count: 0,
             metadata: value.metadata.clone(),
         }
     }

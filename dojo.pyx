@@ -345,6 +345,23 @@ cdef extern from *:
     PageTokenBalance ok;
     Error err;
 
+  cdef struct CArrayTokenCollection:
+    TokenCollection *data;
+    uintptr_t data_len;
+
+  cdef struct PageTokenCollection:
+    CArrayTokenCollection items;
+    COptionc_char next_cursor;
+
+  cdef enum ResultPageTokenCollection_Tag:
+    OkPageTokenCollection,
+    ErrPageTokenCollection,
+
+  cdef struct ResultPageTokenCollection:
+    ResultPageTokenCollection_Tag tag;
+    PageTokenCollection ok;
+    Error err;
+
   cdef struct IndexerUpdate:
     int64_t head;
     int64_t tps;
@@ -503,6 +520,14 @@ cdef extern from *:
   cdef struct CHashItemFieldElementModelMetadata:
     FieldElement key;
     ModelMetadata value;
+
+  cdef struct TokenCollection:
+    FieldElement contract_address;
+    const char *name;
+    const char *symbol;
+    uint8_t decimals;
+    uint32_t count;
+    const char *metadata;
 
   cdef struct Member:
     const char *name;
@@ -851,6 +876,31 @@ cdef extern from *:
                                                uintptr_t token_ids_len,
                                                uint32_t limit,
                                                COptionc_char cursor);
+
+  # Gets token collections for given accounts and contracts
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `contract_addresses` - Array of contract addresses
+  # * `contract_addresses_len` - Length of contract addresses array
+  # * `account_addresses` - Array of account addresses
+  # * `account_addresses_len` - Length of account addresses array
+  # * `token_ids` - Array of token ids
+  # * `token_ids_len` - Length of token ids array
+  # * `limit` - Maximum number of token balances to return
+  # * `cursor` - Cursor to start from
+  #
+  # # Returns
+  # Result containing array of TokenBalance information or error
+  ResultPageTokenCollection client_token_collections(ToriiClient *client,
+                                                     const FieldElement *contract_addresses,
+                                                     uintptr_t contract_addresses_len,
+                                                     const FieldElement *account_addresses,
+                                                     uintptr_t account_addresses_len,
+                                                     const U256 *token_ids,
+                                                     uintptr_t token_ids_len,
+                                                     uint32_t limit,
+                                                     COptionc_char cursor);
 
   # Subscribes to indexer updates
   #

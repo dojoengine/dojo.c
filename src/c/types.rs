@@ -171,6 +171,42 @@ impl From<torii_proto::TokenBalance> for TokenBalance {
     }
 }
 
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct TokenCollection {
+    pub contract_address: FieldElement,
+    pub name: *const c_char,
+    pub symbol: *const c_char,
+    pub decimals: u8,
+    pub count: u32,
+    pub metadata: *const c_char,
+}
+
+impl From<torii_proto::TokenCollection> for TokenCollection {
+    fn from(value: torii_proto::TokenCollection) -> Self {
+        Self {
+            contract_address: value.contract_address.into(),
+            name: CString::new(value.name.clone()).unwrap().into_raw(),
+            symbol: CString::new(value.symbol.clone()).unwrap().into_raw(),
+            decimals: value.decimals,
+            count: value.count,
+            metadata: CString::new(value.metadata.clone()).unwrap().into_raw(),
+        }
+    }
+}
+impl From<torii_proto::Token> for TokenCollection {
+    fn from(value: torii_proto::Token) -> Self {
+        Self {
+            contract_address: value.contract_address.into(),
+            name: CString::new(value.name.clone()).unwrap().into_raw(),
+            symbol: CString::new(value.symbol.clone()).unwrap().into_raw(),
+            decimals: value.decimals,
+            count: 0,
+            metadata: CString::new(value.metadata.clone()).unwrap().into_raw(),
+        }
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct IndexerUpdate {
