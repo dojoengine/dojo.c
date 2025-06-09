@@ -27,7 +27,7 @@ use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::LocalWallet;
 use starknet_crypto::poseidon_hash_many;
 use stream_cancel::{StreamExt as _, Tripwire};
-use torii_libp2p_types::Message;
+use torii_proto::Message;
 use tsify_next::Tsify;
 use wasm_bindgen::prelude::*;
 
@@ -692,19 +692,14 @@ impl ToriiClient {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let ClientConfig { torii_url, relay_url, world_address } = config;
+        let ClientConfig { torii_url, world_address } = config;
 
         let world_address = Felt::from_str(&world_address)
             .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
 
-        let client = torii_client::Client::new(torii_url, relay_url, world_address)
+        let client = torii_client::Client::new(torii_url, world_address)
             .await
             .map_err(|err| JsValue::from(format!("failed to build client: {err}")))?;
-
-        let relay_runner = client.relay_runner();
-        wasm_bindgen_futures::spawn_local(async move {
-            relay_runner.lock().await.run().await;
-        });
 
         Ok(ToriiClient { inner: Arc::new(client) })
     }
@@ -1448,13 +1443,13 @@ impl ToriiClient {
     /// * `signature` - Array of signature field elements as hex strings
     ///
     /// # Returns
-    /// Result containing message ID as byte array or error
+    /// Result containing entity id of the offchain message or error
     #[wasm_bindgen(js_name = publishMessage)]
     pub async fn publish_message(
         &mut self,
         message: &str,
         signature: Vec<String>,
-    ) -> Result<js_sys::Uint8Array, JsValue> {
+    ) -> Result<String, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
@@ -1464,13 +1459,13 @@ impl ToriiClient {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|err| JsValue::from(format!("failed to parse signature: {err}")))?;
 
-        let message_id = self
+        let entity_id = self
             .inner
             .publish_message(Message { message: message.to_string(), signature })
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
 
-        Ok(message_id.as_slice().into())
+        Ok(format!("{:#x}", entity_id))
     }
 }
 

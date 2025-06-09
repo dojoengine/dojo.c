@@ -103,16 +103,16 @@ struct FieldElement {
   uint8_t data[32];
 };
 
-template<typename T>
-struct CArray {
-  T *data;
-  uintptr_t data_len;
-};
-
 struct Controller {
   FieldElement address;
   const char *username;
   uint64_t deployed_at_timestamp;
+};
+
+template<typename T>
+struct CArray {
+  T *data;
+  uintptr_t data_len;
 };
 
 struct Member {
@@ -913,9 +913,7 @@ extern "C" {
 ///
 /// # Returns
 /// Result containing pointer to new ToriiClient instance or error
-Result<ToriiClient*> client_new(const char *torii_url,
-                                const char *libp2p_relay_url,
-                                FieldElement world);
+Result<ToriiClient*> client_new(const char *torii_url, FieldElement world);
 
 /// Initiates a connection to establish a new session account
 ///
@@ -1062,10 +1060,10 @@ void client_set_logger(ToriiClient *client, void (*logger)(const char*));
 ///
 /// # Returns
 /// Result containing byte array or error
-Result<CArray<uint8_t>> client_publish_message(ToriiClient *client,
-                                               const char *message,
-                                               const FieldElement *signature_felts,
-                                               uintptr_t signature_felts_len);
+Result<FieldElement> client_publish_message(ToriiClient *client,
+                                            const char *message,
+                                            const FieldElement *signature_felts,
+                                            uintptr_t signature_felts_len);
 
 /// Retrieves controllers for the given contract addresses
 ///

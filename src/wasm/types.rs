@@ -191,8 +191,6 @@ impl From<torii_proto::IndexerUpdate> for IndexerUpdate {
 pub struct ClientConfig {
     #[serde(rename = "toriiUrl")]
     pub torii_url: String,
-    #[serde(rename = "relayUrl")]
-    pub relay_url: String,
     #[serde(rename = "worldAddress")]
     pub world_address: String,
 }

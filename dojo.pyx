@@ -93,19 +93,6 @@ cdef extern from *:
     FieldElement ok;
     Error err;
 
-  cdef struct CArrayu8:
-    uint8_t *data;
-    uintptr_t data_len;
-
-  cdef enum ResultCArrayu8_Tag:
-    OkCArrayu8,
-    ErrCArrayu8,
-
-  cdef struct ResultCArrayu8:
-    ResultCArrayu8_Tag tag;
-    CArrayu8 ok;
-    Error err;
-
   cdef struct CArrayController:
     Controller *data;
     uintptr_t data_len;
@@ -547,9 +534,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing pointer to new ToriiClient instance or error
-  ResultToriiClient client_new(const char *torii_url,
-                               const char *libp2p_relay_url,
-                               FieldElement world);
+  ResultToriiClient client_new(const char *torii_url, FieldElement world);
 
   # Initiates a connection to establish a new session account
   #
@@ -696,10 +681,10 @@ cdef extern from *:
   #
   # # Returns
   # Result containing byte array or error
-  ResultCArrayu8 client_publish_message(ToriiClient *client,
-                                        const char *message,
-                                        const FieldElement *signature_felts,
-                                        uintptr_t signature_felts_len);
+  ResultFieldElement client_publish_message(ToriiClient *client,
+                                            const char *message,
+                                            const FieldElement *signature_felts,
+                                            uintptr_t signature_felts_len);
 
   # Retrieves controllers for the given contract addresses
   #
