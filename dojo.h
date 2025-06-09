@@ -139,28 +139,6 @@ typedef struct ResultFieldElement {
   };
 } ResultFieldElement;
 
-typedef struct CArrayu8 {
-  uint8_t *data;
-  uintptr_t data_len;
-} CArrayu8;
-
-typedef enum ResultCArrayu8_Tag {
-  OkCArrayu8,
-  ErrCArrayu8,
-} ResultCArrayu8_Tag;
-
-typedef struct ResultCArrayu8 {
-  ResultCArrayu8_Tag tag;
-  union {
-    struct {
-      struct CArrayu8 ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultCArrayu8;
-
 typedef struct CArrayController {
   struct Controller *data;
   uintptr_t data_len;
@@ -856,9 +834,7 @@ extern "C" {
  * # Returns
  * Result containing pointer to new ToriiClient instance or error
  */
-struct ResultToriiClient client_new(const char *torii_url,
-                                    const char *libp2p_relay_url,
-                                    struct FieldElement world);
+struct ResultToriiClient client_new(const char *torii_url, struct FieldElement world);
 
 /**
  * Initiates a connection to establish a new session account
@@ -1027,10 +1003,10 @@ void client_set_logger(struct ToriiClient *client, void (*logger)(const char*));
  * # Returns
  * Result containing byte array or error
  */
-struct ResultCArrayu8 client_publish_message(struct ToriiClient *client,
-                                             const char *message,
-                                             const struct FieldElement *signature_felts,
-                                             uintptr_t signature_felts_len);
+struct ResultFieldElement client_publish_message(struct ToriiClient *client,
+                                                 const char *message,
+                                                 const struct FieldElement *signature_felts,
+                                                 uintptr_t signature_felts_len);
 
 /**
  * Retrieves controllers for the given contract addresses

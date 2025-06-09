@@ -48,7 +48,7 @@ use tokio::runtime::Runtime;
 use tokio::time::sleep;
 use tokio_stream::StreamExt;
 use torii_client::Client as TClient;
-use torii_libp2p_types::Message;
+use torii_proto::Message;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
     BlockId, CArray, COption, Call, Clause, Controller, Entity, Error, Event, IndexerUpdate,
@@ -81,24 +81,15 @@ lazy_static! {
 #[no_mangle]
 pub unsafe extern "C" fn client_new(
     torii_url: *const c_char,
-    libp2p_relay_url: *const c_char,
     world: types::FieldElement,
 ) -> Result<*mut ToriiClient> {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
-    let libp2p_relay_url =
-        unsafe { CStr::from_ptr(libp2p_relay_url).to_string_lossy().into_owned() };
-
-    let client_future = TClient::new(torii_url, libp2p_relay_url, world.into());
+    let client_future = TClient::new(torii_url, world.into());
 
     let client = match RUNTIME.block_on(client_future) {
         Ok(client) => client,
         Err(e) => return Result::Err(e.into()),
     };
-
-    let relay_runner = client.relay_runner();
-    RUNTIME.spawn(async move {
-        relay_runner.lock().await.run().await;
-    });
 
     Result::Ok(Box::into_raw(Box::new(ToriiClient { inner: client, logger: None })))
 }
@@ -704,7 +695,7 @@ pub unsafe extern "C" fn client_publish_message(
     message: *const c_char,
     signature_felts: *const types::FieldElement,
     signature_felts_len: usize,
-) -> Result<CArray<u8>> {
+) -> Result<types::FieldElement> {
     let message = unsafe { CStr::from_ptr(message).to_string_lossy().into_owned() };
     // Should we validate the message here?
     // Not sure if it's worth the added latency
