@@ -715,6 +715,87 @@ pub unsafe extern "C" fn client_publish_message(
     }
 }
 
+/// Publishes multiple messages to the network
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `messages` - Array of JSON strings containing typed data messages
+/// * `messages_len` - Length of messages array
+/// * `signatures` - Flattened array of field elements containing all signatures
+/// * `signatures_len` - Total length of signatures array
+/// * `signature_counts` - Array indicating how many signature elements per message
+/// * `signature_counts_len` - Length of signature counts array (should equal messages_len)
+///
+/// # Returns
+/// Result containing array of message IDs or error
+#[no_mangle]
+pub unsafe extern "C" fn client_publish_message_batch(
+    client: *mut ToriiClient,
+    messages: *const *const c_char,
+    messages_len: usize,
+    signatures: *const types::FieldElement,
+    signatures_len: usize,
+    signature_counts: *const usize,
+    signature_counts_len: usize,
+) -> Result<CArray<types::FieldElement>> {
+    // Validate input
+    if messages_len != signature_counts_len {
+        return Result::Err(Error {
+            message: CString::new("Messages length must equal signature counts length")
+                .unwrap()
+                .into_raw(),
+        });
+    }
+
+    // Parse messages
+    let messages_slice = unsafe { std::slice::from_raw_parts(messages, messages_len) };
+    let mut parsed_messages = Vec::with_capacity(messages_len);
+
+    for &message_ptr in messages_slice {
+        let message = unsafe { CStr::from_ptr(message_ptr).to_string_lossy().into_owned() };
+        parsed_messages.push(message);
+    }
+
+    // Parse signatures with variable lengths
+    let signature_counts_slice =
+        unsafe { std::slice::from_raw_parts(signature_counts, signature_counts_len) };
+    let signatures_slice = unsafe { std::slice::from_raw_parts(signatures, signatures_len) };
+
+    let mut messages_with_signatures = Vec::with_capacity(messages_len);
+    let mut signature_offset = 0;
+
+    for (i, &sig_count) in signature_counts_slice.iter().enumerate() {
+        if signature_offset + sig_count > signatures_len {
+            return Result::Err(Error {
+                message: CString::new("Invalid signature counts: exceeds total signatures length")
+                    .unwrap()
+                    .into_raw(),
+            });
+        }
+
+        let signature = signatures_slice[signature_offset..signature_offset + sig_count]
+            .iter()
+            .map(|f| f.clone().into())
+            .collect::<Vec<Felt>>();
+
+        messages_with_signatures.push(Message { message: parsed_messages[i].clone(), signature });
+
+        signature_offset += sig_count;
+    }
+
+    // Call publish_message_batch
+    let client_future = unsafe { (*client).inner.publish_message_batch(messages_with_signatures) };
+
+    match RUNTIME.block_on(client_future) {
+        Ok(message_ids) => {
+            let ids: Vec<types::FieldElement> =
+                message_ids.into_iter().map(|id| id.into()).collect();
+            Result::Ok(ids.into())
+        }
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
 /// Retrieves controllers for the given contract addresses
 ///
 /// # Parameters

@@ -1467,6 +1467,76 @@ impl ToriiClient {
 
         Ok(format!("{:#x}", entity_id))
     }
+
+    /// Publishes multiple messages to the network
+    ///
+    /// # Parameters
+    /// * `messages` - Array of messages to publish as JSON strings
+    /// * `signatures` - Array of signature arrays, where each inner array contains field elements
+    ///   as hex strings
+    ///
+    /// # Returns
+    /// Result containing array of entity ids of the offchain messages or error
+    #[wasm_bindgen(js_name = publishMessageBatch)]
+    pub async fn publish_message_batch(
+        &mut self,
+        messages: Vec<String>,
+        signatures: js_sys::Array,
+    ) -> Result<Vec<String>, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        // Validate input
+        if messages.len() != signatures.length() as usize {
+            return Err(JsValue::from("Messages and signatures arrays must have the same length"));
+        }
+
+        // Build messages with signatures
+        let mut messages_with_signatures = Vec::with_capacity(messages.len());
+
+        for (i, message) in messages.iter().enumerate() {
+            // Get the signature array at index i
+            let signature_array = signatures.get(i as u32);
+            if !signature_array.is_array() {
+                return Err(JsValue::from(format!("Signature at index {} is not an array", i)));
+            }
+
+            // Convert the inner array to Vec<String>
+            let signature_array = js_sys::Array::from(&signature_array);
+            let mut signature_strings = Vec::with_capacity(signature_array.length() as usize);
+
+            for j in 0..signature_array.length() {
+                let sig_elem = signature_array.get(j);
+                if let Some(s) = sig_elem.as_string() {
+                    signature_strings.push(s);
+                } else {
+                    return Err(JsValue::from(format!(
+                        "Signature element at [{}, {}] is not a string",
+                        i, j
+                    )));
+                }
+            }
+
+            // Parse signature strings to Felt
+            let signature = signature_strings
+                .iter()
+                .map(|s| Felt::from_str(s.as_str()))
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|err| JsValue::from(format!("failed to parse signature: {err}")))?;
+
+            messages_with_signatures.push(Message { message: message.clone(), signature });
+        }
+
+        // Call publish_message_batch
+        let entity_ids = self
+            .inner
+            .publish_message_batch(messages_with_signatures)
+            .await
+            .map_err(|err| JsValue::from(err.to_string()))?;
+
+        // Convert entity IDs to hex strings
+        Ok(entity_ids.into_iter().map(|id| format!("{:#x}", id)).collect())
+    }
 }
 
 #[wasm_bindgen]

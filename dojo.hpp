@@ -103,16 +103,16 @@ struct FieldElement {
   uint8_t data[32];
 };
 
-struct Controller {
-  FieldElement address;
-  const char *username;
-  uint64_t deployed_at_timestamp;
-};
-
 template<typename T>
 struct CArray {
   T *data;
   uintptr_t data_len;
+};
+
+struct Controller {
+  FieldElement address;
+  const char *username;
+  uint64_t deployed_at_timestamp;
 };
 
 struct Member {
@@ -1064,6 +1064,27 @@ Result<FieldElement> client_publish_message(ToriiClient *client,
                                             const char *message,
                                             const FieldElement *signature_felts,
                                             uintptr_t signature_felts_len);
+
+/// Publishes multiple messages to the network
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `messages` - Array of JSON strings containing typed data messages
+/// * `messages_len` - Length of messages array
+/// * `signatures` - Flattened array of field elements containing all signatures
+/// * `signatures_len` - Total length of signatures array
+/// * `signature_counts` - Array indicating how many signature elements per message
+/// * `signature_counts_len` - Length of signature counts array (should equal messages_len)
+///
+/// # Returns
+/// Result containing array of message IDs or error
+Result<CArray<FieldElement>> client_publish_message_batch(ToriiClient *client,
+                                                          const char *const *messages,
+                                                          uintptr_t messages_len,
+                                                          const FieldElement *signatures,
+                                                          uintptr_t signatures_len,
+                                                          const uintptr_t *signature_counts,
+                                                          uintptr_t signature_counts_len);
 
 /// Retrieves controllers for the given contract addresses
 ///

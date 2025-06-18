@@ -93,6 +93,19 @@ cdef extern from *:
     FieldElement ok;
     Error err;
 
+  cdef struct CArrayFieldElement:
+    FieldElement *data;
+    uintptr_t data_len;
+
+  cdef enum ResultCArrayFieldElement_Tag:
+    OkCArrayFieldElement,
+    ErrCArrayFieldElement,
+
+  cdef struct ResultCArrayFieldElement:
+    ResultCArrayFieldElement_Tag tag;
+    CArrayFieldElement ok;
+    Error err;
+
   cdef struct CArrayController:
     Controller *data;
     uintptr_t data_len;
@@ -140,10 +153,6 @@ cdef extern from *:
     uint32_t limit;
     PaginationDirection direction;
     CArrayOrderBy order_by;
-
-  cdef struct CArrayFieldElement:
-    FieldElement *data;
-    uintptr_t data_len;
 
   cdef struct CArrayCOptionFieldElement:
     COptionFieldElement *data;
@@ -360,15 +369,6 @@ cdef extern from *:
     FieldElement account_address;
     FieldElement contract_address;
     U256 token_id;
-
-  cdef enum ResultCArrayFieldElement_Tag:
-    OkCArrayFieldElement,
-    ErrCArrayFieldElement,
-
-  cdef struct ResultCArrayFieldElement:
-    ResultCArrayFieldElement_Tag tag;
-    CArrayFieldElement ok;
-    Error err;
 
   cdef enum Resultc_char_Tag:
     Okc_char,
@@ -685,6 +685,27 @@ cdef extern from *:
                                             const char *message,
                                             const FieldElement *signature_felts,
                                             uintptr_t signature_felts_len);
+
+  # Publishes multiple messages to the network
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `messages` - Array of JSON strings containing typed data messages
+  # * `messages_len` - Length of messages array
+  # * `signatures` - Flattened array of field elements containing all signatures
+  # * `signatures_len` - Total length of signatures array
+  # * `signature_counts` - Array indicating how many signature elements per message
+  # * `signature_counts_len` - Length of signature counts array (should equal messages_len)
+  #
+  # # Returns
+  # Result containing array of message IDs or error
+  ResultCArrayFieldElement client_publish_message_batch(ToriiClient *client,
+                                                        const char *const *messages,
+                                                        uintptr_t messages_len,
+                                                        const FieldElement *signatures,
+                                                        uintptr_t signatures_len,
+                                                        const uintptr_t *signature_counts,
+                                                        uintptr_t signature_counts_len);
 
   # Retrieves controllers for the given contract addresses
   #
