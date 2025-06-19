@@ -434,6 +434,10 @@ cdef extern from *:
     const char *method;
     const char *description;
 
+  cdef struct Message:
+    const char *message;
+    CArrayFieldElement signature;
+
   cdef struct Controller:
     FieldElement address;
     const char *username;
@@ -690,22 +694,14 @@ cdef extern from *:
   #
   # # Parameters
   # * `client` - Pointer to ToriiClient instance
-  # * `messages` - Array of JSON strings containing typed data messages
+  # * `messages` - Array of Message structs
   # * `messages_len` - Length of messages array
-  # * `signatures` - Flattened array of field elements containing all signatures
-  # * `signatures_len` - Total length of signatures array
-  # * `signature_counts` - Array indicating how many signature elements per message
-  # * `signature_counts_len` - Length of signature counts array (should equal messages_len)
   #
   # # Returns
   # Result containing array of message IDs or error
   ResultCArrayFieldElement client_publish_message_batch(ToriiClient *client,
-                                                        const char *const *messages,
-                                                        uintptr_t messages_len,
-                                                        const FieldElement *signatures,
-                                                        uintptr_t signatures_len,
-                                                        const uintptr_t *signature_counts,
-                                                        uintptr_t signature_counts_len);
+                                                        const Message *messages,
+                                                        uintptr_t messages_len);
 
   # Retrieves controllers for the given contract addresses
   #

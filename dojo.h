@@ -11,6 +11,7 @@ struct ToriiClient;
 struct Policy;
 struct ControllerAccount;
 struct Call;
+struct Message;
 struct Controller;
 struct Entity;
 struct OrderBy;
@@ -693,6 +694,11 @@ typedef struct Policy {
   const char *description;
 } Policy;
 
+typedef struct Message {
+  const char *message;
+  struct CArrayFieldElement signature;
+} Message;
+
 typedef struct Controller {
   struct FieldElement address;
   const char *username;
@@ -1013,23 +1019,15 @@ struct ResultFieldElement client_publish_message(struct ToriiClient *client,
  *
  * # Parameters
  * * `client` - Pointer to ToriiClient instance
- * * `messages` - Array of JSON strings containing typed data messages
+ * * `messages` - Array of Message structs
  * * `messages_len` - Length of messages array
- * * `signatures` - Flattened array of field elements containing all signatures
- * * `signatures_len` - Total length of signatures array
- * * `signature_counts` - Array indicating how many signature elements per message
- * * `signature_counts_len` - Length of signature counts array (should equal messages_len)
  *
  * # Returns
  * Result containing array of message IDs or error
  */
 struct ResultCArrayFieldElement client_publish_message_batch(struct ToriiClient *client,
-                                                             const char *const *messages,
-                                                             uintptr_t messages_len,
-                                                             const struct FieldElement *signatures,
-                                                             uintptr_t signatures_len,
-                                                             const uintptr_t *signature_counts,
-                                                             uintptr_t signature_counts_len);
+                                                             const struct Message *messages,
+                                                             uintptr_t messages_len);
 
 /**
  * Retrieves controllers for the given contract addresses

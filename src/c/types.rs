@@ -1362,3 +1362,21 @@ impl From<torii_proto::Event> for Event {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct Message {
+    pub message: *const c_char,
+    pub signature: CArray<FieldElement>,
+}
+
+impl From<Message> for torii_proto::Message {
+    fn from(val: Message) -> Self {
+        let message = unsafe { CStr::from_ptr(val.message).to_string_lossy().into_owned() };
+        let signature_slice =
+            unsafe { std::slice::from_raw_parts(val.signature.data, val.signature.data_len) };
+        let signature = signature_slice.iter().map(|f| f.clone().into()).collect();
+
+        torii_proto::Message { message, signature }
+    }
+}

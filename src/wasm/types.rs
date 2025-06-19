@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::str::FromStr;
 
 use crypto_bigint::U256;
@@ -697,4 +698,27 @@ pub struct Event {
     pub keys: Vec<String>,
     pub data: Vec<String>,
     pub transaction_hash: String,
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Message {
+    pub message: String,
+    pub signature: Vec<String>,
+}
+
+impl TryFrom<Message> for torii_proto::Message {
+    type Error = String;
+
+    fn try_from(val: Message) -> Result<Self, Self::Error> {
+        let signature = val
+            .signature
+            .iter()
+            .map(|s| {
+                Felt::from_str(s).map_err(|e| format!("Invalid signature field element: {}", e))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(torii_proto::Message { message: val.message, signature })
+    }
 }
