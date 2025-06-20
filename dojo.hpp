@@ -10,6 +10,7 @@ struct ToriiClient;
 struct Policy;
 struct ControllerAccount;
 struct Call;
+struct Message;
 struct Ty;
 struct Subscription;
 struct Provider;
@@ -103,16 +104,16 @@ struct FieldElement {
   uint8_t data[32];
 };
 
-struct Controller {
-  FieldElement address;
-  const char *username;
-  uint64_t deployed_at_timestamp;
-};
-
 template<typename T>
 struct CArray {
   T *data;
   uintptr_t data_len;
+};
+
+struct Controller {
+  FieldElement address;
+  const char *username;
+  uint64_t deployed_at_timestamp;
 };
 
 struct Member {
@@ -902,6 +903,11 @@ struct Policy {
   const char *description;
 };
 
+struct Message {
+  const char *message;
+  CArray<FieldElement> signature;
+};
+
 extern "C" {
 
 /// Creates a new Torii client instance
@@ -1064,6 +1070,19 @@ Result<FieldElement> client_publish_message(ToriiClient *client,
                                             const char *message,
                                             const FieldElement *signature_felts,
                                             uintptr_t signature_felts_len);
+
+/// Publishes multiple messages to the network
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `messages` - Array of Message structs
+/// * `messages_len` - Length of messages array
+///
+/// # Returns
+/// Result containing array of message IDs or error
+Result<CArray<FieldElement>> client_publish_message_batch(ToriiClient *client,
+                                                          const Message *messages,
+                                                          uintptr_t messages_len);
 
 /// Retrieves controllers for the given contract addresses
 ///

@@ -11,6 +11,7 @@ struct ToriiClient;
 struct Policy;
 struct ControllerAccount;
 struct Call;
+struct Message;
 struct Controller;
 struct Entity;
 struct OrderBy;
@@ -139,6 +140,28 @@ typedef struct ResultFieldElement {
   };
 } ResultFieldElement;
 
+typedef struct CArrayFieldElement {
+  struct FieldElement *data;
+  uintptr_t data_len;
+} CArrayFieldElement;
+
+typedef enum ResultCArrayFieldElement_Tag {
+  OkCArrayFieldElement,
+  ErrCArrayFieldElement,
+} ResultCArrayFieldElement_Tag;
+
+typedef struct ResultCArrayFieldElement {
+  ResultCArrayFieldElement_Tag tag;
+  union {
+    struct {
+      struct CArrayFieldElement ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultCArrayFieldElement;
+
 typedef struct CArrayController {
   struct Controller *data;
   uintptr_t data_len;
@@ -213,11 +236,6 @@ typedef struct Pagination {
   enum PaginationDirection direction;
   struct CArrayOrderBy order_by;
 } Pagination;
-
-typedef struct CArrayFieldElement {
-  struct FieldElement *data;
-  uintptr_t data_len;
-} CArrayFieldElement;
 
 typedef struct CArrayCOptionFieldElement {
   struct COptionFieldElement *data;
@@ -561,23 +579,6 @@ typedef struct TokenBalance {
   struct U256 token_id;
 } TokenBalance;
 
-typedef enum ResultCArrayFieldElement_Tag {
-  OkCArrayFieldElement,
-  ErrCArrayFieldElement,
-} ResultCArrayFieldElement_Tag;
-
-typedef struct ResultCArrayFieldElement {
-  ResultCArrayFieldElement_Tag tag;
-  union {
-    struct {
-      struct CArrayFieldElement ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultCArrayFieldElement;
-
 typedef enum Resultc_char_Tag {
   Okc_char,
   Errc_char,
@@ -692,6 +693,11 @@ typedef struct Policy {
   const char *method;
   const char *description;
 } Policy;
+
+typedef struct Message {
+  const char *message;
+  struct CArrayFieldElement signature;
+} Message;
 
 typedef struct Controller {
   struct FieldElement address;
@@ -1007,6 +1013,21 @@ struct ResultFieldElement client_publish_message(struct ToriiClient *client,
                                                  const char *message,
                                                  const struct FieldElement *signature_felts,
                                                  uintptr_t signature_felts_len);
+
+/**
+ * Publishes multiple messages to the network
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `messages` - Array of Message structs
+ * * `messages_len` - Length of messages array
+ *
+ * # Returns
+ * Result containing array of message IDs or error
+ */
+struct ResultCArrayFieldElement client_publish_message_batch(struct ToriiClient *client,
+                                                             const struct Message *messages,
+                                                             uintptr_t messages_len);
 
 /**
  * Retrieves controllers for the given contract addresses

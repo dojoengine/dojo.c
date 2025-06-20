@@ -93,6 +93,19 @@ cdef extern from *:
     FieldElement ok;
     Error err;
 
+  cdef struct CArrayFieldElement:
+    FieldElement *data;
+    uintptr_t data_len;
+
+  cdef enum ResultCArrayFieldElement_Tag:
+    OkCArrayFieldElement,
+    ErrCArrayFieldElement,
+
+  cdef struct ResultCArrayFieldElement:
+    ResultCArrayFieldElement_Tag tag;
+    CArrayFieldElement ok;
+    Error err;
+
   cdef struct CArrayController:
     Controller *data;
     uintptr_t data_len;
@@ -140,10 +153,6 @@ cdef extern from *:
     uint32_t limit;
     PaginationDirection direction;
     CArrayOrderBy order_by;
-
-  cdef struct CArrayFieldElement:
-    FieldElement *data;
-    uintptr_t data_len;
 
   cdef struct CArrayCOptionFieldElement:
     COptionFieldElement *data;
@@ -361,15 +370,6 @@ cdef extern from *:
     FieldElement contract_address;
     U256 token_id;
 
-  cdef enum ResultCArrayFieldElement_Tag:
-    OkCArrayFieldElement,
-    ErrCArrayFieldElement,
-
-  cdef struct ResultCArrayFieldElement:
-    ResultCArrayFieldElement_Tag tag;
-    CArrayFieldElement ok;
-    Error err;
-
   cdef enum Resultc_char_Tag:
     Okc_char,
     Errc_char,
@@ -433,6 +433,10 @@ cdef extern from *:
     FieldElement target;
     const char *method;
     const char *description;
+
+  cdef struct Message:
+    const char *message;
+    CArrayFieldElement signature;
 
   cdef struct Controller:
     FieldElement address;
@@ -685,6 +689,19 @@ cdef extern from *:
                                             const char *message,
                                             const FieldElement *signature_felts,
                                             uintptr_t signature_felts_len);
+
+  # Publishes multiple messages to the network
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `messages` - Array of Message structs
+  # * `messages_len` - Length of messages array
+  #
+  # # Returns
+  # Result containing array of message IDs or error
+  ResultCArrayFieldElement client_publish_message_batch(ToriiClient *client,
+                                                        const Message *messages,
+                                                        uintptr_t messages_len);
 
   # Retrieves controllers for the given contract addresses
   #

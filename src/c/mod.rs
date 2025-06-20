@@ -715,6 +715,39 @@ pub unsafe extern "C" fn client_publish_message(
     }
 }
 
+/// Publishes multiple messages to the network
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `messages` - Array of Message structs
+/// * `messages_len` - Length of messages array
+///
+/// # Returns
+/// Result containing array of message IDs or error
+#[no_mangle]
+pub unsafe extern "C" fn client_publish_message_batch(
+    client: *mut ToriiClient,
+    messages: *const types::Message,
+    messages_len: usize,
+) -> Result<CArray<types::FieldElement>> {
+    let messages_slice = unsafe { std::slice::from_raw_parts(messages, messages_len) };
+
+    let messages_with_signatures: Vec<Message> =
+        messages_slice.iter().map(|msg| msg.clone().into()).collect();
+
+    // Call publish_message_batch
+    let client_future = unsafe { (*client).inner.publish_message_batch(messages_with_signatures) };
+
+    match RUNTIME.block_on(client_future) {
+        Ok(message_ids) => {
+            let ids: Vec<types::FieldElement> =
+                message_ids.into_iter().map(|id| id.into()).collect();
+            Result::Ok(ids.into())
+        }
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
 /// Retrieves controllers for the given contract addresses
 ///
 /// # Parameters
