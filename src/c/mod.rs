@@ -691,23 +691,9 @@ pub unsafe extern "C" fn client_set_logger(
 #[no_mangle]
 pub unsafe extern "C" fn client_publish_message(
     client: *mut ToriiClient,
-    // A json string representing the typed data message
-    message: *const c_char,
-    signature_felts: *const types::FieldElement,
-    signature_felts_len: usize,
+    message: types::Message,
 ) -> Result<types::FieldElement> {
-    let message = unsafe { CStr::from_ptr(message).to_string_lossy().into_owned() };
-    // Should we validate the message here?
-    // Not sure if it's worth the added latency
-    // match serde_json::from_str::<TypedData>(message.as_str()) {
-    //     Ok(_) => {},
-    //     Err(e) => return Result::Err(e.into()),
-    // };
-
-    let signature = unsafe { std::slice::from_raw_parts(signature_felts, signature_felts_len) };
-    let signature = signature.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>();
-
-    let client_future = unsafe { (*client).inner.publish_message(Message { message, signature }) };
+    let client_future = unsafe { (*client).inner.publish_message(message.into()) };
 
     match RUNTIME.block_on(client_future) {
         Ok(data) => Result::Ok(data.into()),
@@ -730,13 +716,9 @@ pub unsafe extern "C" fn client_publish_message_batch(
     messages: *const types::Message,
     messages_len: usize,
 ) -> Result<CArray<types::FieldElement>> {
-    let messages_slice = unsafe { std::slice::from_raw_parts(messages, messages_len) };
-
-    let messages_with_signatures: Vec<Message> =
-        messages_slice.iter().map(|msg| msg.clone().into()).collect();
-
-    // Call publish_message_batch
-    let client_future = unsafe { (*client).inner.publish_message_batch(messages_with_signatures) };
+    let messages = unsafe { std::slice::from_raw_parts(messages, messages_len) };
+    let messages: Vec<Message> = messages.iter().cloned().map(|msg| msg.into()).collect();
+    let client_future = unsafe { (*client).inner.publish_message_batch(messages) };
 
     match RUNTIME.block_on(client_future) {
         Ok(message_ids) => {

@@ -10,7 +10,6 @@ struct ToriiClient;
 struct Policy;
 struct ControllerAccount;
 struct Call;
-struct Message;
 struct Ty;
 struct Subscription;
 struct Provider;
@@ -108,6 +107,11 @@ template<typename T>
 struct CArray {
   T *data;
   uintptr_t data_len;
+};
+
+struct Message {
+  const char *message;
+  CArray<FieldElement> signature;
 };
 
 struct Controller {
@@ -903,11 +907,6 @@ struct Policy {
   const char *description;
 };
 
-struct Message {
-  const char *message;
-  CArray<FieldElement> signature;
-};
-
 extern "C" {
 
 /// Creates a new Torii client instance
@@ -1066,10 +1065,7 @@ void client_set_logger(ToriiClient *client, void (*logger)(const char*));
 ///
 /// # Returns
 /// Result containing byte array or error
-Result<FieldElement> client_publish_message(ToriiClient *client,
-                                            const char *message,
-                                            const FieldElement *signature_felts,
-                                            uintptr_t signature_felts_len);
+Result<FieldElement> client_publish_message(ToriiClient *client, Message message);
 
 /// Publishes multiple messages to the network
 ///

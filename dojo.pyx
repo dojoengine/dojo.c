@@ -97,6 +97,10 @@ cdef extern from *:
     FieldElement *data;
     uintptr_t data_len;
 
+  cdef struct Message:
+    const char *message;
+    CArrayFieldElement signature;
+
   cdef enum ResultCArrayFieldElement_Tag:
     OkCArrayFieldElement,
     ErrCArrayFieldElement,
@@ -434,10 +438,6 @@ cdef extern from *:
     const char *method;
     const char *description;
 
-  cdef struct Message:
-    const char *message;
-    CArrayFieldElement signature;
-
   cdef struct Controller:
     FieldElement address;
     const char *username;
@@ -685,10 +685,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing byte array or error
-  ResultFieldElement client_publish_message(ToriiClient *client,
-                                            const char *message,
-                                            const FieldElement *signature_felts,
-                                            uintptr_t signature_felts_len);
+  ResultFieldElement client_publish_message(ToriiClient *client, Message message);
 
   # Publishes multiple messages to the network
   #

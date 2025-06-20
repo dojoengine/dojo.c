@@ -11,7 +11,6 @@ struct ToriiClient;
 struct Policy;
 struct ControllerAccount;
 struct Call;
-struct Message;
 struct Controller;
 struct Entity;
 struct OrderBy;
@@ -144,6 +143,11 @@ typedef struct CArrayFieldElement {
   struct FieldElement *data;
   uintptr_t data_len;
 } CArrayFieldElement;
+
+typedef struct Message {
+  const char *message;
+  struct CArrayFieldElement signature;
+} Message;
 
 typedef enum ResultCArrayFieldElement_Tag {
   OkCArrayFieldElement,
@@ -694,11 +698,6 @@ typedef struct Policy {
   const char *description;
 } Policy;
 
-typedef struct Message {
-  const char *message;
-  struct CArrayFieldElement signature;
-} Message;
-
 typedef struct Controller {
   struct FieldElement address;
   const char *username;
@@ -1010,9 +1009,7 @@ void client_set_logger(struct ToriiClient *client, void (*logger)(const char*));
  * Result containing byte array or error
  */
 struct ResultFieldElement client_publish_message(struct ToriiClient *client,
-                                                 const char *message,
-                                                 const struct FieldElement *signature_felts,
-                                                 uintptr_t signature_felts_len);
+                                                 struct Message message);
 
 /**
  * Publishes multiple messages to the network

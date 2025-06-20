@@ -1446,21 +1446,14 @@ impl ToriiClient {
     #[wasm_bindgen(js_name = publishMessage)]
     pub async fn publish_message(
         &mut self,
-        message: &str,
-        signature: Vec<String>,
+        message: Message,
     ) -> Result<String, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let signature = signature
-            .iter()
-            .map(|s| Felt::from_str(s.as_str()))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|err| JsValue::from(format!("failed to parse signature: {err}")))?;
-
         let entity_id = self
             .inner
-            .publish_message(torii_proto::Message { message: message.to_string(), signature })
+            .publish_message(message.into())
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
 
@@ -1482,21 +1475,15 @@ impl ToriiClient {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        // Convert WASM Messages to torii_proto Messages
-        let messages_with_signatures: Result<Vec<torii_proto::Message>, _> =
-            messages.into_iter().map(|msg| msg.try_into()).collect();
+        let messages: Vec<torii_proto::Message> =
+            messages.into_iter().map(|msg| msg.into()).collect::<Vec<_>>();
 
-        let messages_with_signatures =
-            messages_with_signatures.map_err(|err: String| JsValue::from(err))?;
-
-        // Call publish_message_batch
         let entity_ids = self
             .inner
-            .publish_message_batch(messages_with_signatures)
+            .publish_message_batch(messages)
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
 
-        // Convert entity IDs to hex strings
         Ok(entity_ids.into_iter().map(|id| format!("{:#x}", id)).collect())
     }
 }

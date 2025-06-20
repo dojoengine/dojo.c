@@ -707,18 +707,8 @@ pub struct Message {
     pub signature: Vec<String>,
 }
 
-impl TryFrom<Message> for torii_proto::Message {
-    type Error = String;
-
-    fn try_from(val: Message) -> Result<Self, Self::Error> {
-        let signature = val
-            .signature
-            .iter()
-            .map(|s| {
-                Felt::from_str(s).map_err(|e| format!("Invalid signature field element: {}", e))
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(torii_proto::Message { message: val.message, signature })
+impl From<Message> for torii_proto::Message {
+    fn from(val: Message) -> Self {
+        torii_proto::Message { message: val.message, signature: val.signature.iter().map(|s| Felt::from_str(s).unwrap()).collect() }
     }
 }
