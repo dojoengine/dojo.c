@@ -6,7 +6,6 @@ use std::net::SocketAddr;
 use std::ops::Deref;
 use std::os::raw::c_char;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -45,6 +44,7 @@ use starknet_crypto::{poseidon_hash_many, Felt};
 use stream_cancel::{StreamExt as _, Tripwire};
 use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
+use tokio::sync::oneshot;
 use tokio::time::sleep;
 use tokio_stream::StreamExt;
 use torii_client::Client as TClient;
@@ -842,15 +842,15 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
-    let subscription_id = Arc::new(AtomicU64::new(0));
     let (trigger, tripwire) = Tripwire::new();
 
-    let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
+    let (sub_id_tx, sub_id_rx) = oneshot::channel();
+    let mut sub_id_tx = Some(sub_id_tx);
+
     let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
 
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
-    let subscription_id_clone = Arc::clone(&subscription_id);
     RUNTIME.spawn(async move {
         let mut backoff = Duration::from_secs(1);
         let max_backoff = Duration::from_secs(60);
@@ -863,10 +863,14 @@ pub unsafe extern "C" fn client_on_entity_state_update(
                 let mut rcv = rcv.take_until_if(tripwire.clone());
 
                 while let Some(Ok((id, entity))) = rcv.next().await {
-                    subscription_id_clone.store(id, Ordering::SeqCst);
-                    let key: types::FieldElement = entity.hashed_keys.into();
-                    let models: Vec<Struct> = entity.models.into_iter().map(|e| e.into()).collect();
-                    callback(key, models.into());
+                    if let Some(tx) = sub_id_tx.take() {
+                        tx.send(id).expect("Failed to send subscription ID");
+                    } else {
+                        let key: types::FieldElement = entity.hashed_keys.into();
+                        let models: Vec<Struct> =
+                            entity.models.into_iter().map(|e| e.into()).collect();
+                        callback(key, models.into());
+                    }
                 }
             }
 
@@ -880,6 +884,18 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         }
     });
 
+    let subscription_id = match RUNTIME.block_on(sub_id_rx) {
+        Ok(id) => id,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to establish entity subscription")
+                    .unwrap()
+                    .into_raw(),
+            });
+        }
+    };
+
+    let subscription = Subscription { id: subscription_id, trigger };
     Result::Ok(Box::into_raw(Box::new(subscription)))
 }
 
@@ -901,11 +917,7 @@ pub unsafe extern "C" fn client_update_entity_subscription(
 ) -> Result<bool> {
     let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
 
-    match RUNTIME.block_on(
-        (*client)
-            .inner
-            .update_entity_subscription((*subscription).id.load(Ordering::SeqCst), clause),
-    ) {
+    match RUNTIME.block_on((*client).inner.update_entity_subscription((*subscription).id, clause)) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
@@ -930,14 +942,12 @@ pub unsafe extern "C" fn client_on_event_message_update(
     let client = Arc::new(unsafe { &*client });
     let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
 
-    let subscription_id = Arc::new(AtomicU64::new(0));
     let (trigger, tripwire) = Tripwire::new();
-
-    let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
+    let (sub_id_tx, sub_id_rx) = oneshot::channel();
+    let mut sub_id_tx = Some(sub_id_tx);
 
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
-    let subscription_id_clone = Arc::clone(&subscription_id);
     RUNTIME.spawn(async move {
         let mut backoff = Duration::from_secs(1);
         let max_backoff = Duration::from_secs(60);
@@ -950,10 +960,14 @@ pub unsafe extern "C" fn client_on_event_message_update(
                 let mut rcv = rcv.take_until_if(tripwire.clone());
 
                 while let Some(Ok((id, entity))) = rcv.next().await {
-                    subscription_id_clone.store(id, Ordering::SeqCst);
-                    let key: types::FieldElement = entity.hashed_keys.into();
-                    let models: Vec<Struct> = entity.models.into_iter().map(|e| e.into()).collect();
-                    callback(key, models.into());
+                    if let Some(tx) = sub_id_tx.take() {
+                        tx.send(id).expect("Failed to send subscription ID");
+                    } else {
+                        let key: types::FieldElement = entity.hashed_keys.into();
+                        let models: Vec<Struct> =
+                            entity.models.into_iter().map(|e| e.into()).collect();
+                        callback(key, models.into());
+                    }
                 }
             }
 
@@ -967,6 +981,18 @@ pub unsafe extern "C" fn client_on_event_message_update(
         }
     });
 
+    let subscription_id = match RUNTIME.block_on(sub_id_rx) {
+        Ok(id) => id,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to establish event message subscription")
+                    .unwrap()
+                    .into_raw(),
+            });
+        }
+    };
+
+    let subscription = Subscription { id: subscription_id, trigger };
     Result::Ok(Box::into_raw(Box::new(subscription)))
 }
 
@@ -988,11 +1014,9 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
 ) -> Result<bool> {
     let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
 
-    match RUNTIME.block_on(
-        (*client)
-            .inner
-            .update_event_message_subscription((*subscription).id.load(Ordering::SeqCst), clause),
-    ) {
+    match RUNTIME
+        .block_on((*client).inner.update_event_message_subscription((*subscription).id, clause))
+    {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
@@ -1023,10 +1047,9 @@ pub unsafe extern "C" fn client_on_starknet_event(
         clauses.iter().map(|c| c.clone().into()).collect::<Vec<_>>()
     };
 
-    let subscription_id = Arc::new(AtomicU64::new(0));
+    let (sub_id_tx, sub_id_rx) = oneshot::channel();
+    let mut sub_id_tx = Some(sub_id_tx);
     let (trigger, tripwire) = Tripwire::new();
-
-    let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
@@ -1043,7 +1066,12 @@ pub unsafe extern "C" fn client_on_starknet_event(
                 let mut rcv = rcv.take_until_if(tripwire.clone());
 
                 while let Some(Ok(event)) = rcv.next().await {
-                    callback(event.into());
+                    if let Some(tx) = sub_id_tx.take() {
+                        tx.send(0).expect("Failed to send subscription ID");
+                    } else {
+                        let event: Event = event.into();
+                        callback(event);
+                    }
                 }
             }
 
@@ -1056,6 +1084,17 @@ pub unsafe extern "C" fn client_on_starknet_event(
             backoff = std::cmp::min(backoff * 2, max_backoff);
         }
     });
+
+    let subscription_id = match RUNTIME.block_on(sub_id_rx) {
+        Ok(id) => id,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to establish event subscription").unwrap().into_raw(),
+            });
+        }
+    };
+
+    let subscription = Subscription { id: subscription_id, trigger };
 
     Result::Ok(Box::into_raw(Box::new(subscription)))
 }
@@ -1151,10 +1190,9 @@ pub unsafe extern "C" fn client_on_token_update(
         ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
     };
 
-    let subscription_id = Arc::new(AtomicU64::new(0));
+    let (sub_id_tx, sub_id_rx) = oneshot::channel();
+    let mut sub_id_tx = Some(sub_id_tx);
     let (trigger, tripwire) = Tripwire::new();
-
-    let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
@@ -1174,9 +1212,13 @@ pub unsafe extern "C" fn client_on_token_update(
                 let mut rcv = rcv.take_until_if(tripwire.clone());
 
                 while let Some(Ok((id, token))) = rcv.next().await {
-                    subscription_id.store(id, Ordering::SeqCst);
-                    let token: Token = token.into();
-                    callback(token);
+                    // Our first message will be the subscription ID
+                    if let Some(tx) = sub_id_tx.take() {
+                        tx.send(id).expect("Failed to send subscription ID");
+                    } else {
+                        let token: Token = token.into();
+                        callback(token);
+                    }
                 }
             }
 
@@ -1189,6 +1231,17 @@ pub unsafe extern "C" fn client_on_token_update(
             backoff = std::cmp::min(backoff * 2, max_backoff);
         }
     });
+
+    let subscription_id = match RUNTIME.block_on(sub_id_rx) {
+        Ok(id) => id,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to establish token subscription").unwrap().into_raw(),
+            });
+        }
+    };
+
+    let subscription = Subscription { id: subscription_id, trigger };
 
     Result::Ok(Box::into_raw(Box::new(subscription)))
 }
@@ -1351,10 +1404,9 @@ pub unsafe extern "C" fn on_indexer_update(
         Some(unsafe { (*contract_address).clone().into() })
     };
 
-    let subscription_id = Arc::new(AtomicU64::new(0));
+    let (sub_id_tx, sub_id_rx) = oneshot::channel();
+    let mut sub_id_tx = Some(sub_id_tx);
     let (trigger, tripwire) = Tripwire::new();
-
-    let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
@@ -1370,7 +1422,11 @@ pub unsafe extern "C" fn on_indexer_update(
                 let mut rcv = rcv.take_until_if(tripwire.clone());
 
                 while let Some(Ok(update)) = rcv.next().await {
-                    callback(update.into());
+                    if let Some(tx) = sub_id_tx.take() {
+                        tx.send(0).expect("Failed to send subscription ID");
+                    } else {
+                        callback(update.into());
+                    }
                 }
             }
 
@@ -1383,6 +1439,19 @@ pub unsafe extern "C" fn on_indexer_update(
             backoff = std::cmp::min(backoff * 2, max_backoff);
         }
     });
+
+    let subscription_id = match RUNTIME.block_on(sub_id_rx) {
+        Ok(id) => id,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to establish indexer subscription")
+                    .unwrap()
+                    .into_raw(),
+            });
+        }
+    };
+
+    let subscription = Subscription { id: subscription_id, trigger };
 
     Result::Ok(Box::into_raw(Box::new(subscription)))
 }
@@ -1437,10 +1506,9 @@ pub unsafe extern "C" fn client_on_token_balance_update(
         ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
     };
 
-    let subscription_id = Arc::new(AtomicU64::new(0));
+    let (sub_id_tx, sub_id_rx) = oneshot::channel();
+    let mut sub_id_tx = Some(sub_id_tx);
     let (trigger, tripwire) = Tripwire::new();
-
-    let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
@@ -1464,9 +1532,12 @@ pub unsafe extern "C" fn client_on_token_balance_update(
                 let mut rcv = rcv.take_until_if(tripwire.clone());
 
                 while let Some(Ok((id, balance))) = rcv.next().await {
-                    subscription_id.store(id, Ordering::SeqCst);
-                    let balance: TokenBalance = balance.into();
-                    callback(balance);
+                    if let Some(tx) = sub_id_tx.take() {
+                        tx.send(id).expect("Failed to send subscription ID");
+                    } else {
+                        let balance: TokenBalance = balance.into();
+                        callback(balance);
+                    }
                 }
             }
 
@@ -1479,6 +1550,19 @@ pub unsafe extern "C" fn client_on_token_balance_update(
             backoff = std::cmp::min(backoff * 2, max_backoff);
         }
     });
+
+    let subscription_id = match RUNTIME.block_on(sub_id_rx) {
+        Ok(id) => id,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to establish token balance subscription")
+                    .unwrap()
+                    .into_raw(),
+            });
+        }
+    };
+
+    let subscription = Subscription { id: subscription_id, trigger };
 
     Result::Ok(Box::into_raw(Box::new(subscription)))
 }
@@ -1530,7 +1614,7 @@ pub unsafe extern "C" fn client_update_token_balance_subscription(
     };
 
     match RUNTIME.block_on((*client).inner.update_token_balance_subscription(
-        (*subscription).id.load(Ordering::SeqCst),
+        (*subscription).id,
         contract_addresses,
         account_addresses,
         token_ids,
