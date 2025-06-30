@@ -1,6 +1,6 @@
 mod types;
 
-use std::ffi::{c_void, CStr, CString};
+use std::ffi::{CStr, CString, c_void};
 use std::fs;
 use std::net::SocketAddr;
 use std::ops::Deref;
@@ -18,13 +18,13 @@ use account_sdk::account::session::hash::Session;
 use account_sdk::provider::{CartridgeJsonRpcProvider, CartridgeProvider};
 use account_sdk::signers::Signer;
 use account_sdk::utils::time::get_current_timestamp;
+use axum::Router;
 use axum::extract::State;
-use axum::http::{header, HeaderValue, Method, StatusCode};
+use axum::http::{HeaderValue, Method, StatusCode, header};
 use axum::response::IntoResponse;
 use axum::routing::post;
-use axum::Router;
-use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD as BASE64;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use crypto_bigint::U256;
 use directories::ProjectDirs;
@@ -40,7 +40,7 @@ use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::{poseidon_hash_many, Felt};
+use starknet_crypto::{Felt, poseidon_hash_many};
 use stream_cancel::{StreamExt as _, Tripwire};
 use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
@@ -53,7 +53,7 @@ use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
     BlockId, CArray, COption, Call, Clause, Controller, Entity, Error, Event, IndexerUpdate,
     KeysClause, Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance,
-    TokenCollection, ToriiClient, Ty, WorldMetadata,
+    TokenCollection, ToriiClient, Ty, World,
 };
 use url::Url;
 
@@ -744,7 +744,11 @@ pub unsafe extern "C" fn client_controllers(
     client: *mut ToriiClient,
     contract_addresses: *const types::FieldElement,
     contract_addresses_len: usize,
-) -> Result<CArray<Controller>> {
+    usernames: *const c_char,
+    usernames_len: usize,
+    limit: COption<u32>,
+    cursor: COption<*const c_char>,
+) -> Result<Page<Controller>> {
     let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
         Vec::new()
     } else {
@@ -753,13 +757,23 @@ pub unsafe extern "C" fn client_controllers(
         addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
     };
 
-    let controllers_future = unsafe { (*client).inner.controllers(contract_addresses) };
+    let usernames = if usernames.is_null() || usernames_len == 0 {
+        Vec::new()
+    } else {
+        let usernames = unsafe { std::slice::from_raw_parts(usernames, usernames_len) };
+        usernames
+            .iter()
+            .map(|c| unsafe { CStr::from_ptr(c).to_string_lossy().into_owned() })
+            .collect::<Vec<String>>()
+    };
+    let cursor = cursor.map(|c| unsafe { CStr::from_ptr(c).to_string_lossy().into_owned() });
+
+    let controllers_future = unsafe {
+        (*client).inner.controllers(contract_addresses, usernames, limit.into(), cursor.into())
+    };
 
     match RUNTIME.block_on(controllers_future) {
-        Ok(controllers) => {
-            let controllers: Vec<Controller> = controllers.into_iter().map(|c| c.into()).collect();
-            Result::Ok(controllers.into())
-        }
+        Ok(controllers) => Result::Ok(controllers.into()),
         Err(e) => Result::Err(e.into()),
     }
 }
@@ -815,9 +829,9 @@ pub unsafe extern "C" fn client_event_messages(
 /// * `client` - Pointer to ToriiClient instance
 ///
 /// # Returns
-/// WorldMetadata structure containing world information
+/// World structure containing world information
 #[no_mangle]
-pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> Result<WorldMetadata> {
+pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> Result<World> {
     let metadata_future = unsafe { (*client).inner.metadata() };
     match RUNTIME.block_on(metadata_future) {
         Ok(metadata) => Result::Ok(metadata.into()),
@@ -2270,9 +2284,9 @@ pub unsafe extern "C" fn error_free(error: *mut Error) {
 /// # Parameters
 /// * `metadata` - Pointer to WorldMetadata to free
 #[no_mangle]
-pub unsafe extern "C" fn world_metadata_free(metadata: *mut WorldMetadata) {
+pub unsafe extern "C" fn world_metadata_free(metadata: *mut World) {
     if !metadata.is_null() {
-        let _: dojo_types::WorldMetadata = (*Box::<WorldMetadata>::from_raw(metadata)).into();
+        let _: torii_proto::World = (*Box::<World>::from_raw(metadata)).into();
     }
 }
 

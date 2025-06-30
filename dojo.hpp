@@ -120,22 +120,6 @@ struct Controller {
   uint64_t deployed_at_timestamp;
 };
 
-struct Member {
-  const char *name;
-  Ty *ty;
-  bool key;
-};
-
-struct Struct {
-  const char *name;
-  CArray<Member> children;
-};
-
-struct Entity {
-  FieldElement hashed_keys;
-  CArray<Struct> models;
-};
-
 template<typename T>
 struct COption {
   enum class Tag {
@@ -180,6 +164,22 @@ struct Page {
   COption<const char*> next_cursor;
 };
 
+struct Member {
+  const char *name;
+  Ty *ty;
+  bool key;
+};
+
+struct Struct {
+  const char *name;
+  CArray<Member> children;
+};
+
+struct Entity {
+  FieldElement hashed_keys;
+  CArray<Struct> models;
+};
+
 struct OrderBy {
   const char *model;
   const char *member;
@@ -188,7 +188,7 @@ struct OrderBy {
 
 struct Pagination {
   COption<const char*> cursor;
-  uint32_t limit;
+  COption<uint32_t> limit;
   PaginationDirection direction;
   CArray<OrderBy> order_by;
 };
@@ -767,26 +767,21 @@ struct Ty {
   }
 };
 
-struct ModelMetadata {
+struct Model {
   Ty schema;
   const char *namespace_;
   const char *name;
+  FieldElement selector;
   uint32_t packed_size;
   uint32_t unpacked_size;
   FieldElement class_hash;
   FieldElement contract_address;
-  CArray<FieldElement> layout;
+  const char *layout;
 };
 
-template<typename K, typename V>
-struct CHashItem {
-  K key;
-  V value;
-};
-
-struct WorldMetadata {
+struct World {
   FieldElement world_address;
-  CArray<CHashItem<FieldElement, ModelMetadata>> models;
+  CArray<Model> models;
 };
 
 struct Event {
@@ -1089,9 +1084,13 @@ Result<CArray<FieldElement>> client_publish_message_batch(ToriiClient *client,
 ///
 /// # Returns
 /// Result containing controllers or error
-Result<CArray<Controller>> client_controllers(ToriiClient *client,
-                                              const FieldElement *contract_addresses,
-                                              uintptr_t contract_addresses_len);
+Result<Page<Controller>> client_controllers(ToriiClient *client,
+                                            const FieldElement *contract_addresses,
+                                            uintptr_t contract_addresses_len,
+                                            const char *usernames,
+                                            uintptr_t usernames_len,
+                                            COption<uint32_t> limit,
+                                            COption<const char*> cursor);
 
 /// Queries entities matching given criteria
 ///
@@ -1120,8 +1119,8 @@ Result<Page<Entity>> client_event_messages(ToriiClient *client, Query query);
 /// * `client` - Pointer to ToriiClient instance
 ///
 /// # Returns
-/// WorldMetadata structure containing world information
-Result<WorldMetadata> client_metadata(ToriiClient *client);
+/// World structure containing world information
+Result<World> client_metadata(ToriiClient *client);
 
 /// Subscribes to entity state updates
 ///
@@ -1629,7 +1628,7 @@ void error_free(Error *error);
 ///
 /// # Parameters
 /// * `metadata` - Pointer to WorldMetadata to free
-void world_metadata_free(WorldMetadata *metadata);
+void world_metadata_free(World *metadata);
 
 /// Frees a CArray instance
 ///
