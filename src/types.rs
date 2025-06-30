@@ -106,7 +106,6 @@ pub struct ControllerAccount {
     pub(crate) username: String,
 }
 
-#[repr(C)]
 #[wasm_bindgen]
 pub struct Subscription {
     pub id: u64,

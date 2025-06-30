@@ -804,11 +804,6 @@ typedef struct CHashItemFieldElementModelMetadata {
   struct ModelMetadata value;
 } CHashItemFieldElementModelMetadata;
 
-typedef struct Subscription {
-  uint64_t id;
-  Trigger trigger;
-} Subscription;
-
 typedef struct TokenCollection {
   struct FieldElement contract_address;
   const char *name;
