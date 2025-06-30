@@ -27,6 +27,7 @@ use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::LocalWallet;
 use starknet_crypto::poseidon_hash_many;
 use stream_cancel::{StreamExt as _, Tripwire};
+use tokio::sync::oneshot;
 use tsify_next::Tsify;
 use wasm_bindgen::prelude::*;
 
@@ -777,7 +778,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onTokenUpdated)]
-    pub fn on_token_updated(
+    pub async fn on_token_updated(
         &self,
         contract_addresses: Option<Vec<String>>,
         token_ids: Option<Vec<WasmU256>>,
@@ -799,14 +800,12 @@ impl ToriiClient {
         let token_ids =
             token_ids.unwrap_or_default().into_iter().map(|t| t.into()).collect::<Vec<_>>();
 
-        let subscription_id = Arc::new(AtomicU64::new(0));
+        let (sub_id_tx, sub_id_rx) = oneshot::channel();
+        let mut sub_id_tx = Some(sub_id_tx);
         let (trigger, tripwire) = Tripwire::new();
-
-        let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
         // Spawn a new task to handle the stream and reconnections
         let client = self.inner.clone();
-        let subscription_id_clone = Arc::clone(&subscription_id);
         wasm_bindgen_futures::spawn_local(async move {
             let mut backoff = 1000;
             let max_backoff = 60000;
@@ -820,13 +819,16 @@ impl ToriiClient {
                     let mut stream = stream.take_until_if(tripwire.clone());
 
                     while let Some(Ok((id, token))) = stream.next().await {
-                        subscription_id_clone.store(id, Ordering::SeqCst);
-                        let token: Token = token.into();
+                        if let Some(tx) = sub_id_tx.take() {
+                            tx.send(id).expect("Failed to send subscription ID");
+                        } else {
+                            let token: Token = token.into();
 
                         let _ = callback.call1(
                             &JsValue::null(),
                             &token.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                         );
+                        }
                     }
                 }
 
@@ -839,6 +841,14 @@ impl ToriiClient {
                 backoff = std::cmp::min(backoff * 2, max_backoff);
             }
         });
+
+        let subscription_id = match sub_id_rx.await {
+            Ok(id) => id,
+            Err(_) => {
+                return Err(JsValue::from("Failed to establish token subscription"));
+            }
+        };
+        let subscription = Subscription { id: subscription_id, trigger };
 
         Ok(subscription)
     }
@@ -1023,7 +1033,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onEntityUpdated)]
-    pub fn on_entity_updated(
+    pub async fn on_entity_updated(
         &self,
         clause: Option<Clause>,
         callback: js_sys::Function,
@@ -1032,14 +1042,12 @@ impl ToriiClient {
         console_error_panic_hook::set_once();
 
         let clause = clause.map(|c| c.into());
-        let subscription_id = Arc::new(AtomicU64::new(0));
+        let (sub_id_tx, sub_id_rx) = oneshot::channel();
+        let mut sub_id_tx = Some(sub_id_tx);
         let (trigger, tripwire) = Tripwire::new();
-
-        let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
         // Spawn a new task to handle the stream and reconnections
         let client = self.inner.clone();
-        let subscription_id_clone = Arc::clone(&subscription_id);
         wasm_bindgen_futures::spawn_local(async move {
             let mut backoff = 1000;
             let max_backoff = 60000;
@@ -1051,13 +1059,16 @@ impl ToriiClient {
                     let mut stream = stream.take_until_if(tripwire.clone());
 
                     while let Some(Ok((id, entity))) = stream.next().await {
-                        subscription_id_clone.store(id, Ordering::SeqCst);
-                        let entity: Entity = entity.into();
+                        if let Some(tx) = sub_id_tx.take() {
+                            tx.send(id).expect("Failed to send subscription ID");
+                        } else {
+                            let entity: Entity = entity.into();
 
                         let _ = callback.call1(
                             &JsValue::null(),
-                            &entity.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
-                        );
+                                &entity.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
+                        }
                     }
                 }
 
@@ -1070,6 +1081,14 @@ impl ToriiClient {
                 backoff = std::cmp::min(backoff * 2, max_backoff);
             }
         });
+
+        let subscription_id = match sub_id_rx.await {
+            Ok(id) => id,
+            Err(_) => {
+                return Err(JsValue::from("Failed to establish entity subscription"));
+            }
+        };
+        let subscription = Subscription { id: subscription_id, trigger };
 
         Ok(subscription)
     }
@@ -1090,7 +1109,7 @@ impl ToriiClient {
     ) -> Result<(), JsValue> {
         let clause = clause.map(|c| c.into());
         self.inner
-            .update_entity_subscription(subscription.id.load(Ordering::SeqCst), clause)
+            .update_entity_subscription(subscription.id, clause)
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }
@@ -1104,7 +1123,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onEventMessageUpdated)]
-    pub fn on_event_message_updated(
+    pub async fn on_event_message_updated(
         &self,
         clause: Option<Clause>,
         callback: js_sys::Function,
@@ -1113,14 +1132,12 @@ impl ToriiClient {
         console_error_panic_hook::set_once();
 
         let clause = clause.map(|c| c.into());
-        let subscription_id = Arc::new(AtomicU64::new(0));
+        let (sub_id_tx, sub_id_rx) = oneshot::channel();
+        let mut sub_id_tx = Some(sub_id_tx);
         let (trigger, tripwire) = Tripwire::new();
-
-        let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
         // Spawn a new task to handle the stream and reconnections
         let client = self.inner.clone();
-        let subscription_id_clone = Arc::clone(&subscription_id);
         wasm_bindgen_futures::spawn_local(async move {
             let mut backoff = 1000;
             let max_backoff = 60000;
@@ -1132,13 +1149,16 @@ impl ToriiClient {
                     let mut stream = stream.take_until_if(tripwire.clone());
 
                     while let Some(Ok((id, entity))) = stream.next().await {
-                        subscription_id_clone.store(id, Ordering::SeqCst);
-                        let entity: Entity = entity.into();
+                        if let Some(tx) = sub_id_tx.take() {
+                            tx.send(id).expect("Failed to send subscription ID");
+                        } else {
+                            let entity: Entity = entity.into();
 
                         let _ = callback.call1(
                             &JsValue::null(),
-                            &entity.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
-                        );
+                                &entity.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
+                        }
                     }
                 }
 
@@ -1151,6 +1171,14 @@ impl ToriiClient {
                 backoff = std::cmp::min(backoff * 2, max_backoff);
             }
         });
+
+        let subscription_id = match sub_id_rx.await {
+            Ok(id) => id,
+            Err(_) => {
+                return Err(JsValue::from("Failed to establish event message subscription"));
+            }
+        };
+        let subscription = Subscription { id: subscription_id, trigger };
 
         Ok(subscription)
     }
@@ -1171,7 +1199,7 @@ impl ToriiClient {
     ) -> Result<(), JsValue> {
         let clause = clause.map(|c| c.into());
         self.inner
-            .update_event_message_subscription(subscription.id.load(Ordering::SeqCst), clause)
+            .update_event_message_subscription(subscription.id, clause)
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }
@@ -1185,7 +1213,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onStarknetEvent)]
-    pub fn on_starknet_event(
+    pub async fn on_starknet_event(
         &self,
         clauses: KeysClauses,
         callback: js_sys::Function,
@@ -1194,10 +1222,9 @@ impl ToriiClient {
         console_error_panic_hook::set_once();
 
         let clauses: Vec<_> = clauses.into_iter().map(|c| c.into()).collect();
-        let subscription_id = Arc::new(AtomicU64::new(0));
         let (trigger, tripwire) = Tripwire::new();
-
-        let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
+        let (sub_id_tx, sub_id_rx) = oneshot::channel();
+        let mut sub_id_tx = Some(sub_id_tx);
 
         // Spawn a new task to handle the stream and reconnections
         let client = self.inner.clone();
@@ -1212,10 +1239,15 @@ impl ToriiClient {
                     let mut stream = stream.take_until_if(tripwire.clone());
 
                     while let Some(Ok(event)) = stream.next().await {
-                        let _ = callback.call1(
-                            &JsValue::null(),
-                            &event.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
-                        );
+                        if let Some(tx) = sub_id_tx.take() {
+                            tx.send(0).expect("Failed to send subscription ID");
+                        } else {
+                            let _ = callback.call1(
+                                &JsValue::null(),
+                                &event.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
+                        }
+                        
                     }
                 }
 
@@ -1229,6 +1261,15 @@ impl ToriiClient {
             }
         });
 
+        let subscription_id = match sub_id_rx.await {
+            Ok(id) => id,
+            Err(_) => {
+                return Err(JsValue::from("Failed to establish Starknet event subscription"));
+            }
+        };
+
+        let subscription = Subscription { id: subscription_id, trigger };
+
         Ok(subscription)
     }
 
@@ -1241,7 +1282,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onIndexerUpdated)]
-    pub fn on_indexer_updated(
+    pub async fn on_indexer_updated(
         &self,
         contract_address: Option<String>,
         callback: js_sys::Function,
@@ -1256,14 +1297,12 @@ impl ToriiClient {
                 })
             })
             .transpose()?;
-        let subscription_id = Arc::new(AtomicU64::new(0));
+        let (sub_id_tx, sub_id_rx) = oneshot::channel();
+        let mut sub_id_tx = Some(sub_id_tx);
         let (trigger, tripwire) = Tripwire::new();
-
-        let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
         // Spawn a new task to handle the stream and reconnections
         let client = self.inner.clone();
-        let subscription_id_clone = Arc::clone(&subscription_id);
         wasm_bindgen_futures::spawn_local(async move {
             let mut backoff = 1000;
             let max_backoff = 60000;
@@ -1275,12 +1314,16 @@ impl ToriiClient {
                     let mut stream = stream.take_until_if(tripwire.clone());
 
                     while let Some(Ok(update)) = stream.next().await {
+                        if let Some(tx) = sub_id_tx.take() {
+                            tx.send(0).expect("Failed to send subscription ID");
+                        } else {
                         let update: IndexerUpdate = update.into();
 
                         let _ = callback.call1(
                             &JsValue::null(),
-                            &update.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
-                        );
+                                &update.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
+                        }
                     }
                 }
 
@@ -1293,6 +1336,15 @@ impl ToriiClient {
                 backoff = std::cmp::min(backoff * 2, max_backoff);
             }
         });
+
+        let subscription_id = match sub_id_rx.await {
+            Ok(id) => id,
+            Err(_) => {
+                return Err(JsValue::from("Failed to establish indexer subscription"));
+            }
+        };
+
+        let subscription = Subscription { id: subscription_id, trigger };
 
         Ok(subscription)
     }
@@ -1307,7 +1359,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onTokenBalanceUpdated)]
-    pub fn on_token_balance_updated(
+    pub async fn on_token_balance_updated(
         &self,
         contract_addresses: Option<Vec<String>>,
         account_addresses: Option<Vec<String>>,
@@ -1339,14 +1391,12 @@ impl ToriiClient {
         let token_ids =
             token_ids.unwrap_or_default().into_iter().map(|t| t.into()).collect::<Vec<_>>();
 
-        let subscription_id = Arc::new(AtomicU64::new(0));
+        let (sub_id_tx, sub_id_rx) = oneshot::channel();
+        let mut sub_id_tx = Some(sub_id_tx);
         let (trigger, tripwire) = Tripwire::new();
-
-        let subscription = Subscription { id: Arc::clone(&subscription_id), trigger };
 
         // Spawn a new task to handle the stream and reconnections
         let client = self.inner.clone();
-        let subscription_id_clone = Arc::clone(&subscription_id);
         wasm_bindgen_futures::spawn_local(async move {
             let mut backoff = 1000;
             let max_backoff = 60000;
@@ -1365,13 +1415,16 @@ impl ToriiClient {
                     let mut stream = stream.take_until_if(tripwire.clone());
 
                     while let Some(Ok((id, balance))) = stream.next().await {
-                        subscription_id_clone.store(id, Ordering::SeqCst);
-                        let balance: TokenBalance = balance.into();
+                        if let Some(tx) = sub_id_tx.take() {
+                            tx.send(id).expect("Failed to send subscription ID");
+                        } else {
+                            let balance: TokenBalance = balance.into();
 
                         let _ = callback.call1(
                             &JsValue::null(),
-                            &balance.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
-                        );
+                                &balance.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
+                        }
                     }
                 }
 
@@ -1384,6 +1437,14 @@ impl ToriiClient {
                 backoff = std::cmp::min(backoff * 2, max_backoff);
             }
         });
+
+        let subscription_id = match sub_id_rx.await {
+            Ok(id) => id,
+            Err(_) => {
+                return Err(JsValue::from("Failed to establish token balance subscription"));
+            }
+        };
+        let subscription = Subscription { id: subscription_id, trigger };
 
         Ok(subscription)
     }
@@ -1426,7 +1487,7 @@ impl ToriiClient {
 
         self.inner
             .update_token_balance_subscription(
-                subscription.id.load(Ordering::SeqCst),
+                subscription.id,
                 contract_addresses,
                 account_addresses,
                 token_ids,
