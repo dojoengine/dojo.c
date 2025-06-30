@@ -1248,7 +1248,7 @@ pub struct World {
 
 impl From<torii_proto::World> for World {
     fn from(value: torii_proto::World) -> Self {
-        let models = value.models.into_iter().map(|(_, v)| v.into()).collect::<Vec<Model>>();
+        let models: Vec<Model> = value.models.into_values().map(|v| v.into()).collect();
 
         World { world_address: value.world_address.into(), models: models.into() }
     }
