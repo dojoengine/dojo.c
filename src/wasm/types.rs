@@ -708,6 +708,9 @@ pub struct Message {
 
 impl From<Message> for torii_proto::Message {
     fn from(val: Message) -> Self {
-        torii_proto::Message { message: val.message, signature: val.signature.iter().map(|s| Felt::from_str(s).unwrap()).collect() }
+        torii_proto::Message {
+            message: val.message,
+            signature: val.signature.iter().map(|s| Felt::from_str(s).unwrap()).collect(),
+        }
     }
 }

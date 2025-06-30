@@ -1,6 +1,6 @@
 mod types;
 
-use std::ffi::{CStr, CString, c_void};
+use std::ffi::{c_void, CStr, CString};
 use std::fs;
 use std::net::SocketAddr;
 use std::ops::Deref;
@@ -18,13 +18,13 @@ use account_sdk::account::session::hash::Session;
 use account_sdk::provider::{CartridgeJsonRpcProvider, CartridgeProvider};
 use account_sdk::signers::Signer;
 use account_sdk::utils::time::get_current_timestamp;
-use axum::Router;
 use axum::extract::State;
-use axum::http::{HeaderValue, Method, StatusCode, header};
+use axum::http::{header, HeaderValue, Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::post;
-use base64::Engine as _;
+use axum::Router;
 use base64::engine::general_purpose::STANDARD as BASE64;
+use base64::Engine as _;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use crypto_bigint::U256;
 use directories::ProjectDirs;
@@ -40,7 +40,7 @@ use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::{Felt, poseidon_hash_many};
+use starknet_crypto::{poseidon_hash_many, Felt};
 use stream_cancel::{StreamExt as _, Tripwire};
 use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
@@ -1444,7 +1444,9 @@ pub unsafe extern "C" fn on_indexer_update(
         Ok(id) => id,
         Err(_) => {
             return Result::Err(Error {
-                message: CString::new("Failed to establish indexer subscription").unwrap().into_raw(),
+                message: CString::new("Failed to establish indexer subscription")
+                    .unwrap()
+                    .into_raw(),
             });
         }
     };

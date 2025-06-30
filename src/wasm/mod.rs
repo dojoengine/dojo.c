@@ -824,10 +824,10 @@ impl ToriiClient {
                         } else {
                             let token: Token = token.into();
 
-                        let _ = callback.call1(
-                            &JsValue::null(),
-                            &token.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
-                        );
+                            let _ = callback.call1(
+                                &JsValue::null(),
+                                &token.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
                         }
                     }
                 }
@@ -1064,8 +1064,8 @@ impl ToriiClient {
                         } else {
                             let entity: Entity = entity.into();
 
-                        let _ = callback.call1(
-                            &JsValue::null(),
+                            let _ = callback.call1(
+                                &JsValue::null(),
                                 &entity.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                             );
                         }
@@ -1154,8 +1154,8 @@ impl ToriiClient {
                         } else {
                             let entity: Entity = entity.into();
 
-                        let _ = callback.call1(
-                            &JsValue::null(),
+                            let _ = callback.call1(
+                                &JsValue::null(),
                                 &entity.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                             );
                         }
@@ -1247,7 +1247,6 @@ impl ToriiClient {
                                 &event.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                             );
                         }
-                        
                     }
                 }
 
@@ -1317,10 +1316,10 @@ impl ToriiClient {
                         if let Some(tx) = sub_id_tx.take() {
                             tx.send(0).expect("Failed to send subscription ID");
                         } else {
-                        let update: IndexerUpdate = update.into();
+                            let update: IndexerUpdate = update.into();
 
-                        let _ = callback.call1(
-                            &JsValue::null(),
+                            let _ = callback.call1(
+                                &JsValue::null(),
                                 &update.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                             );
                         }
@@ -1420,8 +1419,8 @@ impl ToriiClient {
                         } else {
                             let balance: TokenBalance = balance.into();
 
-                        let _ = callback.call1(
-                            &JsValue::null(),
+                            let _ = callback.call1(
+                                &JsValue::null(),
                                 &balance.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
                             );
                         }
@@ -1505,10 +1504,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing entity id of the offchain message or error
     #[wasm_bindgen(js_name = publishMessage)]
-    pub async fn publish_message(
-        &mut self,
-        message: Message,
-    ) -> Result<String, JsValue> {
+    pub async fn publish_message(&mut self, message: Message) -> Result<String, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
