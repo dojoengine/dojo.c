@@ -45,9 +45,6 @@ cdef extern from *:
   cdef struct Provider:
     pass
 
-  cdef struct Subscription:
-    pass
-
   cdef struct ToriiClient:
     pass
 
@@ -511,6 +508,10 @@ cdef extern from *:
   cdef struct CHashItemFieldElementModelMetadata:
     FieldElement key;
     ModelMetadata value;
+
+  cdef struct Subscription:
+    uint64_t id;
+    Trigger trigger;
 
   cdef struct TokenCollection:
     FieldElement contract_address;

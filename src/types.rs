@@ -3,7 +3,6 @@ use std::ffi::c_char;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::path::PathBuf;
-use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
@@ -106,8 +105,10 @@ pub struct ControllerAccount {
     pub(crate) account: account_sdk::account::session::account::SessionAccount,
     pub(crate) username: String,
 }
+
+#[repr(C)]
 #[wasm_bindgen]
 pub struct Subscription {
-    pub(crate) id: Arc<AtomicU64>,
+    pub id: u64,
     pub(crate) trigger: Trigger,
 }

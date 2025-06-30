@@ -907,6 +907,11 @@ struct Policy {
   const char *description;
 };
 
+struct Subscription {
+  uint64_t id;
+  Trigger trigger;
+};
+
 extern "C" {
 
 /// Creates a new Torii client instance
