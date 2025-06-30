@@ -716,6 +716,9 @@ impl ToriiClient {
     pub async fn get_controllers(
         &self,
         contract_addresses: Vec<String>,
+        usernames: Vec<String>,
+        limit: Option<u32>,
+        cursor: Option<String>,
     ) -> Result<Controllers, JsValue> {
         let contract_addresses = contract_addresses
             .iter()
@@ -725,11 +728,11 @@ impl ToriiClient {
 
         let controllers = self
             .inner
-            .controllers(contract_addresses)
+            .controllers(contract_addresses, usernames, limit, cursor)
             .await
             .map_err(|e| JsValue::from(format!("failed to get controllers: {e}")))?;
 
-        Ok(Controllers(controllers.into_iter().map(|c| c.into()).collect()))
+        Ok(Controllers(controllers.into()))
     }
 
     /// Gets token information for the given contract addresses
@@ -986,7 +989,7 @@ impl ToriiClient {
             .inner
             .entities(torii_proto::Query {
                 pagination: torii_proto::Pagination {
-                    limit,
+                    limit: Some(limit),
                     cursor,
                     direction: torii_proto::PaginationDirection::Forward,
                     order_by: vec![],

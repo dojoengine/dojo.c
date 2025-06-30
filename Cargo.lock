@@ -823,8 +823,10 @@ checksum = "1a7964611d71df112cb1730f2ee67324fcf4d0fc6606acbbe9bfe06df124637c"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
+ "js-sys",
  "num-traits",
  "serde",
+ "wasm-bindgen",
  "windows-link",
 ]
 
@@ -4485,8 +4487,8 @@ dependencies = [
 
 [[package]]
 name = "torii-client"
-version = "1.5.8-preview.3"
-source = "git+https://github.com/dojoengine/torii?rev=4eb0f11a53e7bbcd973c8aa1184a2ed1788bf0e5#4eb0f11a53e7bbcd973c8aa1184a2ed1788bf0e5"
+version = "1.5.8-preview.4"
+source = "git+https://github.com/dojoengine/torii?rev=07ca961fa81c069b75c5a149984ddf65443e7dae#07ca961fa81c069b75c5a149984ddf65443e7dae"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -4509,8 +4511,8 @@ dependencies = [
 
 [[package]]
 name = "torii-grpc-client"
-version = "1.5.8-preview.3"
-source = "git+https://github.com/dojoengine/torii?rev=4eb0f11a53e7bbcd973c8aa1184a2ed1788bf0e5#4eb0f11a53e7bbcd973c8aa1184a2ed1788bf0e5"
+version = "1.5.8-preview.4"
+source = "git+https://github.com/dojoengine/torii?rev=07ca961fa81c069b75c5a149984ddf65443e7dae#07ca961fa81c069b75c5a149984ddf65443e7dae"
 dependencies = [
  "crypto-bigint",
  "dojo-types",
@@ -4535,9 +4537,10 @@ dependencies = [
 
 [[package]]
 name = "torii-proto"
-version = "1.5.8-preview.3"
-source = "git+https://github.com/dojoengine/torii?rev=4eb0f11a53e7bbcd973c8aa1184a2ed1788bf0e5#4eb0f11a53e7bbcd973c8aa1184a2ed1788bf0e5"
+version = "1.5.8-preview.4"
+source = "git+https://github.com/dojoengine/torii?rev=07ca961fa81c069b75c5a149984ddf65443e7dae#07ca961fa81c069b75c5a149984ddf65443e7dae"
 dependencies = [
+ "chrono",
  "crypto-bigint",
  "dojo-types",
  "dojo-world",

@@ -1,6 +1,7 @@
 use std::ffi::{c_char, CStr, CString};
 
 use crypto_bigint::Encoding;
+use dojo_types::naming::compute_selector_from_names;
 use starknet::core::utils::get_selector_from_name;
 use torii_client::Client;
 
@@ -122,7 +123,7 @@ impl From<torii_proto::Controller> for Controller {
         Controller {
             address: val.address.into(),
             username: CString::new(val.username.clone()).unwrap().into_raw(),
-            deployed_at_timestamp: val.deployed_at,
+            deployed_at_timestamp: val.deployed_at.timestamp() as u64,
         }
     }
 }
@@ -408,13 +409,6 @@ impl From<CStringArray> for Vec<String> {
     }
 }
 
-#[derive(Clone, Debug)]
-#[repr(C)]
-pub struct CHashItem<K, V> {
-    pub key: K,
-    pub value: V,
-}
-
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub struct Error {
@@ -481,7 +475,7 @@ pub struct Query {
 #[repr(C)]
 pub struct Pagination {
     pub cursor: COption<*const c_char>,
-    pub limit: u32,
+    pub limit: COption<u32>,
     pub direction: PaginationDirection,
     pub order_by: CArray<OrderBy>,
 }
@@ -493,7 +487,7 @@ impl From<Pagination> for torii_proto::Pagination {
                 .cursor
                 .map(|c| unsafe { CStr::from_ptr(c).to_string_lossy().to_string() })
                 .into(),
-            limit: val.limit,
+            limit: val.limit.into(),
             direction: val.direction.into(),
             order_by: val.order_by.into(),
         }
@@ -504,7 +498,7 @@ impl From<torii_proto::Pagination> for Pagination {
     fn from(val: torii_proto::Pagination) -> Self {
         Pagination {
             cursor: val.cursor.map(|c| CString::new(c).unwrap().into_raw() as *const c_char).into(),
-            limit: val.limit,
+            limit: val.limit.into(),
             direction: val.direction.into(),
             order_by: val.order_by.into(),
         }
@@ -1247,83 +1241,76 @@ impl From<torii_proto::Value> for Value {
 
 #[derive(Clone, Debug)]
 #[repr(C)]
-pub struct WorldMetadata {
+pub struct World {
     pub world_address: FieldElement,
-    pub models: CArray<CHashItem<FieldElement, ModelMetadata>>,
+    pub models: CArray<Model>,
 }
 
-impl From<dojo_types::WorldMetadata> for WorldMetadata {
-    fn from(value: dojo_types::WorldMetadata) -> Self {
-        let models = value
-            .models
-            .into_iter()
-            .map(|(k, v)| CHashItem { key: k.into(), value: v.into() })
-            .collect::<Vec<CHashItem<FieldElement, ModelMetadata>>>();
+impl From<torii_proto::World> for World {
+    fn from(value: torii_proto::World) -> Self {
+        let models: Vec<Model> = value.models.into_values().map(|v| v.into()).collect();
 
-        WorldMetadata { world_address: value.world_address.into(), models: models.into() }
+        World { world_address: value.world_address.into(), models: models.into() }
     }
 }
 
-impl From<WorldMetadata> for dojo_types::WorldMetadata {
-    fn from(value: WorldMetadata) -> Self {
-        let models: Vec<CHashItem<FieldElement, ModelMetadata>> = value.models.into();
+impl From<World> for torii_proto::World {
+    fn from(value: World) -> Self {
+        let models: Vec<torii_proto::Model> = value.models.into();
         let models = models
             .into_iter()
-            .map(|m| {
-                let k = m.key.into();
-                let v: dojo_types::schema::ModelMetadata = m.value.into();
-
-                (k, v)
-            })
+            .map(|m| (compute_selector_from_names(&m.namespace, &m.name), m))
             .collect();
 
-        dojo_types::WorldMetadata { world_address: value.world_address.into(), models }
+        torii_proto::World { world_address: value.world_address.into(), models }
     }
 }
 
 #[derive(Clone, Debug)]
 #[repr(C)]
-pub struct ModelMetadata {
+pub struct Model {
     pub schema: Ty,
     pub namespace: *const c_char,
     pub name: *const c_char,
+    pub selector: FieldElement,
     pub packed_size: u32,
     pub unpacked_size: u32,
     pub class_hash: FieldElement,
     pub contract_address: FieldElement,
-    pub layout: CArray<FieldElement>,
+    pub layout: *const c_char,
 }
 
-impl From<dojo_types::schema::ModelMetadata> for ModelMetadata {
-    fn from(value: dojo_types::schema::ModelMetadata) -> Self {
-        let layout = value.layout.into_iter().map(|v| v.into()).collect::<Vec<FieldElement>>();
+impl From<torii_proto::Model> for Model {
+    fn from(value: torii_proto::Model) -> Self {
+        let layout = serde_json::to_string(&value.layout).unwrap();
+        let layout = CString::new(layout).unwrap().into_raw();
 
-        ModelMetadata {
+        Model {
             schema: value.schema.into(),
             name: CString::new(value.name.clone()).unwrap().into_raw(),
             namespace: CString::new(value.namespace.clone()).unwrap().into_raw(),
+            selector: value.selector.into(),
             packed_size: value.packed_size,
             unpacked_size: value.unpacked_size,
             class_hash: value.class_hash.into(),
             contract_address: value.contract_address.into(),
-            layout: layout.into(),
+            layout,
         }
     }
 }
 
-impl From<ModelMetadata> for dojo_types::schema::ModelMetadata {
-    fn from(value: ModelMetadata) -> Self {
-        let layout: Vec<FieldElement> = value.layout.into();
+impl From<Model> for torii_proto::Model {
+    fn from(value: Model) -> Self {
+        let layout = unsafe { CStr::from_ptr(value.layout).to_string_lossy().into_owned() };
+        let layout = serde_json::from_str(&layout).unwrap();
 
-        let layout: Vec<starknet::core::types::Felt> =
-            layout.into_iter().map(|v| v.into()).collect();
-
-        dojo_types::schema::ModelMetadata {
+        torii_proto::Model {
             schema: value.schema.into(),
             namespace: unsafe {
                 CString::from_raw(value.namespace as *mut c_char).into_string().unwrap()
             },
             name: unsafe { CString::from_raw(value.name as *mut c_char).into_string().unwrap() },
+            selector: value.selector.into(),
             packed_size: value.packed_size,
             unpacked_size: value.unpacked_size,
             class_hash: value.class_hash.into(),

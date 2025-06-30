@@ -114,19 +114,6 @@ cdef extern from *:
     Controller *data;
     uintptr_t data_len;
 
-  cdef enum ResultCArrayController_Tag:
-    OkCArrayController,
-    ErrCArrayController,
-
-  cdef struct ResultCArrayController:
-    ResultCArrayController_Tag tag;
-    CArrayController ok;
-    Error err;
-
-  cdef struct CArrayEntity:
-    Entity *data;
-    uintptr_t data_len;
-
   cdef enum COptionc_char_Tag:
     Somec_char,
     Nonec_char,
@@ -134,6 +121,31 @@ cdef extern from *:
   cdef struct COptionc_char:
     COptionc_char_Tag tag;
     const char *some;
+
+  cdef struct PageController:
+    CArrayController items;
+    COptionc_char next_cursor;
+
+  cdef enum ResultPageController_Tag:
+    OkPageController,
+    ErrPageController,
+
+  cdef struct ResultPageController:
+    ResultPageController_Tag tag;
+    PageController ok;
+    Error err;
+
+  cdef enum COptionu32_Tag:
+    Someu32,
+    Noneu32,
+
+  cdef struct COptionu32:
+    COptionu32_Tag tag;
+    uint32_t some;
+
+  cdef struct CArrayEntity:
+    Entity *data;
+    uintptr_t data_len;
 
   cdef struct PageEntity:
     CArrayEntity items;
@@ -154,7 +166,7 @@ cdef extern from *:
 
   cdef struct Pagination:
     COptionc_char cursor;
-    uint32_t limit;
+    COptionu32 limit;
     PaginationDirection direction;
     CArrayOrderBy order_by;
 
@@ -268,21 +280,21 @@ cdef extern from *:
     CArrayc_char models;
     bool historical;
 
-  cdef struct CArrayCHashItemFieldElementModelMetadata:
-    CHashItemFieldElementModelMetadata *data;
+  cdef struct CArrayModel:
+    Model *data;
     uintptr_t data_len;
 
-  cdef struct WorldMetadata:
+  cdef struct World:
     FieldElement world_address;
-    CArrayCHashItemFieldElementModelMetadata models;
+    CArrayModel models;
 
-  cdef enum ResultWorldMetadata_Tag:
-    OkWorldMetadata,
-    ErrWorldMetadata,
+  cdef enum ResultWorld_Tag:
+    OkWorld,
+    ErrWorld,
 
-  cdef struct ResultWorldMetadata:
-    ResultWorldMetadata_Tag tag;
-    WorldMetadata ok;
+  cdef struct ResultWorld:
+    ResultWorld_Tag tag;
+    World ok;
     Error err;
 
   cdef enum ResultSubscription_Tag:
@@ -498,19 +510,16 @@ cdef extern from *:
     CArrayTy array;
     const char *byte_array;
 
-  cdef struct ModelMetadata:
+  cdef struct Model:
     Ty schema;
     const char *namespace_;
     const char *name;
+    FieldElement selector;
     uint32_t packed_size;
     uint32_t unpacked_size;
     FieldElement class_hash;
     FieldElement contract_address;
-    CArrayFieldElement layout;
-
-  cdef struct CHashItemFieldElementModelMetadata:
-    FieldElement key;
-    ModelMetadata value;
+    const char *layout;
 
   cdef struct TokenCollection:
     FieldElement contract_address;
@@ -709,9 +718,13 @@ cdef extern from *:
   #
   # # Returns
   # Result containing controllers or error
-  ResultCArrayController client_controllers(ToriiClient *client,
-                                            const FieldElement *contract_addresses,
-                                            uintptr_t contract_addresses_len);
+  ResultPageController client_controllers(ToriiClient *client,
+                                          const FieldElement *contract_addresses,
+                                          uintptr_t contract_addresses_len,
+                                          const char *usernames,
+                                          uintptr_t usernames_len,
+                                          COptionu32 limit,
+                                          COptionc_char cursor);
 
   # Queries entities matching given criteria
   #
@@ -740,8 +753,8 @@ cdef extern from *:
   # * `client` - Pointer to ToriiClient instance
   #
   # # Returns
-  # WorldMetadata structure containing world information
-  ResultWorldMetadata client_metadata(ToriiClient *client);
+  # World structure containing world information
+  ResultWorld client_metadata(ToriiClient *client);
 
   # Subscribes to entity state updates
   #
@@ -1249,7 +1262,7 @@ cdef extern from *:
   #
   # # Parameters
   # * `metadata` - Pointer to WorldMetadata to free
-  void world_metadata_free(WorldMetadata *metadata);
+  void world_metadata_free(World *metadata);
 
   # Frees a CArray instance
   #
