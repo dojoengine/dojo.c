@@ -43,7 +43,7 @@ impl From<WasmU256> for U256 {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct Controllers(pub Vec<Controller>);
+pub struct Controllers(pub Page<Controller>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -58,7 +58,7 @@ impl From<torii_proto::Controller> for Controller {
         Self {
             address: format!("{:#x}", value.address),
             username: value.username.clone(),
-            deployed_at_timestamp: value.deployed_at,
+            deployed_at_timestamp: value.deployed_at.timestamp() as u64,
         }
     }
 }
@@ -353,7 +353,7 @@ pub struct Query {
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Pagination {
-    pub limit: u32,
+    pub limit: Option<u32>,
     pub cursor: Option<String>,
     pub direction: PaginationDirection,
     pub order_by: Vec<OrderBy>,
@@ -362,7 +362,7 @@ pub struct Pagination {
 impl From<Pagination> for torii_proto::Pagination {
     fn from(value: Pagination) -> Self {
         Self {
-            limit: value.limit,
+            limit: value.limit.map(|l| l as u32),
             cursor: value.cursor.map(|c| c.to_string()),
             direction: value.direction.into(),
             order_by: value.order_by.into_iter().map(|o| o.into()).collect(),

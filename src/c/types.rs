@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString, c_char};
+use std::ffi::{c_char, CStr, CString};
 
 use crypto_bigint::Encoding;
 use dojo_types::naming::compute_selector_from_names;
