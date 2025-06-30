@@ -7,7 +7,6 @@ use std::ops::Deref;
 use std::os::raw::c_char;
 use std::str::FromStr;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
 use account_sdk::abigen::controller::OutsideExecutionV3;
@@ -868,7 +867,8 @@ pub unsafe extern "C" fn client_on_entity_state_update(
                         tx.send(id).expect("Failed to send subscription ID");
                     } else {
                         let key: types::FieldElement = entity.hashed_keys.into();
-                        let models: Vec<Struct> = entity.models.into_iter().map(|e| e.into()).collect();
+                        let models: Vec<Struct> =
+                            entity.models.into_iter().map(|e| e.into()).collect();
                         callback(key, models.into());
                     }
                 }
@@ -888,7 +888,9 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         Ok(id) => id,
         Err(_) => {
             return Result::Err(Error {
-                message: CString::new("Failed to establish entity subscription").unwrap().into_raw(),
+                message: CString::new("Failed to establish entity subscription")
+                    .unwrap()
+                    .into_raw(),
             });
         }
     };
@@ -1406,8 +1408,6 @@ pub unsafe extern "C" fn on_indexer_update(
     let mut sub_id_tx = Some(sub_id_tx);
     let (trigger, tripwire) = Tripwire::new();
 
-    let subscription = Subscription { id: 0, trigger };
-
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
     RUNTIME.spawn(async move {
@@ -1422,7 +1422,11 @@ pub unsafe extern "C" fn on_indexer_update(
                 let mut rcv = rcv.take_until_if(tripwire.clone());
 
                 while let Some(Ok(update)) = rcv.next().await {
-                    callback(update.into());
+                    if let Some(tx) = sub_id_tx.take() {
+                        tx.send(0).expect("Failed to send subscription ID");
+                    } else {
+                        callback(update.into());
+                    }
                 }
             }
 
@@ -1435,6 +1439,17 @@ pub unsafe extern "C" fn on_indexer_update(
             backoff = std::cmp::min(backoff * 2, max_backoff);
         }
     });
+
+    let subscription_id = match RUNTIME.block_on(sub_id_rx) {
+        Ok(id) => id,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to establish indexer subscription").unwrap().into_raw(),
+            });
+        }
+    };
+
+    let subscription = Subscription { id: subscription_id, trigger };
 
     Result::Ok(Box::into_raw(Box::new(subscription)))
 }
@@ -1535,11 +1550,12 @@ pub unsafe extern "C" fn client_on_token_balance_update(
     });
 
     let subscription_id = match RUNTIME.block_on(sub_id_rx) {
-
         Ok(id) => id,
         Err(_) => {
             return Result::Err(Error {
-                message: CString::new("Failed to establish token balance subscription").unwrap().into_raw(),
+                message: CString::new("Failed to establish token balance subscription")
+                    .unwrap()
+                    .into_raw(),
             });
         }
     };
@@ -1596,7 +1612,7 @@ pub unsafe extern "C" fn client_update_token_balance_subscription(
     };
 
     match RUNTIME.block_on((*client).inner.update_token_balance_subscription(
-        (*subscription).id.load(Ordering::SeqCst),
+        (*subscription).id,
         contract_addresses,
         account_addresses,
         token_ids,
