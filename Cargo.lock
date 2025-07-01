@@ -1155,7 +1155,7 @@ dependencies = [
 
 [[package]]
 name = "dojo-c"
-version = "1.5.7"
+version = "1.5.8"
 dependencies = [
  "account_sdk",
  "anyhow",
