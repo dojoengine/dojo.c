@@ -532,16 +532,14 @@ impl From<torii_proto::PaginationDirection> for PaginationDirection {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct OrderBy {
-    pub model: *const c_char,
-    pub member: *const c_char,
+    pub field: *const c_char,
     pub direction: OrderDirection,
 }
 
 impl From<OrderBy> for torii_proto::OrderBy {
     fn from(val: OrderBy) -> Self {
         torii_proto::OrderBy {
-            model: unsafe { CStr::from_ptr(val.model).to_string_lossy().to_string() },
-            member: unsafe { CStr::from_ptr(val.member).to_string_lossy().to_string() },
+            field: unsafe { CStr::from_ptr(val.field).to_string_lossy().to_string() },
             direction: val.direction.into(),
         }
     }
@@ -550,8 +548,7 @@ impl From<OrderBy> for torii_proto::OrderBy {
 impl From<torii_proto::OrderBy> for OrderBy {
     fn from(val: torii_proto::OrderBy) -> Self {
         OrderBy {
-            model: CString::new(val.model.clone()).unwrap().into_raw(),
-            member: CString::new(val.member.clone()).unwrap().into_raw(),
+            field: CString::new(val.field.clone()).unwrap().into_raw(),
             direction: val.direction.into(),
         }
     }

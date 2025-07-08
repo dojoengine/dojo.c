@@ -1,19 +1,19 @@
 [package]
 edition = "2021"
 name = "dojo-c"
-version = "1.5.7"
+version = "1.6.0-alpha.0"
 
 [lib]
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
-dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "4145801" }
-dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "4145801" }
-torii-proto = { git = "https://github.com/dojoengine/torii", rev = "07ca961fa81c069b75c5a149984ddf65443e7dae" }
-torii-client = { git = "https://github.com/dojoengine/torii", rev = "07ca961fa81c069b75c5a149984ddf65443e7dae" }
-torii-grpc-client = { git = "https://github.com/dojoengine/torii", rev = "07ca961fa81c069b75c5a149984ddf65443e7dae" }
+dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "054623b" }
+dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "054623b" }
+torii-proto = { git = "https://github.com/dojoengine/torii", rev = "0e89d04" }
+torii-client = { git = "https://github.com/dojoengine/torii", rev = "0e89d04" }
+torii-grpc-client = { git = "https://github.com/dojoengine/torii", rev = "0e89d04" }
 
-starknet = "0.13.0"
+starknet = "0.14.0"
 starknet-crypto = "0.7.2"
 starknet-types-core = { version = "0.1.6", features = ["arbitrary"] }
 
@@ -30,7 +30,7 @@ wasm-bindgen = "0.2.92"
 stream-cancel = "0.8.2"
 cainome = { git = "https://github.com/cartridge-gg/cainome", tag = "v0.3.2" }
 lazy_static = "1.5.0"
-account_sdk = { git = "https://github.com/cartridge-gg/controller", rev = "dbbe0353d64de743739d425f8aab91ca3ac0e16f" }
+account_sdk = { git = "https://github.com/cartridge-gg/controller", rev = "05fe96f4" }
 
 serde-wasm-bindgen = "0.6.3"
 wasm-bindgen-futures = "0.4.39"
@@ -48,6 +48,7 @@ instant = { version = "0.1.13", features = ["wasm-bindgen"] }
 gloo-timers = { version = "0.3.0", features = ["futures"] }
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
+chrono = "0.4.41"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 axum = "0.8.1"

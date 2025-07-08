@@ -181,8 +181,7 @@ struct Entity {
 };
 
 struct OrderBy {
-  const char *model;
-  const char *member;
+  const char *field;
   OrderDirection direction;
 };
 

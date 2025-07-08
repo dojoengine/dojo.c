@@ -729,8 +729,7 @@ typedef struct Entity {
 } Entity;
 
 typedef struct OrderBy {
-  const char *model;
-  const char *member;
+  const char *field;
   enum OrderDirection direction;
 } OrderBy;
 
