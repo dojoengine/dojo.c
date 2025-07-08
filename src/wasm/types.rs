@@ -389,18 +389,13 @@ impl From<PaginationDirection> for torii_proto::PaginationDirection {
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct OrderBy {
-    pub model: String,
-    pub member: String,
+    pub field: String,
     pub direction: OrderDirection,
 }
 
 impl From<OrderBy> for torii_proto::OrderBy {
     fn from(value: OrderBy) -> Self {
-        Self {
-            model: value.model.clone(),
-            member: value.member.clone(),
-            direction: value.direction.into(),
-        }
+        Self { field: value.field.clone(), direction: value.direction.into() }
     }
 }
 

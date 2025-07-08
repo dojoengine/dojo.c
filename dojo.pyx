@@ -460,8 +460,7 @@ cdef extern from *:
     CArrayStruct models;
 
   cdef struct OrderBy:
-    const char *model;
-    const char *member;
+    const char *field;
     OrderDirection direction;
 
   cdef enum COptionFieldElement_Tag:
