@@ -30,7 +30,7 @@ wasm-bindgen = "0.2.92"
 stream-cancel = "0.8.2"
 cainome = { git = "https://github.com/cartridge-gg/cainome", tag = "v0.3.2" }
 lazy_static = "1.5.0"
-account_sdk = { git = "https://github.com/cartridge-gg/controller", rev = "dbbe0353d64de743739d425f8aab91ca3ac0e16f" }
+account_sdk = { git = "https://github.com/cartridge-gg/controller", rev = "05fe96f4" }
 
 serde-wasm-bindgen = "0.6.3"
 wasm-bindgen-futures = "0.4.39"
@@ -48,6 +48,7 @@ instant = { version = "0.1.13", features = ["wasm-bindgen"] }
 gloo-timers = { version = "0.3.0", features = ["futures"] }
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
+chrono = "0.4.41"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 axum = "0.8.1"
