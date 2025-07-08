@@ -17,7 +17,6 @@ use account_sdk::account::session::account::SessionAccount;
 use account_sdk::account::session::hash::Session;
 use account_sdk::provider::{CartridgeJsonRpcProvider, CartridgeProvider};
 use account_sdk::signers::Signer;
-use account_sdk::utils::time::get_current_timestamp;
 use axum::extract::State;
 use axum::http::{header, HeaderValue, Method, StatusCode};
 use axum::response::IntoResponse;
@@ -26,6 +25,7 @@ use axum::Router;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
+use chrono::Utc;
 use crypto_bigint::U256;
 use directories::ProjectDirs;
 use dojo_world::contracts::naming::compute_selector_from_tag;
@@ -629,7 +629,7 @@ pub unsafe extern "C" fn controller_execute_from_outside(
     let caller = OutsideExecutionCaller::Any;
     let calls = unsafe { std::slice::from_raw_parts(calldata, calldata_len).to_vec() };
     let calls = calls.into_iter().map(|c| c.into()).collect::<Vec<starknet::core::types::Call>>();
-    let now = get_current_timestamp();
+    let now = Utc::now().timestamp() as u64;
     let outside_execution = OutsideExecutionV3 {
         caller: caller.into(),
         execute_after: 0_u64,
@@ -652,6 +652,7 @@ pub unsafe extern "C" fn controller_execute_from_outside(
             OutsideExecution::V3(outside_execution),
             (*controller).account.address(),
             signed.signature,
+            None,
         )) {
             Ok(res) => res,
             Err(e) => {
