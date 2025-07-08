@@ -1,20 +1,21 @@
 [package]
 edition = "2021"
 name = "dojo-c"
-version = "1.5.7"
+version = "1.5.9"
 
 [lib]
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
-dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "4145801" }
-dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "4145801" }
-torii-proto = { git = "https://github.com/dojoengine/torii", rev = "4eb0f11a53e7bbcd973c8aa1184a2ed1788bf0e5" }
-torii-client = { git = "https://github.com/dojoengine/torii", rev = "4eb0f11a53e7bbcd973c8aa1184a2ed1788bf0e5" }
-torii-grpc-client = { git = "https://github.com/dojoengine/torii", rev = "4eb0f11a53e7bbcd973c8aa1184a2ed1788bf0e5" }
+dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "d9a9adfcd66484324d300224952bf36148d681cc" }
+dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "d9a9adfcd66484324d300224952bf36148d681cc" }
+torii-proto = { git = "https://github.com/dojoengine/torii", tag = "v1.5.9" }
+torii-client = { git = "https://github.com/dojoengine/torii", tag = "v1.5.9" }
+torii-grpc-client = { git = "https://github.com/dojoengine/torii", tag = "v1.5.9" }
 
-starknet = "0.13.0"
-starknet-crypto = "0.7.2"
+starknet-core = "0.12.3"
+starknet = "0.14.0"
+starknet-crypto = "0.7.1"
 starknet-types-core = { version = "0.1.6", features = ["arbitrary"] }
 
 parking_lot = "0.12.1"
@@ -28,7 +29,7 @@ futures = "0.3.30"
 futures-channel = "0.3.30"
 wasm-bindgen = "0.2.92"
 stream-cancel = "0.8.2"
-cainome = { git = "https://github.com/cartridge-gg/cainome", tag = "v0.3.2" }
+cainome = { git = "https://github.com/Larkooo/cainome", branch = "patch-1" }
 lazy_static = "1.5.0"
 account_sdk = { git = "https://github.com/cartridge-gg/controller", rev = "dbbe0353d64de743739d425f8aab91ca3ac0e16f" }
 
