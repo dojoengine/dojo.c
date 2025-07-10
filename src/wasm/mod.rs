@@ -728,7 +728,16 @@ impl ToriiClient {
 
         let controllers = self
             .inner
-            .controllers(contract_addresses, usernames, limit, cursor)
+            .controllers(torii_proto::ControllerQuery {
+                contract_addresses,
+                usernames,
+                pagination: torii_proto::Pagination {
+                    limit,
+                    cursor,
+                    direction: torii_proto::PaginationDirection::Forward,
+                    order_by: Vec::new(),
+                },
+            })
             .await
             .map_err(|e| JsValue::from(format!("failed to get controllers: {e}")))?;
 
@@ -765,7 +774,16 @@ impl ToriiClient {
 
         let tokens = self
             .inner
-            .tokens(contract_addresses, token_ids, limit, cursor)
+            .tokens(torii_proto::TokenQuery {
+                contract_addresses,
+                token_ids,
+                pagination: torii_proto::Pagination {
+                    limit,
+                    cursor,
+                    direction: torii_proto::PaginationDirection::Forward,
+                    order_by: Vec::new(),
+                },
+            })
             .await
             .map_err(|e| JsValue::from(format!("failed to get tokens: {e}")))?;
 
@@ -895,7 +913,17 @@ impl ToriiClient {
 
         let token_balances = self
             .inner
-            .token_balances(account_addresses, contract_addresses, token_ids, limit, cursor)
+            .token_balances(torii_proto::TokenBalanceQuery {
+                account_addresses,
+                contract_addresses,
+                token_ids,
+                pagination: torii_proto::Pagination {
+                    limit,
+                    cursor,
+                    direction: torii_proto::PaginationDirection::Forward,
+                    order_by: Vec::new(),
+                },
+            })
             .await
             .map_err(|e| JsValue::from(format!("failed to get token balances: {e}")))?;
 
@@ -941,7 +969,17 @@ impl ToriiClient {
 
         let token_collections = self
             .inner
-            .token_collections(account_addresses, contract_addresses, token_ids, limit, cursor)
+            .token_collections(torii_proto::TokenBalanceQuery {
+                account_addresses,
+                contract_addresses,
+                token_ids,
+                pagination: torii_proto::Pagination {
+                    limit,
+                    cursor,
+                    direction: torii_proto::PaginationDirection::Forward,
+                    order_by: Vec::new(),
+                },
+            })
             .await
             .map_err(|e| JsValue::from(format!("failed to get token collections: {e}")))?;
 
