@@ -9,9 +9,9 @@ crate-type = ["cdylib", "rlib", "staticlib"]
 [dependencies]
 dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "054623b" }
 dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "054623b" }
-torii-proto = { git = "https://github.com/dojoengine/torii", rev = "0e89d04" }
-torii-client = { git = "https://github.com/dojoengine/torii", rev = "0e89d04" }
-torii-grpc-client = { git = "https://github.com/dojoengine/torii", rev = "0e89d04" }
+torii-proto = { git = "https://github.com/dojoengine/torii", rev = "74a6e99c" }
+torii-client = { git = "https://github.com/dojoengine/torii", rev = "74a6e99c" }
+torii-grpc-client = { git = "https://github.com/dojoengine/torii", rev = "74a6e99c" }
 
 starknet = "0.14.0"
 starknet-crypto = "0.7.2"

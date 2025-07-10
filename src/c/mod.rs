@@ -770,7 +770,16 @@ pub unsafe extern "C" fn client_controllers(
     let cursor = cursor.map(|c| unsafe { CStr::from_ptr(c).to_string_lossy().into_owned() });
 
     let controllers_future = unsafe {
-        (*client).inner.controllers(contract_addresses, usernames, limit.into(), cursor.into())
+        (*client).inner.controllers(torii_proto::ControllerQuery {
+            contract_addresses,
+            usernames,
+            pagination: torii_proto::Pagination {
+                cursor: cursor.into(),
+                limit: limit.into(),
+                direction: torii_proto::PaginationDirection::Forward,
+                order_by: Vec::new(),
+            },
+        })
     };
 
     match RUNTIME.block_on(controllers_future) {
@@ -1153,14 +1162,18 @@ pub unsafe extern "C" fn client_tokens(
 
     let limit = if limit == 0 { None } else { Some(limit) };
     let tokens = match RUNTIME.block_on(
-        (*client).inner.tokens(
+        (*client).inner.tokens(torii_proto::TokenQuery {
             contract_addresses,
             token_ids,
-            limit,
-            cursor
-                .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
-                .into(),
-        ),
+            pagination: torii_proto::Pagination {
+                limit,
+                cursor: cursor
+                    .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
+                    .into(),
+                direction: torii_proto::PaginationDirection::Forward,
+                order_by: Vec::new(),
+            },
+        }),
     ) {
         Ok(tokens) => tokens,
         Err(e) => return Result::Err(e.into()),
@@ -1312,15 +1325,19 @@ pub unsafe extern "C" fn client_token_balances(
     };
 
     let token_balances = match RUNTIME.block_on(
-        (*client).inner.token_balances(
+        (*client).inner.token_balances(torii_proto::TokenBalanceQuery {
             account_addresses,
             contract_addresses,
             token_ids,
-            if limit == 0 { None } else { Some(limit) },
-            cursor
-                .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
-                .into(),
-        ),
+            pagination: torii_proto::Pagination {
+                cursor: cursor
+                    .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
+                    .into(),
+                limit: limit.into(),
+                direction: torii_proto::PaginationDirection::Forward,
+                order_by: Vec::new(),
+            },
+        }),
     ) {
         Ok(balances) => balances,
         Err(e) => return Result::Err(e.into()),
@@ -1380,15 +1397,19 @@ pub unsafe extern "C" fn client_token_collections(
     };
 
     let token_collections = match RUNTIME.block_on(
-        (*client).inner.token_collections(
+        (*client).inner.token_collections(torii_proto::TokenBalanceQuery {
             account_addresses,
             contract_addresses,
             token_ids,
-            if limit == 0 { None } else { Some(limit) },
-            cursor
-                .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
-                .into(),
-        ),
+            pagination: torii_proto::Pagination {
+                cursor: cursor
+                    .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
+                    .into(),
+                limit: limit.into(),
+                direction: torii_proto::PaginationDirection::Forward,
+                order_by: Vec::new(),
+            },
+        }),
     ) {
         Ok(collections) => collections,
         Err(e) => return Result::Err(e.into()),
