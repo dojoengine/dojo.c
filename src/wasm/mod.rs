@@ -34,7 +34,9 @@ use wasm_bindgen::prelude::*;
 use crate::constants;
 use crate::types::{Account, Provider, Subscription, ToriiClient};
 use crate::utils::watch_tx;
-use crate::wasm::types::{ControllerQuery, TokenBalanceQuery, TokenQuery, TransactionQuery};
+use crate::wasm::types::{
+    ControllerQuery, TokenBalanceQuery, TokenQuery, TransactionFilter, TransactionQuery,
+};
 
 mod types;
 
@@ -742,6 +744,76 @@ impl ToriiClient {
             .await
             .map_err(|e| JsValue::from(format!("failed to get transactions: {e}")))?;
         Ok(Transactions(transactions.into()))
+    }
+
+    /// Subscribes to transactions
+    ///
+    /// # Parameters
+    /// * `filter` - Filter parameters
+    /// * `callback` - JavaScript function to call on updates
+    ///
+    /// # Returns
+    /// Result containing subscription handle or error
+    #[wasm_bindgen(js_name = onTransaction)]
+    pub async fn on_transaction(
+        &self,
+        filter: Option<TransactionFilter>,
+        callback: js_sys::Function,
+    ) -> Result<Subscription, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        let filter: Option<torii_proto::TransactionFilter> = filter.map(|f| f.into()).into();
+
+        let (sub_id_tx, sub_id_rx) = oneshot::channel();
+        let mut sub_id_tx = Some(sub_id_tx);
+        let (trigger, tripwire) = Tripwire::new();
+
+        // Spawn a new task to handle the stream and reconnections
+        let client = self.inner.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let mut backoff = 1000;
+            let max_backoff = 60000;
+
+            loop {
+                if let Ok(stream) = client.on_transaction(filter.clone()).await {
+                    backoff = 1000; // Reset backoff on successful connection
+
+                    let mut stream = stream.take_until_if(tripwire.clone());
+
+                    while let Some(Ok(transaction)) = stream.next().await {
+                        if let Some(tx) = sub_id_tx.take() {
+                            tx.send(0).expect("Failed to send subscription ID");
+                        } else {
+                            let transaction: Transaction = transaction.into();
+
+                            let _ = callback.call1(
+                                &JsValue::null(),
+                                &transaction.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
+                        }
+                    }
+                }
+
+                // If we've reached this point, the stream has ended (possibly due to disconnection)
+                // We'll try to reconnect after a delay, unless the tripwire has been triggered
+                if tripwire.clone().now_or_never().unwrap_or_default() {
+                    break; // Exit the loop if the subscription has been cancelled
+                }
+                gloo_timers::future::TimeoutFuture::new(backoff).await;
+                backoff = std::cmp::min(backoff * 2, max_backoff);
+            }
+        });
+
+        let subscription_id = match sub_id_rx.await {
+            Ok(id) => id,
+            Err(_) => {
+                return Err(JsValue::from("Failed to establish token subscription"));
+            }
+        };
+        let subscription = Subscription { id: subscription_id, trigger };
+
+        Ok(subscription)
     }
 
     /// Gets token information for the given contract addresses

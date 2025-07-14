@@ -157,7 +157,7 @@ impl From<torii_proto::TokenBalance> for TokenBalance {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct TransactionQuery {
+pub struct TransactionFilter {
     pub transaction_hashes: Vec<String>,
     pub caller_addresses: Vec<String>,
     pub contract_addresses: Vec<String>,
@@ -165,13 +165,11 @@ pub struct TransactionQuery {
     pub model_selectors: Vec<String>,
     pub from_block: Option<u64>,
     pub to_block: Option<u64>,
-    pub pagination: Pagination,
 }
 
-impl From<TransactionQuery> for torii_proto::TransactionQuery {
-    fn from(val: TransactionQuery) -> Self {
-        torii_proto::TransactionQuery {
-            pagination: val.pagination.into(),
+impl From<TransactionFilter> for torii_proto::TransactionFilter {
+    fn from(val: TransactionFilter) -> Self {
+        torii_proto::TransactionFilter {
             transaction_hashes: val
                 .transaction_hashes
                 .into_iter()
@@ -195,6 +193,22 @@ impl From<TransactionQuery> for torii_proto::TransactionQuery {
                 .collect(),
             from_block: val.from_block.into(),
             to_block: val.to_block.into(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TransactionQuery {
+    pub filter: Option<TransactionFilter>,
+    pub pagination: Pagination,
+}
+
+impl From<TransactionQuery> for torii_proto::TransactionQuery {
+    fn from(val: TransactionQuery) -> Self {
+        torii_proto::TransactionQuery {
+            filter: val.filter.map(|f| f.into()),
+            pagination: val.pagination.into(),
         }
     }
 }

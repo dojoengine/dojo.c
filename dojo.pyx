@@ -10,6 +10,10 @@ cdef extern from *:
     Latest,
     Pending,
 
+  cdef enum CallType:
+    Execute,
+    ExecuteFromOutside,
+
   cdef enum ComparisonOperator:
     Eq,
     Neq,
@@ -302,6 +306,52 @@ cdef extern from *:
     World ok;
     Error err;
 
+  cdef struct CArrayTransaction:
+    Transaction *data;
+    uintptr_t data_len;
+
+  cdef struct PageTransaction:
+    CArrayTransaction items;
+    COptionc_char next_cursor;
+
+  cdef enum ResultPageTransaction_Tag:
+    OkPageTransaction,
+    ErrPageTransaction,
+
+  cdef struct ResultPageTransaction:
+    ResultPageTransaction_Tag tag;
+    PageTransaction ok;
+    Error err;
+
+  cdef enum COptionu64_Tag:
+    Someu64,
+    Noneu64,
+
+  cdef struct COptionu64:
+    COptionu64_Tag tag;
+    uint64_t some;
+
+  cdef struct TransactionFilter:
+    CArrayFieldElement transaction_hashes;
+    CArrayFieldElement caller_addresses;
+    CArrayFieldElement contract_addresses;
+    CArrayc_char entrypoints;
+    CArrayFieldElement model_selectors;
+    COptionu64 from_block;
+    COptionu64 to_block;
+
+  cdef enum COptionTransactionFilter_Tag:
+    SomeTransactionFilter,
+    NoneTransactionFilter,
+
+  cdef struct COptionTransactionFilter:
+    COptionTransactionFilter_Tag tag;
+    TransactionFilter some;
+
+  cdef struct TransactionQuery:
+    COptionTransactionFilter filter;
+    Pagination pagination;
+
   cdef enum ResultSubscription_Tag:
     OkSubscription,
     ErrSubscription,
@@ -310,6 +360,23 @@ cdef extern from *:
     ResultSubscription_Tag tag;
     Subscription *ok;
     Error err;
+
+  cdef struct CArrayTransactionCall:
+    TransactionCall *data;
+    uintptr_t data_len;
+
+  cdef struct Transaction:
+    FieldElement transaction_hash;
+    FieldElement sender_address;
+    CArrayFieldElement calldata;
+    FieldElement max_fee;
+    CArrayFieldElement signature;
+    FieldElement nonce;
+    uint64_t block_number;
+    const char *transaction_type;
+    uint64_t block_timestamp;
+    CArrayTransactionCall calls;
+    CArrayFieldElement unique_models;
 
   cdef struct CArrayStruct:
     Struct *data;
@@ -540,6 +607,13 @@ cdef extern from *:
     FieldElement contract_address;
     const char *layout;
 
+  cdef struct TransactionCall:
+    FieldElement contract_address;
+    const char *entrypoint;
+    CArrayFieldElement calldata;
+    CallType call_type;
+    FieldElement caller_address;
+
   cdef struct TokenCollection:
     FieldElement contract_address;
     const char *name;
@@ -768,6 +842,29 @@ cdef extern from *:
   # # Returns
   # World structure containing world information
   ResultWorld client_metadata(ToriiClient *client);
+
+  # Retrieves transactions matching the given query
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `query` - Query parameters
+  #
+  # # Returns
+  # Result containing array of matching transactions or error
+  ResultPageTransaction client_transactions(ToriiClient *client, TransactionQuery query);
+
+  # Subscribes to transaction updates
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `filter` - Filter parameters
+  # * `callback` - Function called when updates occur
+  #
+  # # Returns
+  # Result containing pointer to Subscription or error
+  ResultSubscription client_on_transaction(ToriiClient *client,
+                                           COptionTransactionFilter filter,
+                                           void (*callback)(Transaction));
 
   # Subscribes to entity state updates
   #

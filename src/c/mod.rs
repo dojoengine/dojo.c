@@ -58,7 +58,8 @@ use types::{
 use url::Url;
 
 use crate::c::types::{
-    ControllerQuery, TokenBalanceQuery, TokenQuery, Transaction, TransactionQuery,
+    ControllerQuery, TokenBalanceQuery, TokenQuery, Transaction, TransactionFilter,
+    TransactionQuery,
 };
 use crate::constants;
 use crate::types::{
@@ -838,6 +839,76 @@ pub unsafe extern "C" fn client_transactions(
         Ok(transactions) => Result::Ok(transactions.into()),
         Err(e) => Result::Err(e.into()),
     }
+}
+
+/// Subscribes to transaction updates
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `filter` - Filter parameters
+/// * `callback` - Function called when updates occur
+///
+/// # Returns
+/// Result containing pointer to Subscription or error
+#[no_mangle]
+pub unsafe extern "C" fn client_on_transaction(
+    client: *mut ToriiClient,
+    filter: COption<TransactionFilter>,
+    callback: unsafe extern "C" fn(Transaction),
+) -> Result<*mut Subscription> {
+    let client = Arc::new(unsafe { &*client });
+    let (trigger, tripwire) = Tripwire::new();
+
+    let (sub_id_tx, sub_id_rx) = oneshot::channel();
+    let mut sub_id_tx = Some(sub_id_tx);
+
+    let filter: Option<torii_proto::TransactionFilter> = filter.map(|f| f.into()).into();
+
+    // Spawn a new thread to handle the stream and reconnections
+    let client_clone = client.clone();
+    RUNTIME.spawn(async move {
+        let mut backoff = Duration::from_secs(1);
+        let max_backoff = Duration::from_secs(60);
+
+        loop {
+            let rcv = client_clone.inner.on_transaction(filter.clone()).await;
+            if let Ok(rcv) = rcv {
+                backoff = Duration::from_secs(1); // Reset backoff on successful connection
+
+                let mut rcv = rcv.take_until_if(tripwire.clone());
+
+                while let Some(Ok(transaction)) = rcv.next().await {
+                    if let Some(tx) = sub_id_tx.take() {
+                        tx.send(0).expect("Failed to send subscription ID");
+                    } else {
+                        callback(transaction.into());
+                    }
+                }
+            }
+
+            // If we've reached this point, the stream has ended (possibly due to disconnection)
+            // We'll try to reconnect after a delay, unless the tripwire has been triggered
+            if tripwire.clone().now_or_never().unwrap_or_default() {
+                break; // Exit the loop if the subscription has been cancelled
+            }
+            sleep(backoff).await;
+            backoff = std::cmp::min(backoff * 2, max_backoff);
+        }
+    });
+
+    let subscription_id = match RUNTIME.block_on(sub_id_rx) {
+        Ok(id) => id,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to establish entity subscription")
+                    .unwrap()
+                    .into_raw(),
+            });
+        }
+    };
+
+    let subscription = Subscription { id: subscription_id, trigger };
+    Result::Ok(Box::into_raw(Box::new(subscription)))
 }
 
 /// Subscribes to entity state updates
