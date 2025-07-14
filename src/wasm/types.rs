@@ -157,6 +157,75 @@ impl From<torii_proto::TokenBalance> for TokenBalance {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct ControllerQuery {
+    pub contract_addresses: Vec<String>,
+    pub usernames: Vec<String>,
+    pub pagination: Pagination,
+}
+
+impl From<ControllerQuery> for torii_proto::ControllerQuery {
+    fn from(value: ControllerQuery) -> Self {
+        Self {
+            contract_addresses: value
+                .contract_addresses
+                .into_iter()
+                .map(|c| Felt::from_str(c.as_str()).unwrap())
+                .collect(),
+            usernames: value.usernames,
+            pagination: value.pagination.into(),
+        }
+    }
+}
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TokenQuery {
+    pub contract_addresses: Vec<String>,
+    pub token_ids: Vec<String>,
+    pub pagination: Pagination,
+}
+
+impl From<TokenQuery> for torii_proto::TokenQuery {
+    fn from(value: TokenQuery) -> Self {
+        Self {
+            contract_addresses: value
+                .contract_addresses
+                .into_iter()
+                .map(|c| Felt::from_str(c.as_str()).unwrap())
+                .collect(),
+            token_ids: value.token_ids.into_iter().map(|t| U256::from_be_hex(t.as_str())).collect(),
+            pagination: value.pagination.into(),
+        }
+    }
+}
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TokenBalanceQuery {
+    pub contract_addresses: Vec<String>,
+    pub account_addresses: Vec<String>,
+    pub token_ids: Vec<String>,
+    pub pagination: Pagination,
+}
+
+impl From<TokenBalanceQuery> for torii_proto::TokenBalanceQuery {
+    fn from(value: TokenBalanceQuery) -> Self {
+        Self {
+            contract_addresses: value
+                .contract_addresses
+                .into_iter()
+                .map(|c| Felt::from_str(c.as_str()).unwrap())
+                .collect(),
+            account_addresses: value
+                .account_addresses
+                .into_iter()
+                .map(|a| Felt::from_str(a.as_str()).unwrap())
+                .collect(),
+            token_ids: value.token_ids.into_iter().map(|t| U256::from_be_hex(t.as_str())).collect(),
+            pagination: value.pagination.into(),
+        }
+    }
+}
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct IndexerUpdate {
     pub head: i64,
     pub tps: i64,

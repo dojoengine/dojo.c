@@ -34,6 +34,7 @@ use wasm_bindgen::prelude::*;
 use crate::constants;
 use crate::types::{Account, Provider, Subscription, ToriiClient};
 use crate::utils::watch_tx;
+use crate::wasm::types::{ControllerQuery, TokenBalanceQuery, TokenQuery};
 
 mod types;
 
@@ -713,22 +714,12 @@ impl ToriiClient {
     /// # Returns
     /// Result containing controllers or error
     #[wasm_bindgen(js_name = getControllers)]
-    pub async fn get_controllers(
-        &self,
-        contract_addresses: Vec<String>,
-        usernames: Vec<String>,
-        limit: Option<u32>,
-        cursor: Option<String>,
-    ) -> Result<Controllers, JsValue> {
-        let contract_addresses = contract_addresses
-            .iter()
-            .map(|c| Felt::from_str(c))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
+    pub async fn get_controllers(&self, query: ControllerQuery) -> Result<Controllers, JsValue> {
+        let query = query.into();
 
         let controllers = self
             .inner
-            .controllers(contract_addresses, usernames, limit, cursor)
+            .controllers(query)
             .await
             .map_err(|e| JsValue::from(format!("failed to get controllers: {e}")))?;
 
@@ -746,26 +737,12 @@ impl ToriiClient {
     /// # Returns
     /// Result containing token information or error
     #[wasm_bindgen(js_name = getTokens)]
-    pub async fn get_tokens(
-        &self,
-        contract_addresses: Option<Vec<String>>,
-        token_ids: Option<Vec<WasmU256>>,
-        limit: Option<u32>,
-        cursor: Option<String>,
-    ) -> Result<Tokens, JsValue> {
-        let contract_addresses = contract_addresses
-            .unwrap_or_default()
-            .iter()
-            .map(|c| Felt::from_str(c))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
-
-        let token_ids =
-            token_ids.unwrap_or_default().into_iter().map(|t| t.into()).collect::<Vec<_>>();
+    pub async fn get_tokens(&self, query: TokenQuery) -> Result<Tokens, JsValue> {
+        let query = query.into();
 
         let tokens = self
             .inner
-            .tokens(contract_addresses, token_ids, limit, cursor)
+            .tokens(query)
             .await
             .map_err(|e| JsValue::from(format!("failed to get tokens: {e}")))?;
 
@@ -870,32 +847,13 @@ impl ToriiClient {
     #[wasm_bindgen(js_name = getTokenBalances)]
     pub async fn get_token_balances(
         &self,
-        contract_addresses: Option<Vec<String>>,
-        account_addresses: Option<Vec<String>>,
-        token_ids: Option<Vec<WasmU256>>,
-        limit: Option<u32>,
-        cursor: Option<String>,
+        query: TokenBalanceQuery,
     ) -> Result<TokenBalances, JsValue> {
-        let account_addresses = account_addresses
-            .unwrap_or_default()
-            .iter()
-            .map(|a| Felt::from_str(a))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| JsValue::from(format!("failed to parse account addresses: {e}")))?;
-
-        let contract_addresses = contract_addresses
-            .unwrap_or_default()
-            .iter()
-            .map(|c| Felt::from_str(c))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
-
-        let token_ids =
-            token_ids.unwrap_or_default().into_iter().map(|t| t.into()).collect::<Vec<_>>();
+        let query = query.into();
 
         let token_balances = self
             .inner
-            .token_balances(account_addresses, contract_addresses, token_ids, limit, cursor)
+            .token_balances(query)
             .await
             .map_err(|e| JsValue::from(format!("failed to get token balances: {e}")))?;
 
@@ -916,32 +874,13 @@ impl ToriiClient {
     #[wasm_bindgen(js_name = getTokenCollections)]
     pub async fn get_token_collections(
         &self,
-        contract_addresses: Option<Vec<String>>,
-        account_addresses: Option<Vec<String>>,
-        token_ids: Option<Vec<WasmU256>>,
-        limit: Option<u32>,
-        cursor: Option<String>,
+        query: TokenBalanceQuery,
     ) -> Result<TokenCollections, JsValue> {
-        let account_addresses = account_addresses
-            .unwrap_or_default()
-            .iter()
-            .map(|a| Felt::from_str(a))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| JsValue::from(format!("failed to parse account addresses: {e}")))?;
-
-        let contract_addresses = contract_addresses
-            .unwrap_or_default()
-            .iter()
-            .map(|c| Felt::from_str(c))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| JsValue::from(format!("failed to parse contract addresses: {e}")))?;
-
-        let token_ids =
-            token_ids.unwrap_or_default().into_iter().map(|t| t.into()).collect::<Vec<_>>();
+        let query = query.into();
 
         let token_collections = self
             .inner
-            .token_collections(account_addresses, contract_addresses, token_ids, limit, cursor)
+            .token_collections(query)
             .await
             .map_err(|e| JsValue::from(format!("failed to get token collections: {e}")))?;
 

@@ -143,6 +143,25 @@ cdef extern from *:
     COptionu32_Tag tag;
     uint32_t some;
 
+  cdef struct CArrayOrderBy:
+    OrderBy *data;
+    uintptr_t data_len;
+
+  cdef struct Pagination:
+    COptionc_char cursor;
+    COptionu32 limit;
+    PaginationDirection direction;
+    CArrayOrderBy order_by;
+
+  cdef struct CArrayc_char:
+    const char **data;
+    uintptr_t data_len;
+
+  cdef struct ControllerQuery:
+    Pagination pagination;
+    CArrayFieldElement contract_addresses;
+    CArrayc_char usernames;
+
   cdef struct CArrayEntity:
     Entity *data;
     uintptr_t data_len;
@@ -160,22 +179,8 @@ cdef extern from *:
     PageEntity ok;
     Error err;
 
-  cdef struct CArrayOrderBy:
-    OrderBy *data;
-    uintptr_t data_len;
-
-  cdef struct Pagination:
-    COptionc_char cursor;
-    COptionu32 limit;
-    PaginationDirection direction;
-    CArrayOrderBy order_by;
-
   cdef struct CArrayCOptionFieldElement:
     COptionFieldElement *data;
-    uintptr_t data_len;
-
-  cdef struct CArrayc_char:
-    const char **data;
     uintptr_t data_len;
 
   cdef struct KeysClause:
@@ -332,6 +337,15 @@ cdef extern from *:
     PageToken ok;
     Error err;
 
+  cdef struct CArrayU256:
+    U256 *data;
+    uintptr_t data_len;
+
+  cdef struct TokenQuery:
+    CArrayFieldElement contract_addresses;
+    CArrayU256 token_ids;
+    Pagination pagination;
+
   cdef struct Token:
     FieldElement contract_address;
     U256 token_id;
@@ -356,6 +370,12 @@ cdef extern from *:
     ResultPageTokenBalance_Tag tag;
     PageTokenBalance ok;
     Error err;
+
+  cdef struct TokenBalanceQuery:
+    CArrayFieldElement contract_addresses;
+    CArrayFieldElement account_addresses;
+    CArrayU256 token_ids;
+    Pagination pagination;
 
   cdef struct CArrayTokenCollection:
     TokenCollection *data;
@@ -455,13 +475,13 @@ cdef extern from *:
     const char *username;
     uint64_t deployed_at_timestamp;
 
-  cdef struct Entity:
-    FieldElement hashed_keys;
-    CArrayStruct models;
-
   cdef struct OrderBy:
     const char *field;
     OrderDirection direction;
+
+  cdef struct Entity:
+    FieldElement hashed_keys;
+    CArrayStruct models;
 
   cdef enum COptionFieldElement_Tag:
     SomeFieldElement,
@@ -717,13 +737,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing controllers or error
-  ResultPageController client_controllers(ToriiClient *client,
-                                          const FieldElement *contract_addresses,
-                                          uintptr_t contract_addresses_len,
-                                          const char *usernames,
-                                          uintptr_t usernames_len,
-                                          COptionu32 limit,
-                                          COptionc_char cursor);
+  ResultPageController client_controllers(ToriiClient *client, ControllerQuery query);
 
   # Queries entities matching given criteria
   #
@@ -839,13 +853,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing array of Token information or error
-  ResultPageToken client_tokens(ToriiClient *client,
-                                const FieldElement *contract_addresses,
-                                uintptr_t contract_addresses_len,
-                                const U256 *token_ids,
-                                uintptr_t token_ids_len,
-                                uint32_t limit,
-                                COptionc_char cursor);
+  ResultPageToken client_tokens(ToriiClient *client, TokenQuery query);
 
   # Subscribes to token updates
   #
@@ -878,15 +886,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing array of TokenBalance information or error
-  ResultPageTokenBalance client_token_balances(ToriiClient *client,
-                                               const FieldElement *contract_addresses,
-                                               uintptr_t contract_addresses_len,
-                                               const FieldElement *account_addresses,
-                                               uintptr_t account_addresses_len,
-                                               const U256 *token_ids,
-                                               uintptr_t token_ids_len,
-                                               uint32_t limit,
-                                               COptionc_char cursor);
+  ResultPageTokenBalance client_token_balances(ToriiClient *client, TokenBalanceQuery query);
 
   # Gets token collections for given accounts and contracts
   #
@@ -903,15 +903,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing array of TokenBalance information or error
-  ResultPageTokenCollection client_token_collections(ToriiClient *client,
-                                                     const FieldElement *contract_addresses,
-                                                     uintptr_t contract_addresses_len,
-                                                     const FieldElement *account_addresses,
-                                                     uintptr_t account_addresses_len,
-                                                     const U256 *token_ids,
-                                                     uintptr_t token_ids_len,
-                                                     uint32_t limit,
-                                                     COptionc_char cursor);
+  ResultPageTokenCollection client_token_collections(ToriiClient *client, TokenBalanceQuery query);
 
   # Subscribes to indexer updates
   #

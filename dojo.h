@@ -12,8 +12,8 @@ struct Policy;
 struct ControllerAccount;
 struct Call;
 struct Controller;
-struct Entity;
 struct OrderBy;
+struct Entity;
 struct COptionFieldElement;
 struct Model;
 struct Subscription;
@@ -221,6 +221,29 @@ typedef struct COptionu32 {
   };
 } COptionu32;
 
+typedef struct CArrayOrderBy {
+  struct OrderBy *data;
+  uintptr_t data_len;
+} CArrayOrderBy;
+
+typedef struct Pagination {
+  struct COptionc_char cursor;
+  struct COptionu32 limit;
+  enum PaginationDirection direction;
+  struct CArrayOrderBy order_by;
+} Pagination;
+
+typedef struct CArrayc_char {
+  const char **data;
+  uintptr_t data_len;
+} CArrayc_char;
+
+typedef struct ControllerQuery {
+  struct Pagination pagination;
+  struct CArrayFieldElement contract_addresses;
+  struct CArrayc_char usernames;
+} ControllerQuery;
+
 typedef struct CArrayEntity {
   struct Entity *data;
   uintptr_t data_len;
@@ -248,27 +271,10 @@ typedef struct ResultPageEntity {
   };
 } ResultPageEntity;
 
-typedef struct CArrayOrderBy {
-  struct OrderBy *data;
-  uintptr_t data_len;
-} CArrayOrderBy;
-
-typedef struct Pagination {
-  struct COptionc_char cursor;
-  struct COptionu32 limit;
-  enum PaginationDirection direction;
-  struct CArrayOrderBy order_by;
-} Pagination;
-
 typedef struct CArrayCOptionFieldElement {
   struct COptionFieldElement *data;
   uintptr_t data_len;
 } CArrayCOptionFieldElement;
-
-typedef struct CArrayc_char {
-  const char **data;
-  uintptr_t data_len;
-} CArrayc_char;
 
 typedef struct KeysClause {
   struct CArrayCOptionFieldElement keys;
@@ -525,6 +531,17 @@ typedef struct ResultPageToken {
   };
 } ResultPageToken;
 
+typedef struct CArrayU256 {
+  struct U256 *data;
+  uintptr_t data_len;
+} CArrayU256;
+
+typedef struct TokenQuery {
+  struct CArrayFieldElement contract_addresses;
+  struct CArrayU256 token_ids;
+  struct Pagination pagination;
+} TokenQuery;
+
 typedef struct Token {
   struct FieldElement contract_address;
   struct U256 token_id;
@@ -560,6 +577,13 @@ typedef struct ResultPageTokenBalance {
     };
   };
 } ResultPageTokenBalance;
+
+typedef struct TokenBalanceQuery {
+  struct CArrayFieldElement contract_addresses;
+  struct CArrayFieldElement account_addresses;
+  struct CArrayU256 token_ids;
+  struct Pagination pagination;
+} TokenBalanceQuery;
 
 typedef struct CArrayTokenCollection {
   struct TokenCollection *data;
@@ -723,15 +747,15 @@ typedef struct Controller {
   uint64_t deployed_at_timestamp;
 } Controller;
 
-typedef struct Entity {
-  struct FieldElement hashed_keys;
-  struct CArrayStruct models;
-} Entity;
-
 typedef struct OrderBy {
   const char *field;
   enum OrderDirection direction;
 } OrderBy;
+
+typedef struct Entity {
+  struct FieldElement hashed_keys;
+  struct CArrayStruct models;
+} Entity;
 
 typedef enum COptionFieldElement_Tag {
   SomeFieldElement,
@@ -1052,12 +1076,7 @@ struct ResultCArrayFieldElement client_publish_message_batch(struct ToriiClient 
  * Result containing controllers or error
  */
 struct ResultPageController client_controllers(struct ToriiClient *client,
-                                               const struct FieldElement *contract_addresses,
-                                               uintptr_t contract_addresses_len,
-                                               const char *usernames,
-                                               uintptr_t usernames_len,
-                                               struct COptionu32 limit,
-                                               struct COptionc_char cursor);
+                                               struct ControllerQuery query);
 
 /**
  * Queries entities matching given criteria
@@ -1193,13 +1212,7 @@ struct ResultSubscription client_on_starknet_event(struct ToriiClient *client,
  * # Returns
  * Result containing array of Token information or error
  */
-struct ResultPageToken client_tokens(struct ToriiClient *client,
-                                     const struct FieldElement *contract_addresses,
-                                     uintptr_t contract_addresses_len,
-                                     const struct U256 *token_ids,
-                                     uintptr_t token_ids_len,
-                                     uint32_t limit,
-                                     struct COptionc_char cursor);
+struct ResultPageToken client_tokens(struct ToriiClient *client, struct TokenQuery query);
 
 /**
  * Subscribes to token updates
@@ -1237,14 +1250,7 @@ struct ResultSubscription client_on_token_update(struct ToriiClient *client,
  * Result containing array of TokenBalance information or error
  */
 struct ResultPageTokenBalance client_token_balances(struct ToriiClient *client,
-                                                    const struct FieldElement *contract_addresses,
-                                                    uintptr_t contract_addresses_len,
-                                                    const struct FieldElement *account_addresses,
-                                                    uintptr_t account_addresses_len,
-                                                    const struct U256 *token_ids,
-                                                    uintptr_t token_ids_len,
-                                                    uint32_t limit,
-                                                    struct COptionc_char cursor);
+                                                    struct TokenBalanceQuery query);
 
 /**
  * Gets token collections for given accounts and contracts
@@ -1264,14 +1270,7 @@ struct ResultPageTokenBalance client_token_balances(struct ToriiClient *client,
  * Result containing array of TokenBalance information or error
  */
 struct ResultPageTokenCollection client_token_collections(struct ToriiClient *client,
-                                                          const struct FieldElement *contract_addresses,
-                                                          uintptr_t contract_addresses_len,
-                                                          const struct FieldElement *account_addresses,
-                                                          uintptr_t account_addresses_len,
-                                                          const struct U256 *token_ids,
-                                                          uintptr_t token_ids_len,
-                                                          uint32_t limit,
-                                                          struct COptionc_char cursor);
+                                                          struct TokenBalanceQuery query);
 
 /**
  * Subscribes to indexer updates

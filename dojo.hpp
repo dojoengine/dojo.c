@@ -164,6 +164,24 @@ struct Page {
   COption<const char*> next_cursor;
 };
 
+struct OrderBy {
+  const char *field;
+  OrderDirection direction;
+};
+
+struct Pagination {
+  COption<const char*> cursor;
+  COption<uint32_t> limit;
+  PaginationDirection direction;
+  CArray<OrderBy> order_by;
+};
+
+struct ControllerQuery {
+  Pagination pagination;
+  CArray<FieldElement> contract_addresses;
+  CArray<const char*> usernames;
+};
+
 struct Member {
   const char *name;
   Ty *ty;
@@ -178,18 +196,6 @@ struct Struct {
 struct Entity {
   FieldElement hashed_keys;
   CArray<Struct> models;
-};
-
-struct OrderBy {
-  const char *field;
-  OrderDirection direction;
-};
-
-struct Pagination {
-  COption<const char*> cursor;
-  COption<uint32_t> limit;
-  PaginationDirection direction;
-  CArray<OrderBy> order_by;
 };
 
 struct KeysClause {
@@ -798,11 +804,24 @@ struct Token {
   const char *metadata;
 };
 
+struct TokenQuery {
+  CArray<FieldElement> contract_addresses;
+  CArray<U256> token_ids;
+  Pagination pagination;
+};
+
 struct TokenBalance {
   U256 balance;
   FieldElement account_address;
   FieldElement contract_address;
   U256 token_id;
+};
+
+struct TokenBalanceQuery {
+  CArray<FieldElement> contract_addresses;
+  CArray<FieldElement> account_addresses;
+  CArray<U256> token_ids;
+  Pagination pagination;
 };
 
 struct TokenCollection {
@@ -1083,13 +1102,7 @@ Result<CArray<FieldElement>> client_publish_message_batch(ToriiClient *client,
 ///
 /// # Returns
 /// Result containing controllers or error
-Result<Page<Controller>> client_controllers(ToriiClient *client,
-                                            const FieldElement *contract_addresses,
-                                            uintptr_t contract_addresses_len,
-                                            const char *usernames,
-                                            uintptr_t usernames_len,
-                                            COption<uint32_t> limit,
-                                            COption<const char*> cursor);
+Result<Page<Controller>> client_controllers(ToriiClient *client, ControllerQuery query);
 
 /// Queries entities matching given criteria
 ///
@@ -1205,13 +1218,7 @@ Result<Subscription*> client_on_starknet_event(ToriiClient *client,
 ///
 /// # Returns
 /// Result containing array of Token information or error
-Result<Page<Token>> client_tokens(ToriiClient *client,
-                                  const FieldElement *contract_addresses,
-                                  uintptr_t contract_addresses_len,
-                                  const U256 *token_ids,
-                                  uintptr_t token_ids_len,
-                                  uint32_t limit,
-                                  COption<const char*> cursor);
+Result<Page<Token>> client_tokens(ToriiClient *client, TokenQuery query);
 
 /// Subscribes to token updates
 ///
@@ -1244,15 +1251,7 @@ Result<Subscription*> client_on_token_update(ToriiClient *client,
 ///
 /// # Returns
 /// Result containing array of TokenBalance information or error
-Result<Page<TokenBalance>> client_token_balances(ToriiClient *client,
-                                                 const FieldElement *contract_addresses,
-                                                 uintptr_t contract_addresses_len,
-                                                 const FieldElement *account_addresses,
-                                                 uintptr_t account_addresses_len,
-                                                 const U256 *token_ids,
-                                                 uintptr_t token_ids_len,
-                                                 uint32_t limit,
-                                                 COption<const char*> cursor);
+Result<Page<TokenBalance>> client_token_balances(ToriiClient *client, TokenBalanceQuery query);
 
 /// Gets token collections for given accounts and contracts
 ///
@@ -1270,14 +1269,7 @@ Result<Page<TokenBalance>> client_token_balances(ToriiClient *client,
 /// # Returns
 /// Result containing array of TokenBalance information or error
 Result<Page<TokenCollection>> client_token_collections(ToriiClient *client,
-                                                       const FieldElement *contract_addresses,
-                                                       uintptr_t contract_addresses_len,
-                                                       const FieldElement *account_addresses,
-                                                       uintptr_t account_addresses_len,
-                                                       const U256 *token_ids,
-                                                       uintptr_t token_ids_len,
-                                                       uint32_t limit,
-                                                       COption<const char*> cursor);
+                                                       TokenBalanceQuery query);
 
 /// Subscribes to indexer updates
 ///
