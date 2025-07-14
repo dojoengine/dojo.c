@@ -57,7 +57,9 @@ use types::{
 };
 use url::Url;
 
-use crate::c::types::{ControllerQuery, TokenBalanceQuery, TokenQuery};
+use crate::c::types::{
+    ControllerQuery, TokenBalanceQuery, TokenQuery, Transaction, TransactionQuery,
+};
 use crate::constants;
 use crate::types::{
     Account, ControllerAccount, Provider, RegisterSessionResponse, RegisteredAccount,
@@ -812,6 +814,28 @@ pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> Result<Wor
     let metadata_future = unsafe { (*client).inner.metadata() };
     match RUNTIME.block_on(metadata_future) {
         Ok(metadata) => Result::Ok(metadata.into()),
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
+/// Retrieves transactions matching the given query
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - Query parameters
+///
+/// # Returns
+/// Result containing array of matching transactions or error
+#[no_mangle]
+pub unsafe extern "C" fn client_transactions(
+    client: *mut ToriiClient,
+    query: TransactionQuery,
+) -> Result<Page<Transaction>> {
+    let query = query.into();
+    let transactions_future = unsafe { (*client).inner.transactions(query) };
+
+    match RUNTIME.block_on(transactions_future) {
+        Ok(transactions) => Result::Ok(transactions.into()),
         Err(e) => Result::Err(e.into()),
     }
 }

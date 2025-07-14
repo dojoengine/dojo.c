@@ -157,6 +157,126 @@ impl From<torii_proto::TokenBalance> for TokenBalance {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TransactionQuery {
+    pub transaction_hashes: Vec<String>,
+    pub caller_addresses: Vec<String>,
+    pub contract_addresses: Vec<String>,
+    pub entrypoints: Vec<String>,
+    pub model_selectors: Vec<String>,
+    pub from_block: Option<u64>,
+    pub to_block: Option<u64>,
+    pub pagination: Pagination,
+}
+
+impl From<TransactionQuery> for torii_proto::TransactionQuery {
+    fn from(val: TransactionQuery) -> Self {
+        torii_proto::TransactionQuery {
+            pagination: val.pagination.into(),
+            transaction_hashes: val
+                .transaction_hashes
+                .into_iter()
+                .map(|h| Felt::from_str(h.as_str()).unwrap())
+                .collect(),
+            caller_addresses: val
+                .caller_addresses
+                .into_iter()
+                .map(|h| Felt::from_str(h.as_str()).unwrap())
+                .collect(),
+            contract_addresses: val
+                .contract_addresses
+                .into_iter()
+                .map(|h| Felt::from_str(h.as_str()).unwrap())
+                .collect(),
+            entrypoints: val.entrypoints,
+            model_selectors: val
+                .model_selectors
+                .into_iter()
+                .map(|h| Felt::from_str(h.as_str()).unwrap())
+                .collect(),
+            from_block: val.from_block.into(),
+            to_block: val.to_block.into(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Transactions(pub Page<Transaction>);
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Transaction {
+    pub transaction_hash: String,
+    pub sender_address: String,
+    pub calldata: Vec<String>,
+    pub max_fee: String,
+    pub signature: Vec<String>,
+    pub nonce: String,
+    pub block_number: u64,
+    pub transaction_type: String,
+    pub block_timestamp: u64,
+    pub calls: Vec<TransactionCall>,
+    pub unique_models: Vec<String>,
+}
+
+impl From<torii_proto::Transaction> for Transaction {
+    fn from(val: torii_proto::Transaction) -> Self {
+        Transaction {
+            transaction_hash: format!("{:#x}", val.transaction_hash),
+            sender_address: format!("{:#x}", val.sender_address),
+            calldata: val.calldata.into_iter().map(|c| format!("{:#x}", c)).collect(),
+            max_fee: format!("{:#x}", val.max_fee),
+            signature: val.signature.into_iter().map(|s| format!("{:#x}", s)).collect(),
+            nonce: format!("{:#x}", val.nonce),
+            block_number: val.block_number,
+            transaction_type: val.transaction_type,
+            block_timestamp: val.block_timestamp.timestamp() as u64,
+            calls: val.calls.into_iter().map(|c| c.into()).collect(),
+            unique_models: val.unique_models.into_iter().map(|m| format!("{:#x}", m)).collect(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum CallType {
+    Execute,
+    ExecuteFromOutside,
+}
+
+impl From<torii_proto::CallType> for CallType {
+    fn from(val: torii_proto::CallType) -> Self {
+        match val {
+            torii_proto::CallType::Execute => CallType::Execute,
+            torii_proto::CallType::ExecuteFromOutside => CallType::ExecuteFromOutside,
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TransactionCall {
+    pub contract_address: String,
+    pub entrypoint: String,
+    pub calldata: Vec<String>,
+    pub call_type: CallType,
+    pub caller_address: String,
+}
+
+impl From<torii_proto::TransactionCall> for TransactionCall {
+    fn from(val: torii_proto::TransactionCall) -> Self {
+        TransactionCall {
+            contract_address: format!("{:#x}", val.contract_address),
+            entrypoint: val.entrypoint,
+            calldata: val.calldata.into_iter().map(|c| format!("{:#x}", c)).collect(),
+            call_type: val.call_type.into(),
+            caller_address: format!("{:#x}", val.caller_address),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct ControllerQuery {
     pub contract_addresses: Vec<String>,
     pub usernames: Vec<String>,
