@@ -524,6 +524,112 @@ impl From<TokenBalanceQuery> for torii_proto::TokenBalanceQuery {
 
 #[derive(Clone, Debug)]
 #[repr(C)]
+pub struct TransactionQuery {
+    pub transaction_hashes: CArray<FieldElement>,
+    pub caller_addresses: CArray<FieldElement>,
+    pub contract_addresses: CArray<FieldElement>,
+    pub entrypoints: CArray<*const c_char>,
+    pub model_selectors: CArray<FieldElement>,
+    pub from_block: COption<u64>,
+    pub to_block: COption<u64>,
+    pub pagination: Pagination,
+}
+
+impl From<TransactionQuery> for torii_proto::TransactionQuery {
+    fn from(val: TransactionQuery) -> Self {
+        let entrypoints: Vec<*const c_char> = val.entrypoints.into();
+        let entrypoints = entrypoints
+            .into_iter()
+            .map(|e| unsafe { CStr::from_ptr(e).to_string_lossy().to_string() })
+            .collect::<Vec<String>>();
+
+        torii_proto::TransactionQuery {
+            pagination: val.pagination.into(),
+            transaction_hashes: val.transaction_hashes.into(),
+            caller_addresses: val.caller_addresses.into(),
+            contract_addresses: val.contract_addresses.into(),
+            entrypoints,
+            model_selectors: val.model_selectors.into(),
+            from_block: val.from_block.into(),
+            to_block: val.to_block.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct Transaction {
+    pub transaction_hash: FieldElement,
+    pub sender_address: FieldElement,
+    pub calldata: CArray<FieldElement>,
+    pub max_fee: FieldElement,
+    pub signature: CArray<FieldElement>,
+    pub nonce: FieldElement,
+    pub block_number: u64,
+    pub transaction_type: *const c_char,
+    pub block_timestamp: u64,
+    pub calls: CArray<TransactionCall>,
+    pub unique_models: CArray<FieldElement>,
+}
+
+impl From<torii_proto::Transaction> for Transaction {
+    fn from(val: torii_proto::Transaction) -> Self {
+        Transaction {
+            transaction_hash: val.transaction_hash.into(),
+            sender_address: val.sender_address.into(),
+            calldata: val.calldata.into(),
+            max_fee: val.max_fee.into(),
+            signature: val.signature.into(),
+            nonce: val.nonce.into(),
+            block_number: val.block_number,
+            transaction_type: CString::new(val.transaction_type).unwrap().into_raw(),
+            block_timestamp: val.block_timestamp.timestamp() as u64,
+            calls: val.calls.into(),
+            unique_models: val.unique_models.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub enum CallType {
+    Execute,
+    ExecuteFromOutside,
+}
+
+impl From<torii_proto::CallType> for CallType {
+    fn from(val: torii_proto::CallType) -> Self {
+        match val {
+            torii_proto::CallType::Execute => CallType::Execute,
+            torii_proto::CallType::ExecuteFromOutside => CallType::ExecuteFromOutside,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct TransactionCall {
+    pub contract_address: FieldElement,
+    pub entrypoint: *const c_char,
+    pub calldata: CArray<FieldElement>,
+    pub call_type: CallType,
+    pub caller_address: FieldElement,
+}
+
+impl From<torii_proto::TransactionCall> for TransactionCall {
+    fn from(val: torii_proto::TransactionCall) -> Self {
+        TransactionCall {
+            contract_address: val.contract_address.into(),
+            entrypoint: CString::new(val.entrypoint).unwrap().into_raw(),
+            calldata: val.calldata.into(),
+            call_type: val.call_type.into(),
+            caller_address: val.caller_address.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
 pub struct Query {
     pub pagination: Pagination,
     pub clause: COption<Clause>,

@@ -34,14 +34,14 @@ use wasm_bindgen::prelude::*;
 use crate::constants;
 use crate::types::{Account, Provider, Subscription, ToriiClient};
 use crate::utils::watch_tx;
-use crate::wasm::types::{ControllerQuery, TokenBalanceQuery, TokenQuery};
+use crate::wasm::types::{ControllerQuery, TokenBalanceQuery, TokenQuery, TransactionQuery};
 
 mod types;
 
 use types::{
     BlockId, Call, Calls, Clause, ClientConfig, Controller, Controllers, Entities, Entity,
     IndexerUpdate, KeysClause, KeysClauses, Message, Model, Page, Query, Signature, Token,
-    TokenBalance, TokenBalances, TokenCollections, Tokens, WasmU256,
+    TokenBalance, TokenBalances, TokenCollections, Tokens, Transaction, Transactions, WasmU256,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -724,6 +724,24 @@ impl ToriiClient {
             .map_err(|e| JsValue::from(format!("failed to get controllers: {e}")))?;
 
         Ok(Controllers(controllers.into()))
+    }
+
+    /// Gets transactions matching the given query
+    ///
+    /// # Parameters
+    /// * `query` - Query parameters
+    ///
+    /// # Returns
+    /// Result containing transactions or error
+    #[wasm_bindgen(js_name = getTransactions)]
+    pub async fn get_transactions(&self, query: TransactionQuery) -> Result<Transactions, JsValue> {
+        let query = query.into();
+        let transactions = self
+            .inner
+            .transactions(query)
+            .await
+            .map_err(|e| JsValue::from(format!("failed to get transactions: {e}")))?;
+        Ok(Transactions(transactions.into()))
     }
 
     /// Gets token information for the given contract addresses
