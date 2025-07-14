@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "dojo-c"
-version = "1.6.0-alpha.0"
+version = "1.6.0-alpha.1"
 
 [lib]
 crate-type = ["cdylib", "rlib", "staticlib"]
@@ -9,9 +9,9 @@ crate-type = ["cdylib", "rlib", "staticlib"]
 [dependencies]
 dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "054623b" }
 dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "054623b" }
-torii-proto = { git = "https://github.com/dojoengine/torii", rev = "ea69681" }
-torii-client = { git = "https://github.com/dojoengine/torii", rev = "ea69681" }
-torii-grpc-client = { git = "https://github.com/dojoengine/torii", rev = "ea69681" }
+torii-proto = { git = "https://github.com/dojoengine/torii", rev = "a89dd8c" }
+torii-client = { git = "https://github.com/dojoengine/torii", rev = "a89dd8c" }
+torii-grpc-client = { git = "https://github.com/dojoengine/torii", rev = "a89dd8c" }
 
 starknet = "0.14.0"
 starknet-crypto = "0.7.2"

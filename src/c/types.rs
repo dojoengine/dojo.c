@@ -524,7 +524,7 @@ impl From<TokenBalanceQuery> for torii_proto::TokenBalanceQuery {
 
 #[derive(Clone, Debug)]
 #[repr(C)]
-pub struct TransactionQuery {
+pub struct TransactionFilter {
     pub transaction_hashes: CArray<FieldElement>,
     pub caller_addresses: CArray<FieldElement>,
     pub contract_addresses: CArray<FieldElement>,
@@ -532,19 +532,17 @@ pub struct TransactionQuery {
     pub model_selectors: CArray<FieldElement>,
     pub from_block: COption<u64>,
     pub to_block: COption<u64>,
-    pub pagination: Pagination,
 }
 
-impl From<TransactionQuery> for torii_proto::TransactionQuery {
-    fn from(val: TransactionQuery) -> Self {
+impl From<TransactionFilter> for torii_proto::TransactionFilter {
+    fn from(val: TransactionFilter) -> Self {
         let entrypoints: Vec<*const c_char> = val.entrypoints.into();
         let entrypoints = entrypoints
             .into_iter()
             .map(|e| unsafe { CStr::from_ptr(e).to_string_lossy().to_string() })
             .collect::<Vec<String>>();
 
-        torii_proto::TransactionQuery {
-            pagination: val.pagination.into(),
+        torii_proto::TransactionFilter {
             transaction_hashes: val.transaction_hashes.into(),
             caller_addresses: val.caller_addresses.into(),
             contract_addresses: val.contract_addresses.into(),
@@ -552,6 +550,22 @@ impl From<TransactionQuery> for torii_proto::TransactionQuery {
             model_selectors: val.model_selectors.into(),
             from_block: val.from_block.into(),
             to_block: val.to_block.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct TransactionQuery {
+    pub filter: COption<TransactionFilter>,
+    pub pagination: Pagination,
+}
+
+impl From<TransactionQuery> for torii_proto::TransactionQuery {
+    fn from(val: TransactionQuery) -> Self {
+        torii_proto::TransactionQuery {
+            filter: val.filter.map(|f| f.into()).into(),
+            pagination: val.pagination.into(),
         }
     }
 }

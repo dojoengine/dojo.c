@@ -20,6 +20,11 @@ enum class BlockTag {
   Pending,
 };
 
+enum class CallType {
+  Execute,
+  ExecuteFromOutside,
+};
+
 enum class ComparisonOperator {
   Eq,
   Neq,
@@ -789,6 +794,43 @@ struct World {
   CArray<Model> models;
 };
 
+struct TransactionCall {
+  FieldElement contract_address;
+  const char *entrypoint;
+  CArray<FieldElement> calldata;
+  CallType call_type;
+  FieldElement caller_address;
+};
+
+struct Transaction {
+  FieldElement transaction_hash;
+  FieldElement sender_address;
+  CArray<FieldElement> calldata;
+  FieldElement max_fee;
+  CArray<FieldElement> signature;
+  FieldElement nonce;
+  uint64_t block_number;
+  const char *transaction_type;
+  uint64_t block_timestamp;
+  CArray<TransactionCall> calls;
+  CArray<FieldElement> unique_models;
+};
+
+struct TransactionFilter {
+  CArray<FieldElement> transaction_hashes;
+  CArray<FieldElement> caller_addresses;
+  CArray<FieldElement> contract_addresses;
+  CArray<const char*> entrypoints;
+  CArray<FieldElement> model_selectors;
+  COption<uint64_t> from_block;
+  COption<uint64_t> to_block;
+};
+
+struct TransactionQuery {
+  COption<TransactionFilter> filter;
+  Pagination pagination;
+};
+
 struct Event {
   CArray<FieldElement> keys;
   CArray<FieldElement> data;
@@ -1133,6 +1175,29 @@ Result<Page<Entity>> client_event_messages(ToriiClient *client, Query query);
 /// # Returns
 /// World structure containing world information
 Result<World> client_metadata(ToriiClient *client);
+
+/// Retrieves transactions matching the given query
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - Query parameters
+///
+/// # Returns
+/// Result containing array of matching transactions or error
+Result<Page<Transaction>> client_transactions(ToriiClient *client, TransactionQuery query);
+
+/// Subscribes to transaction updates
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `filter` - Filter parameters
+/// * `callback` - Function called when updates occur
+///
+/// # Returns
+/// Result containing pointer to Subscription or error
+Result<Subscription*> client_on_transaction(ToriiClient *client,
+                                            COption<TransactionFilter> filter,
+                                            void (*callback)(Transaction));
 
 /// Subscribes to entity state updates
 ///

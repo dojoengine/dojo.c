@@ -16,7 +16,9 @@ struct OrderBy;
 struct Entity;
 struct COptionFieldElement;
 struct Model;
+struct Transaction;
 struct Subscription;
+struct TransactionCall;
 struct Struct;
 struct Token;
 struct TokenBalance;
@@ -31,6 +33,11 @@ typedef enum BlockTag {
   Latest,
   Pending,
 } BlockTag;
+
+typedef enum CallType {
+  Execute,
+  ExecuteFromOutside,
+} CallType;
 
 typedef enum ComparisonOperator {
   Eq,
@@ -476,6 +483,76 @@ typedef struct ResultWorld {
   };
 } ResultWorld;
 
+typedef struct CArrayTransaction {
+  struct Transaction *data;
+  uintptr_t data_len;
+} CArrayTransaction;
+
+typedef struct PageTransaction {
+  struct CArrayTransaction items;
+  struct COptionc_char next_cursor;
+} PageTransaction;
+
+typedef enum ResultPageTransaction_Tag {
+  OkPageTransaction,
+  ErrPageTransaction,
+} ResultPageTransaction_Tag;
+
+typedef struct ResultPageTransaction {
+  ResultPageTransaction_Tag tag;
+  union {
+    struct {
+      struct PageTransaction ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultPageTransaction;
+
+typedef enum COptionu64_Tag {
+  Someu64,
+  Noneu64,
+} COptionu64_Tag;
+
+typedef struct COptionu64 {
+  COptionu64_Tag tag;
+  union {
+    struct {
+      uint64_t some;
+    };
+  };
+} COptionu64;
+
+typedef struct TransactionFilter {
+  struct CArrayFieldElement transaction_hashes;
+  struct CArrayFieldElement caller_addresses;
+  struct CArrayFieldElement contract_addresses;
+  struct CArrayc_char entrypoints;
+  struct CArrayFieldElement model_selectors;
+  struct COptionu64 from_block;
+  struct COptionu64 to_block;
+} TransactionFilter;
+
+typedef enum COptionTransactionFilter_Tag {
+  SomeTransactionFilter,
+  NoneTransactionFilter,
+} COptionTransactionFilter_Tag;
+
+typedef struct COptionTransactionFilter {
+  COptionTransactionFilter_Tag tag;
+  union {
+    struct {
+      struct TransactionFilter some;
+    };
+  };
+} COptionTransactionFilter;
+
+typedef struct TransactionQuery {
+  struct COptionTransactionFilter filter;
+  struct Pagination pagination;
+} TransactionQuery;
+
 typedef enum ResultSubscription_Tag {
   OkSubscription,
   ErrSubscription,
@@ -492,6 +569,25 @@ typedef struct ResultSubscription {
     };
   };
 } ResultSubscription;
+
+typedef struct CArrayTransactionCall {
+  struct TransactionCall *data;
+  uintptr_t data_len;
+} CArrayTransactionCall;
+
+typedef struct Transaction {
+  struct FieldElement transaction_hash;
+  struct FieldElement sender_address;
+  struct CArrayFieldElement calldata;
+  struct FieldElement max_fee;
+  struct CArrayFieldElement signature;
+  struct FieldElement nonce;
+  uint64_t block_number;
+  const char *transaction_type;
+  uint64_t block_timestamp;
+  struct CArrayTransactionCall calls;
+  struct CArrayFieldElement unique_models;
+} Transaction;
 
 typedef struct CArrayStruct {
   struct Struct *data;
@@ -842,6 +938,14 @@ typedef struct Model {
   const char *layout;
 } Model;
 
+typedef struct TransactionCall {
+  struct FieldElement contract_address;
+  const char *entrypoint;
+  struct CArrayFieldElement calldata;
+  enum CallType call_type;
+  struct FieldElement caller_address;
+} TransactionCall;
+
 typedef struct TokenCollection {
   struct FieldElement contract_address;
   const char *name;
@@ -1113,6 +1217,34 @@ struct ResultPageEntity client_event_messages(struct ToriiClient *client, struct
  * World structure containing world information
  */
 struct ResultWorld client_metadata(struct ToriiClient *client);
+
+/**
+ * Retrieves transactions matching the given query
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `query` - Query parameters
+ *
+ * # Returns
+ * Result containing array of matching transactions or error
+ */
+struct ResultPageTransaction client_transactions(struct ToriiClient *client,
+                                                 struct TransactionQuery query);
+
+/**
+ * Subscribes to transaction updates
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `filter` - Filter parameters
+ * * `callback` - Function called when updates occur
+ *
+ * # Returns
+ * Result containing pointer to Subscription or error
+ */
+struct ResultSubscription client_on_transaction(struct ToriiClient *client,
+                                                struct COptionTransactionFilter filter,
+                                                void (*callback)(struct Transaction));
 
 /**
  * Subscribes to entity state updates
