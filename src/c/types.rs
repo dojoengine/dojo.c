@@ -463,6 +463,67 @@ impl From<starknet::core::types::Felt> for FieldElement {
 
 #[derive(Clone, Debug)]
 #[repr(C)]
+pub struct ControllerQuery {
+    pub pagination: Pagination,
+    pub contract_addresses: CArray<FieldElement>,
+    pub usernames: CArray<*const c_char>,
+}
+
+impl From<ControllerQuery> for torii_proto::ControllerQuery {
+    fn from(val: ControllerQuery) -> Self {
+        let usernames: Vec<*const c_char> = val.usernames.into();
+        let usernames = usernames
+            .into_iter()
+            .map(|u| unsafe { CStr::from_ptr(u).to_string_lossy().to_string() })
+            .collect::<Vec<String>>();
+        torii_proto::ControllerQuery {
+            pagination: val.pagination.into(),
+            contract_addresses: val.contract_addresses.into(),
+            usernames,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct TokenQuery {
+    pub contract_addresses: CArray<FieldElement>,
+    pub token_ids: CArray<U256>,
+    pub pagination: Pagination,
+}
+
+impl From<TokenQuery> for torii_proto::TokenQuery {
+    fn from(val: TokenQuery) -> Self {
+        torii_proto::TokenQuery {
+            contract_addresses: val.contract_addresses.into(),
+            token_ids: val.token_ids.into(),
+            pagination: val.pagination.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct TokenBalanceQuery {
+    pub contract_addresses: CArray<FieldElement>,
+    pub account_addresses: CArray<FieldElement>,
+    pub token_ids: CArray<U256>,
+    pub pagination: Pagination,
+}
+
+impl From<TokenBalanceQuery> for torii_proto::TokenBalanceQuery {
+    fn from(val: TokenBalanceQuery) -> Self {
+        torii_proto::TokenBalanceQuery {
+            contract_addresses: val.contract_addresses.into(),
+            account_addresses: val.account_addresses.into(),
+            token_ids: val.token_ids.into(),
+            pagination: val.pagination.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
 pub struct Query {
     pub pagination: Pagination,
     pub clause: COption<Clause>,

@@ -57,6 +57,7 @@ use types::{
 };
 use url::Url;
 
+use crate::c::types::{ControllerQuery, TokenBalanceQuery, TokenQuery};
 use crate::constants;
 use crate::types::{
     Account, ControllerAccount, Provider, RegisterSessionResponse, RegisteredAccount,
@@ -743,35 +744,10 @@ pub unsafe extern "C" fn client_publish_message_batch(
 #[no_mangle]
 pub unsafe extern "C" fn client_controllers(
     client: *mut ToriiClient,
-    contract_addresses: *const types::FieldElement,
-    contract_addresses_len: usize,
-    usernames: *const c_char,
-    usernames_len: usize,
-    limit: COption<u32>,
-    cursor: COption<*const c_char>,
+    query: ControllerQuery,
 ) -> Result<Page<Controller>> {
-    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
-        Vec::new()
-    } else {
-        let addresses =
-            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
-    };
-
-    let usernames = if usernames.is_null() || usernames_len == 0 {
-        Vec::new()
-    } else {
-        let usernames = unsafe { std::slice::from_raw_parts(usernames, usernames_len) };
-        usernames
-            .iter()
-            .map(|c| unsafe { CStr::from_ptr(c).to_string_lossy().into_owned() })
-            .collect::<Vec<String>>()
-    };
-    let cursor = cursor.map(|c| unsafe { CStr::from_ptr(c).to_string_lossy().into_owned() });
-
-    let controllers_future = unsafe {
-        (*client).inner.controllers(contract_addresses, usernames, limit.into(), cursor.into())
-    };
+    let query = query.into();
+    let controllers_future = unsafe { (*client).inner.controllers(query) };
 
     match RUNTIME.block_on(controllers_future) {
         Ok(controllers) => Result::Ok(controllers.into()),
@@ -1130,43 +1106,15 @@ pub unsafe extern "C" fn client_on_starknet_event(
 #[no_mangle]
 pub unsafe extern "C" fn client_tokens(
     client: *mut ToriiClient,
-    contract_addresses: *const types::FieldElement,
-    contract_addresses_len: usize,
-    token_ids: *const types::U256,
-    token_ids_len: usize,
-    limit: u32,
-    cursor: COption<*const c_char>,
+    query: TokenQuery,
 ) -> Result<Page<Token>> {
-    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
-        Vec::new()
-    } else {
-        let addresses =
-            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
-    };
-    let token_ids = if token_ids.is_null() || token_ids_len == 0 {
-        Vec::new()
-    } else {
-        let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
-        ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
-    };
+    let query = query.into();
+    let tokens_future = unsafe { (*client).inner.tokens(query) };
 
-    let limit = if limit == 0 { None } else { Some(limit) };
-    let tokens = match RUNTIME.block_on(
-        (*client).inner.tokens(
-            contract_addresses,
-            token_ids,
-            limit,
-            cursor
-                .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
-                .into(),
-        ),
-    ) {
-        Ok(tokens) => tokens,
-        Err(e) => return Result::Err(e.into()),
-    };
-
-    Result::Ok(tokens.into())
+    match RUNTIME.block_on(tokens_future) {
+        Ok(tokens) => Result::Ok(tokens.into()),
+        Err(e) => Result::Err(e.into()),
+    }
 }
 
 /// Subscribes to token updates
@@ -1279,54 +1227,15 @@ pub unsafe extern "C" fn client_on_token_update(
 #[no_mangle]
 pub unsafe extern "C" fn client_token_balances(
     client: *mut ToriiClient,
-    contract_addresses: *const types::FieldElement,
-    contract_addresses_len: usize,
-    account_addresses: *const types::FieldElement,
-    account_addresses_len: usize,
-    token_ids: *const types::U256,
-    token_ids_len: usize,
-    limit: u32,
-    cursor: COption<*const c_char>,
+    query: TokenBalanceQuery,
 ) -> Result<Page<TokenBalance>> {
-    let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
-        Vec::new()
-    } else {
-        let addresses =
-            unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
-        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
-    };
+    let query = query.into();
+    let token_balances_future = unsafe { (*client).inner.token_balances(query) };
 
-    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
-        Vec::new()
-    } else {
-        let addresses =
-            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
-    };
-
-    let token_ids = if token_ids.is_null() || token_ids_len == 0 {
-        Vec::new()
-    } else {
-        let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
-        ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
-    };
-
-    let token_balances = match RUNTIME.block_on(
-        (*client).inner.token_balances(
-            account_addresses,
-            contract_addresses,
-            token_ids,
-            if limit == 0 { None } else { Some(limit) },
-            cursor
-                .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
-                .into(),
-        ),
-    ) {
-        Ok(balances) => balances,
-        Err(e) => return Result::Err(e.into()),
-    };
-
-    Result::Ok(token_balances.into())
+    match RUNTIME.block_on(token_balances_future) {
+        Ok(token_balances) => Result::Ok(token_balances.into()),
+        Err(e) => Result::Err(e.into()),
+    }
 }
 
 /// Gets token collections for given accounts and contracts
@@ -1347,54 +1256,15 @@ pub unsafe extern "C" fn client_token_balances(
 #[no_mangle]
 pub unsafe extern "C" fn client_token_collections(
     client: *mut ToriiClient,
-    contract_addresses: *const types::FieldElement,
-    contract_addresses_len: usize,
-    account_addresses: *const types::FieldElement,
-    account_addresses_len: usize,
-    token_ids: *const types::U256,
-    token_ids_len: usize,
-    limit: u32,
-    cursor: COption<*const c_char>,
+    query: TokenBalanceQuery,
 ) -> Result<Page<TokenCollection>> {
-    let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
-        Vec::new()
-    } else {
-        let addresses =
-            unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
-        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
-    };
+    let query = query.into();
+    let token_collections_future = unsafe { (*client).inner.token_collections(query) };
 
-    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
-        Vec::new()
-    } else {
-        let addresses =
-            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
-        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
-    };
-
-    let token_ids = if token_ids.is_null() || token_ids_len == 0 {
-        Vec::new()
-    } else {
-        let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
-        ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
-    };
-
-    let token_collections = match RUNTIME.block_on(
-        (*client).inner.token_collections(
-            account_addresses,
-            contract_addresses,
-            token_ids,
-            if limit == 0 { None } else { Some(limit) },
-            cursor
-                .map(|c| unsafe { std::ffi::CStr::from_ptr(c).to_string_lossy().into_owned() })
-                .into(),
-        ),
-    ) {
-        Ok(collections) => collections,
+    match RUNTIME.block_on(token_collections_future) {
+        Ok(collections) => Result::Ok(collections.into()),
         Err(e) => return Result::Err(e.into()),
-    };
-
-    Result::Ok(token_collections.into())
+    }
 }
 
 /// Subscribes to indexer updates
