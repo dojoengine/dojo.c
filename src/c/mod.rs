@@ -1263,7 +1263,7 @@ pub unsafe extern "C" fn client_token_collections(
 
     match RUNTIME.block_on(token_collections_future) {
         Ok(collections) => Result::Ok(collections.into()),
-        Err(e) => return Result::Err(e.into()),
+        Err(e) => Result::Err(e.into()),
     }
 }
 
