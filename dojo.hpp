@@ -839,7 +839,7 @@ struct Event {
 
 struct Token {
   FieldElement contract_address;
-  U256 token_id;
+  COption<U256> token_id;
   const char *name;
   const char *symbol;
   uint8_t decimals;
@@ -856,7 +856,7 @@ struct TokenBalance {
   U256 balance;
   FieldElement account_address;
   FieldElement contract_address;
-  U256 token_id;
+  COption<U256> token_id;
 };
 
 struct TokenBalanceQuery {
