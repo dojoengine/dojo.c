@@ -79,7 +79,7 @@ pub struct TokenCollections(pub Page<TokenCollection>);
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Token {
     pub contract_address: String,
-    pub token_id: String,
+    pub token_id: Option<String>,
     pub name: String,
     pub symbol: String,
     pub decimals: u8,
@@ -90,7 +90,7 @@ impl From<torii_proto::Token> for Token {
     fn from(value: torii_proto::Token) -> Self {
         Self {
             contract_address: format!("{:#x}", value.contract_address),
-            token_id: format!("0x{:x}", value.token_id),
+            token_id: value.token_id.map(|t| format!("0x{:x}", t)),
             name: value.name.clone(),
             symbol: value.symbol.clone(),
             decimals: value.decimals,
@@ -141,7 +141,7 @@ pub struct TokenBalance {
     pub balance: String,
     pub account_address: String,
     pub contract_address: String,
-    pub token_id: String,
+    pub token_id: Option<String>,
 }
 
 impl From<torii_proto::TokenBalance> for TokenBalance {
@@ -150,7 +150,7 @@ impl From<torii_proto::TokenBalance> for TokenBalance {
             balance: format!("0x{:x}", value.balance),
             account_address: format!("{:#x}", value.account_address),
             contract_address: format!("{:#x}", value.contract_address),
-            token_id: format!("0x{:x}", value.token_id),
+            token_id: value.token_id.map(|t| format!("0x{:x}", t)),
         }
     }
 }

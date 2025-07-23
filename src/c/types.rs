@@ -132,7 +132,7 @@ impl From<torii_proto::Controller> for Controller {
 #[repr(C)]
 pub struct Token {
     pub contract_address: FieldElement,
-    pub token_id: U256,
+    pub token_id: COption<U256>,
     pub name: *const c_char,
     pub symbol: *const c_char,
     pub decimals: u8,
@@ -158,7 +158,7 @@ pub struct TokenBalance {
     pub balance: U256,
     pub account_address: FieldElement,
     pub contract_address: FieldElement,
-    pub token_id: U256,
+    pub token_id: COption<U256>,
 }
 
 impl From<torii_proto::TokenBalance> for TokenBalance {
