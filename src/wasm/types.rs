@@ -518,7 +518,7 @@ impl From<BlockTag> for starknet::core::types::BlockTag {
     fn from(value: BlockTag) -> Self {
         match value {
             BlockTag::Latest => starknet::core::types::BlockTag::Latest,
-            BlockTag::Pending => starknet::core::types::BlockTag::Pending,
+            BlockTag::Pending => starknet::core::types::BlockTag::PreConfirmed,
         }
     }
 }

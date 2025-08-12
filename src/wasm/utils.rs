@@ -88,6 +88,23 @@ pub fn parse_ty_as_json_str(ty: &dojo_types::schema::Ty, key: bool) -> Ty {
             value: serde_wasm_bindgen::to_value(bytearray.as_str()).unwrap(),
             key,
         },
+        dojo_types::schema::Ty::FixedSizeArray(fixed_array) => Ty {
+            r#type: "fixed_array".to_string(),
+            type_name: ty.name(),
+            // Convert Vec<(Ty, u32)> to a list of types for now
+            value: serde_wasm_bindgen::to_value(
+                &fixed_array
+                    .iter()
+                    .flat_map(|(ty, size)| {
+                        // Repeat each type 'size' times
+                        std::iter::repeat(ty).take(*size as usize)
+                    })
+                    .map(|child| parse_ty_as_json_str(child, false))
+                    .collect::<Vec<Ty>>(),
+            )
+            .unwrap(),
+            key,
+        },
     }
 }
 
