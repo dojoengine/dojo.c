@@ -953,7 +953,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
                         tx.send(id).expect("Failed to send subscription ID");
                     } else {
                         let key: types::FieldElement = entity.hashed_keys.into();
-                        let models: Vec<Struct> =
+                        let models: Vec<types::Struct> =
                             entity.models.into_iter().map(|e| e.into()).collect();
                         callback(key, models.into());
                     }
@@ -1050,7 +1050,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
                         tx.send(id).expect("Failed to send subscription ID");
                     } else {
                         let key: types::FieldElement = entity.hashed_keys.into();
-                        let models: Vec<Struct> =
+                        let models: Vec<types::Struct> =
                             entity.models.into_iter().map(|e| e.into()).collect();
                         callback(key, models.into());
                     }

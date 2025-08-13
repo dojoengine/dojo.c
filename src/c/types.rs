@@ -298,7 +298,7 @@ impl From<BlockTag> for starknet::core::types::BlockTag {
     fn from(val: BlockTag) -> Self {
         match val {
             BlockTag::Latest => starknet::core::types::BlockTag::Latest,
-            BlockTag::Pending => starknet::core::types::BlockTag::Pending,
+            BlockTag::Pending => starknet::core::types::BlockTag::PreConfirmed,
         }
     }
 }
@@ -796,7 +796,8 @@ impl From<MemberValue> for torii_proto::MemberValue {
     fn from(val: MemberValue) -> Self {
         match val {
             MemberValue::PrimitiveValue(primitive) => {
-                torii_proto::MemberValue::Primitive(primitive.into())
+                let dojo_primitive: dojo_types::primitive::Primitive = primitive.into();
+                torii_proto::MemberValue::Primitive(dojo_primitive)
             }
             MemberValue::String(string) => torii_proto::MemberValue::String(unsafe {
                 CStr::from_ptr(string).to_string_lossy().to_string()
@@ -815,7 +816,8 @@ impl From<torii_proto::MemberValue> for MemberValue {
     fn from(val: torii_proto::MemberValue) -> Self {
         match val {
             torii_proto::MemberValue::Primitive(primitive) => {
-                MemberValue::PrimitiveValue(primitive.into())
+                let local_primitive: Primitive = primitive.into();
+                MemberValue::PrimitiveValue(local_primitive)
             }
             torii_proto::MemberValue::String(string) => {
                 MemberValue::String(CString::new(string.clone()).unwrap().into_raw())
@@ -891,7 +893,8 @@ pub struct Entity {
 impl From<Entity> for torii_proto::schema::Entity {
     fn from(val: Entity) -> Self {
         let models: Vec<Struct> = val.models.into();
-        let models = models.into_iter().map(|m| m.into()).collect();
+        let models: Vec<dojo_types::schema::Struct> =
+            models.into_iter().map(|m| m.into()).collect();
 
         torii_proto::schema::Entity { hashed_keys: val.hashed_keys.into(), models }
     }
@@ -899,7 +902,7 @@ impl From<Entity> for torii_proto::schema::Entity {
 
 impl From<torii_proto::schema::Entity> for Entity {
     fn from(val: torii_proto::schema::Entity) -> Self {
-        let models = val.models.into_iter().map(|m| m.into()).collect::<Vec<Struct>>();
+        let models: Vec<Struct> = val.models.into_iter().map(|m| m.into()).collect();
 
         Entity { hashed_keys: val.hashed_keys.into(), models: models.into() }
     }
@@ -968,6 +971,16 @@ impl From<dojo_types::schema::Ty> for Ty {
             dojo_types::schema::Ty::ByteArray(array) => {
                 let array = CString::new(array.clone()).unwrap().into_raw();
                 Ty::ByteArray(array)
+            }
+            dojo_types::schema::Ty::FixedSizeArray(fixed_array) => {
+                // Convert Vec<(Ty, u32)> to a regular array for now
+                // Use the first element's type if available
+                if let Some((ty, _)) = fixed_array.first() {
+                    let converted_ty: Ty = ty.clone().into();
+                    return Ty::Array_(vec![converted_ty].into());
+                }
+                let empty_vec: Vec<Ty> = Vec::new();
+                Ty::Array_(empty_vec.into())
             }
         }
     }
@@ -1404,16 +1417,15 @@ impl From<torii_proto::ComparisonOperator> for ComparisonOperator {
 
 impl From<Value> for torii_proto::Value {
     fn from(val: Value) -> Self {
-        torii_proto::Value {
-            primitive_type: val.primitive_type.into(),
-            value_type: val.value_type.into(),
-        }
+        let dojo_primitive: dojo_types::primitive::Primitive = val.primitive_type.into();
+        torii_proto::Value { primitive_type: dojo_primitive, value_type: val.value_type.into() }
     }
 }
 
 impl From<torii_proto::Value> for Value {
     fn from(val: torii_proto::Value) -> Self {
-        Value { primitive_type: val.primitive_type.into(), value_type: val.value_type.into() }
+        let local_primitive: Primitive = val.primitive_type.into();
+        Value { primitive_type: local_primitive, value_type: val.value_type.into() }
     }
 }
 
@@ -1463,8 +1475,9 @@ impl From<torii_proto::Model> for Model {
         let layout = serde_json::to_string(&value.layout).unwrap();
         let layout = CString::new(layout).unwrap().into_raw();
 
+        let local_ty: Ty = value.schema.into();
         Model {
-            schema: value.schema.into(),
+            schema: local_ty,
             name: CString::new(value.name.clone()).unwrap().into_raw(),
             namespace: CString::new(value.namespace.clone()).unwrap().into_raw(),
             selector: value.selector.into(),
@@ -1482,8 +1495,9 @@ impl From<Model> for torii_proto::Model {
         let layout = unsafe { CStr::from_ptr(value.layout).to_string_lossy().into_owned() };
         let layout = serde_json::from_str(&layout).unwrap();
 
+        let dojo_ty: dojo_types::schema::Ty = value.schema.into();
         torii_proto::Model {
-            schema: value.schema.into(),
+            schema: dojo_ty,
             namespace: unsafe {
                 CString::from_raw(value.namespace as *mut c_char).into_string().unwrap()
             },
