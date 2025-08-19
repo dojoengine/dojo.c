@@ -9,11 +9,11 @@ crate-type = ["cdylib", "rlib", "staticlib"]
 [dependencies]
 dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "054623b" }
 dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "054623b" }
-torii-proto = { git = "https://github.com/dojoengine/torii", tag = "v1.6.1" }
-torii-client = { git = "https://github.com/dojoengine/torii", tag = "v1.6.1" }
-torii-grpc-client = { git = "https://github.com/dojoengine/torii", tag = "v1.6.1" }
+torii-proto = { git = "https://github.com/dojoengine/torii", tag = "v1.7.0-alpha.0" }
+torii-client = { git = "https://github.com/dojoengine/torii", tag = "v1.7.0-alpha.0" }
+torii-grpc-client = { git = "https://github.com/dojoengine/torii", tag = "v1.7.0-alpha.0" }
 
-starknet = "0.14.0"
+starknet = "0.17.0-rc.2"
 starknet-crypto = "0.7.2"
 starknet-types-core = { version = "0.1.6", features = ["arbitrary"] }
 
@@ -28,9 +28,9 @@ futures = "0.3.30"
 futures-channel = "0.3.30"
 wasm-bindgen = "0.2.92"
 stream-cancel = "0.8.2"
-cainome = { git = "https://github.com/cartridge-gg/cainome", tag = "v0.3.2" }
+cainome = { git = "https://github.com/cartridge-gg/cainome", rev = "7d60de1" }
 lazy_static = "1.5.0"
-account_sdk = { git = "https://github.com/cartridge-gg/controller", rev = "05fe96f4" }
+account_sdk = { git = "https://github.com/cartridge-gg/controller", rev = "242e7bd" }
 
 serde-wasm-bindgen = "0.6.3"
 wasm-bindgen-futures = "0.4.39"
