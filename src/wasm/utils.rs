@@ -1,18 +1,18 @@
 use std::collections::HashMap;
 
-use dojo_types::primitive::Primitive;
 use num_bigint::BigUint;
 use num_traits::Num;
 use wasm_bindgen::JsValue;
 
 use super::types::{EnumValue, Ty};
+use crate::wasm::types::FixedSizeArray;
 
 pub fn parse_ty_as_json_str(ty: &dojo_types::schema::Ty, key: bool) -> Ty {
     match ty {
         dojo_types::schema::Ty::Primitive(primitive) => Ty {
             r#type: "primitive".to_string(),
             type_name: ty.name(),
-            value: primitive_value_json(*primitive),
+            value: serde_wasm_bindgen::to_value(&primitive.to_json_value().unwrap()).unwrap(),
             key,
         },
         dojo_types::schema::Ty::Struct(struct_ty) => Ty {
@@ -88,28 +88,16 @@ pub fn parse_ty_as_json_str(ty: &dojo_types::schema::Ty, key: bool) -> Ty {
             value: serde_wasm_bindgen::to_value(bytearray.as_str()).unwrap(),
             key,
         },
-    }
-}
-
-fn primitive_value_json(primitive: Primitive) -> JsValue {
-    match primitive {
-        Primitive::Bool(Some(value)) => JsValue::from_bool(value),
-        Primitive::I8(Some(value)) => JsValue::from_f64(value.into()),
-        Primitive::I16(Some(value)) => JsValue::from_f64(value.into()),
-        Primitive::I32(Some(value)) => JsValue::from_f64(value.into()),
-        Primitive::U8(Some(value)) => JsValue::from_f64(value.into()),
-        Primitive::U16(Some(value)) => JsValue::from_f64(value.into()),
-        Primitive::U32(Some(value)) => JsValue::from_f64(value.into()),
-        Primitive::I64(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
-        Primitive::U64(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
-        Primitive::I128(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
-        Primitive::U128(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
-        Primitive::U256(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
-        Primitive::Felt252(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
-        Primitive::ClassHash(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
-        Primitive::ContractAddress(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
-        Primitive::EthAddress(Some(value)) => JsValue::from_str(&format!("0x{value:064x}")),
-        _ => JsValue::NULL,
+        dojo_types::schema::Ty::FixedSizeArray((array, size)) => Ty {
+            r#type: "fixed_size_array".to_string(),
+            type_name: ty.name(),
+            value: serde_wasm_bindgen::to_value(&FixedSizeArray {
+                array: array.iter().map(|ty| parse_ty_as_json_str(ty, false)).collect(),
+                size: *size,
+            })
+            .unwrap(),
+            key,
+        },
     }
 }
 

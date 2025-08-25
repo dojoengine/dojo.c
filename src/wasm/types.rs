@@ -401,14 +401,23 @@ pub struct ClientConfig {
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
 pub struct Ty {
-    #[tsify(type = r#""primitive" | "struct" | "enum" | "array" | "tuple" | "bytearray""#)]
+    #[tsify(
+        type = r#""primitive" | "struct" | "enum" | "array" | "tuple" | "bytearray" | "fixed_size_array""#
+    )]
     pub r#type: String,
     pub type_name: String,
     #[serde(with = "serde_wasm_bindgen::preserve")]
-    #[tsify(type = "boolean | number | string | Ty | Record<string, Ty> | Array<Ty> | { option: \
-                    string, value: Ty } | null")]
+    #[tsify(type = "boolean | number | string | Ty | Record<string, Ty> | Array<Ty> | EnumValue \
+                    | FixedSizeArray | null")]
     pub value: JsValue,
     pub key: bool,
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct FixedSizeArray {
+    pub array: Vec<Ty>,
+    pub size: u32,
 }
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
@@ -511,14 +520,14 @@ impl From<Call> for FunctionCall {
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub enum BlockTag {
     Latest,
-    Pending,
+    PreConfirmed,
 }
 
 impl From<BlockTag> for starknet::core::types::BlockTag {
     fn from(value: BlockTag) -> Self {
         match value {
             BlockTag::Latest => starknet::core::types::BlockTag::Latest,
-            BlockTag::Pending => starknet::core::types::BlockTag::Pending,
+            BlockTag::PreConfirmed => starknet::core::types::BlockTag::PreConfirmed,
         }
     }
 }

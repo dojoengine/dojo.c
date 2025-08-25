@@ -17,7 +17,7 @@ struct Account;
 
 enum class BlockTag {
   Latest,
-  Pending,
+  PreConfirmed,
 };
 
 enum class CallType {
@@ -666,6 +666,11 @@ struct Enum {
   CArray<EnumOption> options;
 };
 
+struct FixedSizeArray {
+  CArray<Ty> array;
+  uint32_t size;
+};
+
 struct Ty {
   enum class Tag {
     Primitive_,
@@ -673,6 +678,7 @@ struct Ty {
     Enum_,
     Tuple_,
     Array_,
+    FixedSizeArray_,
     ByteArray,
   };
 
@@ -696,6 +702,10 @@ struct Ty {
     CArray<Ty> _0;
   };
 
+  struct FixedSizeArray__Body {
+    FixedSizeArray _0;
+  };
+
   struct ByteArray_Body {
     const char *_0;
   };
@@ -707,6 +717,7 @@ struct Ty {
     Enum__Body enum_;
     Tuple__Body tuple;
     Array__Body array;
+    FixedSizeArray__Body fixed_size_array;
     ByteArray_Body byte_array;
   };
 
@@ -765,6 +776,17 @@ struct Ty {
     return tag == Tag::Array_;
   }
 
+  static Ty FixedSizeArray_(const FixedSizeArray &_0) {
+    Ty result;
+    ::new (&result.fixed_size_array._0) (FixedSizeArray)(_0);
+    result.tag = Tag::FixedSizeArray_;
+    return result;
+  }
+
+  bool IsFixedSizeArray_() const {
+    return tag == Tag::FixedSizeArray_;
+  }
+
   static Ty ByteArray(const char *const &_0) {
     Ty result;
     ::new (&result.byte_array._0) (const char*)(_0);
@@ -787,6 +809,7 @@ struct Model {
   FieldElement class_hash;
   FieldElement contract_address;
   const char *layout;
+  bool use_legacy_store;
 };
 
 struct World {
