@@ -8,7 +8,7 @@ cdef extern from *:
 
   cdef enum BlockTag:
     Latest,
-    Pending,
+    PreConfirmed,
 
   cdef enum CallType:
     Execute,
@@ -587,12 +587,17 @@ cdef extern from *:
     Ty *data;
     uintptr_t data_len;
 
+  cdef struct FixedSizeArray:
+    CArrayTy array;
+    uint32_t size;
+
   cdef enum Ty_Tag:
     Primitive_,
     Struct_,
     Enum_,
     Tuple_,
     Array_,
+    FixedSizeArray_,
     ByteArray,
 
   cdef struct Ty:
@@ -602,6 +607,7 @@ cdef extern from *:
     Enum enum_;
     CArrayTy tuple;
     CArrayTy array;
+    FixedSizeArray fixed_size_array;
     const char *byte_array;
 
   cdef struct Model:
@@ -614,6 +620,7 @@ cdef extern from *:
     FieldElement class_hash;
     FieldElement contract_address;
     const char *layout;
+    bool use_legacy_store;
 
   cdef struct TransactionCall:
     FieldElement contract_address;

@@ -281,7 +281,7 @@ pub enum BlockId {
 #[repr(C)]
 pub enum BlockTag {
     Latest,
-    Pending,
+    PreConfirmed,
 }
 
 impl From<BlockId> for starknet::core::types::BlockId {
@@ -298,7 +298,7 @@ impl From<BlockTag> for starknet::core::types::BlockTag {
     fn from(val: BlockTag) -> Self {
         match val {
             BlockTag::Latest => starknet::core::types::BlockTag::Latest,
-            BlockTag::Pending => starknet::core::types::BlockTag::Pending,
+            BlockTag::PreConfirmed => starknet::core::types::BlockTag::PreConfirmed,
         }
     }
 }
@@ -943,6 +943,13 @@ impl From<torii_proto::ValueType> for ValueType {
 
 #[derive(Clone, Debug)]
 #[repr(C)]
+pub struct FixedSizeArray {
+    pub array: CArray<Ty>,
+    pub size: u32,
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
 #[allow(clippy::enum_variant_names)]
 pub enum Ty {
     Primitive_(Primitive),
@@ -950,6 +957,7 @@ pub enum Ty {
     Enum_(Enum),
     Tuple_(CArray<Ty>),
     Array_(CArray<Ty>),
+    FixedSizeArray_(FixedSizeArray),
     ByteArray(*const c_char),
 }
 
@@ -965,6 +973,9 @@ impl From<dojo_types::schema::Ty> for Ty {
             dojo_types::schema::Ty::Enum(enum_) => Ty::Enum_(enum_.into()),
             dojo_types::schema::Ty::Tuple(tuple) => Ty::Tuple_(tuple.into()),
             dojo_types::schema::Ty::Array(array) => Ty::Array_(array.into()),
+            dojo_types::schema::Ty::FixedSizeArray((ty, size)) => {
+                Ty::FixedSizeArray_(FixedSizeArray { array: ty.into(), size })
+            }
             dojo_types::schema::Ty::ByteArray(array) => {
                 let array = CString::new(array.clone()).unwrap().into_raw();
                 Ty::ByteArray(array)
@@ -983,6 +994,10 @@ impl From<Ty> for dojo_types::schema::Ty {
             Ty::Enum_(enum_) => dojo_types::schema::Ty::Enum(enum_.into()),
             Ty::Tuple_(tuple) => dojo_types::schema::Ty::Tuple(tuple.into()),
             Ty::Array_(array) => dojo_types::schema::Ty::Array(array.into()),
+            Ty::FixedSizeArray_(fixed_size_array) => dojo_types::schema::Ty::FixedSizeArray((
+                fixed_size_array.array.into(),
+                fixed_size_array.size,
+            )),
             Ty::ByteArray(array) => {
                 let array = unsafe { CStr::from_ptr(array).to_string_lossy().to_string() };
                 dojo_types::schema::Ty::ByteArray(array)
@@ -1456,6 +1471,7 @@ pub struct Model {
     pub class_hash: FieldElement,
     pub contract_address: FieldElement,
     pub layout: *const c_char,
+    pub use_legacy_store: bool,
 }
 
 impl From<torii_proto::Model> for Model {
@@ -1473,6 +1489,7 @@ impl From<torii_proto::Model> for Model {
             class_hash: value.class_hash.into(),
             contract_address: value.contract_address.into(),
             layout,
+            use_legacy_store: value.use_legacy_store,
         }
     }
 }
@@ -1494,6 +1511,7 @@ impl From<Model> for torii_proto::Model {
             class_hash: value.class_hash.into(),
             contract_address: value.contract_address.into(),
             layout,
+            use_legacy_store: value.use_legacy_store,
         }
     }
 }

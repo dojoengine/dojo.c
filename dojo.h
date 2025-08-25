@@ -31,7 +31,7 @@ struct EnumOption;
 
 typedef enum BlockTag {
   Latest,
-  Pending,
+  PreConfirmed,
 } BlockTag;
 
 typedef enum CallType {
@@ -907,12 +907,18 @@ typedef struct CArrayTy {
   uintptr_t data_len;
 } CArrayTy;
 
+typedef struct FixedSizeArray {
+  struct CArrayTy array;
+  uint32_t size;
+} FixedSizeArray;
+
 typedef enum Ty_Tag {
   Primitive_,
   Struct_,
   Enum_,
   Tuple_,
   Array_,
+  FixedSizeArray_,
   ByteArray,
 } Ty_Tag;
 
@@ -935,6 +941,9 @@ typedef struct Ty {
       struct CArrayTy array;
     };
     struct {
+      struct FixedSizeArray fixed_size_array;
+    };
+    struct {
       const char *byte_array;
     };
   };
@@ -950,6 +959,7 @@ typedef struct Model {
   struct FieldElement class_hash;
   struct FieldElement contract_address;
   const char *layout;
+  bool use_legacy_store;
 } Model;
 
 typedef struct TransactionCall {
