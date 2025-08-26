@@ -2,17 +2,56 @@ use std::collections::HashMap;
 
 use num_bigint::BigUint;
 use num_traits::Num;
+use serde_json::Value as JsonValue;
 use wasm_bindgen::JsValue;
 
 use super::types::{EnumValue, Ty};
 use crate::wasm::types::FixedSizeArray;
+
+fn json_value_to_js_value(json_value: &JsonValue) -> JsValue {
+    match json_value {
+        JsonValue::Null => JsValue::NULL,
+        JsonValue::Bool(b) => JsValue::from(*b),
+        JsonValue::Number(n) => {
+            if let Some(i) = n.as_i64() {
+                JsValue::from(i)
+            } else if let Some(u) = n.as_u64() {
+                JsValue::from(u)
+            } else if let Some(f) = n.as_f64() {
+                JsValue::from(f)
+            } else {
+                JsValue::from(n.to_string())
+            }
+        }
+        JsonValue::String(s) => JsValue::from(s.as_str()),
+        JsonValue::Array(arr) => {
+            let js_array = js_sys::Array::new();
+            for item in arr {
+                js_array.push(&json_value_to_js_value(item));
+            }
+            js_array.into()
+        }
+        JsonValue::Object(obj) => {
+            let js_obj = js_sys::Object::new();
+            for (key, value) in obj {
+                js_sys::Reflect::set(
+                    &js_obj,
+                    &JsValue::from(key.as_str()),
+                    &json_value_to_js_value(value),
+                )
+                .unwrap();
+            }
+            js_obj.into()
+        }
+    }
+}
 
 pub fn parse_ty_as_json_str(ty: &dojo_types::schema::Ty, key: bool) -> Ty {
     match ty {
         dojo_types::schema::Ty::Primitive(primitive) => Ty {
             r#type: "primitive".to_string(),
             type_name: ty.name(),
-            value: serde_wasm_bindgen::to_value(&primitive.to_json_value().unwrap()).unwrap(),
+            value: json_value_to_js_value(&primitive.to_json_value().unwrap()),
             key,
         },
         dojo_types::schema::Ty::Struct(struct_ty) => Ty {
