@@ -167,7 +167,7 @@ mod tests {
         // Test number
         let json_val = json!(42);
         let js_val = json_value_to_js_value(&json_val);
-        assert!(js_val.is_f64());
+        assert!(js_val.as_f64().is_some());
         assert_eq!(js_val.as_f64().unwrap() as i32, 42);
 
         // Test string
@@ -192,13 +192,13 @@ mod tests {
         let primitive = Primitive::I8(Some(42));
         let json_val = primitive.to_json_value().unwrap();
         let js_val = json_value_to_js_value(&json_val);
-        assert!(js_val.is_f64());
+        assert!(js_val.as_f64().is_some());
         assert_eq!(js_val.as_f64().unwrap() as i8, 42);
 
         let primitive = Primitive::U32(Some(1234567));
         let json_val = primitive.to_json_value().unwrap();
         let js_val = json_value_to_js_value(&json_val);
-        assert!(js_val.is_f64());
+        assert!(js_val.as_f64().is_some());
         assert_eq!(js_val.as_f64().unwrap() as u32, 1234567);
 
         // Test boolean
@@ -215,7 +215,8 @@ mod tests {
         assert_eq!(js_val.as_string().unwrap(), "18446744073709551615");
 
         // Test U256 (should be hex string)
-        let primitive = Primitive::U256(Some(starknet_types_core::felt::Felt::from(42u32)));
+        use crypto_bigint::U256;
+        let primitive = Primitive::U256(Some(U256::from(42u32)));
         let json_val = primitive.to_json_value().unwrap();
         let js_val = json_value_to_js_value(&json_val);
         assert!(js_val.is_string());
