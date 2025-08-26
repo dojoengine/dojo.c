@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
+use gloo_utils::format::JsValueSerdeExt;
 use num_bigint::BigUint;
 use num_traits::Num;
-use gloo_utils::format::JsValueSerdeExt;
 use serde_json::Value as JsonValue;
 use wasm_bindgen::JsValue;
 
@@ -140,10 +140,11 @@ pub fn pad_to_hex(input: &str) -> Result<String, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use dojo_types::primitive::Primitive;
     use serde_json::json;
     use wasm_bindgen_test::*;
+
+    use super::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 
@@ -179,7 +180,10 @@ mod tests {
         let json_val = json!("0x000000000000000000000000000000000000000000000000000000000000002a");
         let js_val = json_value_to_js_value(&json_val);
         assert!(js_val.is_string());
-        assert_eq!(js_val.as_string().unwrap(), "0x000000000000000000000000000000000000000000000000000000000000002a");
+        assert_eq!(
+            js_val.as_string().unwrap(),
+            "0x000000000000000000000000000000000000000000000000000000000000002a"
+        );
     }
 
     #[wasm_bindgen_test]
@@ -218,7 +222,8 @@ mod tests {
         assert!(js_val.as_string().unwrap().starts_with("0x"));
 
         // Test ContractAddress (should be hex string)
-        let primitive = Primitive::ContractAddress(Some(starknet_types_core::felt::Felt::from(42u32)));
+        let primitive =
+            Primitive::ContractAddress(Some(starknet_types_core::felt::Felt::from(42u32)));
         let json_val = primitive.to_json_value().unwrap();
         let js_val = json_value_to_js_value(&json_val);
         assert!(js_val.is_string());
@@ -229,10 +234,10 @@ mod tests {
     fn test_json_array_conversion() {
         let json_val = json!([1, 2, 3, "test", true]);
         let js_val = json_value_to_js_value(&json_val);
-        
+
         // Check if it's an array
         assert!(js_val.is_object());
-        
+
         // Convert to js_sys::Array to test further
         let js_array = js_sys::Array::from(&js_val);
         assert_eq!(js_array.length(), 5);
@@ -246,10 +251,10 @@ mod tests {
             "active": true
         });
         let js_val = json_value_to_js_value(&json_val);
-        
+
         // Check if it's an object
         assert!(js_val.is_object());
-        
+
         // Test that we can access properties
         let js_obj = js_sys::Object::from(js_val);
         let name_val = js_sys::Reflect::get(&js_obj, &JsValue::from("name")).unwrap();
