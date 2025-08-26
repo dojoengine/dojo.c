@@ -46,6 +46,7 @@ crypto-bigint = "0.5.5"
 tsify-next = { version = "0.5.4", features = ["js"] }
 instant = { version = "0.1.13", features = ["wasm-bindgen"] }
 gloo-timers = { version = "0.3.0", features = ["futures"] }
+gloo-utils = { version = "0.2.0", features = ["serde"] }
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
 chrono = "0.4.41"
@@ -68,6 +69,9 @@ base64 = "0.22.1"
 # this addresses issue with cyclical dependencies when generating C header
 # see. https://github.com/mozilla/cbindgen/issues/43
 cbindgen = { git = "https://github.com/masnagam/cbindgen", branch = "fix-issue-43" }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.33"
 
 [patch.crates-io]
 crunchy = { git = "https://github.com/nmathewson/crunchy", branch = "cross-compilation-fix" }
