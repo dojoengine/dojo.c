@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use num_bigint::BigUint;
 use num_traits::Num;
+use gloo_utils::format::JsValueSerdeExt;
 use serde_json::Value as JsonValue;
 use wasm_bindgen::JsValue;
 
@@ -9,41 +10,7 @@ use super::types::{EnumValue, Ty};
 use crate::wasm::types::FixedSizeArray;
 
 fn json_value_to_js_value(json_value: &JsonValue) -> JsValue {
-    match json_value {
-        JsonValue::Null => JsValue::NULL,
-        JsonValue::Bool(b) => JsValue::from(*b),
-        JsonValue::Number(n) => {
-            if let Some(i) = n.as_i64() {
-                JsValue::from(i)
-            } else if let Some(u) = n.as_u64() {
-                JsValue::from(u)
-            } else if let Some(f) = n.as_f64() {
-                JsValue::from(f)
-            } else {
-                JsValue::from(n.to_string())
-            }
-        }
-        JsonValue::String(s) => JsValue::from(s.as_str()),
-        JsonValue::Array(arr) => {
-            let js_array = js_sys::Array::new();
-            for item in arr {
-                js_array.push(&json_value_to_js_value(item));
-            }
-            js_array.into()
-        }
-        JsonValue::Object(obj) => {
-            let js_obj = js_sys::Object::new();
-            for (key, value) in obj {
-                js_sys::Reflect::set(
-                    &js_obj,
-                    &JsValue::from(key.as_str()),
-                    &json_value_to_js_value(value),
-                )
-                .unwrap();
-            }
-            js_obj.into()
-        }
-    }
+    JsValue::from_serde(json_value).unwrap()
 }
 
 pub fn parse_ty_as_json_str(ty: &dojo_types::schema::Ty, key: bool) -> Ty {
@@ -169,4 +136,124 @@ pub fn pad_to_hex(input: &str) -> Result<String, String> {
     let padded_hex = format!("{:0>64}", hex_string);
 
     Ok(padded_hex)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dojo_types::primitive::Primitive;
+    use serde_json::json;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn test_json_value_to_js_value_primitives() {
+        // Test null
+        let json_val = json!(null);
+        let js_val = json_value_to_js_value(&json_val);
+        assert!(js_val.is_null());
+
+        // Test boolean
+        let json_val = json!(true);
+        let js_val = json_value_to_js_value(&json_val);
+        assert!(js_val.is_truthy());
+
+        let json_val = json!(false);
+        let js_val = json_value_to_js_value(&json_val);
+        assert!(!js_val.is_truthy());
+
+        // Test number
+        let json_val = json!(42);
+        let js_val = json_value_to_js_value(&json_val);
+        assert!(js_val.is_f64());
+        assert_eq!(js_val.as_f64().unwrap() as i32, 42);
+
+        // Test string
+        let json_val = json!("hello world");
+        let js_val = json_value_to_js_value(&json_val);
+        assert!(js_val.is_string());
+        assert_eq!(js_val.as_string().unwrap(), "hello world");
+
+        // Test hex string (like what primitives produce)
+        let json_val = json!("0x000000000000000000000000000000000000000000000000000000000000002a");
+        let js_val = json_value_to_js_value(&json_val);
+        assert!(js_val.is_string());
+        assert_eq!(js_val.as_string().unwrap(), "0x000000000000000000000000000000000000000000000000000000000000002a");
+    }
+
+    #[wasm_bindgen_test]
+    fn test_primitive_to_js_value_conversions() {
+        // Test small integers
+        let primitive = Primitive::I8(Some(42));
+        let json_val = primitive.to_json_value().unwrap();
+        let js_val = json_value_to_js_value(&json_val);
+        assert!(js_val.is_f64());
+        assert_eq!(js_val.as_f64().unwrap() as i8, 42);
+
+        let primitive = Primitive::U32(Some(1234567));
+        let json_val = primitive.to_json_value().unwrap();
+        let js_val = json_value_to_js_value(&json_val);
+        assert!(js_val.is_f64());
+        assert_eq!(js_val.as_f64().unwrap() as u32, 1234567);
+
+        // Test boolean
+        let primitive = Primitive::Bool(Some(true));
+        let json_val = primitive.to_json_value().unwrap();
+        let js_val = json_value_to_js_value(&json_val);
+        assert!(js_val.is_truthy());
+
+        // Test large integers (should be strings)
+        let primitive = Primitive::U64(Some(18446744073709551615u64));
+        let json_val = primitive.to_json_value().unwrap();
+        let js_val = json_value_to_js_value(&json_val);
+        assert!(js_val.is_string());
+        assert_eq!(js_val.as_string().unwrap(), "18446744073709551615");
+
+        // Test U256 (should be hex string)
+        let primitive = Primitive::U256(Some(starknet_types_core::felt::Felt::from(42u32)));
+        let json_val = primitive.to_json_value().unwrap();
+        let js_val = json_value_to_js_value(&json_val);
+        assert!(js_val.is_string());
+        assert!(js_val.as_string().unwrap().starts_with("0x"));
+
+        // Test ContractAddress (should be hex string)
+        let primitive = Primitive::ContractAddress(Some(starknet_types_core::felt::Felt::from(42u32)));
+        let json_val = primitive.to_json_value().unwrap();
+        let js_val = json_value_to_js_value(&json_val);
+        assert!(js_val.is_string());
+        assert!(js_val.as_string().unwrap().starts_with("0x"));
+    }
+
+    #[wasm_bindgen_test]
+    fn test_json_array_conversion() {
+        let json_val = json!([1, 2, 3, "test", true]);
+        let js_val = json_value_to_js_value(&json_val);
+        
+        // Check if it's an array
+        assert!(js_val.is_object());
+        
+        // Convert to js_sys::Array to test further
+        let js_array = js_sys::Array::from(&js_val);
+        assert_eq!(js_array.length(), 5);
+    }
+
+    #[wasm_bindgen_test]
+    fn test_json_object_conversion() {
+        let json_val = json!({
+            "name": "test",
+            "value": 42,
+            "active": true
+        });
+        let js_val = json_value_to_js_value(&json_val);
+        
+        // Check if it's an object
+        assert!(js_val.is_object());
+        
+        // Test that we can access properties
+        let js_obj = js_sys::Object::from(js_val);
+        let name_val = js_sys::Reflect::get(&js_obj, &JsValue::from("name")).unwrap();
+        assert!(name_val.is_string());
+        assert_eq!(name_val.as_string().unwrap(), "test");
+    }
 }

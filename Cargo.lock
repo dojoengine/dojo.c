@@ -1376,6 +1376,7 @@ dependencies = [
  "futures",
  "futures-channel",
  "gloo-timers",
+ "gloo-utils",
  "instant",
  "js-sys",
  "keyring",
@@ -1402,6 +1403,7 @@ dependencies = [
  "urlencoding",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+ "wasm-bindgen-test",
  "web-sys",
 ]
 
