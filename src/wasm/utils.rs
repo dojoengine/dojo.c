@@ -146,8 +146,6 @@ mod tests {
 
     use super::*;
 
-    wasm_bindgen_test_configure!(run_in_browser);
-
     #[wasm_bindgen_test]
     fn test_json_value_to_js_value_primitives() {
         // Test null
