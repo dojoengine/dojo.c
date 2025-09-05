@@ -23,6 +23,12 @@ cdef extern from *:
     Lte,
     In,
     NotIn,
+    Contains,
+    ContainsAll,
+    ContainsAny,
+    ArrayLengthEq,
+    ArrayLengthGt,
+    ArrayLengthLt,
 
   cdef enum LogicalOperator:
     And,
@@ -428,6 +434,7 @@ cdef extern from *:
     const char *symbol;
     uint8_t decimals;
     const char *metadata;
+    COptionU256 total_supply;
 
   cdef struct CArrayTokenBalance:
     TokenBalance *data;
@@ -557,6 +564,9 @@ cdef extern from *:
   cdef struct Entity:
     FieldElement hashed_keys;
     CArrayStruct models;
+    uint64_t created_at;
+    uint64_t updated_at;
+    uint64_t executed_at;
 
   cdef enum COptionFieldElement_Tag:
     SomeFieldElement,

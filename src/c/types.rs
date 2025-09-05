@@ -1,5 +1,6 @@
 use std::ffi::{c_char, CStr, CString};
 
+use chrono::DateTime;
 use crypto_bigint::Encoding;
 use dojo_types::naming::compute_selector_from_names;
 use starknet::core::utils::get_selector_from_name;
@@ -137,6 +138,7 @@ pub struct Token {
     pub symbol: *const c_char,
     pub decimals: u8,
     pub metadata: *const c_char,
+    pub total_supply: COption<U256>,
 }
 
 impl From<torii_proto::Token> for Token {
@@ -148,6 +150,7 @@ impl From<torii_proto::Token> for Token {
             symbol: CString::new(val.symbol.clone()).unwrap().into_raw(),
             decimals: val.decimals,
             metadata: CString::new(val.metadata.clone()).unwrap().into_raw(),
+            total_supply: val.total_supply.into(),
         }
     }
 }
@@ -862,6 +865,13 @@ pub enum ComparisonOperator {
     Lte,
     In,
     NotIn,
+    // Array-specific operators
+    Contains,      // Array contains value
+    ContainsAll,   // Array contains all values
+    ContainsAny,   // Array contains any of the values
+    ArrayLengthEq, // Array length equals
+    ArrayLengthGt, // Array length greater than
+    ArrayLengthLt, // Array length less than
 }
 
 #[derive(Clone, Debug)]
@@ -886,6 +896,9 @@ pub enum ValueType {
 pub struct Entity {
     pub hashed_keys: FieldElement,
     pub models: CArray<Struct>,
+    pub created_at: u64,
+    pub updated_at: u64,
+    pub executed_at: u64,
 }
 
 impl From<Entity> for torii_proto::schema::Entity {
@@ -893,7 +906,13 @@ impl From<Entity> for torii_proto::schema::Entity {
         let models: Vec<Struct> = val.models.into();
         let models = models.into_iter().map(|m| m.into()).collect();
 
-        torii_proto::schema::Entity { hashed_keys: val.hashed_keys.into(), models }
+        torii_proto::schema::Entity {
+            hashed_keys: val.hashed_keys.into(),
+            models,
+            created_at: DateTime::from_timestamp(val.created_at as i64, 0).unwrap(),
+            updated_at: DateTime::from_timestamp(val.updated_at as i64, 0).unwrap(),
+            executed_at: DateTime::from_timestamp(val.executed_at as i64, 0).unwrap(),
+        }
     }
 }
 
@@ -901,7 +920,13 @@ impl From<torii_proto::schema::Entity> for Entity {
     fn from(val: torii_proto::schema::Entity) -> Self {
         let models = val.models.into_iter().map(|m| m.into()).collect::<Vec<Struct>>();
 
-        Entity { hashed_keys: val.hashed_keys.into(), models: models.into() }
+        Entity {
+            hashed_keys: val.hashed_keys.into(),
+            models: models.into(),
+            created_at: val.created_at.timestamp() as u64,
+            updated_at: val.updated_at.timestamp() as u64,
+            executed_at: val.executed_at.timestamp() as u64,
+        }
     }
 }
 
@@ -1398,6 +1423,12 @@ impl From<ComparisonOperator> for torii_proto::ComparisonOperator {
             ComparisonOperator::Lte => torii_proto::ComparisonOperator::Lte,
             ComparisonOperator::In => torii_proto::ComparisonOperator::In,
             ComparisonOperator::NotIn => torii_proto::ComparisonOperator::NotIn,
+            ComparisonOperator::Contains => torii_proto::ComparisonOperator::Contains,
+            ComparisonOperator::ContainsAll => torii_proto::ComparisonOperator::ContainsAll,
+            ComparisonOperator::ContainsAny => torii_proto::ComparisonOperator::ContainsAny,
+            ComparisonOperator::ArrayLengthEq => torii_proto::ComparisonOperator::ArrayLengthEq,
+            ComparisonOperator::ArrayLengthGt => torii_proto::ComparisonOperator::ArrayLengthGt,
+            ComparisonOperator::ArrayLengthLt => torii_proto::ComparisonOperator::ArrayLengthLt,
         }
     }
 }
@@ -1413,6 +1444,12 @@ impl From<torii_proto::ComparisonOperator> for ComparisonOperator {
             torii_proto::ComparisonOperator::Lte => ComparisonOperator::Lte,
             torii_proto::ComparisonOperator::In => ComparisonOperator::In,
             torii_proto::ComparisonOperator::NotIn => ComparisonOperator::NotIn,
+            torii_proto::ComparisonOperator::Contains => ComparisonOperator::Contains,
+            torii_proto::ComparisonOperator::ContainsAll => ComparisonOperator::ContainsAll,
+            torii_proto::ComparisonOperator::ContainsAny => ComparisonOperator::ContainsAny,
+            torii_proto::ComparisonOperator::ArrayLengthEq => ComparisonOperator::ArrayLengthEq,
+            torii_proto::ComparisonOperator::ArrayLengthGt => ComparisonOperator::ArrayLengthGt,
+            torii_proto::ComparisonOperator::ArrayLengthLt => ComparisonOperator::ArrayLengthLt,
         }
     }
 }

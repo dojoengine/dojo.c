@@ -34,6 +34,12 @@ enum class ComparisonOperator {
   Lte,
   In,
   NotIn,
+  Contains,
+  ContainsAll,
+  ContainsAny,
+  ArrayLengthEq,
+  ArrayLengthGt,
+  ArrayLengthLt,
 };
 
 enum class LogicalOperator {
@@ -201,6 +207,9 @@ struct Struct {
 struct Entity {
   FieldElement hashed_keys;
   CArray<Struct> models;
+  uint64_t created_at;
+  uint64_t updated_at;
+  uint64_t executed_at;
 };
 
 struct KeysClause {
@@ -867,6 +876,7 @@ struct Token {
   const char *symbol;
   uint8_t decimals;
   const char *metadata;
+  COption<U256> total_supply;
 };
 
 struct TokenQuery {
