@@ -1244,7 +1244,7 @@ Result<Subscription*> client_on_transaction(ToriiClient *client,
 /// Result containing pointer to Subscription or error
 Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
                                                     COption<Clause> clause,
-                                                    void (*callback)(FieldElement, CArray<Struct>));
+                                                    void (*callback)(Entity));
 
 /// Updates an existing entity subscription with new clauses
 ///
@@ -1272,7 +1272,7 @@ Result<bool> client_update_entity_subscription(ToriiClient *client,
 /// Result containing pointer to Subscription or error
 Result<Subscription*> client_on_event_message_update(ToriiClient *client,
                                                      COption<Clause> clause,
-                                                     void (*callback)(FieldElement, CArray<Struct>));
+                                                     void (*callback)(Entity));
 
 /// Updates an existing event message subscription
 ///

@@ -925,7 +925,7 @@ pub unsafe extern "C" fn client_on_transaction(
 pub unsafe extern "C" fn client_on_entity_state_update(
     client: *mut ToriiClient,
     clause: COption<Clause>,
-    callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
+    callback: unsafe extern "C" fn(Entity),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
     let (trigger, tripwire) = Tripwire::new();
@@ -952,10 +952,7 @@ pub unsafe extern "C" fn client_on_entity_state_update(
                     if let Some(tx) = sub_id_tx.take() {
                         tx.send(id).expect("Failed to send subscription ID");
                     } else {
-                        let key: types::FieldElement = entity.hashed_keys.into();
-                        let models: Vec<Struct> =
-                            entity.models.into_iter().map(|e| e.into()).collect();
-                        callback(key, models.into());
+                        callback(entity.into());
                     }
                 }
             }
@@ -1023,7 +1020,7 @@ pub unsafe extern "C" fn client_update_entity_subscription(
 pub unsafe extern "C" fn client_on_event_message_update(
     client: *mut ToriiClient,
     clause: COption<Clause>,
-    callback: unsafe extern "C" fn(types::FieldElement, CArray<Struct>),
+    callback: unsafe extern "C" fn(Entity),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
     let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
@@ -1049,10 +1046,7 @@ pub unsafe extern "C" fn client_on_event_message_update(
                     if let Some(tx) = sub_id_tx.take() {
                         tx.send(id).expect("Failed to send subscription ID");
                     } else {
-                        let key: types::FieldElement = entity.hashed_keys.into();
-                        let models: Vec<Struct> =
-                            entity.models.into_iter().map(|e| e.into()).collect();
-                        callback(key, models.into());
+                        callback(entity.into());
                     }
                 }
             }

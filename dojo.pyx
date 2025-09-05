@@ -388,6 +388,13 @@ cdef extern from *:
     Struct *data;
     uintptr_t data_len;
 
+  cdef struct Entity:
+    FieldElement hashed_keys;
+    CArrayStruct models;
+    uint64_t created_at;
+    uint64_t updated_at;
+    uint64_t executed_at;
+
   cdef struct Event:
     CArrayFieldElement keys;
     CArrayFieldElement data;
@@ -560,13 +567,6 @@ cdef extern from *:
   cdef struct OrderBy:
     const char *field;
     OrderDirection direction;
-
-  cdef struct Entity:
-    FieldElement hashed_keys;
-    CArrayStruct models;
-    uint64_t created_at;
-    uint64_t updated_at;
-    uint64_t executed_at;
 
   cdef enum COptionFieldElement_Tag:
     SomeFieldElement,
@@ -903,7 +903,7 @@ cdef extern from *:
   # Result containing pointer to Subscription or error
   ResultSubscription client_on_entity_state_update(ToriiClient *client,
                                                    COptionClause clause,
-                                                   void (*callback)(FieldElement, CArrayStruct));
+                                                   void (*callback)(Entity));
 
   # Updates an existing entity subscription with new clauses
   #
@@ -931,7 +931,7 @@ cdef extern from *:
   # Result containing pointer to Subscription or error
   ResultSubscription client_on_event_message_update(ToriiClient *client,
                                                     COptionClause clause,
-                                                    void (*callback)(FieldElement, CArrayStruct));
+                                                    void (*callback)(Entity));
 
   # Updates an existing event message subscription
   #
