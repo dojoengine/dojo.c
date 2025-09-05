@@ -600,6 +600,14 @@ typedef struct CArrayStruct {
   uintptr_t data_len;
 } CArrayStruct;
 
+typedef struct Entity {
+  struct FieldElement hashed_keys;
+  struct CArrayStruct models;
+  uint64_t created_at;
+  uint64_t updated_at;
+  uint64_t executed_at;
+} Entity;
+
 typedef struct Event {
   struct CArrayFieldElement keys;
   struct CArrayFieldElement data;
@@ -868,14 +876,6 @@ typedef struct OrderBy {
   const char *field;
   enum OrderDirection direction;
 } OrderBy;
-
-typedef struct Entity {
-  struct FieldElement hashed_keys;
-  struct CArrayStruct models;
-  uint64_t created_at;
-  uint64_t updated_at;
-  uint64_t executed_at;
-} Entity;
 
 typedef enum COptionFieldElement_Tag {
   SomeFieldElement,
@@ -1294,8 +1294,7 @@ struct ResultSubscription client_on_transaction(struct ToriiClient *client,
  */
 struct ResultSubscription client_on_entity_state_update(struct ToriiClient *client,
                                                         struct COptionClause clause,
-                                                        void (*callback)(struct FieldElement,
-                                                                         struct CArrayStruct));
+                                                        void (*callback)(struct Entity));
 
 /**
  * Updates an existing entity subscription with new clauses
@@ -1327,8 +1326,7 @@ struct Resultbool client_update_entity_subscription(struct ToriiClient *client,
  */
 struct ResultSubscription client_on_event_message_update(struct ToriiClient *client,
                                                          struct COptionClause clause,
-                                                         void (*callback)(struct FieldElement,
-                                                                          struct CArrayStruct));
+                                                         void (*callback)(struct Entity));
 
 /**
  * Updates an existing event message subscription
