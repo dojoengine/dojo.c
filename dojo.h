@@ -48,6 +48,12 @@ typedef enum ComparisonOperator {
   Lte,
   In,
   NotIn,
+  Contains,
+  ContainsAll,
+  ContainsAny,
+  ArrayLengthEq,
+  ArrayLengthGt,
+  ArrayLengthLt,
 } ComparisonOperator;
 
 typedef enum LogicalOperator {
@@ -659,6 +665,7 @@ typedef struct Token {
   const char *symbol;
   uint8_t decimals;
   const char *metadata;
+  struct COptionU256 total_supply;
 } Token;
 
 typedef struct CArrayTokenBalance {
@@ -865,6 +872,9 @@ typedef struct OrderBy {
 typedef struct Entity {
   struct FieldElement hashed_keys;
   struct CArrayStruct models;
+  uint64_t created_at;
+  uint64_t updated_at;
+  uint64_t executed_at;
 } Entity;
 
 typedef enum COptionFieldElement_Tag {

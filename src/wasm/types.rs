@@ -84,6 +84,7 @@ pub struct Token {
     pub symbol: String,
     pub decimals: u8,
     pub metadata: String,
+    pub total_supply: Option<String>,
 }
 
 impl From<torii_proto::Token> for Token {
@@ -95,6 +96,7 @@ impl From<torii_proto::Token> for Token {
             symbol: value.symbol.clone(),
             decimals: value.decimals,
             metadata: value.metadata.clone(),
+            total_supply: value.total_supply.map(|t| format!("0x{:x}", t)),
         }
     }
 }
@@ -473,6 +475,9 @@ impl From<Struct> for Model {
 pub struct Entity {
     pub hashed_keys: String,
     pub models: HashMap<String, Model>,
+    pub created_at: u64,
+    pub updated_at: u64,
+    pub executed_at: u64,
 }
 
 impl From<torii_proto::schema::Entity> for Entity {
@@ -480,6 +485,9 @@ impl From<torii_proto::schema::Entity> for Entity {
         Self {
             hashed_keys: format!("{:#x}", value.hashed_keys),
             models: value.models.into_iter().map(|m| (m.name.clone(), m.into())).collect(),
+            created_at: value.created_at.timestamp() as u64,
+            updated_at: value.updated_at.timestamp() as u64,
+            executed_at: value.executed_at.timestamp() as u64,
         }
     }
 }
