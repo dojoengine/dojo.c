@@ -42,6 +42,15 @@ enum class ComparisonOperator {
   ArrayLengthLt,
 };
 
+enum class ContractType {
+  WORLD,
+  ERC20,
+  ERC721,
+  ERC1155,
+  UDC,
+  OTHER,
+};
+
 enum class LogicalOperator {
   And,
   Or,
@@ -908,11 +917,20 @@ struct TokenCollection {
   const char *metadata;
 };
 
-struct IndexerUpdate {
-  int64_t head;
-  int64_t tps;
-  int64_t last_block_timestamp;
+struct Contract {
   FieldElement contract_address;
+  ContractType contract_type;
+  COption<uint64_t> head;
+  COption<uint64_t> tps;
+  COption<uint64_t> last_block_timestamp;
+  COption<FieldElement> last_pending_block_tx;
+  uint64_t updated_at;
+  uint64_t created_at;
+};
+
+struct ContractQuery {
+  CArray<FieldElement> contract_addresses;
+  CArray<ContractType> contract_types;
 };
 
 struct Signature {
@@ -1369,7 +1387,17 @@ Result<Page<TokenBalance>> client_token_balances(ToriiClient *client, TokenBalan
 Result<Page<TokenCollection>> client_token_collections(ToriiClient *client,
                                                        TokenBalanceQuery query);
 
-/// Subscribes to indexer updates
+/// Gets contracts matching the given query
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - ContractQuery parameters
+///
+/// # Returns
+/// Result containing array of Contract information or error
+Result<CArray<Contract>> client_contracts(ToriiClient *client, ContractQuery query);
+
+/// Subscribes to contract updates
 ///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
@@ -1378,9 +1406,9 @@ Result<Page<TokenCollection>> client_token_collections(ToriiClient *client,
 ///
 /// # Returns
 /// Result containing pointer to Subscription or error
-Result<Subscription*> on_indexer_update(ToriiClient *client,
-                                        const FieldElement *contract_address,
-                                        void (*callback)(IndexerUpdate));
+Result<Subscription*> on_contract_update(ToriiClient *client,
+                                         const FieldElement *contract_address,
+                                         void (*callback)(Contract));
 
 /// Subscribes to token balance updates
 ///

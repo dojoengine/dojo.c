@@ -23,6 +23,8 @@ struct Struct;
 struct Token;
 struct TokenBalance;
 struct TokenCollection;
+struct Contract;
+enum ContractType;
 struct Provider;
 struct Account;
 struct Ty;
@@ -55,6 +57,15 @@ typedef enum ComparisonOperator {
   ArrayLengthGt,
   ArrayLengthLt,
 } ComparisonOperator;
+
+typedef enum ContractType {
+  WORLD,
+  ERC20,
+  ERC721,
+  ERC1155,
+  UDC,
+  OTHER,
+} ContractType;
 
 typedef enum LogicalOperator {
   And,
@@ -737,12 +748,62 @@ typedef struct ResultPageTokenCollection {
   };
 } ResultPageTokenCollection;
 
-typedef struct IndexerUpdate {
-  int64_t head;
-  int64_t tps;
-  int64_t last_block_timestamp;
+typedef struct CArrayContract {
+  struct Contract *data;
+  uintptr_t data_len;
+} CArrayContract;
+
+typedef enum ResultCArrayContract_Tag {
+  OkCArrayContract,
+  ErrCArrayContract,
+} ResultCArrayContract_Tag;
+
+typedef struct ResultCArrayContract {
+  ResultCArrayContract_Tag tag;
+  union {
+    struct {
+      struct CArrayContract ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultCArrayContract;
+
+typedef struct CArrayContractType {
+  enum ContractType *data;
+  uintptr_t data_len;
+} CArrayContractType;
+
+typedef struct ContractQuery {
+  struct CArrayFieldElement contract_addresses;
+  struct CArrayContractType contract_types;
+} ContractQuery;
+
+typedef enum COptionFieldElement_Tag {
+  SomeFieldElement,
+  NoneFieldElement,
+} COptionFieldElement_Tag;
+
+typedef struct COptionFieldElement {
+  COptionFieldElement_Tag tag;
+  union {
+    struct {
+      struct FieldElement some;
+    };
+  };
+} COptionFieldElement;
+
+typedef struct Contract {
   struct FieldElement contract_address;
-} IndexerUpdate;
+  enum ContractType contract_type;
+  struct COptionu64 head;
+  struct COptionu64 tps;
+  struct COptionu64 last_block_timestamp;
+  struct COptionFieldElement last_pending_block_tx;
+  uint64_t updated_at;
+  uint64_t created_at;
+} Contract;
 
 typedef struct TokenBalance {
   struct U256 balance;
@@ -876,20 +937,6 @@ typedef struct OrderBy {
   const char *field;
   enum OrderDirection direction;
 } OrderBy;
-
-typedef enum COptionFieldElement_Tag {
-  SomeFieldElement,
-  NoneFieldElement,
-} COptionFieldElement_Tag;
-
-typedef struct COptionFieldElement {
-  COptionFieldElement_Tag tag;
-  union {
-    struct {
-      struct FieldElement some;
-    };
-  };
-} COptionFieldElement;
 
 typedef struct CArrayMember {
   struct Member *data;
@@ -1437,7 +1484,20 @@ struct ResultPageTokenCollection client_token_collections(struct ToriiClient *cl
                                                           struct TokenBalanceQuery query);
 
 /**
- * Subscribes to indexer updates
+ * Gets contracts matching the given query
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `query` - ContractQuery parameters
+ *
+ * # Returns
+ * Result containing array of Contract information or error
+ */
+struct ResultCArrayContract client_contracts(struct ToriiClient *client,
+                                             struct ContractQuery query);
+
+/**
+ * Subscribes to contract updates
  *
  * # Parameters
  * * `client` - Pointer to ToriiClient instance
@@ -1447,9 +1507,9 @@ struct ResultPageTokenCollection client_token_collections(struct ToriiClient *cl
  * # Returns
  * Result containing pointer to Subscription or error
  */
-struct ResultSubscription on_indexer_update(struct ToriiClient *client,
-                                            const struct FieldElement *contract_address,
-                                            void (*callback)(struct IndexerUpdate));
+struct ResultSubscription on_contract_update(struct ToriiClient *client,
+                                             const struct FieldElement *contract_address,
+                                             void (*callback)(struct Contract));
 
 /**
  * Subscribes to token balance updates
