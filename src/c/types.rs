@@ -213,6 +213,7 @@ impl From<torii_proto::Token> for TokenCollection {
 
 #[repr(C)]
 #[derive(Debug, Clone)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum ContractType {
     WORLD,
     ERC20,

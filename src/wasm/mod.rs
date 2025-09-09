@@ -35,14 +35,15 @@ use crate::constants;
 use crate::types::{Account, Provider, Subscription, ToriiClient};
 use crate::utils::watch_tx;
 use crate::wasm::types::{
-    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenQuery, TransactionFilter, TransactionQuery,
+    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenQuery, TransactionFilter,
+    TransactionQuery,
 };
 
 mod types;
 
 use types::{
-    BlockId, Call, Calls, Clause, ClientConfig, Contract, Contracts, Controller, Controllers, Entities, Entity,
-    KeysClause, KeysClauses, Message, Model, Page, Query, Signature, Token,
+    BlockId, Call, Calls, Clause, ClientConfig, Contract, Contracts, Controller, Controllers,
+    Entities, Entity, KeysClause, KeysClauses, Message, Model, Page, Query, Signature, Token,
     TokenBalance, TokenBalances, TokenCollections, Tokens, Transaction, Transactions, WasmU256,
 };
 

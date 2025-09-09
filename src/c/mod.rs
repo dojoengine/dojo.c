@@ -51,9 +51,9 @@ use torii_client::Client as TClient;
 use torii_proto::Message;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
-    BlockId, CArray, COption, Call, Clause, Controller, Entity, Error, Event, Contract,
-    KeysClause, Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance,
-    TokenCollection, ToriiClient, Ty, World,
+    BlockId, CArray, COption, Call, Clause, Contract, Controller, Entity, Error, Event, KeysClause,
+    Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance, TokenCollection,
+    ToriiClient, Ty, World,
 };
 use url::Url;
 
