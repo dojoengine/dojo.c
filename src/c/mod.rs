@@ -51,14 +51,14 @@ use torii_client::Client as TClient;
 use torii_proto::Message;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
-    BlockId, CArray, COption, Call, Clause, Controller, Entity, Error, Event, IndexerUpdate,
-    KeysClause, Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance,
-    TokenCollection, ToriiClient, Ty, World,
+    BlockId, CArray, COption, Call, Clause, Contract, Controller, Entity, Error, Event, KeysClause,
+    Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance, TokenCollection,
+    ToriiClient, Ty, World,
 };
 use url::Url;
 
 use crate::c::types::{
-    ControllerQuery, TokenBalanceQuery, TokenQuery, Transaction, TransactionFilter,
+    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenQuery, Transaction, TransactionFilter,
     TransactionQuery,
 };
 use crate::constants;
@@ -1356,7 +1356,29 @@ pub unsafe extern "C" fn client_token_collections(
     }
 }
 
-/// Subscribes to indexer updates
+/// Gets contracts matching the given query
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - ContractQuery parameters
+///
+/// # Returns
+/// Result containing array of Contract information or error
+#[no_mangle]
+pub unsafe extern "C" fn client_contracts(
+    client: *mut ToriiClient,
+    query: ContractQuery,
+) -> Result<CArray<Contract>> {
+    let query: torii_proto::ContractQuery = query.into();
+    let contracts_future = unsafe { (*client).inner.contracts(query) };
+
+    match RUNTIME.block_on(contracts_future) {
+        Ok(contracts) => Result::Ok(contracts.into()),
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
+/// Subscribes to contract updates
 ///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
@@ -1366,10 +1388,10 @@ pub unsafe extern "C" fn client_token_collections(
 /// # Returns
 /// Result containing pointer to Subscription or error
 #[no_mangle]
-pub unsafe extern "C" fn on_indexer_update(
+pub unsafe extern "C" fn on_contract_update(
     client: *mut ToriiClient,
     contract_address: *const types::FieldElement,
-    callback: unsafe extern "C" fn(IndexerUpdate),
+    callback: unsafe extern "C" fn(Contract),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
     let contract_address = if contract_address.is_null() {
@@ -1389,7 +1411,7 @@ pub unsafe extern "C" fn on_indexer_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv = client_clone.inner.on_indexer_updated(contract_address).await;
+            let rcv = client_clone.inner.on_contract_updated(contract_address).await;
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
@@ -1418,7 +1440,7 @@ pub unsafe extern "C" fn on_indexer_update(
         Ok(id) => id,
         Err(_) => {
             return Result::Err(Error {
-                message: CString::new("Failed to establish indexer subscription")
+                message: CString::new("Failed to establish contract subscription")
                     .unwrap()
                     .into_raw(),
             });

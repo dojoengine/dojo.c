@@ -213,30 +213,65 @@ impl From<torii_proto::Token> for TokenCollection {
 
 #[repr(C)]
 #[derive(Debug, Clone)]
-pub struct IndexerUpdate {
-    pub head: i64,
-    pub tps: i64,
-    pub last_block_timestamp: i64,
-    pub contract_address: FieldElement,
+#[allow(clippy::upper_case_acronyms)]
+pub enum ContractType {
+    WORLD,
+    ERC20,
+    ERC721,
+    ERC1155,
+    UDC,
+    OTHER,
 }
 
-impl From<IndexerUpdate> for torii_proto::IndexerUpdate {
-    fn from(val: IndexerUpdate) -> Self {
-        torii_proto::IndexerUpdate {
-            head: val.head,
-            tps: val.tps,
-            last_block_timestamp: val.last_block_timestamp,
-            contract_address: val.contract_address.into(),
+impl From<torii_proto::ContractType> for ContractType {
+    fn from(val: torii_proto::ContractType) -> Self {
+        match val {
+            torii_proto::ContractType::WORLD => ContractType::WORLD,
+            torii_proto::ContractType::ERC20 => ContractType::ERC20,
+            torii_proto::ContractType::ERC721 => ContractType::ERC721,
+            torii_proto::ContractType::ERC1155 => ContractType::ERC1155,
+            torii_proto::ContractType::UDC => ContractType::UDC,
+            torii_proto::ContractType::OTHER => ContractType::OTHER,
         }
     }
 }
 
-impl From<torii_proto::IndexerUpdate> for IndexerUpdate {
-    fn from(val: torii_proto::IndexerUpdate) -> Self {
-        IndexerUpdate {
-            head: val.head,
-            tps: val.tps,
-            last_block_timestamp: val.last_block_timestamp,
+impl From<ContractType> for torii_proto::ContractType {
+    fn from(val: ContractType) -> Self {
+        match val {
+            ContractType::WORLD => torii_proto::ContractType::WORLD,
+            ContractType::ERC20 => torii_proto::ContractType::ERC20,
+            ContractType::ERC721 => torii_proto::ContractType::ERC721,
+            ContractType::ERC1155 => torii_proto::ContractType::ERC1155,
+            ContractType::UDC => torii_proto::ContractType::UDC,
+            ContractType::OTHER => torii_proto::ContractType::OTHER,
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Debug, Clone)]
+pub struct Contract {
+    pub contract_address: FieldElement,
+    pub contract_type: ContractType,
+    pub head: COption<u64>,
+    pub tps: COption<u64>,
+    pub last_block_timestamp: COption<u64>,
+    pub last_pending_block_tx: COption<FieldElement>,
+    pub updated_at: u64,
+    pub created_at: u64,
+}
+
+impl From<torii_proto::Contract> for Contract {
+    fn from(val: torii_proto::Contract) -> Self {
+        Contract {
+            contract_type: val.contract_type.into(),
+            head: val.head.into(),
+            tps: val.tps.into(),
+            last_block_timestamp: val.last_block_timestamp.into(),
+            last_pending_block_tx: val.last_pending_block_tx.into(),
+            updated_at: val.updated_at.timestamp() as u64,
+            created_at: val.created_at.timestamp() as u64,
             contract_address: val.contract_address.into(),
         }
     }
@@ -569,6 +604,22 @@ impl From<TransactionQuery> for torii_proto::TransactionQuery {
         torii_proto::TransactionQuery {
             filter: val.filter.map(|f| f.into()).into(),
             pagination: val.pagination.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct ContractQuery {
+    pub contract_addresses: CArray<FieldElement>,
+    pub contract_types: CArray<ContractType>,
+}
+
+impl From<ContractQuery> for torii_proto::ContractQuery {
+    fn from(val: ContractQuery) -> Self {
+        torii_proto::ContractQuery {
+            contract_addresses: val.contract_addresses.into(),
+            contract_types: val.contract_types.into(),
         }
     }
 }

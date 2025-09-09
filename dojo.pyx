@@ -30,6 +30,14 @@ cdef extern from *:
     ArrayLengthGt,
     ArrayLengthLt,
 
+  cdef enum ContractType:
+    WORLD,
+    ERC20,
+    ERC721,
+    ERC1155,
+    UDC,
+    OTHER,
+
   cdef enum LogicalOperator:
     And,
     Or,
@@ -483,11 +491,44 @@ cdef extern from *:
     PageTokenCollection ok;
     Error err;
 
-  cdef struct IndexerUpdate:
-    int64_t head;
-    int64_t tps;
-    int64_t last_block_timestamp;
+  cdef struct CArrayContract:
+    Contract *data;
+    uintptr_t data_len;
+
+  cdef enum ResultCArrayContract_Tag:
+    OkCArrayContract,
+    ErrCArrayContract,
+
+  cdef struct ResultCArrayContract:
+    ResultCArrayContract_Tag tag;
+    CArrayContract ok;
+    Error err;
+
+  cdef struct CArrayContractType:
+    ContractType *data;
+    uintptr_t data_len;
+
+  cdef struct ContractQuery:
+    CArrayFieldElement contract_addresses;
+    CArrayContractType contract_types;
+
+  cdef enum COptionFieldElement_Tag:
+    SomeFieldElement,
+    NoneFieldElement,
+
+  cdef struct COptionFieldElement:
+    COptionFieldElement_Tag tag;
+    FieldElement some;
+
+  cdef struct Contract:
     FieldElement contract_address;
+    ContractType contract_type;
+    COptionu64 head;
+    COptionu64 tps;
+    COptionu64 last_block_timestamp;
+    COptionFieldElement last_pending_block_tx;
+    uint64_t updated_at;
+    uint64_t created_at;
 
   cdef struct TokenBalance:
     U256 balance;
@@ -567,14 +608,6 @@ cdef extern from *:
   cdef struct OrderBy:
     const char *field;
     OrderDirection direction;
-
-  cdef enum COptionFieldElement_Tag:
-    SomeFieldElement,
-    NoneFieldElement,
-
-  cdef struct COptionFieldElement:
-    COptionFieldElement_Tag tag;
-    FieldElement some;
 
   cdef struct CArrayMember:
     Member *data;
@@ -1027,7 +1060,17 @@ cdef extern from *:
   # Result containing array of TokenBalance information or error
   ResultPageTokenCollection client_token_collections(ToriiClient *client, TokenBalanceQuery query);
 
-  # Subscribes to indexer updates
+  # Gets contracts matching the given query
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `query` - ContractQuery parameters
+  #
+  # # Returns
+  # Result containing array of Contract information or error
+  ResultCArrayContract client_contracts(ToriiClient *client, ContractQuery query);
+
+  # Subscribes to contract updates
   #
   # # Parameters
   # * `client` - Pointer to ToriiClient instance
@@ -1036,9 +1079,9 @@ cdef extern from *:
   #
   # # Returns
   # Result containing pointer to Subscription or error
-  ResultSubscription on_indexer_update(ToriiClient *client,
-                                       const FieldElement *contract_address,
-                                       void (*callback)(IndexerUpdate));
+  ResultSubscription on_contract_update(ToriiClient *client,
+                                        const FieldElement *contract_address,
+                                        void (*callback)(Contract));
 
   # Subscribes to token balance updates
   #

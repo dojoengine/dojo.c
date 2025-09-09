@@ -35,14 +35,15 @@ use crate::constants;
 use crate::types::{Account, Provider, Subscription, ToriiClient};
 use crate::utils::watch_tx;
 use crate::wasm::types::{
-    ControllerQuery, TokenBalanceQuery, TokenQuery, TransactionFilter, TransactionQuery,
+    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenQuery, TransactionFilter,
+    TransactionQuery,
 };
 
 mod types;
 
 use types::{
-    BlockId, Call, Calls, Clause, ClientConfig, Controller, Controllers, Entities, Entity,
-    IndexerUpdate, KeysClause, KeysClauses, Message, Model, Page, Query, Signature, Token,
+    BlockId, Call, Calls, Clause, ClientConfig, Contract, Contracts, Controller, Controllers,
+    Entities, Entity, KeysClause, KeysClauses, Message, Model, Page, Query, Signature, Token,
     TokenBalance, TokenBalances, TokenCollections, Tokens, Transaction, Transactions, WasmU256,
 };
 
@@ -728,6 +729,26 @@ impl ToriiClient {
         Ok(Controllers(controllers.into()))
     }
 
+    /// Gets contracts matching the given query
+    ///
+    /// # Parameters
+    /// * `query` - ContractQuery parameters
+    ///
+    /// # Returns
+    /// Result containing contracts or error
+    #[wasm_bindgen(js_name = getContracts)]
+    pub async fn get_contracts(&self, query: ContractQuery) -> Result<Contracts, JsValue> {
+        let query = query.into();
+
+        let contracts = self
+            .inner
+            .contracts(query)
+            .await
+            .map_err(|e| JsValue::from(format!("failed to get contracts: {e}")))?;
+
+        Ok(Contracts(contracts.into_iter().map(|c| c.into()).collect()))
+    }
+
     /// Gets transactions matching the given query
     ///
     /// # Parameters
@@ -1313,7 +1334,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing subscription handle or error
     #[wasm_bindgen(js_name = onIndexerUpdated)]
-    pub async fn on_indexer_updated(
+    pub async fn on_contract_updated(
         &self,
         contract_address: Option<String>,
         callback: js_sys::Function,
@@ -1339,7 +1360,7 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                if let Ok(stream) = client.on_indexer_updated(contract_address).await {
+                if let Ok(stream) = client.on_contract_updated(contract_address).await {
                     backoff = 1000; // Reset backoff on successful connection
 
                     let mut stream = stream.take_until_if(tripwire.clone());
@@ -1348,7 +1369,7 @@ impl ToriiClient {
                         if let Some(tx) = sub_id_tx.take() {
                             tx.send(0).expect("Failed to send subscription ID");
                         } else {
-                            let update: IndexerUpdate = update.into();
+                            let update: Contract = update.into();
 
                             let _ = callback.call1(
                                 &JsValue::null(),
@@ -1371,7 +1392,7 @@ impl ToriiClient {
         let subscription_id = match sub_id_rx.await {
             Ok(id) => id,
             Err(_) => {
-                return Err(JsValue::from("Failed to establish indexer subscription"));
+                return Err(JsValue::from("Failed to establish contract subscription"));
             }
         };
 

@@ -47,6 +47,10 @@ pub struct Controllers(pub Page<Controller>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Contracts(pub Vec<Contract>);
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Controller {
     pub address: String,
     pub username: String,
@@ -360,33 +364,88 @@ impl From<TokenBalanceQuery> for torii_proto::TokenBalanceQuery {
         }
     }
 }
+
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct IndexerUpdate {
-    pub head: i64,
-    pub tps: i64,
-    pub last_block_timestamp: i64,
-    pub contract_address: String,
+pub enum ContractType {
+    WORLD,
+    ERC20,
+    ERC721,
+    ERC1155,
+    UDC,
+    OTHER,
 }
 
-impl From<IndexerUpdate> for torii_proto::IndexerUpdate {
-    fn from(value: IndexerUpdate) -> Self {
-        Self {
-            head: value.head,
-            tps: value.tps,
-            last_block_timestamp: value.last_block_timestamp,
-            contract_address: Felt::from_str(value.contract_address.as_str()).unwrap(),
+impl From<ContractType> for torii_proto::ContractType {
+    fn from(value: ContractType) -> Self {
+        match value {
+            ContractType::WORLD => torii_proto::ContractType::WORLD,
+            ContractType::ERC20 => torii_proto::ContractType::ERC20,
+            ContractType::ERC721 => torii_proto::ContractType::ERC721,
+            ContractType::ERC1155 => torii_proto::ContractType::ERC1155,
+            ContractType::UDC => torii_proto::ContractType::UDC,
+            ContractType::OTHER => torii_proto::ContractType::OTHER,
         }
     }
 }
 
-impl From<torii_proto::IndexerUpdate> for IndexerUpdate {
-    fn from(value: torii_proto::IndexerUpdate) -> Self {
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct ContractQuery {
+    pub contract_addresses: Vec<String>,
+    pub contract_types: Vec<ContractType>,
+}
+
+impl From<ContractQuery> for torii_proto::ContractQuery {
+    fn from(value: ContractQuery) -> Self {
         Self {
+            contract_addresses: value
+                .contract_addresses
+                .into_iter()
+                .map(|c| Felt::from_str(c.as_str()).unwrap())
+                .collect(),
+            contract_types: value.contract_types.into_iter().map(|t| t.into()).collect(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Contract {
+    pub contract_address: String,
+    pub contract_type: ContractType,
+    pub head: Option<u64>,
+    pub tps: Option<u64>,
+    pub last_block_timestamp: Option<u64>,
+    pub last_pending_block_tx: Option<String>,
+    pub updated_at: u64,
+    pub created_at: u64,
+}
+
+impl From<torii_proto::Contract> for Contract {
+    fn from(value: torii_proto::Contract) -> Self {
+        Self {
+            contract_address: format!("{:#x}", value.contract_address),
+            contract_type: value.contract_type.into(),
             head: value.head,
             tps: value.tps,
             last_block_timestamp: value.last_block_timestamp,
-            contract_address: format!("{:#x}", value.contract_address),
+            last_pending_block_tx: value.last_pending_block_tx.map(|tx| format!("{:#x}", tx)),
+            updated_at: value.updated_at.timestamp() as u64,
+            created_at: value.created_at.timestamp() as u64,
+        }
+    }
+}
+
+impl From<torii_proto::ContractType> for ContractType {
+    fn from(value: torii_proto::ContractType) -> Self {
+        match value {
+            torii_proto::ContractType::WORLD => ContractType::WORLD,
+            torii_proto::ContractType::ERC20 => ContractType::ERC20,
+            torii_proto::ContractType::ERC721 => ContractType::ERC721,
+            torii_proto::ContractType::ERC1155 => ContractType::ERC1155,
+            torii_proto::ContractType::UDC => ContractType::UDC,
+            torii_proto::ContractType::OTHER => ContractType::OTHER,
         }
     }
 }
