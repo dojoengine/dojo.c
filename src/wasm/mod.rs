@@ -35,8 +35,8 @@ use crate::constants;
 use crate::types::{Account, Provider, Subscription, ToriiClient};
 use crate::utils::watch_tx;
 use crate::wasm::types::{
-    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenQuery, TransactionFilter,
-    TransactionQuery,
+    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenContractQuery, TokenQuery,
+    TransactionFilter, TransactionQuery,
 };
 
 mod types;
@@ -44,7 +44,7 @@ mod types;
 use types::{
     BlockId, Call, Calls, Clause, ClientConfig, Contract, Contracts, Controller, Controllers,
     Entities, Entity, KeysClause, KeysClauses, Message, Model, Page, Query, Signature, Token,
-    TokenBalance, TokenBalances, TokenCollections, Tokens, Transaction, Transactions, WasmU256,
+    TokenBalance, TokenBalances, TokenContracts, Tokens, Transaction, Transactions, WasmU256,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -971,7 +971,7 @@ impl ToriiClient {
         Ok(TokenBalances(token_balances.into()))
     }
 
-    /// Gets token collections for given accounts and contracts
+    /// Gets token contracts for given accounts and contracts
     ///
     /// # Parameters
     /// * `contract_addresses` - Array of contract addresses as hex strings
@@ -982,20 +982,20 @@ impl ToriiClient {
     ///
     /// # Returns
     /// Result containing token balances or error
-    #[wasm_bindgen(js_name = getTokenCollections)]
-    pub async fn get_token_collections(
+    #[wasm_bindgen(js_name = getTokenContracts)]
+    pub async fn get_token_contracts(
         &self,
-        query: TokenBalanceQuery,
-    ) -> Result<TokenCollections, JsValue> {
+        query: TokenContractQuery,
+    ) -> Result<TokenContracts, JsValue> {
         let query = query.into();
 
-        let token_collections = self
+        let token_contracts = self
             .inner
-            .token_collections(query)
+            .token_contracts(query)
             .await
-            .map_err(|e| JsValue::from(format!("failed to get token collections: {e}")))?;
+            .map_err(|e| JsValue::from(format!("failed to get token contracts: {e}")))?;
 
-        Ok(TokenCollections(token_collections.into()))
+        Ok(TokenContracts(token_contracts.into()))
     }
 
     /// Queries entities based on the provided query parameters

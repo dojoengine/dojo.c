@@ -908,13 +908,19 @@ struct TokenBalanceQuery {
   Pagination pagination;
 };
 
-struct TokenCollection {
+struct TokenContract {
   FieldElement contract_address;
   const char *name;
   const char *symbol;
   uint8_t decimals;
-  uint32_t count;
   const char *metadata;
+  COption<U256> total_supply;
+};
+
+struct TokenContractQuery {
+  CArray<FieldElement> contract_addresses;
+  CArray<ContractType> contract_types;
+  Pagination pagination;
 };
 
 struct Contract {
@@ -1384,8 +1390,7 @@ Result<Page<TokenBalance>> client_token_balances(ToriiClient *client, TokenBalan
 ///
 /// # Returns
 /// Result containing array of TokenBalance information or error
-Result<Page<TokenCollection>> client_token_collections(ToriiClient *client,
-                                                       TokenBalanceQuery query);
+Result<Page<TokenContract>> client_token_contracts(ToriiClient *client, TokenContractQuery query);
 
 /// Gets contracts matching the given query
 ///
