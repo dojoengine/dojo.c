@@ -198,18 +198,6 @@ impl From<torii_proto::TokenContract> for TokenContract {
         }
     }
 }
-impl From<torii_proto::Token> for TokenContract {
-    fn from(value: torii_proto::Token) -> Self {
-        Self {
-            contract_address: value.contract_address.into(),
-            name: CString::new(value.name.clone()).unwrap().into_raw(),
-            symbol: CString::new(value.symbol.clone()).unwrap().into_raw(),
-            decimals: value.decimals,
-            total_supply: COption::None,
-            metadata: CString::new(value.metadata.clone()).unwrap().into_raw(),
-        }
-    }
-}
 
 #[repr(C)]
 #[derive(Debug, Clone)]

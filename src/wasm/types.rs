@@ -128,18 +128,6 @@ impl From<torii_proto::TokenContract> for TokenContract {
         }
     }
 }
-impl From<torii_proto::Token> for TokenContract {
-    fn from(value: torii_proto::Token) -> Self {
-        Self {
-            contract_address: format!("{:#x}", value.contract_address),
-            name: value.name.clone(),
-            symbol: value.symbol.clone(),
-            decimals: value.decimals,
-            total_supply: Option::None,
-            metadata: value.metadata.clone(),
-        }
-    }
-}
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
