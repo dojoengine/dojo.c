@@ -77,7 +77,7 @@ pub struct TokenBalances(pub Page<TokenBalance>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct TokenCollections(pub Page<TokenCollection>);
+pub struct TokenContracts(pub Page<TokenContract>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -107,35 +107,23 @@ impl From<torii_proto::Token> for Token {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct TokenCollection {
+pub struct TokenContract {
     pub contract_address: String,
     pub name: String,
     pub symbol: String,
     pub decimals: u8,
-    pub count: u32,
     pub metadata: String,
+    pub total_supply: Option<String>,
 }
 
-impl From<torii_proto::TokenCollection> for TokenCollection {
-    fn from(value: torii_proto::TokenCollection) -> Self {
+impl From<torii_proto::TokenContract> for TokenContract {
+    fn from(value: torii_proto::TokenContract) -> Self {
         Self {
             contract_address: format!("{:#x}", value.contract_address),
             name: value.name.clone(),
             symbol: value.symbol.clone(),
             decimals: value.decimals,
-            count: value.count,
-            metadata: value.metadata.clone(),
-        }
-    }
-}
-impl From<torii_proto::Token> for TokenCollection {
-    fn from(value: torii_proto::Token) -> Self {
-        Self {
-            contract_address: format!("{:#x}", value.contract_address),
-            name: value.name.clone(),
-            symbol: value.symbol.clone(),
-            decimals: value.decimals,
-            count: 0,
+            total_supply: value.total_supply.map(|t| format!("0x{:x}", t)),
             metadata: value.metadata.clone(),
         }
     }
@@ -337,6 +325,7 @@ impl From<TokenQuery> for torii_proto::TokenQuery {
         }
     }
 }
+
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct TokenBalanceQuery {
@@ -360,6 +349,28 @@ impl From<TokenBalanceQuery> for torii_proto::TokenBalanceQuery {
                 .map(|a| Felt::from_str(a.as_str()).unwrap())
                 .collect(),
             token_ids: value.token_ids.into_iter().map(|t| U256::from_be_hex(t.as_str())).collect(),
+            pagination: value.pagination.into(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TokenContractQuery {
+    pub contract_addresses: Vec<String>,
+    pub contract_types: Vec<ContractType>,
+    pub pagination: Pagination,
+}
+
+impl From<TokenContractQuery> for torii_proto::TokenContractQuery {
+    fn from(value: TokenContractQuery) -> Self {
+        Self {
+            contract_addresses: value
+                .contract_addresses
+                .into_iter()
+                .map(|c| Felt::from_str(c.as_str()).unwrap())
+                .collect(),
+            contract_types: value.contract_types.into_iter().map(|a| a.into()).collect(),
             pagination: value.pagination.into(),
         }
     }

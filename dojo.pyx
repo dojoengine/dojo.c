@@ -474,22 +474,31 @@ cdef extern from *:
     CArrayU256 token_ids;
     Pagination pagination;
 
-  cdef struct CArrayTokenCollection:
-    TokenCollection *data;
+  cdef struct CArrayTokenContract:
+    TokenContract *data;
     uintptr_t data_len;
 
-  cdef struct PageTokenCollection:
-    CArrayTokenCollection items;
+  cdef struct PageTokenContract:
+    CArrayTokenContract items;
     COptionc_char next_cursor;
 
-  cdef enum ResultPageTokenCollection_Tag:
-    OkPageTokenCollection,
-    ErrPageTokenCollection,
+  cdef enum ResultPageTokenContract_Tag:
+    OkPageTokenContract,
+    ErrPageTokenContract,
 
-  cdef struct ResultPageTokenCollection:
-    ResultPageTokenCollection_Tag tag;
-    PageTokenCollection ok;
+  cdef struct ResultPageTokenContract:
+    ResultPageTokenContract_Tag tag;
+    PageTokenContract ok;
     Error err;
+
+  cdef struct CArrayContractType:
+    ContractType *data;
+    uintptr_t data_len;
+
+  cdef struct TokenContractQuery:
+    CArrayFieldElement contract_addresses;
+    CArrayContractType contract_types;
+    Pagination pagination;
 
   cdef struct CArrayContract:
     Contract *data;
@@ -503,10 +512,6 @@ cdef extern from *:
     ResultCArrayContract_Tag tag;
     CArrayContract ok;
     Error err;
-
-  cdef struct CArrayContractType:
-    ContractType *data;
-    uintptr_t data_len;
 
   cdef struct ContractQuery:
     CArrayFieldElement contract_addresses;
@@ -672,13 +677,13 @@ cdef extern from *:
     CallType call_type;
     FieldElement caller_address;
 
-  cdef struct TokenCollection:
+  cdef struct TokenContract:
     FieldElement contract_address;
     const char *name;
     const char *symbol;
     uint8_t decimals;
-    uint32_t count;
     const char *metadata;
+    COptionU256 total_supply;
 
   cdef struct Member:
     const char *name;
@@ -1058,7 +1063,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing array of TokenBalance information or error
-  ResultPageTokenCollection client_token_collections(ToriiClient *client, TokenBalanceQuery query);
+  ResultPageTokenContract client_token_contracts(ToriiClient *client, TokenContractQuery query);
 
   # Gets contracts matching the given query
   #

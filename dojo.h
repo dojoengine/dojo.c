@@ -22,9 +22,9 @@ struct TransactionCall;
 struct Struct;
 struct Token;
 struct TokenBalance;
-struct TokenCollection;
-struct Contract;
+struct TokenContract;
 enum ContractType;
+struct Contract;
 struct Provider;
 struct Account;
 struct Ty;
@@ -721,32 +721,43 @@ typedef struct TokenBalanceQuery {
   struct Pagination pagination;
 } TokenBalanceQuery;
 
-typedef struct CArrayTokenCollection {
-  struct TokenCollection *data;
+typedef struct CArrayTokenContract {
+  struct TokenContract *data;
   uintptr_t data_len;
-} CArrayTokenCollection;
+} CArrayTokenContract;
 
-typedef struct PageTokenCollection {
-  struct CArrayTokenCollection items;
+typedef struct PageTokenContract {
+  struct CArrayTokenContract items;
   struct COptionc_char next_cursor;
-} PageTokenCollection;
+} PageTokenContract;
 
-typedef enum ResultPageTokenCollection_Tag {
-  OkPageTokenCollection,
-  ErrPageTokenCollection,
-} ResultPageTokenCollection_Tag;
+typedef enum ResultPageTokenContract_Tag {
+  OkPageTokenContract,
+  ErrPageTokenContract,
+} ResultPageTokenContract_Tag;
 
-typedef struct ResultPageTokenCollection {
-  ResultPageTokenCollection_Tag tag;
+typedef struct ResultPageTokenContract {
+  ResultPageTokenContract_Tag tag;
   union {
     struct {
-      struct PageTokenCollection ok;
+      struct PageTokenContract ok;
     };
     struct {
       struct Error err;
     };
   };
-} ResultPageTokenCollection;
+} ResultPageTokenContract;
+
+typedef struct CArrayContractType {
+  enum ContractType *data;
+  uintptr_t data_len;
+} CArrayContractType;
+
+typedef struct TokenContractQuery {
+  struct CArrayFieldElement contract_addresses;
+  struct CArrayContractType contract_types;
+  struct Pagination pagination;
+} TokenContractQuery;
 
 typedef struct CArrayContract {
   struct Contract *data;
@@ -769,11 +780,6 @@ typedef struct ResultCArrayContract {
     };
   };
 } ResultCArrayContract;
-
-typedef struct CArrayContractType {
-  enum ContractType *data;
-  uintptr_t data_len;
-} CArrayContractType;
 
 typedef struct ContractQuery {
   struct CArrayFieldElement contract_addresses;
@@ -1027,14 +1033,14 @@ typedef struct TransactionCall {
   struct FieldElement caller_address;
 } TransactionCall;
 
-typedef struct TokenCollection {
+typedef struct TokenContract {
   struct FieldElement contract_address;
   const char *name;
   const char *symbol;
   uint8_t decimals;
-  uint32_t count;
   const char *metadata;
-} TokenCollection;
+  struct COptionU256 total_supply;
+} TokenContract;
 
 typedef struct Member {
   const char *name;
@@ -1480,8 +1486,8 @@ struct ResultPageTokenBalance client_token_balances(struct ToriiClient *client,
  * # Returns
  * Result containing array of TokenBalance information or error
  */
-struct ResultPageTokenCollection client_token_collections(struct ToriiClient *client,
-                                                          struct TokenBalanceQuery query);
+struct ResultPageTokenContract client_token_contracts(struct ToriiClient *client,
+                                                      struct TokenContractQuery query);
 
 /**
  * Gets contracts matching the given query

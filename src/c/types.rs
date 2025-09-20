@@ -177,35 +177,23 @@ impl From<torii_proto::TokenBalance> for TokenBalance {
 
 #[derive(Debug, Clone)]
 #[repr(C)]
-pub struct TokenCollection {
+pub struct TokenContract {
     pub contract_address: FieldElement,
     pub name: *const c_char,
     pub symbol: *const c_char,
     pub decimals: u8,
-    pub count: u32,
     pub metadata: *const c_char,
+    pub total_supply: COption<U256>,
 }
 
-impl From<torii_proto::TokenCollection> for TokenCollection {
-    fn from(value: torii_proto::TokenCollection) -> Self {
+impl From<torii_proto::TokenContract> for TokenContract {
+    fn from(value: torii_proto::TokenContract) -> Self {
         Self {
             contract_address: value.contract_address.into(),
             name: CString::new(value.name.clone()).unwrap().into_raw(),
             symbol: CString::new(value.symbol.clone()).unwrap().into_raw(),
             decimals: value.decimals,
-            count: value.count,
-            metadata: CString::new(value.metadata.clone()).unwrap().into_raw(),
-        }
-    }
-}
-impl From<torii_proto::Token> for TokenCollection {
-    fn from(value: torii_proto::Token) -> Self {
-        Self {
-            contract_address: value.contract_address.into(),
-            name: CString::new(value.name.clone()).unwrap().into_raw(),
-            symbol: CString::new(value.symbol.clone()).unwrap().into_raw(),
-            decimals: value.decimals,
-            count: 0,
+            total_supply: value.total_supply.into(),
             metadata: CString::new(value.metadata.clone()).unwrap().into_raw(),
         }
     }
@@ -555,6 +543,24 @@ impl From<TokenBalanceQuery> for torii_proto::TokenBalanceQuery {
             contract_addresses: val.contract_addresses.into(),
             account_addresses: val.account_addresses.into(),
             token_ids: val.token_ids.into(),
+            pagination: val.pagination.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct TokenContractQuery {
+    pub contract_addresses: CArray<FieldElement>,
+    pub contract_types: CArray<ContractType>,
+    pub pagination: Pagination,
+}
+
+impl From<TokenContractQuery> for torii_proto::TokenContractQuery {
+    fn from(val: TokenContractQuery) -> Self {
+        torii_proto::TokenContractQuery {
+            contract_addresses: val.contract_addresses.into(),
+            contract_types: val.contract_types.into(),
             pagination: val.pagination.into(),
         }
     }

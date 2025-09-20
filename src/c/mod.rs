@@ -52,14 +52,14 @@ use torii_proto::Message;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
     BlockId, CArray, COption, Call, Clause, Contract, Controller, Entity, Error, Event, KeysClause,
-    Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance, TokenCollection,
+    Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance, TokenContract,
     ToriiClient, Ty, World,
 };
 use url::Url;
 
 use crate::c::types::{
-    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenQuery, Transaction, TransactionFilter,
-    TransactionQuery,
+    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenContractQuery, TokenQuery, Transaction,
+    TransactionFilter, TransactionQuery,
 };
 use crate::constants;
 use crate::types::{
@@ -1343,15 +1343,15 @@ pub unsafe extern "C" fn client_token_balances(
 /// # Returns
 /// Result containing array of TokenBalance information or error
 #[no_mangle]
-pub unsafe extern "C" fn client_token_collections(
+pub unsafe extern "C" fn client_token_contracts(
     client: *mut ToriiClient,
-    query: TokenBalanceQuery,
-) -> Result<Page<TokenCollection>> {
+    query: TokenContractQuery,
+) -> Result<Page<TokenContract>> {
     let query = query.into();
-    let token_collections_future = unsafe { (*client).inner.token_collections(query) };
+    let token_contracts_future = unsafe { (*client).inner.token_contracts(query) };
 
-    match RUNTIME.block_on(token_collections_future) {
-        Ok(collections) => Result::Ok(collections.into()),
+    match RUNTIME.block_on(token_contracts_future) {
+        Ok(contracts) => Result::Ok(contracts.into()),
         Err(e) => Result::Err(e.into()),
     }
 }
