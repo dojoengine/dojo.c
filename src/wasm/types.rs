@@ -321,13 +321,9 @@ pub struct AttributeFilter {
     pub trait_value: String,
 }
 
-
 impl From<AttributeFilter> for torii_proto::TokenAttributeFilter {
     fn from(value: AttributeFilter) -> Self {
-        Self {
-            trait_name: value.trait_name,
-            trait_value: value.trait_value,
-        }
+        Self { trait_name: value.trait_name, trait_value: value.trait_value }
     }
 }
 
