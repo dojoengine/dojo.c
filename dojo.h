@@ -21,6 +21,7 @@ struct Subscription;
 struct TransactionCall;
 struct Struct;
 struct Token;
+struct AttributeFilter;
 struct TokenBalance;
 struct TokenContract;
 enum ContractType;
@@ -657,9 +658,15 @@ typedef struct CArrayU256 {
   uintptr_t data_len;
 } CArrayU256;
 
+typedef struct CArrayAttributeFilter {
+  struct AttributeFilter *data;
+  uintptr_t data_len;
+} CArrayAttributeFilter;
+
 typedef struct TokenQuery {
   struct CArrayFieldElement contract_addresses;
   struct CArrayU256 token_ids;
+  struct CArrayAttributeFilter attribute_filters;
   struct Pagination pagination;
 } TokenQuery;
 
@@ -1032,6 +1039,11 @@ typedef struct TransactionCall {
   enum CallType call_type;
   struct FieldElement caller_address;
 } TransactionCall;
+
+typedef struct AttributeFilter {
+  const char *trait_name;
+  const char *trait_value;
+} AttributeFilter;
 
 typedef struct TokenContract {
   struct FieldElement contract_address;

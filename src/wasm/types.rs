@@ -81,6 +81,15 @@ pub struct TokenContracts(pub Page<TokenContract>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TokenTransferQuery {
+    pub contract_addresses: Vec<String>,
+    pub account_addresses: Vec<String>,
+    pub token_ids: Vec<String>,
+    pub pagination: Pagination,
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Token {
     pub contract_address: String,
     pub token_id: Option<String>,
@@ -304,11 +313,30 @@ impl From<ControllerQuery> for torii_proto::ControllerQuery {
         }
     }
 }
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct AttributeFilter {
+    pub trait_name: String,
+    pub trait_value: String,
+}
+
+
+impl From<AttributeFilter> for torii_proto::TokenAttributeFilter {
+    fn from(value: AttributeFilter) -> Self {
+        Self {
+            trait_name: value.trait_name,
+            trait_value: value.trait_value,
+        }
+    }
+}
+
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct TokenQuery {
     pub contract_addresses: Vec<String>,
     pub token_ids: Vec<String>,
+    pub attribute_filters: Vec<AttributeFilter>,
     pub pagination: Pagination,
 }
 
@@ -321,6 +349,7 @@ impl From<TokenQuery> for torii_proto::TokenQuery {
                 .map(|c| Felt::from_str(c.as_str()).unwrap())
                 .collect(),
             token_ids: value.token_ids.into_iter().map(|t| U256::from_be_hex(t.as_str())).collect(),
+            attribute_filters: value.attribute_filters.into_iter().map(|a| a.into()).collect(),
             pagination: value.pagination.into(),
         }
     }

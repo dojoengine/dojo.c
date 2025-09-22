@@ -512,9 +512,26 @@ impl From<ControllerQuery> for torii_proto::ControllerQuery {
 
 #[derive(Clone, Debug)]
 #[repr(C)]
+pub struct AttributeFilter {
+    pub trait_name: *const c_char,
+    pub trait_value: *const c_char,
+}
+
+impl From<AttributeFilter> for torii_proto::TokenAttributeFilter {
+    fn from(val: AttributeFilter) -> Self {
+        torii_proto::TokenAttributeFilter {
+            trait_name: unsafe { CStr::from_ptr(val.trait_name).to_string_lossy().to_string() },
+            trait_value: unsafe { CStr::from_ptr(val.trait_value).to_string_lossy().to_string() },
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
 pub struct TokenQuery {
     pub contract_addresses: CArray<FieldElement>,
     pub token_ids: CArray<U256>,
+    pub attribute_filters: CArray<AttributeFilter>,
     pub pagination: Pagination,
 }
 
@@ -523,6 +540,7 @@ impl From<TokenQuery> for torii_proto::TokenQuery {
         torii_proto::TokenQuery {
             contract_addresses: val.contract_addresses.into(),
             token_ids: val.token_ids.into(),
+            attribute_filters: val.attribute_filters.into(),
             pagination: val.pagination.into(),
         }
     }
