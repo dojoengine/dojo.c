@@ -888,9 +888,15 @@ struct Token {
   COption<U256> total_supply;
 };
 
+struct AttributeFilter {
+  const char *trait_name;
+  const char *trait_value;
+};
+
 struct TokenQuery {
   CArray<FieldElement> contract_addresses;
   CArray<U256> token_ids;
+  CArray<AttributeFilter> attribute_filters;
   Pagination pagination;
 };
 

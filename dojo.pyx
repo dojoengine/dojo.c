@@ -429,9 +429,14 @@ cdef extern from *:
     U256 *data;
     uintptr_t data_len;
 
+  cdef struct CArrayAttributeFilter:
+    AttributeFilter *data;
+    uintptr_t data_len;
+
   cdef struct TokenQuery:
     CArrayFieldElement contract_addresses;
     CArrayU256 token_ids;
+    CArrayAttributeFilter attribute_filters;
     Pagination pagination;
 
   cdef enum COptionU256_Tag:
@@ -676,6 +681,10 @@ cdef extern from *:
     CArrayFieldElement calldata;
     CallType call_type;
     FieldElement caller_address;
+
+  cdef struct AttributeFilter:
+    const char *trait_name;
+    const char *trait_value;
 
   cdef struct TokenContract:
     FieldElement contract_address;
