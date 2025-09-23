@@ -7,31 +7,6 @@
 namespace dojo_bindings {
 #endif  // __cplusplus
 
-struct ToriiClient;
-struct Policy;
-struct ControllerAccount;
-struct Call;
-struct Controller;
-struct OrderBy;
-struct Entity;
-struct COptionFieldElement;
-struct Model;
-struct Transaction;
-struct Subscription;
-struct TransactionCall;
-struct Struct;
-struct Token;
-struct AttributeFilter;
-struct TokenBalance;
-struct TokenContract;
-enum ContractType;
-struct Contract;
-struct Provider;
-struct Account;
-struct Ty;
-struct Member;
-struct EnumOption;
-
 typedef enum BlockTag {
   Latest,
   PreConfirmed,
@@ -88,6 +63,16 @@ typedef enum PatternMatching {
   VariableLen = 1,
 } PatternMatching;
 
+typedef struct Account Account;
+
+typedef struct ControllerAccount ControllerAccount;
+
+typedef struct Provider Provider;
+
+typedef struct Subscription Subscription;
+
+typedef struct ToriiClient ToriiClient;
+
 typedef struct Error {
   char *message;
 } Error;
@@ -112,6 +97,12 @@ typedef struct ResultToriiClient {
 typedef struct FieldElement {
   uint8_t data[32];
 } FieldElement;
+
+typedef struct Policy {
+  struct FieldElement target;
+  const char *method;
+  const char *description;
+} Policy;
 
 typedef enum ResultControllerAccount_Tag {
   OkControllerAccount,
@@ -169,6 +160,12 @@ typedef struct CArrayFieldElement {
   uintptr_t data_len;
 } CArrayFieldElement;
 
+typedef struct Call {
+  struct FieldElement to;
+  const char *selector;
+  struct CArrayFieldElement calldata;
+} Call;
+
 typedef struct Message {
   const char *message;
   struct CArrayFieldElement signature;
@@ -190,6 +187,12 @@ typedef struct ResultCArrayFieldElement {
     };
   };
 } ResultCArrayFieldElement;
+
+typedef struct Controller {
+  struct FieldElement address;
+  const char *username;
+  uint64_t deployed_at_timestamp;
+} Controller;
 
 typedef struct CArrayController {
   struct Controller *data;
@@ -246,6 +249,11 @@ typedef struct COptionu32 {
   };
 } COptionu32;
 
+typedef struct OrderBy {
+  const char *field;
+  enum OrderDirection direction;
+} OrderBy;
+
 typedef struct CArrayOrderBy {
   struct OrderBy *data;
   uintptr_t data_len;
@@ -268,44 +276,6 @@ typedef struct ControllerQuery {
   struct CArrayFieldElement contract_addresses;
   struct CArrayc_char usernames;
 } ControllerQuery;
-
-typedef struct CArrayEntity {
-  struct Entity *data;
-  uintptr_t data_len;
-} CArrayEntity;
-
-typedef struct PageEntity {
-  struct CArrayEntity items;
-  struct COptionc_char next_cursor;
-} PageEntity;
-
-typedef enum ResultPageEntity_Tag {
-  OkPageEntity,
-  ErrPageEntity,
-} ResultPageEntity_Tag;
-
-typedef struct ResultPageEntity {
-  ResultPageEntity_Tag tag;
-  union {
-    struct {
-      struct PageEntity ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultPageEntity;
-
-typedef struct CArrayCOptionFieldElement {
-  struct COptionFieldElement *data;
-  uintptr_t data_len;
-} CArrayCOptionFieldElement;
-
-typedef struct KeysClause {
-  struct CArrayCOptionFieldElement keys;
-  enum PatternMatching pattern_matching;
-  struct CArrayc_char models;
-} KeysClause;
 
 typedef struct U256 {
   uint8_t data[32];
@@ -383,6 +353,150 @@ typedef struct Primitive {
     };
   };
 } Primitive;
+
+typedef struct EnumOption {
+  const char *name;
+  struct Ty *ty;
+} EnumOption;
+
+typedef struct CArrayEnumOption {
+  struct EnumOption *data;
+  uintptr_t data_len;
+} CArrayEnumOption;
+
+typedef struct Enum {
+  const char *name;
+  uint8_t option;
+  struct CArrayEnumOption options;
+} Enum;
+
+typedef struct CArrayTy {
+  struct Ty *data;
+  uintptr_t data_len;
+} CArrayTy;
+
+typedef struct FixedSizeArray {
+  struct CArrayTy array;
+  uint32_t size;
+} FixedSizeArray;
+
+typedef enum Ty_Tag {
+  Primitive_,
+  Struct_,
+  Enum_,
+  Tuple_,
+  Array_,
+  FixedSizeArray_,
+  ByteArray,
+} Ty_Tag;
+
+typedef struct Ty {
+  Ty_Tag tag;
+  union {
+    struct {
+      struct Primitive primitive;
+    };
+    struct {
+      struct Struct struct_;
+    };
+    struct {
+      struct Enum enum_;
+    };
+    struct {
+      struct CArrayTy tuple;
+    };
+    struct {
+      struct CArrayTy array;
+    };
+    struct {
+      struct FixedSizeArray fixed_size_array;
+    };
+    struct {
+      const char *byte_array;
+    };
+  };
+} Ty;
+
+typedef struct Member {
+  const char *name;
+  struct Ty *ty;
+  bool key;
+} Member;
+
+typedef struct CArrayMember {
+  struct Member *data;
+  uintptr_t data_len;
+} CArrayMember;
+
+typedef struct Struct {
+  const char *name;
+  struct CArrayMember children;
+} Struct;
+
+typedef struct CArrayStruct {
+  struct Struct *data;
+  uintptr_t data_len;
+} CArrayStruct;
+
+typedef struct Entity {
+  struct FieldElement hashed_keys;
+  struct CArrayStruct models;
+  uint64_t created_at;
+  uint64_t updated_at;
+  uint64_t executed_at;
+} Entity;
+
+typedef struct CArrayEntity {
+  struct Entity *data;
+  uintptr_t data_len;
+} CArrayEntity;
+
+typedef struct PageEntity {
+  struct CArrayEntity items;
+  struct COptionc_char next_cursor;
+} PageEntity;
+
+typedef enum ResultPageEntity_Tag {
+  OkPageEntity,
+  ErrPageEntity,
+} ResultPageEntity_Tag;
+
+typedef struct ResultPageEntity {
+  ResultPageEntity_Tag tag;
+  union {
+    struct {
+      struct PageEntity ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultPageEntity;
+
+typedef enum COptionFieldElement_Tag {
+  SomeFieldElement,
+  NoneFieldElement,
+} COptionFieldElement_Tag;
+
+typedef struct COptionFieldElement {
+  COptionFieldElement_Tag tag;
+  union {
+    struct {
+      struct FieldElement some;
+    };
+  };
+} COptionFieldElement;
+
+typedef struct CArrayCOptionFieldElement {
+  struct COptionFieldElement *data;
+  uintptr_t data_len;
+} CArrayCOptionFieldElement;
+
+typedef struct KeysClause {
+  struct CArrayCOptionFieldElement keys;
+  enum PatternMatching pattern_matching;
+  struct CArrayc_char models;
+} KeysClause;
 
 typedef struct CArrayMemberValue {
   struct MemberValue *data;
@@ -474,6 +588,19 @@ typedef struct Query {
   bool historical;
 } Query;
 
+typedef struct Model {
+  struct Ty schema;
+  const char *namespace_;
+  const char *name;
+  struct FieldElement selector;
+  uint32_t packed_size;
+  uint32_t unpacked_size;
+  struct FieldElement class_hash;
+  struct FieldElement contract_address;
+  const char *layout;
+  bool use_legacy_store;
+} Model;
+
 typedef struct CArrayModel {
   struct Model *data;
   uintptr_t data_len;
@@ -500,6 +627,33 @@ typedef struct ResultWorld {
     };
   };
 } ResultWorld;
+
+typedef struct TransactionCall {
+  struct FieldElement contract_address;
+  const char *entrypoint;
+  struct CArrayFieldElement calldata;
+  enum CallType call_type;
+  struct FieldElement caller_address;
+} TransactionCall;
+
+typedef struct CArrayTransactionCall {
+  struct TransactionCall *data;
+  uintptr_t data_len;
+} CArrayTransactionCall;
+
+typedef struct Transaction {
+  struct FieldElement transaction_hash;
+  struct FieldElement sender_address;
+  struct CArrayFieldElement calldata;
+  struct FieldElement max_fee;
+  struct CArrayFieldElement signature;
+  struct FieldElement nonce;
+  uint64_t block_number;
+  const char *transaction_type;
+  uint64_t block_timestamp;
+  struct CArrayTransactionCall calls;
+  struct CArrayFieldElement unique_models;
+} Transaction;
 
 typedef struct CArrayTransaction {
   struct Transaction *data;
@@ -588,43 +742,35 @@ typedef struct ResultSubscription {
   };
 } ResultSubscription;
 
-typedef struct CArrayTransactionCall {
-  struct TransactionCall *data;
-  uintptr_t data_len;
-} CArrayTransactionCall;
-
-typedef struct Transaction {
-  struct FieldElement transaction_hash;
-  struct FieldElement sender_address;
-  struct CArrayFieldElement calldata;
-  struct FieldElement max_fee;
-  struct CArrayFieldElement signature;
-  struct FieldElement nonce;
-  uint64_t block_number;
-  const char *transaction_type;
-  uint64_t block_timestamp;
-  struct CArrayTransactionCall calls;
-  struct CArrayFieldElement unique_models;
-} Transaction;
-
-typedef struct CArrayStruct {
-  struct Struct *data;
-  uintptr_t data_len;
-} CArrayStruct;
-
-typedef struct Entity {
-  struct FieldElement hashed_keys;
-  struct CArrayStruct models;
-  uint64_t created_at;
-  uint64_t updated_at;
-  uint64_t executed_at;
-} Entity;
-
 typedef struct Event {
   struct CArrayFieldElement keys;
   struct CArrayFieldElement data;
   struct FieldElement transaction_hash;
 } Event;
+
+typedef enum COptionU256_Tag {
+  SomeU256,
+  NoneU256,
+} COptionU256_Tag;
+
+typedef struct COptionU256 {
+  COptionU256_Tag tag;
+  union {
+    struct {
+      struct U256 some;
+    };
+  };
+} COptionU256;
+
+typedef struct Token {
+  struct FieldElement contract_address;
+  struct COptionU256 token_id;
+  const char *name;
+  const char *symbol;
+  uint8_t decimals;
+  const char *metadata;
+  struct COptionU256 total_supply;
+} Token;
 
 typedef struct CArrayToken {
   struct Token *data;
@@ -658,6 +804,11 @@ typedef struct CArrayU256 {
   uintptr_t data_len;
 } CArrayU256;
 
+typedef struct AttributeFilter {
+  const char *trait_name;
+  const char *trait_value;
+} AttributeFilter;
+
 typedef struct CArrayAttributeFilter {
   struct AttributeFilter *data;
   uintptr_t data_len;
@@ -670,29 +821,12 @@ typedef struct TokenQuery {
   struct Pagination pagination;
 } TokenQuery;
 
-typedef enum COptionU256_Tag {
-  SomeU256,
-  NoneU256,
-} COptionU256_Tag;
-
-typedef struct COptionU256 {
-  COptionU256_Tag tag;
-  union {
-    struct {
-      struct U256 some;
-    };
-  };
-} COptionU256;
-
-typedef struct Token {
+typedef struct TokenBalance {
+  struct U256 balance;
+  struct FieldElement account_address;
   struct FieldElement contract_address;
   struct COptionU256 token_id;
-  const char *name;
-  const char *symbol;
-  uint8_t decimals;
-  const char *metadata;
-  struct COptionU256 total_supply;
-} Token;
+} TokenBalance;
 
 typedef struct CArrayTokenBalance {
   struct TokenBalance *data;
@@ -727,6 +861,15 @@ typedef struct TokenBalanceQuery {
   struct CArrayU256 token_ids;
   struct Pagination pagination;
 } TokenBalanceQuery;
+
+typedef struct TokenContract {
+  struct FieldElement contract_address;
+  const char *name;
+  const char *symbol;
+  uint8_t decimals;
+  const char *metadata;
+  struct COptionU256 total_supply;
+} TokenContract;
 
 typedef struct CArrayTokenContract {
   struct TokenContract *data;
@@ -766,6 +909,17 @@ typedef struct TokenContractQuery {
   struct Pagination pagination;
 } TokenContractQuery;
 
+typedef struct Contract {
+  struct FieldElement contract_address;
+  enum ContractType contract_type;
+  struct COptionu64 head;
+  struct COptionu64 tps;
+  struct COptionu64 last_block_timestamp;
+  struct COptionFieldElement last_pending_block_tx;
+  uint64_t updated_at;
+  uint64_t created_at;
+} Contract;
+
 typedef struct CArrayContract {
   struct Contract *data;
   uintptr_t data_len;
@@ -792,38 +946,6 @@ typedef struct ContractQuery {
   struct CArrayFieldElement contract_addresses;
   struct CArrayContractType contract_types;
 } ContractQuery;
-
-typedef enum COptionFieldElement_Tag {
-  SomeFieldElement,
-  NoneFieldElement,
-} COptionFieldElement_Tag;
-
-typedef struct COptionFieldElement {
-  COptionFieldElement_Tag tag;
-  union {
-    struct {
-      struct FieldElement some;
-    };
-  };
-} COptionFieldElement;
-
-typedef struct Contract {
-  struct FieldElement contract_address;
-  enum ContractType contract_type;
-  struct COptionu64 head;
-  struct COptionu64 tps;
-  struct COptionu64 last_block_timestamp;
-  struct COptionFieldElement last_pending_block_tx;
-  uint64_t updated_at;
-  uint64_t created_at;
-} Contract;
-
-typedef struct TokenBalance {
-  struct U256 balance;
-  struct FieldElement account_address;
-  struct FieldElement contract_address;
-  struct COptionU256 token_id;
-} TokenBalance;
 
 typedef enum Resultc_char_Tag {
   Okc_char,
@@ -904,12 +1026,6 @@ typedef struct ResultAccount {
   };
 } ResultAccount;
 
-typedef struct Call {
-  struct FieldElement to;
-  const char *selector;
-  struct CArrayFieldElement calldata;
-} Call;
-
 /**
  * Block hash, number or tag
  */
@@ -933,137 +1049,6 @@ typedef struct BlockId {
     };
   };
 } BlockId;
-
-typedef struct Policy {
-  struct FieldElement target;
-  const char *method;
-  const char *description;
-} Policy;
-
-typedef struct Controller {
-  struct FieldElement address;
-  const char *username;
-  uint64_t deployed_at_timestamp;
-} Controller;
-
-typedef struct OrderBy {
-  const char *field;
-  enum OrderDirection direction;
-} OrderBy;
-
-typedef struct CArrayMember {
-  struct Member *data;
-  uintptr_t data_len;
-} CArrayMember;
-
-typedef struct Struct {
-  const char *name;
-  struct CArrayMember children;
-} Struct;
-
-typedef struct CArrayEnumOption {
-  struct EnumOption *data;
-  uintptr_t data_len;
-} CArrayEnumOption;
-
-typedef struct Enum {
-  const char *name;
-  uint8_t option;
-  struct CArrayEnumOption options;
-} Enum;
-
-typedef struct CArrayTy {
-  struct Ty *data;
-  uintptr_t data_len;
-} CArrayTy;
-
-typedef struct FixedSizeArray {
-  struct CArrayTy array;
-  uint32_t size;
-} FixedSizeArray;
-
-typedef enum Ty_Tag {
-  Primitive_,
-  Struct_,
-  Enum_,
-  Tuple_,
-  Array_,
-  FixedSizeArray_,
-  ByteArray,
-} Ty_Tag;
-
-typedef struct Ty {
-  Ty_Tag tag;
-  union {
-    struct {
-      struct Primitive primitive;
-    };
-    struct {
-      struct Struct struct_;
-    };
-    struct {
-      struct Enum enum_;
-    };
-    struct {
-      struct CArrayTy tuple;
-    };
-    struct {
-      struct CArrayTy array;
-    };
-    struct {
-      struct FixedSizeArray fixed_size_array;
-    };
-    struct {
-      const char *byte_array;
-    };
-  };
-} Ty;
-
-typedef struct Model {
-  struct Ty schema;
-  const char *namespace_;
-  const char *name;
-  struct FieldElement selector;
-  uint32_t packed_size;
-  uint32_t unpacked_size;
-  struct FieldElement class_hash;
-  struct FieldElement contract_address;
-  const char *layout;
-  bool use_legacy_store;
-} Model;
-
-typedef struct TransactionCall {
-  struct FieldElement contract_address;
-  const char *entrypoint;
-  struct CArrayFieldElement calldata;
-  enum CallType call_type;
-  struct FieldElement caller_address;
-} TransactionCall;
-
-typedef struct AttributeFilter {
-  const char *trait_name;
-  const char *trait_value;
-} AttributeFilter;
-
-typedef struct TokenContract {
-  struct FieldElement contract_address;
-  const char *name;
-  const char *symbol;
-  uint8_t decimals;
-  const char *metadata;
-  struct COptionU256 total_supply;
-} TokenContract;
-
-typedef struct Member {
-  const char *name;
-  struct Ty *ty;
-  bool key;
-} Member;
-
-typedef struct EnumOption {
-  const char *name;
-  struct Ty *ty;
-} EnumOption;
 
 #ifdef __cplusplus
 extern "C" {

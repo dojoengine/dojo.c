@@ -5,7 +5,17 @@
         "__config": "c",
         "unistd.h": "c",
         "typeinfo": "c",
-        "dojo.h": "c"
+        "dojo.h": "c",
+        "__bit_reference": "c",
+        "bitset": "c",
+        "type_traits": "c",
+        "utility": "c",
+        "ios": "c",
+        "limits": "c",
+        "locale": "c",
+        "new": "c",
+        "string": "c",
+        "string_view": "c"
     },
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml"

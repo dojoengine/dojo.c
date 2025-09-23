@@ -6,15 +6,6 @@
 
 namespace dojo_bindings {
 
-struct ToriiClient;
-struct Policy;
-struct ControllerAccount;
-struct Call;
-struct Ty;
-struct Subscription;
-struct Provider;
-struct Account;
-
 enum class BlockTag {
   Latest,
   PreConfirmed,
@@ -71,6 +62,16 @@ enum class PatternMatching {
   VariableLen = 1,
 };
 
+struct Account;
+
+struct ControllerAccount;
+
+struct Provider;
+
+struct Subscription;
+
+struct ToriiClient;
+
 struct Error {
   char *message;
 };
@@ -123,10 +124,22 @@ struct FieldElement {
   uint8_t data[32];
 };
 
+struct Policy {
+  FieldElement target;
+  const char *method;
+  const char *description;
+};
+
 template<typename T>
 struct CArray {
   T *data;
   uintptr_t data_len;
+};
+
+struct Call {
+  FieldElement to;
+  const char *selector;
+  CArray<FieldElement> calldata;
 };
 
 struct Message {
@@ -200,31 +213,6 @@ struct ControllerQuery {
   Pagination pagination;
   CArray<FieldElement> contract_addresses;
   CArray<const char*> usernames;
-};
-
-struct Member {
-  const char *name;
-  Ty *ty;
-  bool key;
-};
-
-struct Struct {
-  const char *name;
-  CArray<Member> children;
-};
-
-struct Entity {
-  FieldElement hashed_keys;
-  CArray<Struct> models;
-  uint64_t created_at;
-  uint64_t updated_at;
-  uint64_t executed_at;
-};
-
-struct KeysClause {
-  CArray<COption<FieldElement>> keys;
-  PatternMatching pattern_matching;
-  CArray<const char*> models;
 };
 
 struct U256 {
@@ -516,6 +504,175 @@ struct Primitive {
   }
 };
 
+struct EnumOption {
+  const char *name;
+  Ty *ty;
+};
+
+struct Enum {
+  const char *name;
+  uint8_t option;
+  CArray<EnumOption> options;
+};
+
+struct FixedSizeArray {
+  CArray<Ty> array;
+  uint32_t size;
+};
+
+struct Ty {
+  enum class Tag {
+    Primitive_,
+    Struct_,
+    Enum_,
+    Tuple_,
+    Array_,
+    FixedSizeArray_,
+    ByteArray,
+  };
+
+  struct Primitive__Body {
+    Primitive _0;
+  };
+
+  struct Struct__Body {
+    Struct _0;
+  };
+
+  struct Enum__Body {
+    Enum _0;
+  };
+
+  struct Tuple__Body {
+    CArray<Ty> _0;
+  };
+
+  struct Array__Body {
+    CArray<Ty> _0;
+  };
+
+  struct FixedSizeArray__Body {
+    FixedSizeArray _0;
+  };
+
+  struct ByteArray_Body {
+    const char *_0;
+  };
+
+  Tag tag;
+  union {
+    Primitive__Body primitive;
+    Struct__Body struct_;
+    Enum__Body enum_;
+    Tuple__Body tuple;
+    Array__Body array;
+    FixedSizeArray__Body fixed_size_array;
+    ByteArray_Body byte_array;
+  };
+
+  static Ty Primitive_(const Primitive &_0) {
+    Ty result;
+    ::new (&result.primitive._0) (Primitive)(_0);
+    result.tag = Tag::Primitive_;
+    return result;
+  }
+
+  bool IsPrimitive_() const {
+    return tag == Tag::Primitive_;
+  }
+
+  static Ty Struct_(const Struct &_0) {
+    Ty result;
+    ::new (&result.struct_._0) (Struct)(_0);
+    result.tag = Tag::Struct_;
+    return result;
+  }
+
+  bool IsStruct_() const {
+    return tag == Tag::Struct_;
+  }
+
+  static Ty Enum_(const Enum &_0) {
+    Ty result;
+    ::new (&result.enum_._0) (Enum)(_0);
+    result.tag = Tag::Enum_;
+    return result;
+  }
+
+  bool IsEnum_() const {
+    return tag == Tag::Enum_;
+  }
+
+  static Ty Tuple_(const CArray<Ty> &_0) {
+    Ty result;
+    ::new (&result.tuple._0) (CArray<Ty>)(_0);
+    result.tag = Tag::Tuple_;
+    return result;
+  }
+
+  bool IsTuple_() const {
+    return tag == Tag::Tuple_;
+  }
+
+  static Ty Array_(const CArray<Ty> &_0) {
+    Ty result;
+    ::new (&result.array._0) (CArray<Ty>)(_0);
+    result.tag = Tag::Array_;
+    return result;
+  }
+
+  bool IsArray_() const {
+    return tag == Tag::Array_;
+  }
+
+  static Ty FixedSizeArray_(const FixedSizeArray &_0) {
+    Ty result;
+    ::new (&result.fixed_size_array._0) (FixedSizeArray)(_0);
+    result.tag = Tag::FixedSizeArray_;
+    return result;
+  }
+
+  bool IsFixedSizeArray_() const {
+    return tag == Tag::FixedSizeArray_;
+  }
+
+  static Ty ByteArray(const char *const &_0) {
+    Ty result;
+    ::new (&result.byte_array._0) (const char*)(_0);
+    result.tag = Tag::ByteArray;
+    return result;
+  }
+
+  bool IsByteArray() const {
+    return tag == Tag::ByteArray;
+  }
+};
+
+struct Member {
+  const char *name;
+  Ty *ty;
+  bool key;
+};
+
+struct Struct {
+  const char *name;
+  CArray<Member> children;
+};
+
+struct Entity {
+  FieldElement hashed_keys;
+  CArray<Struct> models;
+  uint64_t created_at;
+  uint64_t updated_at;
+  uint64_t executed_at;
+};
+
+struct KeysClause {
+  CArray<COption<FieldElement>> keys;
+  PatternMatching pattern_matching;
+  CArray<const char*> models;
+};
+
 struct MemberValue {
   enum class Tag {
     PrimitiveValue,
@@ -673,150 +830,6 @@ struct Query {
   bool historical;
 };
 
-struct EnumOption {
-  const char *name;
-  Ty *ty;
-};
-
-struct Enum {
-  const char *name;
-  uint8_t option;
-  CArray<EnumOption> options;
-};
-
-struct FixedSizeArray {
-  CArray<Ty> array;
-  uint32_t size;
-};
-
-struct Ty {
-  enum class Tag {
-    Primitive_,
-    Struct_,
-    Enum_,
-    Tuple_,
-    Array_,
-    FixedSizeArray_,
-    ByteArray,
-  };
-
-  struct Primitive__Body {
-    Primitive _0;
-  };
-
-  struct Struct__Body {
-    Struct _0;
-  };
-
-  struct Enum__Body {
-    Enum _0;
-  };
-
-  struct Tuple__Body {
-    CArray<Ty> _0;
-  };
-
-  struct Array__Body {
-    CArray<Ty> _0;
-  };
-
-  struct FixedSizeArray__Body {
-    FixedSizeArray _0;
-  };
-
-  struct ByteArray_Body {
-    const char *_0;
-  };
-
-  Tag tag;
-  union {
-    Primitive__Body primitive;
-    Struct__Body struct_;
-    Enum__Body enum_;
-    Tuple__Body tuple;
-    Array__Body array;
-    FixedSizeArray__Body fixed_size_array;
-    ByteArray_Body byte_array;
-  };
-
-  static Ty Primitive_(const Primitive &_0) {
-    Ty result;
-    ::new (&result.primitive._0) (Primitive)(_0);
-    result.tag = Tag::Primitive_;
-    return result;
-  }
-
-  bool IsPrimitive_() const {
-    return tag == Tag::Primitive_;
-  }
-
-  static Ty Struct_(const Struct &_0) {
-    Ty result;
-    ::new (&result.struct_._0) (Struct)(_0);
-    result.tag = Tag::Struct_;
-    return result;
-  }
-
-  bool IsStruct_() const {
-    return tag == Tag::Struct_;
-  }
-
-  static Ty Enum_(const Enum &_0) {
-    Ty result;
-    ::new (&result.enum_._0) (Enum)(_0);
-    result.tag = Tag::Enum_;
-    return result;
-  }
-
-  bool IsEnum_() const {
-    return tag == Tag::Enum_;
-  }
-
-  static Ty Tuple_(const CArray<Ty> &_0) {
-    Ty result;
-    ::new (&result.tuple._0) (CArray<Ty>)(_0);
-    result.tag = Tag::Tuple_;
-    return result;
-  }
-
-  bool IsTuple_() const {
-    return tag == Tag::Tuple_;
-  }
-
-  static Ty Array_(const CArray<Ty> &_0) {
-    Ty result;
-    ::new (&result.array._0) (CArray<Ty>)(_0);
-    result.tag = Tag::Array_;
-    return result;
-  }
-
-  bool IsArray_() const {
-    return tag == Tag::Array_;
-  }
-
-  static Ty FixedSizeArray_(const FixedSizeArray &_0) {
-    Ty result;
-    ::new (&result.fixed_size_array._0) (FixedSizeArray)(_0);
-    result.tag = Tag::FixedSizeArray_;
-    return result;
-  }
-
-  bool IsFixedSizeArray_() const {
-    return tag == Tag::FixedSizeArray_;
-  }
-
-  static Ty ByteArray(const char *const &_0) {
-    Ty result;
-    ::new (&result.byte_array._0) (const char*)(_0);
-    result.tag = Tag::ByteArray;
-    return result;
-  }
-
-  bool IsByteArray() const {
-    return tag == Tag::ByteArray;
-  }
-};
-
 struct Model {
   Ty schema;
   const char *namespace_;
@@ -952,12 +965,6 @@ struct Signature {
   FieldElement s;
 };
 
-struct Call {
-  FieldElement to;
-  const char *selector;
-  CArray<FieldElement> calldata;
-};
-
 /// Block hash, number or tag
 struct BlockId {
   enum class Tag {
@@ -1017,12 +1024,6 @@ struct BlockId {
   bool IsBlockTag_() const {
     return tag == Tag::BlockTag_;
   }
-};
-
-struct Policy {
-  FieldElement target;
-  const char *method;
-  const char *description;
 };
 
 extern "C" {
