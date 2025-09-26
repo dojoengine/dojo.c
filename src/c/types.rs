@@ -609,7 +609,10 @@ impl From<torii_proto::TokenTransfer> for TokenTransfer {
             amount: val.amount.into(),
             token_id: val.token_id.into(),
             executed_at: val.executed_at.timestamp() as u64,
-            event_id: val.event_id.map(|e| CString::new(e).unwrap().into_raw() as *const c_char).into(),
+            event_id: val
+                .event_id
+                .map(|e| CString::new(e).unwrap().into_raw() as *const c_char)
+                .into(),
         }
     }
 }

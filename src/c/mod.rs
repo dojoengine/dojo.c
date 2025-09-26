@@ -58,8 +58,8 @@ use types::{
 use url::Url;
 
 use crate::c::types::{
-    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenContractQuery, TokenQuery, 
-    Transaction, TransactionFilter, TransactionQuery,
+    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenContractQuery, TokenQuery, Transaction,
+    TransactionFilter, TransactionQuery,
 };
 use crate::constants;
 use crate::types::{

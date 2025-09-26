@@ -44,7 +44,8 @@ mod types;
 use types::{
     BlockId, Call, Calls, Clause, ClientConfig, Contract, Contracts, Controller, Controllers,
     Entities, Entity, KeysClause, KeysClauses, Message, Model, Page, Query, Signature, Token,
-    TokenBalance, TokenBalances, TokenContracts, TokenTransfer, TokenTransfers, Tokens, Transaction, Transactions, WasmU256,
+    TokenBalance, TokenBalances, TokenContracts, TokenTransfer, TokenTransfers, Tokens,
+    Transaction, Transactions, WasmU256,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
