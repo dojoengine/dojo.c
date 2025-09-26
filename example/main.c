@@ -1,4 +1,4 @@
-#include "dojo.h"
+#include "../dojo.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -29,7 +29,6 @@ void on_entity_state_update(FieldElement key, CArrayStruct models)
 
 void hex_to_bytes(const char *hex, FieldElement *felt)
 {
-
     if (hex[0] == '0' && hex[1] == 'x')
     {
         hex += 2;
