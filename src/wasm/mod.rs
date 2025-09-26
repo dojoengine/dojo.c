@@ -36,7 +36,7 @@ use crate::types::{Account, Provider, Subscription, ToriiClient};
 use crate::utils::watch_tx;
 use crate::wasm::types::{
     ContractQuery, ControllerQuery, TokenBalanceQuery, TokenContractQuery, TokenQuery,
-    TransactionFilter, TransactionQuery,
+    TokenTransferQuery, TransactionFilter, TransactionQuery,
 };
 
 mod types;
@@ -44,7 +44,7 @@ mod types;
 use types::{
     BlockId, Call, Calls, Clause, ClientConfig, Contract, Contracts, Controller, Controllers,
     Entities, Entity, KeysClause, KeysClauses, Message, Model, Page, Query, Signature, Token,
-    TokenBalance, TokenBalances, TokenContracts, Tokens, Transaction, Transactions, WasmU256,
+    TokenBalance, TokenBalances, TokenContracts, TokenTransfer, TokenTransfers, Tokens, Transaction, Transactions, WasmU256,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -998,6 +998,29 @@ impl ToriiClient {
         Ok(TokenContracts(token_contracts.into()))
     }
 
+    /// Gets token transfers for given accounts and contracts
+    ///
+    /// # Parameters
+    /// * `query` - TokenTransferQuery parameters
+    ///
+    /// # Returns
+    /// Result containing token transfers or error
+    #[wasm_bindgen(js_name = getTokenTransfers)]
+    pub async fn get_token_transfers(
+        &self,
+        query: TokenTransferQuery,
+    ) -> Result<TokenTransfers, JsValue> {
+        let query = query.into();
+
+        let token_transfers = self
+            .inner
+            .token_transfers(query)
+            .await
+            .map_err(|e| JsValue::from(format!("failed to get token transfers: {e}")))?;
+
+        Ok(TokenTransfers(token_transfers.into()))
+    }
+
     /// Queries entities based on the provided query parameters
     ///
     /// # Parameters
@@ -1539,6 +1562,155 @@ impl ToriiClient {
 
         self.inner
             .update_token_balance_subscription(
+                subscription.id,
+                contract_addresses,
+                account_addresses,
+                token_ids,
+            )
+            .await
+            .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
+    }
+
+    /// Subscribes to token transfer updates
+    ///
+    /// # Parameters
+    /// * `contract_addresses` - Array of contract addresses to filter (empty for all)
+    /// * `account_addresses` - Array of account addresses to filter (empty for all)
+    /// * `token_ids` - Array of token IDs to filter (empty for all)
+    /// * `callback` - JavaScript function to call on updates
+    ///
+    /// # Returns
+    /// Result containing subscription handle or error
+    #[wasm_bindgen(js_name = onTokenTransferUpdated)]
+    pub async fn on_token_transfer_updated(
+        &self,
+        contract_addresses: Option<Vec<String>>,
+        account_addresses: Option<Vec<String>>,
+        token_ids: Option<Vec<WasmU256>>,
+        callback: js_sys::Function,
+    ) -> Result<Subscription, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        let account_addresses = account_addresses
+            .unwrap_or_default()
+            .iter()
+            .map(|addr| {
+                Felt::from_str(addr)
+                    .map_err(|err| JsValue::from(format!("failed to parse account address: {err}")))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let contract_addresses = contract_addresses
+            .unwrap_or_default()
+            .iter()
+            .map(|addr| {
+                Felt::from_str(addr).map_err(|err| {
+                    JsValue::from(format!("failed to parse contract address: {err}"))
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let token_ids =
+            token_ids.unwrap_or_default().into_iter().map(|t| t.into()).collect::<Vec<_>>();
+
+        let (sub_id_tx, sub_id_rx) = oneshot::channel();
+        let mut sub_id_tx = Some(sub_id_tx);
+        let (trigger, tripwire) = Tripwire::new();
+
+        // Spawn a new task to handle the stream and reconnections
+        let client = self.inner.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let mut backoff = 1000;
+            let max_backoff = 60000;
+
+            loop {
+                if let Ok(stream) = client
+                    .on_token_transfer_updated(
+                        contract_addresses.clone(),
+                        account_addresses.clone(),
+                        token_ids.clone(),
+                    )
+                    .await
+                {
+                    backoff = 1000; // Reset backoff on successful connection
+
+                    let mut stream = stream.take_until_if(tripwire.clone());
+
+                    while let Some(Ok(transfer)) = stream.next().await {
+                        if let Some(tx) = sub_id_tx.take() {
+                            tx.send(0).expect("Failed to send subscription ID");
+                        } else {
+                            let transfer: TokenTransfer = transfer.into();
+
+                            let _ = callback.call1(
+                                &JsValue::null(),
+                                &transfer.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
+                        }
+                    }
+                }
+
+                // If we've reached this point, the stream has ended (possibly due to disconnection)
+                // We'll try to reconnect after a delay, unless the tripwire has been triggered
+                if tripwire.clone().now_or_never().unwrap_or_default() {
+                    break; // Exit the loop if the subscription has been cancelled
+                }
+                gloo_timers::future::TimeoutFuture::new(backoff).await;
+                backoff = std::cmp::min(backoff * 2, max_backoff);
+            }
+        });
+
+        let subscription_id = match sub_id_rx.await {
+            Ok(id) => id,
+            Err(_) => {
+                return Err(JsValue::from("Failed to establish token transfer subscription"));
+            }
+        };
+        let subscription = Subscription { id: subscription_id, trigger };
+
+        Ok(subscription)
+    }
+
+    /// Updates an existing token transfer subscription
+    ///
+    /// # Parameters
+    /// * `subscription` - Existing subscription to update
+    /// * `contract_addresses` - New array of contract addresses to filter
+    /// * `account_addresses` - New array of account addresses to filter
+    /// * `token_ids` - New array of token IDs to filter
+    ///
+    /// # Returns
+    /// Result containing unit or error
+    #[wasm_bindgen(js_name = updateTokenTransferSubscription)]
+    pub async fn update_token_transfer_subscription(
+        &self,
+        subscription: &Subscription,
+        contract_addresses: Vec<String>,
+        account_addresses: Vec<String>,
+        token_ids: Vec<WasmU256>,
+    ) -> Result<(), JsValue> {
+        let account_addresses = account_addresses
+            .iter()
+            .map(|addr| {
+                Felt::from_str(addr)
+                    .map_err(|err| JsValue::from(format!("failed to parse account address: {err}")))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let contract_addresses = contract_addresses
+            .iter()
+            .map(|addr| {
+                Felt::from_str(addr).map_err(|err| {
+                    JsValue::from(format!("failed to parse contract address: {err}"))
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let token_ids = token_ids.into_iter().map(|t| t.into()).collect::<Vec<_>>();
+
+        self.inner
+            .update_token_transfer_subscription(
                 subscription.id,
                 contract_addresses,
                 account_addresses,

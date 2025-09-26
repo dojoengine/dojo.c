@@ -26,6 +26,7 @@ struct TokenBalance;
 struct TokenContract;
 enum ContractType;
 struct Contract;
+struct TokenTransfer;
 struct Provider;
 struct Account;
 struct Ty;
@@ -793,6 +794,40 @@ typedef struct ContractQuery {
   struct CArrayContractType contract_types;
 } ContractQuery;
 
+typedef struct CArrayTokenTransfer {
+  struct TokenTransfer *data;
+  uintptr_t data_len;
+} CArrayTokenTransfer;
+
+typedef struct PageTokenTransfer {
+  struct CArrayTokenTransfer items;
+  struct COptionc_char next_cursor;
+} PageTokenTransfer;
+
+typedef enum ResultPageTokenTransfer_Tag {
+  OkPageTokenTransfer,
+  ErrPageTokenTransfer,
+} ResultPageTokenTransfer_Tag;
+
+typedef struct ResultPageTokenTransfer {
+  ResultPageTokenTransfer_Tag tag;
+  union {
+    struct {
+      struct PageTokenTransfer ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultPageTokenTransfer;
+
+typedef struct TokenTransferQuery {
+  struct CArrayFieldElement contract_addresses;
+  struct CArrayFieldElement account_addresses;
+  struct CArrayU256 token_ids;
+  struct Pagination pagination;
+} TokenTransferQuery;
+
 typedef enum COptionFieldElement_Tag {
   SomeFieldElement,
   NoneFieldElement,
@@ -824,6 +859,17 @@ typedef struct TokenBalance {
   struct FieldElement contract_address;
   struct COptionU256 token_id;
 } TokenBalance;
+
+typedef struct TokenTransfer {
+  const char *id;
+  struct FieldElement contract_address;
+  struct FieldElement from_address;
+  struct FieldElement to_address;
+  struct U256 amount;
+  struct COptionU256 token_id;
+  uint64_t executed_at;
+  struct COptionc_char event_id;
+} TokenTransfer;
 
 typedef enum Resultc_char_Tag {
   Okc_char,
@@ -1051,6 +1097,7 @@ typedef struct TokenContract {
   const char *symbol;
   uint8_t decimals;
   const char *metadata;
+  const char *token_metadata;
   struct COptionU256 total_supply;
 } TokenContract;
 
@@ -1515,6 +1562,19 @@ struct ResultCArrayContract client_contracts(struct ToriiClient *client,
                                              struct ContractQuery query);
 
 /**
+ * Retrieves token transfers matching the given query
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `query` - TokenTransferQuery parameters
+ *
+ * # Returns
+ * Result containing array of TokenTransfer information or error
+ */
+struct ResultPageTokenTransfer client_token_transfers(struct ToriiClient *client,
+                                                      struct TokenTransferQuery query);
+
+/**
  * Subscribes to contract updates
  *
  * # Parameters
@@ -1574,6 +1634,56 @@ struct Resultbool client_update_token_balance_subscription(struct ToriiClient *c
                                                            uintptr_t account_addresses_len,
                                                            const struct U256 *token_ids,
                                                            uintptr_t token_ids_len);
+
+/**
+ * Subscribes to token transfer updates
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `contract_addresses` - Array of contract addresses to filter (empty for all)
+ * * `contract_addresses_len` - Length of contract addresses array
+ * * `account_addresses` - Array of account addresses to filter (empty for all)
+ * * `account_addresses_len` - Length of account addresses array
+ * * `token_ids` - Array of token IDs to filter (empty for all)
+ * * `token_ids_len` - Length of token IDs array
+ * * `callback` - Function called when updates occur
+ *
+ * # Returns
+ * Result containing pointer to Subscription or error
+ */
+struct ResultSubscription client_on_token_transfer_update(struct ToriiClient *client,
+                                                          const struct FieldElement *contract_addresses,
+                                                          uintptr_t contract_addresses_len,
+                                                          const struct FieldElement *account_addresses,
+                                                          uintptr_t account_addresses_len,
+                                                          const struct U256 *token_ids,
+                                                          uintptr_t token_ids_len,
+                                                          void (*callback)(struct TokenTransfer));
+
+/**
+ * Updates an existing token transfer subscription
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `subscription` - Pointer to existing Subscription
+ * * `contract_addresses` - Array of contract addresses to filter (empty for all)
+ * * `contract_addresses_len` - Length of contract addresses array
+ * * `account_addresses` - Array of account addresses to filter (empty for all)
+ * * `account_addresses_len` - Length of account addresses array
+ * * `token_ids` - Array of token IDs to filter (empty for all)
+ * * `token_ids_len` - Length of token IDs array
+ *
+ * # Returns
+ * Result containing success boolean or error
+ */
+struct Resultbool client_update_token_transfer_subscription(struct ToriiClient *client,
+                                                            struct Subscription *subscription,
+                                                            const struct FieldElement *contract_addresses,
+                                                            uintptr_t contract_addresses_len,
+                                                            const struct FieldElement *account_addresses,
+                                                            uintptr_t account_addresses_len,
+                                                            const struct U256 *token_ids,
+                                                            uintptr_t token_ids_len);
 
 /**
  * Serializes a string into a byte array

@@ -81,12 +81,7 @@ pub struct TokenContracts(pub Page<TokenContract>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct TokenTransferQuery {
-    pub contract_addresses: Vec<String>,
-    pub account_addresses: Vec<String>,
-    pub token_ids: Vec<String>,
-    pub pagination: Pagination,
-}
+pub struct TokenTransfers(pub Page<TokenTransfer>);
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -122,6 +117,7 @@ pub struct TokenContract {
     pub symbol: String,
     pub decimals: u8,
     pub metadata: String,
+    pub token_metadata: String,
     pub total_supply: Option<String>,
 }
 
@@ -132,6 +128,7 @@ impl From<torii_proto::TokenContract> for TokenContract {
             name: value.name.clone(),
             symbol: value.symbol.clone(),
             decimals: value.decimals,
+            token_metadata: value.token_metadata.clone(),
             total_supply: value.total_supply.map(|t| format!("0x{:x}", t)),
             metadata: value.metadata.clone(),
         }
@@ -154,6 +151,62 @@ impl From<torii_proto::TokenBalance> for TokenBalance {
             account_address: format!("{:#x}", value.account_address),
             contract_address: format!("{:#x}", value.contract_address),
             token_id: value.token_id.map(|t| format!("0x{:x}", t)),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TokenTransfer {
+    pub id: String,
+    pub contract_address: String,
+    pub from_address: String,
+    pub to_address: String,
+    pub amount: String,
+    pub token_id: Option<String>,
+    pub executed_at: u64,
+    pub event_id: Option<String>,
+}
+
+impl From<torii_proto::TokenTransfer> for TokenTransfer {
+    fn from(value: torii_proto::TokenTransfer) -> Self {
+        Self {
+            id: value.id,
+            contract_address: format!("{:#x}", value.contract_address),
+            from_address: format!("{:#x}", value.from_address),
+            to_address: format!("{:#x}", value.to_address),
+            amount: format!("0x{:x}", value.amount),
+            token_id: value.token_id.map(|t| format!("0x{:x}", t)),
+            executed_at: value.executed_at.timestamp() as u64,
+            event_id: value.event_id,
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TokenTransferQuery {
+    pub contract_addresses: Vec<String>,
+    pub account_addresses: Vec<String>,
+    pub token_ids: Vec<String>,
+    pub pagination: Pagination,
+}
+
+impl From<TokenTransferQuery> for torii_proto::TokenTransferQuery {
+    fn from(value: TokenTransferQuery) -> Self {
+        Self {
+            contract_addresses: value
+                .contract_addresses
+                .into_iter()
+                .map(|c| Felt::from_str(c.as_str()).unwrap())
+                .collect(),
+            account_addresses: value
+                .account_addresses
+                .into_iter()
+                .map(|a| Felt::from_str(a.as_str()).unwrap())
+                .collect(),
+            token_ids: value.token_ids.into_iter().map(|t| U256::from_be_hex(t.as_str())).collect(),
+            pagination: value.pagination.into(),
         }
     }
 }

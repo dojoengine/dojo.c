@@ -920,6 +920,7 @@ struct TokenContract {
   const char *symbol;
   uint8_t decimals;
   const char *metadata;
+  const char *token_metadata;
   COption<U256> total_supply;
 };
 
@@ -943,6 +944,24 @@ struct Contract {
 struct ContractQuery {
   CArray<FieldElement> contract_addresses;
   CArray<ContractType> contract_types;
+};
+
+struct TokenTransfer {
+  const char *id;
+  FieldElement contract_address;
+  FieldElement from_address;
+  FieldElement to_address;
+  U256 amount;
+  COption<U256> token_id;
+  uint64_t executed_at;
+  COption<const char*> event_id;
+};
+
+struct TokenTransferQuery {
+  CArray<FieldElement> contract_addresses;
+  CArray<FieldElement> account_addresses;
+  CArray<U256> token_ids;
+  Pagination pagination;
 };
 
 struct Signature {
@@ -1408,6 +1427,16 @@ Result<Page<TokenContract>> client_token_contracts(ToriiClient *client, TokenCon
 /// Result containing array of Contract information or error
 Result<CArray<Contract>> client_contracts(ToriiClient *client, ContractQuery query);
 
+/// Retrieves token transfers matching the given query
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - TokenTransferQuery parameters
+///
+/// # Returns
+/// Result containing array of TokenTransfer information or error
+Result<Page<TokenTransfer>> client_token_transfers(ToriiClient *client, TokenTransferQuery query);
+
 /// Subscribes to contract updates
 ///
 /// # Parameters
@@ -1462,6 +1491,52 @@ Result<bool> client_update_token_balance_subscription(ToriiClient *client,
                                                       uintptr_t account_addresses_len,
                                                       const U256 *token_ids,
                                                       uintptr_t token_ids_len);
+
+/// Subscribes to token transfer updates
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `contract_addresses` - Array of contract addresses to filter (empty for all)
+/// * `contract_addresses_len` - Length of contract addresses array
+/// * `account_addresses` - Array of account addresses to filter (empty for all)
+/// * `account_addresses_len` - Length of account addresses array
+/// * `token_ids` - Array of token IDs to filter (empty for all)
+/// * `token_ids_len` - Length of token IDs array
+/// * `callback` - Function called when updates occur
+///
+/// # Returns
+/// Result containing pointer to Subscription or error
+Result<Subscription*> client_on_token_transfer_update(ToriiClient *client,
+                                                      const FieldElement *contract_addresses,
+                                                      uintptr_t contract_addresses_len,
+                                                      const FieldElement *account_addresses,
+                                                      uintptr_t account_addresses_len,
+                                                      const U256 *token_ids,
+                                                      uintptr_t token_ids_len,
+                                                      void (*callback)(TokenTransfer));
+
+/// Updates an existing token transfer subscription
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `subscription` - Pointer to existing Subscription
+/// * `contract_addresses` - Array of contract addresses to filter (empty for all)
+/// * `contract_addresses_len` - Length of contract addresses array
+/// * `account_addresses` - Array of account addresses to filter (empty for all)
+/// * `account_addresses_len` - Length of account addresses array
+/// * `token_ids` - Array of token IDs to filter (empty for all)
+/// * `token_ids_len` - Length of token IDs array
+///
+/// # Returns
+/// Result containing success boolean or error
+Result<bool> client_update_token_transfer_subscription(ToriiClient *client,
+                                                       Subscription *subscription,
+                                                       const FieldElement *contract_addresses,
+                                                       uintptr_t contract_addresses_len,
+                                                       const FieldElement *account_addresses,
+                                                       uintptr_t account_addresses_len,
+                                                       const U256 *token_ids,
+                                                       uintptr_t token_ids_len);
 
 /// Serializes a string into a byte array
 ///
