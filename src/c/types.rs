@@ -183,6 +183,7 @@ pub struct TokenContract {
     pub symbol: *const c_char,
     pub decimals: u8,
     pub metadata: *const c_char,
+    pub token_metadata: *const c_char,
     pub total_supply: COption<U256>,
 }
 
@@ -193,6 +194,7 @@ impl From<torii_proto::TokenContract> for TokenContract {
             name: CString::new(value.name.clone()).unwrap().into_raw(),
             symbol: CString::new(value.symbol.clone()).unwrap().into_raw(),
             decimals: value.decimals,
+            token_metadata: CString::new(value.token_metadata.clone()).unwrap().into_raw(),
             total_supply: value.total_supply.into(),
             metadata: CString::new(value.metadata.clone()).unwrap().into_raw(),
         }
@@ -579,6 +581,54 @@ impl From<TokenContractQuery> for torii_proto::TokenContractQuery {
         torii_proto::TokenContractQuery {
             contract_addresses: val.contract_addresses.into(),
             contract_types: val.contract_types.into(),
+            pagination: val.pagination.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct TokenTransfer {
+    pub id: *const c_char,
+    pub contract_address: FieldElement,
+    pub from_address: FieldElement,
+    pub to_address: FieldElement,
+    pub amount: U256,
+    pub token_id: COption<U256>,
+    pub executed_at: u64,
+    pub event_id: COption<*const c_char>,
+}
+
+impl From<torii_proto::TokenTransfer> for TokenTransfer {
+    fn from(val: torii_proto::TokenTransfer) -> Self {
+        TokenTransfer {
+            id: CString::new(val.id.clone()).unwrap().into_raw(),
+            contract_address: val.contract_address.into(),
+            from_address: val.from_address.into(),
+            to_address: val.to_address.into(),
+            amount: val.amount.into(),
+            token_id: val.token_id.into(),
+            executed_at: val.executed_at.timestamp() as u64,
+            event_id: val.event_id.map(|e| CString::new(e).unwrap().into_raw() as *const c_char).into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct TokenTransferQuery {
+    pub contract_addresses: CArray<FieldElement>,
+    pub account_addresses: CArray<FieldElement>,
+    pub token_ids: CArray<U256>,
+    pub pagination: Pagination,
+}
+
+impl From<TokenTransferQuery> for torii_proto::TokenTransferQuery {
+    fn from(val: TokenTransferQuery) -> Self {
+        torii_proto::TokenTransferQuery {
+            contract_addresses: val.contract_addresses.into(),
+            account_addresses: val.account_addresses.into(),
+            token_ids: val.token_ids.into(),
             pagination: val.pagination.into(),
         }
     }

@@ -53,13 +53,13 @@ use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
     BlockId, CArray, COption, Call, Clause, Contract, Controller, Entity, Error, Event, KeysClause,
     Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance, TokenContract,
-    ToriiClient, Ty, World,
+    TokenTransfer, TokenTransferQuery, ToriiClient, Ty, World,
 };
 use url::Url;
 
 use crate::c::types::{
-    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenContractQuery, TokenQuery, Transaction,
-    TransactionFilter, TransactionQuery,
+    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenContractQuery, TokenQuery, 
+    Transaction, TransactionFilter, TransactionQuery,
 };
 use crate::constants;
 use crate::types::{
@@ -1378,6 +1378,28 @@ pub unsafe extern "C" fn client_contracts(
     }
 }
 
+/// Retrieves token transfers matching the given query
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - TokenTransferQuery parameters
+///
+/// # Returns
+/// Result containing array of TokenTransfer information or error
+#[no_mangle]
+pub unsafe extern "C" fn client_token_transfers(
+    client: *mut ToriiClient,
+    query: TokenTransferQuery,
+) -> Result<Page<TokenTransfer>> {
+    let query = query.into();
+    let token_transfers_future = unsafe { (*client).inner.token_transfers(query) };
+
+    match RUNTIME.block_on(token_transfers_future) {
+        Ok(transfers) => Result::Ok(transfers.into()),
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
 /// Subscribes to contract updates
 ///
 /// # Parameters
@@ -1610,6 +1632,178 @@ pub unsafe extern "C" fn client_update_token_balance_subscription(
     };
 
     match RUNTIME.block_on((*client).inner.update_token_balance_subscription(
+        (*subscription).id,
+        contract_addresses,
+        account_addresses,
+        token_ids,
+    )) {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
+/// Subscribes to token transfer updates
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `contract_addresses` - Array of contract addresses to filter (empty for all)
+/// * `contract_addresses_len` - Length of contract addresses array
+/// * `account_addresses` - Array of account addresses to filter (empty for all)
+/// * `account_addresses_len` - Length of account addresses array
+/// * `token_ids` - Array of token IDs to filter (empty for all)
+/// * `token_ids_len` - Length of token IDs array
+/// * `callback` - Function called when updates occur
+///
+/// # Returns
+/// Result containing pointer to Subscription or error
+#[no_mangle]
+pub unsafe extern "C" fn client_on_token_transfer_update(
+    client: *mut ToriiClient,
+    contract_addresses: *const types::FieldElement,
+    contract_addresses_len: usize,
+    account_addresses: *const types::FieldElement,
+    account_addresses_len: usize,
+    token_ids: *const types::U256,
+    token_ids_len: usize,
+    callback: unsafe extern "C" fn(TokenTransfer),
+) -> Result<*mut Subscription> {
+    let client = Arc::new(unsafe { &*client });
+
+    // Convert account addresses array to Vec<Felt> if not empty
+    let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses =
+            unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    // Convert contract addresses array to Vec<Felt> if not empty
+    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses =
+            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    let token_ids = if token_ids.is_null() || token_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
+        ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
+    };
+
+    let (sub_id_tx, sub_id_rx) = oneshot::channel();
+    let mut sub_id_tx = Some(sub_id_tx);
+    let (trigger, tripwire) = Tripwire::new();
+
+    // Spawn a new thread to handle the stream and reconnections
+    let client_clone = client.clone();
+    RUNTIME.spawn(async move {
+        let mut backoff = Duration::from_secs(1);
+        let max_backoff = Duration::from_secs(60);
+
+        loop {
+            let rcv = client_clone
+                .inner
+                .on_token_transfer_updated(
+                    contract_addresses.clone(),
+                    account_addresses.clone(),
+                    token_ids.clone(),
+                )
+                .await;
+
+            if let Ok(rcv) = rcv {
+                backoff = Duration::from_secs(1); // Reset backoff on successful connection
+
+                let mut rcv = rcv.take_until_if(tripwire.clone());
+
+                while let Some(Ok(transfer)) = rcv.next().await {
+                    if let Some(tx) = sub_id_tx.take() {
+                        tx.send(0).expect("Failed to send subscription ID");
+                    } else {
+                        let transfer: types::TokenTransfer = transfer.into();
+                        callback(transfer);
+                    }
+                }
+            }
+
+            // If we've reached this point, the stream has ended (possibly due to disconnection)
+            // We'll try to reconnect after a delay, unless the tripwire has been triggered
+            if tripwire.clone().now_or_never().unwrap_or_default() {
+                break; // Exit the loop if the subscription has been cancelled
+            }
+            sleep(backoff).await;
+            backoff = std::cmp::min(backoff * 2, max_backoff);
+        }
+    });
+
+    let subscription_id = match RUNTIME.block_on(sub_id_rx) {
+        Ok(id) => id,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to establish token transfer subscription")
+                    .unwrap()
+                    .into_raw(),
+            });
+        }
+    };
+
+    let subscription = Subscription { id: subscription_id, trigger };
+
+    Result::Ok(Box::into_raw(Box::new(subscription)))
+}
+
+/// Updates an existing token transfer subscription
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `subscription` - Pointer to existing Subscription
+/// * `contract_addresses` - Array of contract addresses to filter (empty for all)
+/// * `contract_addresses_len` - Length of contract addresses array
+/// * `account_addresses` - Array of account addresses to filter (empty for all)
+/// * `account_addresses_len` - Length of account addresses array
+/// * `token_ids` - Array of token IDs to filter (empty for all)
+/// * `token_ids_len` - Length of token IDs array
+///
+/// # Returns
+/// Result containing success boolean or error
+#[no_mangle]
+pub unsafe extern "C" fn client_update_token_transfer_subscription(
+    client: *mut ToriiClient,
+    subscription: *mut Subscription,
+    contract_addresses: *const types::FieldElement,
+    contract_addresses_len: usize,
+    account_addresses: *const types::FieldElement,
+    account_addresses_len: usize,
+    token_ids: *const types::U256,
+    token_ids_len: usize,
+) -> Result<bool> {
+    let contract_addresses = if contract_addresses.is_null() || contract_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses =
+            unsafe { std::slice::from_raw_parts(contract_addresses, contract_addresses_len) };
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    let account_addresses = if account_addresses.is_null() || account_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses =
+            unsafe { std::slice::from_raw_parts(account_addresses, account_addresses_len) };
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    let token_ids = if token_ids.is_null() || token_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(token_ids, token_ids_len) };
+        ids.iter().map(|f| f.clone().into()).collect::<Vec<U256>>()
+    };
+
+    match RUNTIME.block_on((*client).inner.update_token_transfer_subscription(
         (*subscription).id,
         contract_addresses,
         account_addresses,
