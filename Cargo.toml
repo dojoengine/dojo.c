@@ -70,7 +70,7 @@ base64 = "0.22.1"
 # see. https://github.com/mozilla/cbindgen/issues/43
 # cbindgen = { git = "https://github.com/flaviojs/cbindgen_tmp", branch = "resolve-order-dependencies-clike" }
 # cbindgen = "0.29"
-cbindgen = { git = "https://github.com/masnagam/cbindgen", branch = "fix-issue-43" }
+cbindgen = { git = "https://github.com/Larkooo/cbindgen", branch = "no-c-forward-enum" }
 
 
 [dev-dependencies]

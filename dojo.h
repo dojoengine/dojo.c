@@ -24,7 +24,6 @@ struct Token;
 struct AttributeFilter;
 struct TokenBalance;
 struct TokenContract;
-enum ContractType;
 struct Contract;
 struct TokenTransfer;
 struct Provider;
