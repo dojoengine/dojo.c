@@ -872,6 +872,50 @@ struct TransactionQuery {
   Pagination pagination;
 };
 
+struct AggregationEntry {
+  const char *id;
+  const char *aggregator_id;
+  const char *entity_id;
+  U256 value;
+  const char *display_value;
+  uint64_t position;
+  FieldElement model_id;
+  uint64_t created_at;
+  uint64_t updated_at;
+};
+
+struct AggregationQuery {
+  CArray<const char*> aggregator_ids;
+  CArray<const char*> entity_ids;
+  Pagination pagination;
+};
+
+struct ActionCount {
+  const char *action_name;
+  uint32_t count;
+};
+
+struct Activity {
+  const char *id;
+  FieldElement world_address;
+  const char *namespace_;
+  FieldElement caller_address;
+  uint64_t session_start;
+  uint64_t session_end;
+  uint32_t action_count;
+  CArray<ActionCount> actions;
+  uint64_t updated_at;
+};
+
+struct ActivityQuery {
+  CArray<FieldElement> world_addresses;
+  CArray<const char*> namespaces;
+  CArray<FieldElement> caller_addresses;
+  COption<uint64_t> from_time;
+  COption<uint64_t> to_time;
+  Pagination pagination;
+};
+
 struct Event {
   CArray<FieldElement> keys;
   CArray<FieldElement> data;
@@ -1308,6 +1352,111 @@ Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
 Result<bool> client_update_entity_subscription(ToriiClient *client,
                                                Subscription *subscription,
                                                COption<Clause> clause);
+
+/// Retrieves aggregations (leaderboards, stats, rankings) matching query parameter
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - AggregationQuery containing aggregator_ids, entity_ids, and pagination
+///
+/// # Returns
+/// Result containing Page of AggregationEntry or error
+Result<Page<AggregationEntry>> client_aggregations(ToriiClient *client, AggregationQuery query);
+
+/// Subscribes to aggregation updates (leaderboards, stats, rankings)
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `aggregator_ids` - Array of aggregator IDs to subscribe to
+/// * `aggregator_ids_len` - Length of aggregator_ids array
+/// * `entity_ids` - Array of entity IDs to subscribe to
+/// * `entity_ids_len` - Length of entity_ids array
+/// * `callback` - Function called when updates occur
+///
+/// # Returns
+/// Result containing pointer to Subscription or error
+Result<Subscription*> client_on_aggregation_update(ToriiClient *client,
+                                                   const char *const *aggregator_ids,
+                                                   uintptr_t aggregator_ids_len,
+                                                   const char *const *entity_ids,
+                                                   uintptr_t entity_ids_len,
+                                                   void (*callback)(AggregationEntry));
+
+/// Updates an existing aggregation subscription with new parameters
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `subscription` - Pointer to existing Subscription
+/// * `aggregator_ids` - Array of aggregator IDs to subscribe to
+/// * `aggregator_ids_len` - Length of aggregator_ids array
+/// * `entity_ids` - Array of entity IDs to subscribe to
+/// * `entity_ids_len` - Length of entity_ids array
+///
+/// # Returns
+/// Result containing success boolean or error
+Result<bool> client_update_aggregation_subscription(ToriiClient *client,
+                                                    Subscription *subscription,
+                                                    const char *const *aggregator_ids,
+                                                    uintptr_t aggregator_ids_len,
+                                                    const char *const *entity_ids,
+                                                    uintptr_t entity_ids_len);
+
+/// Retrieves activities (user session tracking) matching query parameter
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - ActivityQuery containing world_addresses, namespaces, caller_addresses, and pagination
+///
+/// # Returns
+/// Result containing Page of Activity or error
+Result<Page<Activity>> client_activities(ToriiClient *client,
+                                         ActivityQuery query);
+
+/// Subscribes to activity updates (user session tracking)
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `world_addresses` - Array of world addresses to subscribe to
+/// * `world_addresses_len` - Length of world_addresses array
+/// * `namespaces` - Array of namespaces to subscribe to
+/// * `namespaces_len` - Length of namespaces array
+/// * `caller_addresses` - Array of caller addresses to subscribe to
+/// * `caller_addresses_len` - Length of caller_addresses array
+/// * `callback` - Function called when updates occur
+///
+/// # Returns
+/// Result containing pointer to Subscription or error
+Result<Subscription*> client_on_activity_update(ToriiClient *client,
+                                                const FieldElement *world_addresses,
+                                                uintptr_t world_addresses_len,
+                                                const char *const *namespaces,
+                                                uintptr_t namespaces_len,
+                                                const FieldElement *caller_addresses,
+                                                uintptr_t caller_addresses_len,
+                                                void (*callback)(Activity));
+
+/// Updates an existing activity subscription with new parameters
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `subscription` - Pointer to existing Subscription
+/// * `world_addresses` - Array of world addresses to subscribe to
+/// * `world_addresses_len` - Length of world_addresses array
+/// * `namespaces` - Array of namespaces to subscribe to
+/// * `namespaces_len` - Length of namespaces array
+/// * `caller_addresses` - Array of caller addresses to subscribe to
+/// * `caller_addresses_len` - Length of caller_addresses array
+///
+/// # Returns
+/// Result containing success boolean or error
+Result<bool> client_update_activity_subscription(ToriiClient *client,
+                                                 Subscription *subscription,
+                                                 const FieldElement *world_addresses,
+                                                 uintptr_t world_addresses_len,
+                                                 const char *const *namespaces,
+                                                 uintptr_t namespaces_len,
+                                                 const FieldElement *caller_addresses,
+                                                 uintptr_t caller_addresses_len);
 
 /// Subscribes to event message updates
 ///

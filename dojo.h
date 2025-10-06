@@ -20,6 +20,9 @@ struct Transaction;
 struct Subscription;
 struct TransactionCall;
 struct Struct;
+struct AggregationEntry;
+struct Activity;
+struct ActionCount;
 struct Token;
 struct AttributeFilter;
 struct TokenBalance;
@@ -620,6 +623,104 @@ typedef struct Entity {
   uint64_t executed_at;
 } Entity;
 
+typedef struct CArrayAggregationEntry {
+  struct AggregationEntry *data;
+  uintptr_t data_len;
+} CArrayAggregationEntry;
+
+typedef struct PageAggregationEntry {
+  struct CArrayAggregationEntry items;
+  struct COptionc_char next_cursor;
+} PageAggregationEntry;
+
+typedef enum ResultPageAggregationEntry_Tag {
+  OkPageAggregationEntry,
+  ErrPageAggregationEntry,
+} ResultPageAggregationEntry_Tag;
+
+typedef struct ResultPageAggregationEntry {
+  ResultPageAggregationEntry_Tag tag;
+  union {
+    struct {
+      struct PageAggregationEntry ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultPageAggregationEntry;
+
+typedef struct AggregationQuery {
+  struct CArrayc_char aggregator_ids;
+  struct CArrayc_char entity_ids;
+  struct Pagination pagination;
+} AggregationQuery;
+
+typedef struct AggregationEntry {
+  const char *id;
+  const char *aggregator_id;
+  const char *entity_id;
+  struct U256 value;
+  const char *display_value;
+  uint64_t position;
+  struct FieldElement model_id;
+  uint64_t created_at;
+  uint64_t updated_at;
+} AggregationEntry;
+
+typedef struct CArrayActivity {
+  struct Activity *data;
+  uintptr_t data_len;
+} CArrayActivity;
+
+typedef struct PageActivity {
+  struct CArrayActivity items;
+  struct COptionc_char next_cursor;
+} PageActivity;
+
+typedef enum ResultPageActivity_Tag {
+  OkPageActivity,
+  ErrPageActivity,
+} ResultPageActivity_Tag;
+
+typedef struct ResultPageActivity {
+  ResultPageActivity_Tag tag;
+  union {
+    struct {
+      struct PageActivity ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultPageActivity;
+
+typedef struct ActivityQuery {
+  struct CArrayFieldElement world_addresses;
+  struct CArrayc_char namespaces;
+  struct CArrayFieldElement caller_addresses;
+  struct COptionu64 from_time;
+  struct COptionu64 to_time;
+  struct Pagination pagination;
+} ActivityQuery;
+
+typedef struct CArrayActionCount {
+  struct ActionCount *data;
+  uintptr_t data_len;
+} CArrayActionCount;
+
+typedef struct Activity {
+  const char *id;
+  struct FieldElement world_address;
+  const char *namespace_;
+  struct FieldElement caller_address;
+  uint64_t session_start;
+  uint64_t session_end;
+  uint32_t action_count;
+  struct CArrayActionCount actions;
+  uint64_t updated_at;
+} Activity;
+
 typedef struct Event {
   struct CArrayFieldElement keys;
   struct CArrayFieldElement data;
@@ -1085,6 +1186,11 @@ typedef struct TransactionCall {
   struct FieldElement caller_address;
 } TransactionCall;
 
+typedef struct ActionCount {
+  const char *action_name;
+  uint32_t count;
+} ActionCount;
+
 typedef struct AttributeFilter {
   const char *trait_name;
   const char *trait_value;
@@ -1422,6 +1528,124 @@ struct ResultSubscription client_on_entity_state_update(struct ToriiClient *clie
 struct Resultbool client_update_entity_subscription(struct ToriiClient *client,
                                                     struct Subscription *subscription,
                                                     struct COptionClause clause);
+
+/**
+ * Retrieves aggregations (leaderboards, stats, rankings) matching query parameter
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `query` - AggregationQuery containing aggregator_ids, entity_ids, and pagination
+ *
+ * # Returns
+ * Result containing Page of AggregationEntry or error
+ */
+struct ResultPageAggregationEntry client_aggregations(struct ToriiClient *client,
+                                                      struct AggregationQuery query);
+
+/**
+ * Subscribes to aggregation updates (leaderboards, stats, rankings)
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `aggregator_ids` - Array of aggregator IDs to subscribe to
+ * * `aggregator_ids_len` - Length of aggregator_ids array
+ * * `entity_ids` - Array of entity IDs to subscribe to
+ * * `entity_ids_len` - Length of entity_ids array
+ * * `callback` - Function called when updates occur
+ *
+ * # Returns
+ * Result containing pointer to Subscription or error
+ */
+struct ResultSubscription client_on_aggregation_update(struct ToriiClient *client,
+                                                       const char *const *aggregator_ids,
+                                                       uintptr_t aggregator_ids_len,
+                                                       const char *const *entity_ids,
+                                                       uintptr_t entity_ids_len,
+                                                       void (*callback)(struct AggregationEntry));
+
+/**
+ * Updates an existing aggregation subscription with new parameters
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `subscription` - Pointer to existing Subscription
+ * * `aggregator_ids` - Array of aggregator IDs to subscribe to
+ * * `aggregator_ids_len` - Length of aggregator_ids array
+ * * `entity_ids` - Array of entity IDs to subscribe to
+ * * `entity_ids_len` - Length of entity_ids array
+ *
+ * # Returns
+ * Result containing success boolean or error
+ */
+struct Resultbool client_update_aggregation_subscription(struct ToriiClient *client,
+                                                         struct Subscription *subscription,
+                                                         const char *const *aggregator_ids,
+                                                         uintptr_t aggregator_ids_len,
+                                                         const char *const *entity_ids,
+                                                         uintptr_t entity_ids_len);
+
+/**
+ * Retrieves activities (user session tracking) matching query parameter
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `query` - ActivityQuery containing world_addresses, namespaces, caller_addresses, and pagination
+ *
+ * # Returns
+ * Result containing Page of Activity or error
+ */
+struct ResultPageActivity client_activities(struct ToriiClient *client,
+                                            struct ActivityQuery query);
+
+/**
+ * Subscribes to activity updates (user session tracking)
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `world_addresses` - Array of world addresses to subscribe to
+ * * `world_addresses_len` - Length of world_addresses array
+ * * `namespaces` - Array of namespaces to subscribe to
+ * * `namespaces_len` - Length of namespaces array
+ * * `caller_addresses` - Array of caller addresses to subscribe to
+ * * `caller_addresses_len` - Length of caller_addresses array
+ * * `callback` - Function called when updates occur
+ *
+ * # Returns
+ * Result containing pointer to Subscription or error
+ */
+struct ResultSubscription client_on_activity_update(struct ToriiClient *client,
+                                                    const struct FieldElement *world_addresses,
+                                                    uintptr_t world_addresses_len,
+                                                    const char *const *namespaces,
+                                                    uintptr_t namespaces_len,
+                                                    const struct FieldElement *caller_addresses,
+                                                    uintptr_t caller_addresses_len,
+                                                    void (*callback)(struct Activity));
+
+/**
+ * Updates an existing activity subscription with new parameters
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `subscription` - Pointer to existing Subscription
+ * * `world_addresses` - Array of world addresses to subscribe to
+ * * `world_addresses_len` - Length of world_addresses array
+ * * `namespaces` - Array of namespaces to subscribe to
+ * * `namespaces_len` - Length of namespaces array
+ * * `caller_addresses` - Array of caller addresses to subscribe to
+ * * `caller_addresses_len` - Length of caller_addresses array
+ *
+ * # Returns
+ * Result containing success boolean or error
+ */
+struct Resultbool client_update_activity_subscription(struct ToriiClient *client,
+                                                      struct Subscription *subscription,
+                                                      const struct FieldElement *world_addresses,
+                                                      uintptr_t world_addresses_len,
+                                                      const char *const *namespaces,
+                                                      uintptr_t namespaces_len,
+                                                      const struct FieldElement *caller_addresses,
+                                                      uintptr_t caller_addresses_len);
 
 /**
  * Subscribes to event message updates

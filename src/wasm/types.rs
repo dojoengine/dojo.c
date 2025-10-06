@@ -1077,3 +1077,121 @@ impl From<Message> for torii_proto::Message {
         }
     }
 }
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct AggregationQuery {
+    pub aggregator_ids: Vec<String>,
+    pub entity_ids: Vec<String>,
+    pub pagination: Pagination,
+}
+
+impl From<AggregationQuery> for torii_proto::AggregationQuery {
+    fn from(value: AggregationQuery) -> Self {
+        Self {
+            aggregator_ids: value.aggregator_ids,
+            entity_ids: value.entity_ids,
+            pagination: value.pagination.into(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct ActivityQuery {
+    pub world_addresses: Vec<String>,
+    pub namespaces: Vec<String>,
+    pub caller_addresses: Vec<String>,
+    pub from_time: Option<String>,
+    pub to_time: Option<String>,
+    pub pagination: Pagination,
+}
+
+impl From<ActivityQuery> for torii_proto::ActivityQuery {
+    fn from(value: ActivityQuery) -> Self {
+        Self {
+            world_addresses: value
+                .world_addresses
+                .into_iter()
+                .map(|addr| Felt::from_str(&addr).unwrap())
+                .collect(),
+            namespaces: value.namespaces,
+            caller_addresses: value
+                .caller_addresses
+                .into_iter()
+                .map(|addr| Felt::from_str(&addr).unwrap())
+                .collect(),
+            from_time: value.from_time.and_then(|t| t.parse().ok()),
+            to_time: value.to_time.and_then(|t| t.parse().ok()),
+            pagination: value.pagination.into(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct AggregationEntry {
+    pub id: String,
+    pub aggregator_id: String,
+    pub entity_id: String,
+    pub value: String,
+    pub display_value: String,
+    pub position: u64,
+    pub model_id: String,
+    pub created_at: u64,
+    pub updated_at: u64,
+}
+
+impl From<torii_proto::AggregationEntry> for AggregationEntry {
+    fn from(value: torii_proto::AggregationEntry) -> Self {
+        Self {
+            id: value.id,
+            aggregator_id: value.aggregator_id,
+            entity_id: value.entity_id,
+            value: format!("0x{:x}", value.value),
+            display_value: value.display_value,
+            position: value.position,
+            model_id: format!("{:#x}", value.model_id),
+            created_at: value.created_at.timestamp() as u64,
+            updated_at: value.updated_at.timestamp() as u64,
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
+pub struct Activity {
+    pub id: String,
+    pub world_address: String,
+    pub namespace: String,
+    pub caller_address: String,
+    pub session_start: u64,
+    pub session_end: u64,
+    pub action_count: u32,
+    pub actions: HashMap<String, u32>,
+    pub updated_at: u64,
+}
+
+impl From<torii_proto::Activity> for Activity {
+    fn from(value: torii_proto::Activity) -> Self {
+        Self {
+            id: value.id,
+            world_address: format!("{:#x}", value.world_address),
+            namespace: value.namespace,
+            caller_address: format!("{:#x}", value.caller_address),
+            session_start: value.session_start.timestamp() as u64,
+            session_end: value.session_end.timestamp() as u64,
+            action_count: value.action_count,
+            actions: value.actions,
+            updated_at: value.updated_at.timestamp() as u64,
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Aggregations(pub Page<AggregationEntry>);
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Activities(pub Page<Activity>);

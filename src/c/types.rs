@@ -1728,3 +1728,139 @@ impl From<Message> for torii_proto::Message {
         torii_proto::Message { message, signature }
     }
 }
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct AggregationQuery {
+    pub aggregator_ids: CArray<*const c_char>,
+    pub entity_ids: CArray<*const c_char>,
+    pub pagination: Pagination,
+}
+
+impl From<AggregationQuery> for torii_proto::AggregationQuery {
+    fn from(val: AggregationQuery) -> Self {
+        let aggregator_ids: Vec<*const c_char> = val.aggregator_ids.into();
+        let aggregator_ids = aggregator_ids
+            .into_iter()
+            .map(|id| unsafe { CStr::from_ptr(id).to_string_lossy().to_string() })
+            .collect::<Vec<String>>();
+
+        let entity_ids: Vec<*const c_char> = val.entity_ids.into();
+        let entity_ids = entity_ids
+            .into_iter()
+            .map(|id| unsafe { CStr::from_ptr(id).to_string_lossy().to_string() })
+            .collect::<Vec<String>>();
+
+        torii_proto::AggregationQuery {
+            aggregator_ids,
+            entity_ids,
+            pagination: val.pagination.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct ActivityQuery {
+    pub world_addresses: CArray<FieldElement>,
+    pub namespaces: CArray<*const c_char>,
+    pub caller_addresses: CArray<FieldElement>,
+    pub from_time: COption<u64>,
+    pub to_time: COption<u64>,
+    pub pagination: Pagination,
+}
+
+impl From<ActivityQuery> for torii_proto::ActivityQuery {
+    fn from(val: ActivityQuery) -> Self {
+        let namespaces: Vec<*const c_char> = val.namespaces.into();
+        let namespaces = namespaces
+            .into_iter()
+            .map(|ns| unsafe { CStr::from_ptr(ns).to_string_lossy().to_string() })
+            .collect::<Vec<String>>();
+
+        torii_proto::ActivityQuery {
+            world_addresses: val.world_addresses.into(),
+            namespaces,
+            caller_addresses: val.caller_addresses.into(),
+            from_time: val.from_time.map(|t| DateTime::from_timestamp(t as i64, 0).unwrap()).into(),
+            to_time: val.to_time.map(|t| DateTime::from_timestamp(t as i64, 0).unwrap()).into(),
+            pagination: val.pagination.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct AggregationEntry {
+    pub id: *const c_char,
+    pub aggregator_id: *const c_char,
+    pub entity_id: *const c_char,
+    pub value: U256,
+    pub display_value: *const c_char,
+    pub position: u64,
+    pub model_id: FieldElement,
+    pub created_at: u64,
+    pub updated_at: u64,
+}
+
+impl From<torii_proto::AggregationEntry> for AggregationEntry {
+    fn from(val: torii_proto::AggregationEntry) -> Self {
+        AggregationEntry {
+            id: CString::new(val.id.clone()).unwrap().into_raw(),
+            aggregator_id: CString::new(val.aggregator_id.clone()).unwrap().into_raw(),
+            entity_id: CString::new(val.entity_id.clone()).unwrap().into_raw(),
+            value: val.value.into(),
+            display_value: CString::new(val.display_value.clone()).unwrap().into_raw(),
+            position: val.position,
+            model_id: val.model_id.into(),
+            created_at: val.created_at.timestamp() as u64,
+            updated_at: val.updated_at.timestamp() as u64,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct Activity {
+    pub id: *const c_char,
+    pub world_address: FieldElement,
+    pub namespace: *const c_char,
+    pub caller_address: FieldElement,
+    pub session_start: u64,
+    pub session_end: u64,
+    pub action_count: u32,
+    pub actions: CArray<ActionCount>,
+    pub updated_at: u64,
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct ActionCount {
+    pub action_name: *const c_char,
+    pub count: u32,
+}
+
+impl From<torii_proto::Activity> for Activity {
+    fn from(val: torii_proto::Activity) -> Self {
+        let actions: Vec<ActionCount> = val
+            .actions
+            .into_iter()
+            .map(|(name, count)| ActionCount {
+                action_name: CString::new(name).unwrap().into_raw(),
+                count,
+            })
+            .collect();
+
+        Activity {
+            id: CString::new(val.id).unwrap().into_raw(),
+            world_address: val.world_address.into(),
+            namespace: CString::new(val.namespace).unwrap().into_raw(),
+            caller_address: val.caller_address.into(),
+            session_start: val.session_start.timestamp() as u64,
+            session_end: val.session_end.timestamp() as u64,
+            action_count: val.action_count,
+            actions: actions.into(),
+            updated_at: val.updated_at.timestamp() as u64,
+        }
+    }
+}
