@@ -912,7 +912,7 @@ dependencies = [
 [[package]]
 name = "cbindgen"
 version = "0.27.0"
-source = "git+https://github.com/masnagam/cbindgen?branch=fix-issue-43#7fcd29d7a7bd204cff6887ae099aa40f716367ed"
+source = "git+https://github.com/Larkooo/cbindgen?branch=no-c-forward-enum#1df076f7559fbfeb3f9d5c9968c1c1630363ebc8"
 dependencies = [
  "clap",
  "heck 0.4.1",
