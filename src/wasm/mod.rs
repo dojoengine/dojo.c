@@ -35,17 +35,17 @@ use crate::constants;
 use crate::types::{Account, Provider, Subscription, ToriiClient};
 use crate::utils::watch_tx;
 use crate::wasm::types::{
-    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenContractQuery, TokenQuery,
-    TokenTransferQuery, TransactionFilter, TransactionQuery,
+    ActivityQuery, AggregationQuery, ContractQuery, ControllerQuery, TokenBalanceQuery,
+    TokenContractQuery, TokenQuery, TokenTransferQuery, TransactionFilter, TransactionQuery,
 };
 
 mod types;
 
 use types::{
-    BlockId, Call, Calls, Clause, ClientConfig, Contract, Contracts, Controller, Controllers,
-    Entities, Entity, KeysClause, KeysClauses, Message, Model, Page, Query, Signature, Token,
-    TokenBalance, TokenBalances, TokenContracts, TokenTransfer, TokenTransfers, Tokens,
-    Transaction, Transactions, WasmU256,
+    Activities, Activity, AggregationEntry, Aggregations, BlockId, Call, Calls, Clause,
+    ClientConfig, Contract, Contracts, Controller, Controllers, Entities, Entity, KeysClause,
+    KeysClauses, Message, Model, Page, Query, Signature, Token, TokenBalance, TokenBalances,
+    TokenContracts, TokenTransfer, TokenTransfers, Tokens, Transaction, Transactions, WasmU256,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -1022,6 +1022,47 @@ impl ToriiClient {
         Ok(TokenTransfers(token_transfers.into()))
     }
 
+    /// Gets aggregations (leaderboards, stats, rankings) matching query parameters
+    ///
+    /// # Parameters
+    /// * `query` - AggregationQuery containing aggregator_ids, entity_ids, and pagination
+    ///
+    /// # Returns
+    /// Result containing aggregations or error
+    #[wasm_bindgen(js_name = getAggregations)]
+    pub async fn get_aggregations(&self, query: AggregationQuery) -> Result<Aggregations, JsValue> {
+        let query = query.into();
+
+        let aggregations = self
+            .inner
+            .aggregations(query)
+            .await
+            .map_err(|e| JsValue::from(format!("failed to get aggregations: {e}")))?;
+
+        Ok(Aggregations(aggregations.into()))
+    }
+
+    /// Gets activities (user session tracking) matching query parameters
+    ///
+    /// # Parameters
+    /// * `query` - ActivityQuery containing world_addresses, namespaces, caller_addresses, and
+    ///   pagination
+    ///
+    /// # Returns
+    /// Result containing activities or error
+    #[wasm_bindgen(js_name = getActivities)]
+    pub async fn get_activities(&self, query: ActivityQuery) -> Result<Activities, JsValue> {
+        let query = query.into();
+
+        let activities = self
+            .inner
+            .activities(query)
+            .await
+            .map_err(|e| JsValue::from(format!("failed to get activities: {e}")))?;
+
+        Ok(Activities(activities.into()))
+    }
+
     /// Queries entities based on the provided query parameters
     ///
     /// # Parameters
@@ -1673,6 +1714,180 @@ impl ToriiClient {
         Ok(subscription)
     }
 
+    /// Subscribes to aggregation updates (leaderboards, stats, rankings)
+    ///
+    /// # Parameters
+    /// * `aggregator_ids` - Array of aggregator IDs to subscribe to
+    /// * `entity_ids` - Array of entity IDs to subscribe to
+    /// * `callback` - JavaScript function to call on updates
+    ///
+    /// # Returns
+    /// Result containing subscription handle or error
+    #[wasm_bindgen(js_name = onAggregationUpdated)]
+    pub async fn on_aggregation_updated(
+        &self,
+        aggregator_ids: Option<Vec<String>>,
+        entity_ids: Option<Vec<String>>,
+        callback: js_sys::Function,
+    ) -> Result<Subscription, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        let aggregator_ids = aggregator_ids.unwrap_or_default();
+        let entity_ids = entity_ids.unwrap_or_default();
+
+        let (sub_id_tx, sub_id_rx) = oneshot::channel();
+        let mut sub_id_tx = Some(sub_id_tx);
+        let (trigger, tripwire) = Tripwire::new();
+
+        // Spawn a new task to handle the stream and reconnections
+        let client = self.inner.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let mut backoff = 1000;
+            let max_backoff = 60000;
+
+            loop {
+                if let Ok(stream) =
+                    client.on_aggregation_updated(aggregator_ids.clone(), entity_ids.clone()).await
+                {
+                    backoff = 1000; // Reset backoff on successful connection
+
+                    let mut stream = stream.take_until_if(tripwire.clone());
+
+                    while let Some(Ok((id, aggregation_entry))) = stream.next().await {
+                        if let Some(tx) = sub_id_tx.take() {
+                            tx.send(id).expect("Failed to send subscription ID");
+                        } else {
+                            let aggregation_entry: AggregationEntry = aggregation_entry.into();
+
+                            let _ = callback.call1(
+                                &JsValue::null(),
+                                &aggregation_entry.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
+                        }
+                    }
+                }
+
+                // If we've reached this point, the stream has ended (possibly due to disconnection)
+                // We'll try to reconnect after a delay, unless the tripwire has been triggered
+                if tripwire.clone().now_or_never().unwrap_or_default() {
+                    break; // Exit the loop if the subscription has been cancelled
+                }
+                gloo_timers::future::TimeoutFuture::new(backoff).await;
+                backoff = std::cmp::min(backoff * 2, max_backoff);
+            }
+        });
+
+        let subscription_id = match sub_id_rx.await {
+            Ok(id) => id,
+            Err(_) => {
+                return Err(JsValue::from("Failed to establish aggregation subscription"));
+            }
+        };
+        let subscription = Subscription { id: subscription_id, trigger };
+
+        Ok(subscription)
+    }
+
+    /// Subscribes to activity updates (user session tracking)
+    ///
+    /// # Parameters
+    /// * `world_addresses` - Array of world addresses to subscribe to
+    /// * `namespaces` - Array of namespaces to subscribe to
+    /// * `caller_addresses` - Array of caller addresses to subscribe to
+    /// * `callback` - JavaScript function to call on updates
+    ///
+    /// # Returns
+    /// Result containing subscription handle or error
+    #[wasm_bindgen(js_name = onActivityUpdated)]
+    pub async fn on_activity_updated(
+        &self,
+        world_addresses: Option<Vec<String>>,
+        namespaces: Option<Vec<String>>,
+        caller_addresses: Option<Vec<String>>,
+        callback: js_sys::Function,
+    ) -> Result<Subscription, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        let world_addresses = world_addresses
+            .unwrap_or_default()
+            .iter()
+            .map(|addr| {
+                Felt::from_str(addr)
+                    .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let namespaces = namespaces.unwrap_or_default();
+
+        let caller_addresses = caller_addresses
+            .unwrap_or_default()
+            .iter()
+            .map(|addr| {
+                Felt::from_str(addr)
+                    .map_err(|err| JsValue::from(format!("failed to parse caller address: {err}")))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let (sub_id_tx, sub_id_rx) = oneshot::channel();
+        let mut sub_id_tx = Some(sub_id_tx);
+        let (trigger, tripwire) = Tripwire::new();
+
+        // Spawn a new task to handle the stream and reconnections
+        let client = self.inner.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let mut backoff = 1000;
+            let max_backoff = 60000;
+
+            loop {
+                if let Ok(stream) = client
+                    .on_activity_updated(
+                        world_addresses.clone(),
+                        namespaces.clone(),
+                        caller_addresses.clone(),
+                    )
+                    .await
+                {
+                    backoff = 1000; // Reset backoff on successful connection
+
+                    let mut stream = stream.take_until_if(tripwire.clone());
+
+                    while let Some(Ok((id, activity))) = stream.next().await {
+                        if let Some(tx) = sub_id_tx.take() {
+                            tx.send(id).expect("Failed to send subscription ID");
+                        } else {
+                            let activity: Activity = activity.into();
+
+                            let _ = callback.call1(
+                                &JsValue::null(),
+                                &activity.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
+                        }
+                    }
+                }
+
+                // If we've reached this point, the stream has ended (possibly due to disconnection)
+                // We'll try to reconnect after a delay, unless the tripwire has been triggered
+                if tripwire.clone().now_or_never().unwrap_or_default() {
+                    break; // Exit the loop if the subscription has been cancelled
+                }
+                gloo_timers::future::TimeoutFuture::new(backoff).await;
+                backoff = std::cmp::min(backoff * 2, max_backoff);
+            }
+        });
+
+        let subscription_id = match sub_id_rx.await {
+            Ok(id) => id,
+            Err(_) => {
+                return Err(JsValue::from("Failed to establish activity subscription"));
+            }
+        };
+        let subscription = Subscription { id: subscription_id, trigger };
+
+        Ok(subscription)
+    }
+
     /// Updates an existing token transfer subscription
     ///
     /// # Parameters
@@ -1716,6 +1931,73 @@ impl ToriiClient {
                 contract_addresses,
                 account_addresses,
                 token_ids,
+            )
+            .await
+            .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
+    }
+
+    /// Updates an existing aggregation subscription
+    ///
+    /// # Parameters
+    /// * `subscription` - Existing subscription to update
+    /// * `aggregator_ids` - New array of aggregator IDs to filter
+    /// * `entity_ids` - New array of entity IDs to filter
+    ///
+    /// # Returns
+    /// Result containing unit or error
+    #[wasm_bindgen(js_name = updateAggregationSubscription)]
+    pub async fn update_aggregation_subscription(
+        &self,
+        subscription: &Subscription,
+        aggregator_ids: Vec<String>,
+        entity_ids: Vec<String>,
+    ) -> Result<(), JsValue> {
+        self.inner
+            .update_aggregation_subscription(subscription.id, aggregator_ids, entity_ids)
+            .await
+            .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
+    }
+
+    /// Updates an existing activity subscription
+    ///
+    /// # Parameters
+    /// * `subscription` - Existing subscription to update
+    /// * `world_addresses` - New array of world addresses to filter
+    /// * `namespaces` - New array of namespaces to filter
+    /// * `caller_addresses` - New array of caller addresses to filter
+    ///
+    /// # Returns
+    /// Result containing unit or error
+    #[wasm_bindgen(js_name = updateActivitySubscription)]
+    pub async fn update_activity_subscription(
+        &self,
+        subscription: &Subscription,
+        world_addresses: Vec<String>,
+        namespaces: Vec<String>,
+        caller_addresses: Vec<String>,
+    ) -> Result<(), JsValue> {
+        let world_addresses = world_addresses
+            .iter()
+            .map(|addr| {
+                Felt::from_str(addr)
+                    .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let caller_addresses = caller_addresses
+            .iter()
+            .map(|addr| {
+                Felt::from_str(addr)
+                    .map_err(|err| JsValue::from(format!("failed to parse caller address: {err}")))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        self.inner
+            .update_activity_subscription(
+                subscription.id,
+                world_addresses,
+                namespaces,
+                caller_addresses,
             )
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))

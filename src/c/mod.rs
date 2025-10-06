@@ -51,15 +51,15 @@ use torii_client::Client as TClient;
 use torii_proto::Message;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
-    BlockId, CArray, COption, Call, Clause, Contract, Controller, Entity, Error, Event, KeysClause,
-    Page, Policy, Query, Result, Signature, Struct, Token, TokenBalance, TokenContract,
-    TokenTransfer, TokenTransferQuery, ToriiClient, Ty, World,
+    Activity, AggregationEntry, BlockId, CArray, COption, Call, Clause, Contract, Controller,
+    Entity, Error, Event, KeysClause, Page, Policy, Query, Result, Signature, Struct, Token,
+    TokenBalance, TokenContract, TokenTransfer, TokenTransferQuery, ToriiClient, Ty, World,
 };
 use url::Url;
 
 use crate::c::types::{
-    ContractQuery, ControllerQuery, TokenBalanceQuery, TokenContractQuery, TokenQuery, Transaction,
-    TransactionFilter, TransactionQuery,
+    ActivityQuery, AggregationQuery, ContractQuery, ControllerQuery, TokenBalanceQuery,
+    TokenContractQuery, TokenQuery, Transaction, TransactionFilter, TransactionQuery,
 };
 use crate::constants;
 use crate::types::{
@@ -1001,6 +1001,380 @@ pub unsafe extern "C" fn client_update_entity_subscription(
     let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
 
     match RUNTIME.block_on((*client).inner.update_entity_subscription((*subscription).id, clause)) {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
+/// Retrieves aggregations (leaderboards, stats, rankings) matching query parameter
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - AggregationQuery containing aggregator_ids, entity_ids, and pagination
+///
+/// # Returns
+/// Result containing Page of AggregationEntry or error
+#[no_mangle]
+pub unsafe extern "C" fn client_aggregations(
+    client: *mut ToriiClient,
+    query: AggregationQuery,
+) -> Result<Page<AggregationEntry>> {
+    let query = query.into();
+    let aggregations_future = unsafe { (*client).inner.aggregations(query) };
+
+    match RUNTIME.block_on(aggregations_future) {
+        Ok(aggregations) => Result::Ok(aggregations.into()),
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
+/// Subscribes to aggregation updates (leaderboards, stats, rankings)
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `aggregator_ids` - Array of aggregator IDs to subscribe to
+/// * `aggregator_ids_len` - Length of aggregator_ids array
+/// * `entity_ids` - Array of entity IDs to subscribe to
+/// * `entity_ids_len` - Length of entity_ids array
+/// * `callback` - Function called when updates occur
+///
+/// # Returns
+/// Result containing pointer to Subscription or error
+#[no_mangle]
+pub unsafe extern "C" fn client_on_aggregation_update(
+    client: *mut ToriiClient,
+    aggregator_ids: *const *const c_char,
+    aggregator_ids_len: usize,
+    entity_ids: *const *const c_char,
+    entity_ids_len: usize,
+    callback: unsafe extern "C" fn(AggregationEntry),
+) -> Result<*mut Subscription> {
+    let client = Arc::new(unsafe { &*client });
+
+    // Convert aggregator_ids array to Vec<String> if not empty
+    let aggregator_ids = if aggregator_ids.is_null() || aggregator_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(aggregator_ids, aggregator_ids_len) };
+        ids.iter()
+            .map(|id| unsafe { CStr::from_ptr(*id).to_string_lossy().to_string() })
+            .collect::<Vec<String>>()
+    };
+
+    let entity_ids = if entity_ids.is_null() || entity_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(entity_ids, entity_ids_len) };
+        ids.iter()
+            .map(|id| unsafe { CStr::from_ptr(*id).to_string_lossy().to_string() })
+            .collect::<Vec<String>>()
+    };
+
+    let (sub_id_tx, sub_id_rx) = oneshot::channel();
+    let mut sub_id_tx = Some(sub_id_tx);
+    let (trigger, tripwire) = Tripwire::new();
+
+    // Spawn a new thread to handle the stream and reconnections
+    let client_clone = client.clone();
+    RUNTIME.spawn(async move {
+        let mut backoff = Duration::from_secs(1);
+        let max_backoff = Duration::from_secs(60);
+
+        loop {
+            let rcv = client_clone
+                .inner
+                .on_aggregation_updated(aggregator_ids.clone(), entity_ids.clone())
+                .await;
+
+            if let Ok(rcv) = rcv {
+                backoff = Duration::from_secs(1); // Reset backoff on successful connection
+
+                let mut rcv = rcv.take_until_if(tripwire.clone());
+
+                while let Some(Ok((id, aggregation_entry))) = rcv.next().await {
+                    // Our first message will be the subscription ID
+                    if let Some(tx) = sub_id_tx.take() {
+                        tx.send(id).expect("Failed to send subscription ID");
+                    } else {
+                        let aggregation_entry: AggregationEntry = aggregation_entry.into();
+                        callback(aggregation_entry);
+                    }
+                }
+            }
+
+            // If we've reached this point, the stream has ended (possibly due to disconnection)
+            // We'll try to reconnect after a delay, unless the tripwire has been triggered
+            if tripwire.clone().now_or_never().unwrap_or_default() {
+                break; // Exit the loop if the subscription has been cancelled
+            }
+            sleep(backoff).await;
+            backoff = std::cmp::min(backoff * 2, max_backoff);
+        }
+    });
+
+    let subscription_id = match RUNTIME.block_on(sub_id_rx) {
+        Ok(id) => id,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to establish aggregation subscription")
+                    .unwrap()
+                    .into_raw(),
+            });
+        }
+    };
+
+    let subscription = Subscription { id: subscription_id, trigger };
+
+    Result::Ok(Box::into_raw(Box::new(subscription)))
+}
+
+/// Updates an existing aggregation subscription with new parameters
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `subscription` - Pointer to existing Subscription
+/// * `aggregator_ids` - Array of aggregator IDs to subscribe to
+/// * `aggregator_ids_len` - Length of aggregator_ids array
+/// * `entity_ids` - Array of entity IDs to subscribe to
+/// * `entity_ids_len` - Length of entity_ids array
+///
+/// # Returns
+/// Result containing success boolean or error
+#[no_mangle]
+pub unsafe extern "C" fn client_update_aggregation_subscription(
+    client: *mut ToriiClient,
+    subscription: *mut Subscription,
+    aggregator_ids: *const *const c_char,
+    aggregator_ids_len: usize,
+    entity_ids: *const *const c_char,
+    entity_ids_len: usize,
+) -> Result<bool> {
+    // Convert aggregator_ids array to Vec<String> if not empty
+    let aggregator_ids = if aggregator_ids.is_null() || aggregator_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(aggregator_ids, aggregator_ids_len) };
+        ids.iter()
+            .map(|id| unsafe { CStr::from_ptr(*id).to_string_lossy().to_string() })
+            .collect::<Vec<String>>()
+    };
+
+    let entity_ids = if entity_ids.is_null() || entity_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(entity_ids, entity_ids_len) };
+        ids.iter()
+            .map(|id| unsafe { CStr::from_ptr(*id).to_string_lossy().to_string() })
+            .collect::<Vec<String>>()
+    };
+
+    match RUNTIME.block_on((*client).inner.update_aggregation_subscription(
+        (*subscription).id,
+        aggregator_ids,
+        entity_ids,
+    )) {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
+/// Retrieves activities (user session tracking) matching query parameter
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - ActivityQuery containing world_addresses, namespaces, caller_addresses, and
+///   pagination
+///
+/// # Returns
+/// Result containing Page of Activity or error
+#[no_mangle]
+pub unsafe extern "C" fn client_activities(
+    client: *mut ToriiClient,
+    query: ActivityQuery,
+) -> Result<Page<Activity>> {
+    let query = query.into();
+    let activities_future = unsafe { (*client).inner.activities(query) };
+
+    match RUNTIME.block_on(activities_future) {
+        Ok(activities) => Result::Ok(activities.into()),
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
+/// Subscribes to activity updates (user session tracking)
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `world_addresses` - Array of world addresses to subscribe to
+/// * `world_addresses_len` - Length of world_addresses array
+/// * `namespaces` - Array of namespaces to subscribe to
+/// * `namespaces_len` - Length of namespaces array
+/// * `caller_addresses` - Array of caller addresses to subscribe to
+/// * `caller_addresses_len` - Length of caller_addresses array
+/// * `callback` - Function called when updates occur
+///
+/// # Returns
+/// Result containing pointer to Subscription or error
+#[no_mangle]
+pub unsafe extern "C" fn client_on_activity_update(
+    client: *mut ToriiClient,
+    world_addresses: *const types::FieldElement,
+    world_addresses_len: usize,
+    namespaces: *const *const c_char,
+    namespaces_len: usize,
+    caller_addresses: *const types::FieldElement,
+    caller_addresses_len: usize,
+    callback: unsafe extern "C" fn(Activity),
+) -> Result<*mut Subscription> {
+    let client = Arc::new(unsafe { &*client });
+
+    // Convert world addresses array to Vec<Felt> if not empty
+    let world_addresses = if world_addresses.is_null() || world_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses = unsafe { std::slice::from_raw_parts(world_addresses, world_addresses_len) };
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    // Convert namespaces array to Vec<String> if not empty
+    let namespaces = if namespaces.is_null() || namespaces_len == 0 {
+        Vec::new()
+    } else {
+        let ns = unsafe { std::slice::from_raw_parts(namespaces, namespaces_len) };
+        ns.iter()
+            .map(|ns| unsafe { CStr::from_ptr(*ns).to_string_lossy().to_string() })
+            .collect::<Vec<String>>()
+    };
+
+    // Convert caller addresses array to Vec<Felt> if not empty
+    let caller_addresses = if caller_addresses.is_null() || caller_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses =
+            unsafe { std::slice::from_raw_parts(caller_addresses, caller_addresses_len) };
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    let (sub_id_tx, sub_id_rx) = oneshot::channel();
+    let mut sub_id_tx = Some(sub_id_tx);
+    let (trigger, tripwire) = Tripwire::new();
+
+    // Spawn a new thread to handle the stream and reconnections
+    let client_clone = client.clone();
+    RUNTIME.spawn(async move {
+        let mut backoff = Duration::from_secs(1);
+        let max_backoff = Duration::from_secs(60);
+
+        loop {
+            let rcv = client_clone
+                .inner
+                .on_activity_updated(
+                    world_addresses.clone(),
+                    namespaces.clone(),
+                    caller_addresses.clone(),
+                )
+                .await;
+
+            if let Ok(rcv) = rcv {
+                backoff = Duration::from_secs(1); // Reset backoff on successful connection
+
+                let mut rcv = rcv.take_until_if(tripwire.clone());
+
+                while let Some(Ok((id, activity))) = rcv.next().await {
+                    // Our first message will be the subscription ID
+                    if let Some(tx) = sub_id_tx.take() {
+                        tx.send(id).expect("Failed to send subscription ID");
+                    } else {
+                        let activity: Activity = activity.into();
+                        callback(activity);
+                    }
+                }
+            }
+
+            // If we've reached this point, the stream has ended (possibly due to disconnection)
+            // We'll try to reconnect after a delay, unless the tripwire has been triggered
+            if tripwire.clone().now_or_never().unwrap_or_default() {
+                break; // Exit the loop if the subscription has been cancelled
+            }
+            sleep(backoff).await;
+            backoff = std::cmp::min(backoff * 2, max_backoff);
+        }
+    });
+
+    let subscription_id = match RUNTIME.block_on(sub_id_rx) {
+        Ok(id) => id,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to establish activity subscription")
+                    .unwrap()
+                    .into_raw(),
+            });
+        }
+    };
+
+    let subscription = Subscription { id: subscription_id, trigger };
+
+    Result::Ok(Box::into_raw(Box::new(subscription)))
+}
+
+/// Updates an existing activity subscription with new parameters
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `subscription` - Pointer to existing Subscription
+/// * `world_addresses` - Array of world addresses to subscribe to
+/// * `world_addresses_len` - Length of world_addresses array
+/// * `namespaces` - Array of namespaces to subscribe to
+/// * `namespaces_len` - Length of namespaces array
+/// * `caller_addresses` - Array of caller addresses to subscribe to
+/// * `caller_addresses_len` - Length of caller_addresses array
+///
+/// # Returns
+/// Result containing success boolean or error
+#[no_mangle]
+pub unsafe extern "C" fn client_update_activity_subscription(
+    client: *mut ToriiClient,
+    subscription: *mut Subscription,
+    world_addresses: *const types::FieldElement,
+    world_addresses_len: usize,
+    namespaces: *const *const c_char,
+    namespaces_len: usize,
+    caller_addresses: *const types::FieldElement,
+    caller_addresses_len: usize,
+) -> Result<bool> {
+    // Convert world addresses array to Vec<Felt> if not empty
+    let world_addresses = if world_addresses.is_null() || world_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses = unsafe { std::slice::from_raw_parts(world_addresses, world_addresses_len) };
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    // Convert namespaces array to Vec<String> if not empty
+    let namespaces = if namespaces.is_null() || namespaces_len == 0 {
+        Vec::new()
+    } else {
+        let ns = unsafe { std::slice::from_raw_parts(namespaces, namespaces_len) };
+        ns.iter()
+            .map(|ns| unsafe { CStr::from_ptr(*ns).to_string_lossy().to_string() })
+            .collect::<Vec<String>>()
+    };
+
+    // Convert caller addresses array to Vec<Felt> if not empty
+    let caller_addresses = if caller_addresses.is_null() || caller_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addresses =
+            unsafe { std::slice::from_raw_parts(caller_addresses, caller_addresses_len) };
+        addresses.iter().map(|f| f.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    match RUNTIME.block_on((*client).inner.update_activity_subscription(
+        (*subscription).id,
+        world_addresses,
+        namespaces,
+        caller_addresses,
+    )) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
@@ -2477,7 +2851,6 @@ pub unsafe extern "C" fn carray_free(data: *mut c_void, data_len: usize) {
         let _: Vec<c_void> = Vec::from_raw_parts(data, data_len, data_len);
     }
 }
-
 /// Frees a string
 ///
 /// # Parameters
