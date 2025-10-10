@@ -1125,6 +1125,83 @@ cdef extern from *:
                                                     const char *const *entity_ids,
                                                     uintptr_t entity_ids_len);
 
+  # Retrieves achievements matching query parameter
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `query` - AchievementQuery containing world_addresses, namespaces, hidden filter, and
+  #   pagination
+  #
+  # # Returns
+  # Result containing Page of Achievement or error
+  ResultPageAchievement client_achievements(ToriiClient *client, AchievementQuery query);
+
+  # Retrieves player achievement data matching query parameter
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses, and
+  #   pagination
+  #
+  # # Returns
+  # Result containing Page of PlayerAchievementEntry or error
+  ResultPagePlayerAchievementEntry client_player_achievements(ToriiClient *client,
+                                                              PlayerAchievementQuery query);
+
+  # Subscribes to achievement progression updates
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `world_addresses` - Array of world addresses to subscribe to
+  # * `world_addresses_len` - Length of world_addresses array
+  # * `namespaces` - Array of namespaces to subscribe to
+  # * `namespaces_len` - Length of namespaces array
+  # * `player_addresses` - Array of player addresses to subscribe to
+  # * `player_addresses_len` - Length of player_addresses array
+  # * `achievement_ids` - Array of achievement IDs to subscribe to
+  # * `achievement_ids_len` - Length of achievement_ids array
+  # * `callback` - Function called when updates occur
+  #
+  # # Returns
+  # Result containing pointer to Subscription or error
+  ResultSubscription client_on_achievement_progression_update(ToriiClient *client,
+                                                              const FieldElement *world_addresses,
+                                                              uintptr_t world_addresses_len,
+                                                              const char *const *namespaces,
+                                                              uintptr_t namespaces_len,
+                                                              const FieldElement *player_addresses,
+                                                              uintptr_t player_addresses_len,
+                                                              const char *const *achievement_ids,
+                                                              uintptr_t achievement_ids_len,
+                                                              void (*callback)(AchievementProgression));
+
+  # Updates an existing achievement progression subscription with new parameters
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `subscription` - Pointer to existing Subscription
+  # * `world_addresses` - Array of world addresses to subscribe to
+  # * `world_addresses_len` - Length of world_addresses array
+  # * `namespaces` - Array of namespaces to subscribe to
+  # * `namespaces_len` - Length of namespaces array
+  # * `player_addresses` - Array of player addresses to subscribe to
+  # * `player_addresses_len` - Length of player_addresses array
+  # * `achievement_ids` - Array of achievement IDs to subscribe to
+  # * `achievement_ids_len` - Length of achievement_ids array
+  #
+  # # Returns
+  # Result containing success boolean or error
+  Resultbool client_update_achievement_progression_subscription(ToriiClient *client,
+                                                                Subscription *subscription,
+                                                                const FieldElement *world_addresses,
+                                                                uintptr_t world_addresses_len,
+                                                                const char *const *namespaces,
+                                                                uintptr_t namespaces_len,
+                                                                const FieldElement *player_addresses,
+                                                                uintptr_t player_addresses_len,
+                                                                const char *const *achievement_ids,
+                                                                uintptr_t achievement_ids_len);
+
   # Retrieves activities (user session tracking) matching query parameter
   #
   # # Parameters
