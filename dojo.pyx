@@ -1284,18 +1284,19 @@ cdef extern from *:
   #
   # # Parameters
   # * `client` - Pointer to ToriiClient instance
-  # * `query` - AchievementQuery containing world_addresses, namespaces, hidden filter, and pagination
+  # * `query` - AchievementQuery containing world_addresses, namespaces, hidden filter, and
+  #   pagination
   #
   # # Returns
   # Result containing Page of Achievement or error
-  ResultPageAchievement client_achievements(ToriiClient *client,
-                                            AchievementQuery query);
+  ResultPageAchievement client_achievements(ToriiClient *client, AchievementQuery query);
 
   # Retrieves player achievement data matching query parameter
   #
   # # Parameters
   # * `client` - Pointer to ToriiClient instance
-  # * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses, and pagination
+  # * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses, and
+  #   pagination
   #
   # # Returns
   # Result containing Page of PlayerAchievementEntry or error

@@ -4,6 +4,8 @@ mod utils;
 
 #[cfg(not(target_arch = "wasm32"))]
 mod c;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod swift;
 #[cfg(target_arch = "wasm32")]
 /// cbindgen:ignore
 mod wasm;
