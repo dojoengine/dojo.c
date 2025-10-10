@@ -1408,11 +1408,7 @@ pub struct TaskProgress {
 
 impl From<torii_proto::TaskProgress> for TaskProgress {
     fn from(value: torii_proto::TaskProgress) -> Self {
-        Self {
-            task_id: value.task_id,
-            count: value.count,
-            completed: value.completed,
-        }
+        Self { task_id: value.task_id, count: value.count, completed: value.completed }
     }
 }
 

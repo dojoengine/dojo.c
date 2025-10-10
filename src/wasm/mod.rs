@@ -1081,11 +1081,10 @@ impl ToriiClient {
 
         let query = query.into();
 
-        let player_achievements = self
-            .inner
-            .player_achievements(query)
-            .await
-            .map_err(|err| JsValue::from(format!("failed to get player achievements: {err}")))?;
+        let player_achievements =
+            self.inner.player_achievements(query).await.map_err(|err| {
+                JsValue::from(format!("failed to get player achievements: {err}"))
+            })?;
 
         Ok(PlayerAchievements(player_achievements.into()))
     }
@@ -1226,7 +1225,9 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                if let Ok(stream) = client.on_entity_updated(clause.clone(), world_addresses.clone()).await {
+                if let Ok(stream) =
+                    client.on_entity_updated(clause.clone(), world_addresses.clone()).await
+                {
                     backoff = 1000; // Reset backoff on successful connection
 
                     let mut stream = stream.take_until_if(tripwire.clone());
@@ -1328,7 +1329,9 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                if let Ok(stream) = client.on_event_message_updated(clause.clone(), world_addresses.clone()).await {
+                if let Ok(stream) =
+                    client.on_event_message_updated(clause.clone(), world_addresses.clone()).await
+                {
                     backoff = 1000; // Reset backoff on successful connection
 
                     let mut stream = stream.take_until_if(tripwire.clone());
