@@ -1,0 +1,19 @@
+#ifndef CallList_D_H
+#define CallList_D_H
+
+#include <stdio.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include "diplomat_runtime.h"
+
+
+
+
+
+typedef struct CallList CallList;
+
+
+
+
+#endif // CallList_D_H
