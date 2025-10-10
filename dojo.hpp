@@ -132,6 +132,7 @@ struct CArray {
 struct Message {
   const char *message;
   CArray<FieldElement> signature;
+  FieldElement world_address;
 };
 
 struct Controller {
@@ -214,6 +215,7 @@ struct Struct {
 };
 
 struct Entity {
+  FieldElement world_address;
   FieldElement hashed_keys;
   CArray<Struct> models;
   uint64_t created_at;
@@ -666,6 +668,7 @@ struct Clause {
 };
 
 struct Query {
+  CArray<FieldElement> world_addresses;
   Pagination pagination;
   COption<Clause> clause;
   bool no_hashed_keys;
@@ -818,6 +821,7 @@ struct Ty {
 };
 
 struct Model {
+  FieldElement world_address;
   Ty schema;
   const char *namespace_;
   const char *name;
@@ -879,7 +883,7 @@ struct AggregationEntry {
   U256 value;
   const char *display_value;
   uint64_t position;
-  FieldElement model_id;
+  const char *model_id;
   uint64_t created_at;
   uint64_t updated_at;
 };
@@ -888,6 +892,94 @@ struct AggregationQuery {
   CArray<const char*> aggregator_ids;
   CArray<const char*> entity_ids;
   Pagination pagination;
+};
+
+struct AchievementTask {
+  const char *task_id;
+  const char *description;
+  uint32_t total;
+  uint32_t total_completions;
+  double completion_rate;
+  uint64_t created_at;
+};
+
+struct Achievement {
+  const char *id;
+  FieldElement world_address;
+  const char *namespace_;
+  const char *entity_id;
+  bool hidden;
+  uint32_t index;
+  uint32_t points;
+  const char *start;
+  const char *end;
+  const char *group;
+  const char *icon;
+  const char *title;
+  const char *description;
+  CArray<AchievementTask> tasks;
+  const char *data;
+  uint32_t total_completions;
+  double completion_rate;
+  uint64_t created_at;
+  uint64_t updated_at;
+};
+
+struct AchievementQuery {
+  CArray<FieldElement> world_addresses;
+  CArray<const char*> namespaces;
+  COption<bool> hidden;
+  Pagination pagination;
+};
+
+struct PlayerAchievementStats {
+  uint32_t total_points;
+  uint32_t completed_achievements;
+  uint32_t total_achievements;
+  double completion_percentage;
+  COption<uint64_t> last_achievement_at;
+  uint64_t created_at;
+  uint64_t updated_at;
+};
+
+struct TaskProgress {
+  const char *task_id;
+  uint32_t count;
+  bool completed;
+};
+
+struct PlayerAchievementProgress {
+  Achievement achievement;
+  CArray<TaskProgress> task_progress;
+  bool completed;
+  double progress_percentage;
+};
+
+struct PlayerAchievementEntry {
+  FieldElement player_address;
+  PlayerAchievementStats stats;
+  CArray<PlayerAchievementProgress> achievements;
+};
+
+struct PlayerAchievementQuery {
+  CArray<FieldElement> world_addresses;
+  CArray<const char*> namespaces;
+  CArray<FieldElement> player_addresses;
+  Pagination pagination;
+};
+
+struct AchievementProgression {
+  const char *id;
+  const char *achievement_id;
+  const char *task_id;
+  FieldElement world_address;
+  const char *namespace_;
+  FieldElement player_id;
+  uint32_t count;
+  bool completed;
+  COption<uint64_t> completed_at;
+  uint64_t created_at;
+  uint64_t updated_at;
 };
 
 struct ActionCount {
@@ -1095,11 +1187,10 @@ extern "C" {
 /// # Parameters
 /// * `torii_url` - URL of the Torii server
 /// * `libp2p_relay_url` - URL of the libp2p relay server
-/// * `world` - World address as a FieldElement
 ///
 /// # Returns
 /// Result containing pointer to new ToriiClient instance or error
-Result<ToriiClient*> client_new(const char *torii_url, FieldElement world);
+Result<ToriiClient*> client_new(const char *torii_url);
 
 /// Initiates a connection to establish a new session account
 ///
@@ -1246,7 +1337,7 @@ void client_set_logger(ToriiClient *client, void (*logger)(const char*));
 ///
 /// # Returns
 /// Result containing byte array or error
-Result<FieldElement> client_publish_message(ToriiClient *client, Message message);
+Result<const char*> client_publish_message(ToriiClient *client, Message message);
 
 /// Publishes multiple messages to the network
 ///
@@ -1257,9 +1348,9 @@ Result<FieldElement> client_publish_message(ToriiClient *client, Message message
 ///
 /// # Returns
 /// Result containing array of message IDs or error
-Result<CArray<FieldElement>> client_publish_message_batch(ToriiClient *client,
-                                                          const Message *messages,
-                                                          uintptr_t messages_len);
+Result<CArray<const char*>> client_publish_message_batch(ToriiClient *client,
+                                                         const Message *messages,
+                                                         uintptr_t messages_len);
 
 /// Retrieves controllers for the given contract addresses
 ///
@@ -1300,7 +1391,9 @@ Result<Page<Entity>> client_event_messages(ToriiClient *client, Query query);
 ///
 /// # Returns
 /// World structure containing world information
-Result<World> client_metadata(ToriiClient *client);
+Result<CArray<World>> client_worlds(ToriiClient *client,
+                                    const FieldElement *world_addresses,
+                                    uintptr_t world_addresses_len);
 
 /// Retrieves transactions matching the given query
 ///
@@ -1337,6 +1430,8 @@ Result<Subscription*> client_on_transaction(ToriiClient *client,
 /// Result containing pointer to Subscription or error
 Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
                                                     COption<Clause> clause,
+                                                    const FieldElement *world_addresses,
+                                                    uintptr_t world_addresses_len,
                                                     void (*callback)(Entity));
 
 /// Updates an existing entity subscription with new clauses
@@ -1351,7 +1446,9 @@ Result<Subscription*> client_on_entity_state_update(ToriiClient *client,
 /// Result containing success boolean or error
 Result<bool> client_update_entity_subscription(ToriiClient *client,
                                                Subscription *subscription,
-                                               COption<Clause> clause);
+                                               COption<Clause> clause,
+                                               const FieldElement *world_addresses,
+                                               uintptr_t world_addresses_len);
 
 /// Retrieves aggregations (leaderboards, stats, rankings) matching query parameter
 ///
@@ -1401,16 +1498,92 @@ Result<bool> client_update_aggregation_subscription(ToriiClient *client,
                                                     const char *const *entity_ids,
                                                     uintptr_t entity_ids_len);
 
+/// Retrieves achievements matching query parameter
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - AchievementQuery containing world_addresses, namespaces, hidden filter, and pagination
+///
+/// # Returns
+/// Result containing Page of Achievement or error
+Result<Page<Achievement>> client_achievements(ToriiClient *client,
+                                              AchievementQuery query);
+
+/// Retrieves player achievement data matching query parameter
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses, and pagination
+///
+/// # Returns
+/// Result containing Page of PlayerAchievementEntry or error
+Result<Page<PlayerAchievementEntry>> client_player_achievements(ToriiClient *client,
+                                                                PlayerAchievementQuery query);
+
+/// Subscribes to achievement progression updates
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `world_addresses` - Array of world addresses to subscribe to
+/// * `world_addresses_len` - Length of world_addresses array
+/// * `namespaces` - Array of namespaces to subscribe to
+/// * `namespaces_len` - Length of namespaces array
+/// * `player_addresses` - Array of player addresses to subscribe to
+/// * `player_addresses_len` - Length of player_addresses array
+/// * `achievement_ids` - Array of achievement IDs to subscribe to
+/// * `achievement_ids_len` - Length of achievement_ids array
+/// * `callback` - Function called when updates occur
+///
+/// # Returns
+/// Result containing pointer to Subscription or error
+Result<Subscription*> client_on_achievement_progression_update(ToriiClient *client,
+                                                               const FieldElement *world_addresses,
+                                                               uintptr_t world_addresses_len,
+                                                               const char *const *namespaces,
+                                                               uintptr_t namespaces_len,
+                                                               const FieldElement *player_addresses,
+                                                               uintptr_t player_addresses_len,
+                                                               const char *const *achievement_ids,
+                                                               uintptr_t achievement_ids_len,
+                                                               void (*callback)(AchievementProgression));
+
+/// Updates an existing achievement progression subscription with new parameters
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `subscription` - Pointer to existing Subscription
+/// * `world_addresses` - Array of world addresses to subscribe to
+/// * `world_addresses_len` - Length of world_addresses array
+/// * `namespaces` - Array of namespaces to subscribe to
+/// * `namespaces_len` - Length of namespaces array
+/// * `player_addresses` - Array of player addresses to subscribe to
+/// * `player_addresses_len` - Length of player_addresses array
+/// * `achievement_ids` - Array of achievement IDs to subscribe to
+/// * `achievement_ids_len` - Length of achievement_ids array
+///
+/// # Returns
+/// Result containing success boolean or error
+Result<bool> client_update_achievement_progression_subscription(ToriiClient *client,
+                                                                Subscription *subscription,
+                                                                const FieldElement *world_addresses,
+                                                                uintptr_t world_addresses_len,
+                                                                const char *const *namespaces,
+                                                                uintptr_t namespaces_len,
+                                                                const FieldElement *player_addresses,
+                                                                uintptr_t player_addresses_len,
+                                                                const char *const *achievement_ids,
+                                                                uintptr_t achievement_ids_len);
+
 /// Retrieves activities (user session tracking) matching query parameter
 ///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
-/// * `query` - ActivityQuery containing world_addresses, namespaces, caller_addresses, and pagination
+/// * `query` - ActivityQuery containing world_addresses, namespaces, caller_addresses, and
+///   pagination
 ///
 /// # Returns
 /// Result containing Page of Activity or error
-Result<Page<Activity>> client_activities(ToriiClient *client,
-                                         ActivityQuery query);
+Result<Page<Activity>> client_activities(ToriiClient *client, ActivityQuery query);
 
 /// Subscribes to activity updates (user session tracking)
 ///
@@ -1470,6 +1643,8 @@ Result<bool> client_update_activity_subscription(ToriiClient *client,
 /// Result containing pointer to Subscription or error
 Result<Subscription*> client_on_event_message_update(ToriiClient *client,
                                                      COption<Clause> clause,
+                                                     const FieldElement *world_addresses,
+                                                     uintptr_t world_addresses_len,
                                                      void (*callback)(Entity));
 
 /// Updates an existing event message subscription
@@ -1484,7 +1659,9 @@ Result<Subscription*> client_on_event_message_update(ToriiClient *client,
 /// Result containing success boolean or error
 Result<bool> client_update_event_message_subscription(ToriiClient *client,
                                                       Subscription *subscription,
-                                                      COption<Clause> clause);
+                                                      COption<Clause> clause,
+                                                      const FieldElement *world_addresses,
+                                                      uintptr_t world_addresses_len);
 
 /// Subscribes to Starknet events
 ///

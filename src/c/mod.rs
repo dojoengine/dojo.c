@@ -51,15 +51,17 @@ use torii_client::Client as TClient;
 use torii_proto::Message;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use types::{
-    Activity, AggregationEntry, BlockId, CArray, COption, Call, Clause, Contract, Controller,
-    Entity, Error, Event, KeysClause, Page, Policy, Query, Result, Signature, Struct, Token,
-    TokenBalance, TokenContract, TokenTransfer, TokenTransferQuery, ToriiClient, Ty, World,
+    Achievement, AchievementProgression, Activity, AggregationEntry, BlockId, CArray, COption,
+    Call, Clause, Contract, Controller, Entity, Error, Event, KeysClause, Page,
+    PlayerAchievementEntry, Policy, Query, Result, Signature, Struct, Token, TokenBalance,
+    TokenContract, TokenTransfer, TokenTransferQuery, ToriiClient, Ty, World,
 };
 use url::Url;
 
 use crate::c::types::{
-    ActivityQuery, AggregationQuery, ContractQuery, ControllerQuery, TokenBalanceQuery,
-    TokenContractQuery, TokenQuery, Transaction, TransactionFilter, TransactionQuery,
+    AchievementQuery, ActivityQuery, AggregationQuery, ContractQuery, ControllerQuery,
+    PlayerAchievementQuery, TokenBalanceQuery, TokenContractQuery, TokenQuery, Transaction,
+    TransactionFilter, TransactionQuery,
 };
 use crate::constants;
 use crate::types::{
@@ -78,17 +80,13 @@ lazy_static! {
 /// # Parameters
 /// * `torii_url` - URL of the Torii server
 /// * `libp2p_relay_url` - URL of the libp2p relay server
-/// * `world` - World address as a FieldElement
 ///
 /// # Returns
 /// Result containing pointer to new ToriiClient instance or error
 #[no_mangle]
-pub unsafe extern "C" fn client_new(
-    torii_url: *const c_char,
-    world: types::FieldElement,
-) -> Result<*mut ToriiClient> {
+pub unsafe extern "C" fn client_new(torii_url: *const c_char) -> Result<*mut ToriiClient> {
     let torii_url = unsafe { CStr::from_ptr(torii_url).to_string_lossy().into_owned() };
-    let client_future = TClient::new(torii_url, world.into());
+    let client_future = TClient::new(torii_url);
 
     let client = match RUNTIME.block_on(client_future) {
         Ok(client) => client,
@@ -697,11 +695,11 @@ pub unsafe extern "C" fn client_set_logger(
 pub unsafe extern "C" fn client_publish_message(
     client: *mut ToriiClient,
     message: types::Message,
-) -> Result<types::FieldElement> {
+) -> Result<*const c_char> {
     let client_future = unsafe { (*client).inner.publish_message(message.into()) };
 
     match RUNTIME.block_on(client_future) {
-        Ok(data) => Result::Ok(data.into()),
+        Ok(data) => Result::Ok(CString::new(data).unwrap().into_raw() as *const c_char),
         Err(e) => Result::Err(e.into()),
     }
 }
@@ -720,15 +718,17 @@ pub unsafe extern "C" fn client_publish_message_batch(
     client: *mut ToriiClient,
     messages: *const types::Message,
     messages_len: usize,
-) -> Result<CArray<types::FieldElement>> {
+) -> Result<CArray<*const c_char>> {
     let messages = unsafe { std::slice::from_raw_parts(messages, messages_len) };
     let messages: Vec<Message> = messages.iter().cloned().map(|msg| msg.into()).collect();
     let client_future = unsafe { (*client).inner.publish_message_batch(messages) };
 
     match RUNTIME.block_on(client_future) {
         Ok(message_ids) => {
-            let ids: Vec<types::FieldElement> =
-                message_ids.into_iter().map(|id| id.into()).collect();
+            let ids: Vec<*const c_char> = message_ids
+                .into_iter()
+                .map(|id| CString::new(id).unwrap().into_raw() as *const c_char)
+                .collect();
             Result::Ok(ids.into())
         }
         Err(e) => Result::Err(e.into()),
@@ -811,8 +811,15 @@ pub unsafe extern "C" fn client_event_messages(
 /// # Returns
 /// World structure containing world information
 #[no_mangle]
-pub unsafe extern "C" fn client_metadata(client: *mut ToriiClient) -> Result<World> {
-    let metadata_future = unsafe { (*client).inner.metadata() };
+pub unsafe extern "C" fn client_worlds(
+    client: *mut ToriiClient,
+    world_addresses: *const types::FieldElement,
+    world_addresses_len: usize,
+) -> Result<CArray<World>> {
+    let world_addresses =
+        unsafe { std::slice::from_raw_parts(world_addresses, world_addresses_len) };
+    let world_addresses = world_addresses.iter().map(|addr| addr.clone().into()).collect();
+    let metadata_future = unsafe { (*client).inner.worlds(world_addresses) };
     match RUNTIME.block_on(metadata_future) {
         Ok(metadata) => Result::Ok(metadata.into()),
         Err(e) => Result::Err(e.into()),
@@ -925,6 +932,8 @@ pub unsafe extern "C" fn client_on_transaction(
 pub unsafe extern "C" fn client_on_entity_state_update(
     client: *mut ToriiClient,
     clause: COption<Clause>,
+    world_addresses: *const types::FieldElement,
+    world_addresses_len: usize,
     callback: unsafe extern "C" fn(Entity),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
@@ -934,7 +943,10 @@ pub unsafe extern "C" fn client_on_entity_state_update(
     let mut sub_id_tx = Some(sub_id_tx);
 
     let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
-
+    let world_addresses =
+        unsafe { std::slice::from_raw_parts(world_addresses, world_addresses_len) };
+    let world_addresses =
+        world_addresses.iter().map(|addr| addr.clone().into()).collect::<Vec<Felt>>();
     // Spawn a new thread to handle the stream and reconnections
     let client_clone = client.clone();
     RUNTIME.spawn(async move {
@@ -942,7 +954,8 @@ pub unsafe extern "C" fn client_on_entity_state_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv = client_clone.inner.on_entity_updated(clause.clone()).await;
+            let rcv =
+                client_clone.inner.on_entity_updated(clause.clone(), world_addresses.clone()).await;
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
@@ -997,10 +1010,18 @@ pub unsafe extern "C" fn client_update_entity_subscription(
     client: *mut ToriiClient,
     subscription: *mut Subscription,
     clause: COption<Clause>,
+    world_addresses: *const types::FieldElement,
+    world_addresses_len: usize,
 ) -> Result<bool> {
     let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
-
-    match RUNTIME.block_on((*client).inner.update_entity_subscription((*subscription).id, clause)) {
+    let world_addresses =
+        unsafe { std::slice::from_raw_parts(world_addresses, world_addresses_len) };
+    let world_addresses = world_addresses.iter().map(|addr| addr.clone().into()).collect();
+    match RUNTIME.block_on((*client).inner.update_entity_subscription(
+        (*subscription).id,
+        clause,
+        world_addresses,
+    )) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }
@@ -1172,6 +1193,259 @@ pub unsafe extern "C" fn client_update_aggregation_subscription(
         (*subscription).id,
         aggregator_ids,
         entity_ids,
+    )) {
+        Ok(_) => Result::Ok(true),
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
+/// Retrieves achievements matching query parameter
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - AchievementQuery containing world_addresses, namespaces, hidden filter, and
+///   pagination
+///
+/// # Returns
+/// Result containing Page of Achievement or error
+#[no_mangle]
+pub unsafe extern "C" fn client_achievements(
+    client: *mut ToriiClient,
+    query: AchievementQuery,
+) -> Result<Page<Achievement>> {
+    let query = query.into();
+    let achievements_future = unsafe { (*client).inner.achievements(query) };
+
+    match RUNTIME.block_on(achievements_future) {
+        Ok(achievements) => Result::Ok(achievements.into()),
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
+/// Retrieves player achievement data matching query parameter
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses, and
+///   pagination
+///
+/// # Returns
+/// Result containing Page of PlayerAchievementEntry or error
+#[no_mangle]
+pub unsafe extern "C" fn client_player_achievements(
+    client: *mut ToriiClient,
+    query: PlayerAchievementQuery,
+) -> Result<Page<PlayerAchievementEntry>> {
+    let query = query.into();
+    let player_achievements_future = unsafe { (*client).inner.player_achievements(query) };
+
+    match RUNTIME.block_on(player_achievements_future) {
+        Ok(player_achievements) => Result::Ok(player_achievements.into()),
+        Err(e) => Result::Err(e.into()),
+    }
+}
+
+/// Subscribes to achievement progression updates
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `world_addresses` - Array of world addresses to subscribe to
+/// * `world_addresses_len` - Length of world_addresses array
+/// * `namespaces` - Array of namespaces to subscribe to
+/// * `namespaces_len` - Length of namespaces array
+/// * `player_addresses` - Array of player addresses to subscribe to
+/// * `player_addresses_len` - Length of player_addresses array
+/// * `achievement_ids` - Array of achievement IDs to subscribe to
+/// * `achievement_ids_len` - Length of achievement_ids array
+/// * `callback` - Function called when updates occur
+///
+/// # Returns
+/// Result containing pointer to Subscription or error
+#[no_mangle]
+pub unsafe extern "C" fn client_on_achievement_progression_update(
+    client: *mut ToriiClient,
+    world_addresses: *const types::FieldElement,
+    world_addresses_len: usize,
+    namespaces: *const *const c_char,
+    namespaces_len: usize,
+    player_addresses: *const types::FieldElement,
+    player_addresses_len: usize,
+    achievement_ids: *const *const c_char,
+    achievement_ids_len: usize,
+    callback: unsafe extern "C" fn(AchievementProgression),
+) -> Result<*mut Subscription> {
+    let client = Arc::new(unsafe { &*client });
+
+    // Convert world_addresses array to Vec<Felt> if not empty
+    let world_addresses = if world_addresses.is_null() || world_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addrs = unsafe { std::slice::from_raw_parts(world_addresses, world_addresses_len) };
+        addrs.iter().map(|addr| addr.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    // Convert namespaces array to Vec<String> if not empty
+    let namespaces = if namespaces.is_null() || namespaces_len == 0 {
+        Vec::new()
+    } else {
+        let ns = unsafe { std::slice::from_raw_parts(namespaces, namespaces_len) };
+        ns.iter()
+            .map(|n| unsafe { CStr::from_ptr(*n).to_string_lossy().to_string() })
+            .collect::<Vec<String>>()
+    };
+
+    // Convert player_addresses array to Vec<Felt> if not empty
+    let player_addresses = if player_addresses.is_null() || player_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addrs = unsafe { std::slice::from_raw_parts(player_addresses, player_addresses_len) };
+        addrs.iter().map(|addr| addr.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    // Convert achievement_ids array to Vec<String> if not empty
+    let achievement_ids = if achievement_ids.is_null() || achievement_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(achievement_ids, achievement_ids_len) };
+        ids.iter()
+            .map(|id| unsafe { CStr::from_ptr(*id).to_string_lossy().to_string() })
+            .collect::<Vec<String>>()
+    };
+
+    let (sub_id_tx, sub_id_rx) = oneshot::channel();
+    let mut sub_id_tx = Some(sub_id_tx);
+    let (trigger, tripwire) = Tripwire::new();
+
+    // Spawn a new thread to handle the stream and reconnections
+    let client_clone = client.clone();
+    RUNTIME.spawn(async move {
+        let mut backoff = Duration::from_secs(1);
+        let max_backoff = Duration::from_secs(60);
+
+        loop {
+            let rcv = client_clone
+                .inner
+                .on_achievement_progression_updated(
+                    world_addresses.clone(),
+                    namespaces.clone(),
+                    player_addresses.clone(),
+                    achievement_ids.clone(),
+                )
+                .await;
+
+            if let Ok(rcv) = rcv {
+                backoff = Duration::from_secs(1); // Reset backoff on successful connection
+
+                let mut rcv = rcv.take_until_if(tripwire.clone());
+
+                while let Some(Ok((id, progression))) = rcv.next().await {
+                    // Our first message will be the subscription ID
+                    if let Some(tx) = sub_id_tx.take() {
+                        tx.send(id).expect("Failed to send subscription ID");
+                    } else {
+                        let progression: AchievementProgression = progression.into();
+                        callback(progression);
+                    }
+                }
+            }
+
+            // If we've reached this point, the stream has ended (possibly due to disconnection)
+            // We'll try to reconnect after a delay, unless the tripwire has been triggered
+            if tripwire.clone().now_or_never().unwrap_or_default() {
+                break; // Exit the loop if the subscription has been cancelled
+            }
+            sleep(backoff).await;
+            backoff = std::cmp::min(backoff * 2, max_backoff);
+        }
+    });
+
+    let subscription_id = match RUNTIME.block_on(sub_id_rx) {
+        Ok(id) => id,
+        Err(_) => {
+            return Result::Err(Error {
+                message: CString::new("Failed to establish achievement progression subscription")
+                    .unwrap()
+                    .into_raw(),
+            });
+        }
+    };
+
+    let subscription = Subscription { id: subscription_id, trigger };
+
+    Result::Ok(Box::into_raw(Box::new(subscription)))
+}
+
+/// Updates an existing achievement progression subscription with new parameters
+///
+/// # Parameters
+/// * `client` - Pointer to ToriiClient instance
+/// * `subscription` - Pointer to existing Subscription
+/// * `world_addresses` - Array of world addresses to subscribe to
+/// * `world_addresses_len` - Length of world_addresses array
+/// * `namespaces` - Array of namespaces to subscribe to
+/// * `namespaces_len` - Length of namespaces array
+/// * `player_addresses` - Array of player addresses to subscribe to
+/// * `player_addresses_len` - Length of player_addresses array
+/// * `achievement_ids` - Array of achievement IDs to subscribe to
+/// * `achievement_ids_len` - Length of achievement_ids array
+///
+/// # Returns
+/// Result containing success boolean or error
+#[no_mangle]
+pub unsafe extern "C" fn client_update_achievement_progression_subscription(
+    client: *mut ToriiClient,
+    subscription: *mut Subscription,
+    world_addresses: *const types::FieldElement,
+    world_addresses_len: usize,
+    namespaces: *const *const c_char,
+    namespaces_len: usize,
+    player_addresses: *const types::FieldElement,
+    player_addresses_len: usize,
+    achievement_ids: *const *const c_char,
+    achievement_ids_len: usize,
+) -> Result<bool> {
+    // Convert world_addresses array to Vec<Felt> if not empty
+    let world_addresses = if world_addresses.is_null() || world_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addrs = unsafe { std::slice::from_raw_parts(world_addresses, world_addresses_len) };
+        addrs.iter().map(|addr| addr.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    // Convert namespaces array to Vec<String> if not empty
+    let namespaces = if namespaces.is_null() || namespaces_len == 0 {
+        Vec::new()
+    } else {
+        let ns = unsafe { std::slice::from_raw_parts(namespaces, namespaces_len) };
+        ns.iter()
+            .map(|n| unsafe { CStr::from_ptr(*n).to_string_lossy().to_string() })
+            .collect::<Vec<String>>()
+    };
+
+    // Convert player_addresses array to Vec<Felt> if not empty
+    let player_addresses = if player_addresses.is_null() || player_addresses_len == 0 {
+        Vec::new()
+    } else {
+        let addrs = unsafe { std::slice::from_raw_parts(player_addresses, player_addresses_len) };
+        addrs.iter().map(|addr| addr.clone().into()).collect::<Vec<Felt>>()
+    };
+
+    // Convert achievement_ids array to Vec<String> if not empty
+    let achievement_ids = if achievement_ids.is_null() || achievement_ids_len == 0 {
+        Vec::new()
+    } else {
+        let ids = unsafe { std::slice::from_raw_parts(achievement_ids, achievement_ids_len) };
+        ids.iter()
+            .map(|id| unsafe { CStr::from_ptr(*id).to_string_lossy().to_string() })
+            .collect::<Vec<String>>()
+    };
+
+    match RUNTIME.block_on((*client).inner.update_achievement_progression_subscription(
+        (*subscription).id,
+        world_addresses,
+        namespaces,
+        player_addresses,
+        achievement_ids,
     )) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
@@ -1394,11 +1668,16 @@ pub unsafe extern "C" fn client_update_activity_subscription(
 pub unsafe extern "C" fn client_on_event_message_update(
     client: *mut ToriiClient,
     clause: COption<Clause>,
+    world_addresses: *const types::FieldElement,
+    world_addresses_len: usize,
     callback: unsafe extern "C" fn(Entity),
 ) -> Result<*mut Subscription> {
     let client = Arc::new(unsafe { &*client });
     let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
-
+    let world_addresses =
+        unsafe { std::slice::from_raw_parts(world_addresses, world_addresses_len) };
+    let world_addresses =
+        world_addresses.iter().map(|addr| addr.clone().into()).collect::<Vec<Felt>>();
     let (trigger, tripwire) = Tripwire::new();
     let (sub_id_tx, sub_id_rx) = oneshot::channel();
     let mut sub_id_tx = Some(sub_id_tx);
@@ -1410,7 +1689,10 @@ pub unsafe extern "C" fn client_on_event_message_update(
         let max_backoff = Duration::from_secs(60);
 
         loop {
-            let rcv = client_clone.inner.on_event_message_updated(clause.clone()).await;
+            let rcv = client_clone
+                .inner
+                .on_event_message_updated(clause.clone(), world_addresses.clone())
+                .await;
             if let Ok(rcv) = rcv {
                 backoff = Duration::from_secs(1); // Reset backoff on successful connection
 
@@ -1465,12 +1747,18 @@ pub unsafe extern "C" fn client_update_event_message_subscription(
     client: *mut ToriiClient,
     subscription: *mut Subscription,
     clause: COption<Clause>,
+    world_addresses: *const types::FieldElement,
+    world_addresses_len: usize,
 ) -> Result<bool> {
     let clause: Option<torii_proto::Clause> = clause.map(|c| c.into()).into();
-
-    match RUNTIME
-        .block_on((*client).inner.update_event_message_subscription((*subscription).id, clause))
-    {
+    let world_addresses =
+        unsafe { std::slice::from_raw_parts(world_addresses, world_addresses_len) };
+    let world_addresses = world_addresses.iter().map(|addr| addr.clone().into()).collect();
+    match RUNTIME.block_on((*client).inner.update_event_message_subscription(
+        (*subscription).id,
+        clause,
+        world_addresses,
+    )) {
         Ok(_) => Result::Ok(true),
         Err(e) => Result::Err(e.into()),
     }

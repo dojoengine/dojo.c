@@ -42,10 +42,12 @@ use crate::wasm::types::{
 mod types;
 
 use types::{
-    Activities, Activity, AggregationEntry, Aggregations, BlockId, Call, Calls, Clause,
-    ClientConfig, Contract, Contracts, Controller, Controllers, Entities, Entity, KeysClause,
-    KeysClauses, Message, Model, Page, Query, Signature, Token, TokenBalance, TokenBalances,
-    TokenContracts, TokenTransfer, TokenTransfers, Tokens, Transaction, Transactions, WasmU256,
+    Achievement, AchievementProgression, AchievementQuery, Achievements, Activities, Activity,
+    AggregationEntry, Aggregations, BlockId, Call, Calls, Clause, ClientConfig, Contract,
+    Contracts, Controller, Controllers, Entities, Entity, KeysClause, KeysClauses, Message, Model,
+    Page, PlayerAchievementQuery, PlayerAchievements, Query, Signature, Token, TokenBalance,
+    TokenBalances, TokenContracts, TokenTransfer, TokenTransfers, Tokens, Transaction,
+    Transactions, WasmU256,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -697,12 +699,9 @@ impl ToriiClient {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
-        let ClientConfig { torii_url, world_address } = config;
+        let ClientConfig { torii_url, .. } = config;
 
-        let world_address = Felt::from_str(&world_address)
-            .map_err(|err| JsValue::from(format!("failed to parse world address: {err}")))?;
-
-        let client = torii_client::Client::new(torii_url, world_address)
+        let client = torii_client::Client::new(torii_url)
             .await
             .map_err(|err| JsValue::from(format!("failed to build client: {err}")))?;
 
@@ -1042,6 +1041,54 @@ impl ToriiClient {
         Ok(Aggregations(aggregations.into()))
     }
 
+    /// Retrieves achievements matching the query
+    ///
+    /// # Parameters
+    /// * `query` - AchievementQuery parameters
+    ///
+    /// # Returns
+    /// Result containing achievements or error
+    #[wasm_bindgen(js_name = getAchievements)]
+    pub async fn get_achievements(&self, query: AchievementQuery) -> Result<Achievements, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        let query = query.into();
+
+        let achievements = self
+            .inner
+            .achievements(query)
+            .await
+            .map_err(|err| JsValue::from(format!("failed to get achievements: {err}")))?;
+
+        Ok(Achievements(achievements.into()))
+    }
+
+    /// Retrieves player achievement data matching the query
+    ///
+    /// # Parameters
+    /// * `query` - PlayerAchievementQuery parameters
+    ///
+    /// # Returns
+    /// Result containing player achievements or error
+    #[wasm_bindgen(js_name = getPlayerAchievements)]
+    pub async fn get_player_achievements(
+        &self,
+        query: PlayerAchievementQuery,
+    ) -> Result<PlayerAchievements, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        let query = query.into();
+
+        let player_achievements =
+            self.inner.player_achievements(query).await.map_err(|err| {
+                JsValue::from(format!("failed to get player achievements: {err}"))
+            })?;
+
+        Ok(PlayerAchievements(player_achievements.into()))
+    }
+
     /// Gets activities (user session tracking) matching query parameters
     ///
     /// # Parameters
@@ -1103,6 +1150,7 @@ impl ToriiClient {
         let results = self
             .inner
             .entities(torii_proto::Query {
+                world_addresses: vec![],
                 pagination: torii_proto::Pagination {
                     limit: Some(limit),
                     cursor,
@@ -1154,12 +1202,18 @@ impl ToriiClient {
     pub async fn on_entity_updated(
         &self,
         clause: Option<Clause>,
+        world_addresses: Option<Vec<String>>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let clause = clause.map(|c| c.into());
+        let world_addresses = world_addresses
+            .unwrap_or_default()
+            .into_iter()
+            .map(|addr| Felt::from_hex(&addr).unwrap())
+            .collect::<Vec<_>>();
         let (sub_id_tx, sub_id_rx) = oneshot::channel();
         let mut sub_id_tx = Some(sub_id_tx);
         let (trigger, tripwire) = Tripwire::new();
@@ -1171,7 +1225,9 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                if let Ok(stream) = client.on_entity_updated(clause.clone()).await {
+                if let Ok(stream) =
+                    client.on_entity_updated(clause.clone(), world_addresses.clone()).await
+                {
                     backoff = 1000; // Reset backoff on successful connection
 
                     let mut stream = stream.take_until_if(tripwire.clone());
@@ -1224,10 +1280,16 @@ impl ToriiClient {
         &self,
         subscription: &Subscription,
         clause: Option<Clause>,
+        world_addresses: Option<Vec<String>>,
     ) -> Result<(), JsValue> {
         let clause = clause.map(|c| c.into());
+        let world_addresses = world_addresses
+            .unwrap_or_default()
+            .into_iter()
+            .map(|addr| Felt::from_hex(&addr).unwrap())
+            .collect::<Vec<_>>();
         self.inner
-            .update_entity_subscription(subscription.id, clause)
+            .update_entity_subscription(subscription.id, clause, world_addresses)
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }
@@ -1244,12 +1306,18 @@ impl ToriiClient {
     pub async fn on_event_message_updated(
         &self,
         clause: Option<Clause>,
+        world_addresses: Option<Vec<String>>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
         #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
 
         let clause = clause.map(|c| c.into());
+        let world_addresses = world_addresses
+            .unwrap_or_default()
+            .into_iter()
+            .map(|addr| Felt::from_hex(&addr).unwrap())
+            .collect::<Vec<_>>();
         let (sub_id_tx, sub_id_rx) = oneshot::channel();
         let mut sub_id_tx = Some(sub_id_tx);
         let (trigger, tripwire) = Tripwire::new();
@@ -1261,7 +1329,9 @@ impl ToriiClient {
             let max_backoff = 60000;
 
             loop {
-                if let Ok(stream) = client.on_event_message_updated(clause.clone()).await {
+                if let Ok(stream) =
+                    client.on_event_message_updated(clause.clone(), world_addresses.clone()).await
+                {
                     backoff = 1000; // Reset backoff on successful connection
 
                     let mut stream = stream.take_until_if(tripwire.clone());
@@ -1314,10 +1384,16 @@ impl ToriiClient {
         &self,
         subscription: &Subscription,
         clause: Option<Clause>,
+        world_addresses: Option<Vec<String>>,
     ) -> Result<(), JsValue> {
         let clause = clause.map(|c| c.into());
+        let world_addresses = world_addresses
+            .unwrap_or_default()
+            .into_iter()
+            .map(|addr| Felt::from_hex(&addr).unwrap())
+            .collect::<Vec<_>>();
         self.inner
-            .update_event_message_subscription(subscription.id, clause)
+            .update_event_message_subscription(subscription.id, clause, world_addresses)
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }
@@ -1958,6 +2034,148 @@ impl ToriiClient {
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
     }
 
+    /// Subscribes to achievement progression updates
+    ///
+    /// # Parameters
+    /// * `world_addresses` - Optional array of world addresses as hex strings
+    /// * `namespaces` - Optional array of namespaces
+    /// * `player_addresses` - Optional array of player addresses as hex strings
+    /// * `achievement_ids` - Optional array of achievement IDs
+    /// * `callback` - JavaScript function to call on updates
+    ///
+    /// # Returns
+    /// Result containing subscription handle or error
+    #[wasm_bindgen(js_name = onAchievementProgressionUpdated)]
+    pub async fn on_achievement_progression_updated(
+        &self,
+        world_addresses: Option<Vec<String>>,
+        namespaces: Option<Vec<String>>,
+        player_addresses: Option<Vec<String>>,
+        achievement_ids: Option<Vec<String>>,
+        callback: js_sys::Function,
+    ) -> Result<Subscription, JsValue> {
+        #[cfg(feature = "console-error-panic")]
+        console_error_panic_hook::set_once();
+
+        let world_addresses = world_addresses
+            .unwrap_or_default()
+            .into_iter()
+            .map(|addr| Felt::from_hex(&addr).unwrap())
+            .collect::<Vec<_>>();
+
+        let namespaces = namespaces.unwrap_or_default();
+
+        let player_addresses = player_addresses
+            .unwrap_or_default()
+            .into_iter()
+            .map(|addr| Felt::from_hex(&addr).unwrap())
+            .collect::<Vec<_>>();
+
+        let achievement_ids = achievement_ids.unwrap_or_default();
+
+        let (sub_id_tx, sub_id_rx) = oneshot::channel();
+        let mut sub_id_tx = Some(sub_id_tx);
+        let (trigger, tripwire) = Tripwire::new();
+
+        // Spawn a new task to handle the stream and reconnections
+        let client = self.inner.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let mut backoff = 1000;
+            let max_backoff = 60000;
+
+            loop {
+                if let Ok(stream) = client
+                    .on_achievement_progression_updated(
+                        world_addresses.clone(),
+                        namespaces.clone(),
+                        player_addresses.clone(),
+                        achievement_ids.clone(),
+                    )
+                    .await
+                {
+                    backoff = 1000; // Reset backoff on successful connection
+
+                    let mut stream = stream.take_until_if(tripwire.clone());
+
+                    while let Some(Ok((id, progression))) = stream.next().await {
+                        if let Some(tx) = sub_id_tx.take() {
+                            tx.send(id).expect("Failed to send subscription ID");
+                        } else {
+                            let progression: AchievementProgression = progression.into();
+
+                            let _ = callback.call1(
+                                &JsValue::null(),
+                                &progression.serialize(&JSON_COMPAT_SERIALIZER).unwrap(),
+                            );
+                        }
+                    }
+                }
+
+                // If we've reached this point, the stream has ended (possibly due to disconnection)
+                // We'll try to reconnect after a delay, unless the tripwire has been triggered
+                if tripwire.clone().now_or_never().unwrap_or_default() {
+                    break; // Exit the loop if the subscription has been cancelled
+                }
+                gloo_timers::future::TimeoutFuture::new(backoff).await;
+                backoff = std::cmp::min(backoff * 2, max_backoff);
+            }
+        });
+
+        let subscription_id = match sub_id_rx.await {
+            Ok(id) => id,
+            Err(_) => {
+                return Err(JsValue::from(
+                    "Failed to establish achievement progression subscription",
+                ));
+            }
+        };
+        let subscription = Subscription { id: subscription_id, trigger };
+
+        Ok(subscription)
+    }
+
+    /// Updates achievement progression subscription
+    ///
+    /// # Parameters
+    /// * `subscription` - Existing subscription to update
+    /// * `world_addresses` - Array of world addresses
+    /// * `namespaces` - Array of namespaces
+    /// * `player_addresses` - Array of player addresses
+    /// * `achievement_ids` - Array of achievement IDs
+    ///
+    /// # Returns
+    /// Result containing unit or error
+    #[wasm_bindgen(js_name = updateAchievementProgressionSubscription)]
+    pub async fn update_achievement_progression_subscription(
+        &self,
+        subscription: &Subscription,
+        world_addresses: Vec<String>,
+        namespaces: Vec<String>,
+        player_addresses: Vec<String>,
+        achievement_ids: Vec<String>,
+    ) -> Result<(), JsValue> {
+        let world_addresses = world_addresses
+            .into_iter()
+            .map(|addr| Felt::from_hex(&addr).unwrap())
+            .collect::<Vec<_>>();
+
+        let player_addresses = player_addresses
+            .into_iter()
+            .map(|addr| Felt::from_hex(&addr).unwrap())
+            .collect::<Vec<_>>();
+
+        self.inner
+            .update_achievement_progression_subscription(
+                subscription.id,
+                world_addresses,
+                namespaces,
+                player_addresses,
+                achievement_ids,
+            )
+            .await
+            .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
+    }
+
     /// Updates an existing activity subscription
     ///
     /// # Parameters
@@ -2022,7 +2240,7 @@ impl ToriiClient {
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
 
-        Ok(format!("{:#x}", entity_id))
+        Ok(entity_id)
     }
 
     /// Publishes multiple messages to the network
@@ -2049,7 +2267,7 @@ impl ToriiClient {
             .await
             .map_err(|err| JsValue::from(err.to_string()))?;
 
-        Ok(entity_ids.into_iter().map(|id| format!("{:#x}", id)).collect())
+        Ok(entity_ids)
     }
 }
 
