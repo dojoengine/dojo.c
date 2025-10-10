@@ -776,6 +776,7 @@ impl From<torii_proto::TransactionCall> for TransactionCall {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Query {
+    pub world_addresses: CArray<FieldElement>,
     pub pagination: Pagination,
     pub clause: COption<Clause>,
     pub no_hashed_keys: bool,
@@ -1022,6 +1023,7 @@ pub enum ValueType {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Entity {
+    pub world_address: FieldElement,
     pub hashed_keys: FieldElement,
     pub models: CArray<Struct>,
     pub created_at: u64,
@@ -1035,6 +1037,7 @@ impl From<Entity> for torii_proto::schema::Entity {
         let models = models.into_iter().map(|m| m.into()).collect();
 
         torii_proto::schema::Entity {
+            world_address: val.world_address.into(),
             hashed_keys: val.hashed_keys.into(),
             models,
             created_at: DateTime::from_timestamp(val.created_at as i64, 0).unwrap(),
@@ -1049,6 +1052,7 @@ impl From<torii_proto::schema::Entity> for Entity {
         let models = val.models.into_iter().map(|m| m.into()).collect::<Vec<Struct>>();
 
         Entity {
+            world_address: val.world_address.into(),
             hashed_keys: val.hashed_keys.into(),
             models: models.into(),
             created_at: val.created_at.timestamp() as u64,
@@ -1400,6 +1404,7 @@ impl From<Query> for torii_proto::Query {
         let clause = val.clause.map(|c| c.into()).into();
 
         torii_proto::Query {
+            world_addresses: val.world_addresses.into(),
             pagination: val.pagination.into(),
             clause,
             models,
@@ -1414,6 +1419,7 @@ impl From<torii_proto::Query> for Query {
         let models = StringVec(val.models).into();
 
         Query {
+            world_addresses: val.world_addresses.into(),
             pagination: val.pagination.into(),
             clause: val.clause.into(),
             models,
@@ -1627,6 +1633,7 @@ impl From<World> for torii_proto::World {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Model {
+    pub world_address: FieldElement,
     pub schema: Ty,
     pub namespace: *const c_char,
     pub name: *const c_char,
@@ -1645,6 +1652,7 @@ impl From<torii_proto::Model> for Model {
         let layout = CString::new(layout).unwrap().into_raw();
 
         Model {
+            world_address: value.world_address.into(),
             schema: value.schema.into(),
             name: CString::new(value.name.clone()).unwrap().into_raw(),
             namespace: CString::new(value.namespace.clone()).unwrap().into_raw(),
@@ -1665,6 +1673,7 @@ impl From<Model> for torii_proto::Model {
         let layout = serde_json::from_str(&layout).unwrap();
 
         torii_proto::Model {
+            world_address: value.world_address.into(),
             schema: value.schema.into(),
             namespace: unsafe {
                 CString::from_raw(value.namespace as *mut c_char).into_string().unwrap()
@@ -1716,6 +1725,7 @@ impl From<torii_proto::Event> for Event {
 pub struct Message {
     pub message: *const c_char,
     pub signature: CArray<FieldElement>,
+    pub world_address: FieldElement,
 }
 
 impl From<Message> for torii_proto::Message {
@@ -1725,7 +1735,7 @@ impl From<Message> for torii_proto::Message {
             unsafe { std::slice::from_raw_parts(val.signature.data, val.signature.data_len) };
         let signature = signature_slice.iter().map(|f| f.clone().into()).collect();
 
-        torii_proto::Message { message, signature }
+        torii_proto::Message { message, signature, world_address: val.world_address.into() }
     }
 }
 
@@ -1798,7 +1808,7 @@ pub struct AggregationEntry {
     pub value: U256,
     pub display_value: *const c_char,
     pub position: u64,
-    pub model_id: FieldElement,
+    pub model_id: *const c_char,
     pub created_at: u64,
     pub updated_at: u64,
 }
@@ -1812,7 +1822,7 @@ impl From<torii_proto::AggregationEntry> for AggregationEntry {
             value: val.value.into(),
             display_value: CString::new(val.display_value.clone()).unwrap().into_raw(),
             position: val.position,
-            model_id: val.model_id.into(),
+            model_id: CString::new(val.model_id.clone()).unwrap().into_raw(),
             created_at: val.created_at.timestamp() as u64,
             updated_at: val.updated_at.timestamp() as u64,
         }
@@ -1860,6 +1870,256 @@ impl From<torii_proto::Activity> for Activity {
             session_end: val.session_end.timestamp() as u64,
             action_count: val.action_count,
             actions: actions.into(),
+            updated_at: val.updated_at.timestamp() as u64,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct AchievementQuery {
+    pub world_addresses: CArray<FieldElement>,
+    pub namespaces: CArray<*const c_char>,
+    pub hidden: COption<bool>,
+    pub pagination: Pagination,
+}
+
+impl From<AchievementQuery> for torii_proto::AchievementQuery {
+    fn from(val: AchievementQuery) -> Self {
+        let namespaces: Vec<*const c_char> = val.namespaces.into();
+        let namespaces = namespaces
+            .into_iter()
+            .map(|ns| unsafe { CStr::from_ptr(ns).to_string_lossy().to_string() })
+            .collect::<Vec<String>>();
+
+        torii_proto::AchievementQuery {
+            world_addresses: val.world_addresses.into(),
+            namespaces,
+            hidden: val.hidden.into(),
+            pagination: val.pagination.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct PlayerAchievementQuery {
+    pub world_addresses: CArray<FieldElement>,
+    pub namespaces: CArray<*const c_char>,
+    pub player_addresses: CArray<FieldElement>,
+    pub pagination: Pagination,
+}
+
+impl From<PlayerAchievementQuery> for torii_proto::PlayerAchievementQuery {
+    fn from(val: PlayerAchievementQuery) -> Self {
+        let namespaces: Vec<*const c_char> = val.namespaces.into();
+        let namespaces = namespaces
+            .into_iter()
+            .map(|ns| unsafe { CStr::from_ptr(ns).to_string_lossy().to_string() })
+            .collect::<Vec<String>>();
+
+        torii_proto::PlayerAchievementQuery {
+            world_addresses: val.world_addresses.into(),
+            namespaces,
+            player_addresses: val.player_addresses.into(),
+            pagination: val.pagination.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct Achievement {
+    pub id: *const c_char,
+    pub world_address: FieldElement,
+    pub namespace: *const c_char,
+    pub entity_id: *const c_char,
+    pub hidden: bool,
+    pub index: u32,
+    pub points: u32,
+    pub start: *const c_char,
+    pub end: *const c_char,
+    pub group: *const c_char,
+    pub icon: *const c_char,
+    pub title: *const c_char,
+    pub description: *const c_char,
+    pub tasks: CArray<AchievementTask>,
+    pub data: *const c_char,
+    pub total_completions: u32,
+    pub completion_rate: f64,
+    pub created_at: u64,
+    pub updated_at: u64,
+}
+
+impl From<torii_proto::Achievement> for Achievement {
+    fn from(val: torii_proto::Achievement) -> Self {
+        let tasks: Vec<AchievementTask> = val.tasks.into_iter().map(|t| t.into()).collect();
+
+        Achievement {
+            id: CString::new(val.id).unwrap().into_raw(),
+            world_address: val.world_address.into(),
+            namespace: CString::new(val.namespace).unwrap().into_raw(),
+            entity_id: CString::new(val.entity_id).unwrap().into_raw(),
+            hidden: val.hidden,
+            index: val.index,
+            points: val.points,
+            start: CString::new(val.start).unwrap().into_raw(),
+            end: CString::new(val.end).unwrap().into_raw(),
+            group: CString::new(val.group).unwrap().into_raw(),
+            icon: CString::new(val.icon).unwrap().into_raw(),
+            title: CString::new(val.title).unwrap().into_raw(),
+            description: CString::new(val.description).unwrap().into_raw(),
+            tasks: tasks.into(),
+            data: CString::new(val.data.unwrap_or_default()).unwrap().into_raw(),
+            total_completions: val.total_completions,
+            completion_rate: val.completion_rate,
+            created_at: val.created_at.timestamp() as u64,
+            updated_at: val.updated_at.timestamp() as u64,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct AchievementTask {
+    pub task_id: *const c_char,
+    pub description: *const c_char,
+    pub total: u32,
+    pub total_completions: u32,
+    pub completion_rate: f64,
+    pub created_at: u64,
+}
+
+impl From<torii_proto::AchievementTask> for AchievementTask {
+    fn from(val: torii_proto::AchievementTask) -> Self {
+        AchievementTask {
+            task_id: CString::new(val.task_id).unwrap().into_raw(),
+            description: CString::new(val.description).unwrap().into_raw(),
+            total: val.total,
+            total_completions: val.total_completions,
+            completion_rate: val.completion_rate,
+            created_at: val.created_at.timestamp() as u64,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct PlayerAchievementEntry {
+    pub player_address: FieldElement,
+    pub stats: PlayerAchievementStats,
+    pub achievements: CArray<PlayerAchievementProgress>,
+}
+
+impl From<torii_proto::PlayerAchievementEntry> for PlayerAchievementEntry {
+    fn from(val: torii_proto::PlayerAchievementEntry) -> Self {
+        let achievements: Vec<PlayerAchievementProgress> =
+            val.achievements.into_iter().map(|a| a.into()).collect();
+
+        PlayerAchievementEntry {
+            player_address: val.player_address.into(),
+            stats: val.stats.into(),
+            achievements: achievements.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct PlayerAchievementStats {
+    pub total_points: u32,
+    pub completed_achievements: u32,
+    pub total_achievements: u32,
+    pub completion_percentage: f64,
+    pub last_achievement_at: COption<u64>,
+    pub created_at: u64,
+    pub updated_at: u64,
+}
+
+impl From<torii_proto::PlayerAchievementStats> for PlayerAchievementStats {
+    fn from(val: torii_proto::PlayerAchievementStats) -> Self {
+        PlayerAchievementStats {
+            total_points: val.total_points,
+            completed_achievements: val.completed_achievements,
+            total_achievements: val.total_achievements,
+            completion_percentage: val.completion_percentage,
+            last_achievement_at: val.last_achievement_at.map(|t| t.timestamp() as u64).into(),
+            created_at: val.created_at.timestamp() as u64,
+            updated_at: val.updated_at.timestamp() as u64,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct PlayerAchievementProgress {
+    pub achievement: Achievement,
+    pub task_progress: CArray<TaskProgress>,
+    pub completed: bool,
+    pub progress_percentage: f64,
+}
+
+impl From<torii_proto::PlayerAchievementProgress> for PlayerAchievementProgress {
+    fn from(val: torii_proto::PlayerAchievementProgress) -> Self {
+        let task_progress: Vec<TaskProgress> =
+            val.task_progress.into_iter().map(|t| t.into()).collect();
+
+        PlayerAchievementProgress {
+            achievement: val.achievement.into(),
+            task_progress: task_progress.into(),
+            completed: val.completed,
+            progress_percentage: val.progress_percentage,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct TaskProgress {
+    pub task_id: *const c_char,
+    pub count: u32,
+    pub completed: bool,
+}
+
+impl From<torii_proto::TaskProgress> for TaskProgress {
+    fn from(val: torii_proto::TaskProgress) -> Self {
+        TaskProgress {
+            task_id: CString::new(val.task_id).unwrap().into_raw(),
+            count: val.count,
+            completed: val.completed,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct AchievementProgression {
+    pub id: *const c_char,
+    pub achievement_id: *const c_char,
+    pub task_id: *const c_char,
+    pub world_address: FieldElement,
+    pub namespace: *const c_char,
+    pub player_id: FieldElement,
+    pub count: u32,
+    pub completed: bool,
+    pub completed_at: COption<u64>,
+    pub created_at: u64,
+    pub updated_at: u64,
+}
+
+impl From<torii_proto::AchievementProgression> for AchievementProgression {
+    fn from(val: torii_proto::AchievementProgression) -> Self {
+        AchievementProgression {
+            id: CString::new(val.id).unwrap().into_raw(),
+            achievement_id: CString::new(val.achievement_id).unwrap().into_raw(),
+            task_id: CString::new(val.task_id).unwrap().into_raw(),
+            world_address: val.world_address.into(),
+            namespace: CString::new(val.namespace).unwrap().into_raw(),
+            player_id: val.player_id.into(),
+            count: val.count,
+            completed: val.completed,
+            completed_at: val.completed_at.map(|t| t.timestamp() as u64).into(),
+            created_at: val.created_at.timestamp() as u64,
             updated_at: val.updated_at.timestamp() as u64,
         }
     }

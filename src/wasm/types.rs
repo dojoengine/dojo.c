@@ -621,6 +621,7 @@ impl From<Struct> for Model {
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
 pub struct Entity {
+    pub world_address: String,
     pub hashed_keys: String,
     pub models: HashMap<String, Model>,
     pub created_at: u64,
@@ -631,6 +632,7 @@ pub struct Entity {
 impl From<torii_proto::schema::Entity> for Entity {
     fn from(value: torii_proto::schema::Entity) -> Self {
         Self {
+            world_address: format!("{:#x}", value.world_address),
             hashed_keys: format!("{:#x}", value.hashed_keys),
             models: value.models.into_iter().map(|m| (m.name.clone(), m.into())).collect(),
             created_at: value.created_at.timestamp() as u64,
@@ -711,6 +713,7 @@ impl From<BlockId> for starknet::core::types::BlockId {
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Query {
+    pub world_addresses: Vec<String>,
     pub pagination: Pagination,
     pub clause: Option<Clause>,
     pub no_hashed_keys: bool,
@@ -786,6 +789,11 @@ impl From<OrderDirection> for torii_proto::OrderDirection {
 impl From<Query> for torii_proto::Query {
     fn from(value: Query) -> Self {
         Self {
+            world_addresses: value
+                .world_addresses
+                .into_iter()
+                .map(|addr| Felt::from_hex(&addr).unwrap())
+                .collect(),
             pagination: value.pagination.into(),
             clause: value.clause.map(|c| c.into()),
             no_hashed_keys: value.no_hashed_keys,
@@ -1067,6 +1075,7 @@ pub struct Event {
 pub struct Message {
     pub message: String,
     pub signature: Vec<String>,
+    pub world_address: String,
 }
 
 impl From<Message> for torii_proto::Message {
@@ -1074,6 +1083,7 @@ impl From<Message> for torii_proto::Message {
         torii_proto::Message {
             message: val.message,
             signature: val.signature.iter().map(|s| Felt::from_str(s).unwrap()).collect(),
+            world_address: Felt::from_hex(&val.world_address).unwrap(),
         }
     }
 }
@@ -1151,7 +1161,7 @@ impl From<torii_proto::AggregationEntry> for AggregationEntry {
             value: format!("0x{:x}", value.value),
             display_value: value.display_value,
             position: value.position,
-            model_id: format!("{:#x}", value.model_id),
+            model_id: value.model_id,
             created_at: value.created_at.timestamp() as u64,
             updated_at: value.updated_at.timestamp() as u64,
         }
@@ -1195,3 +1205,255 @@ pub struct Aggregations(pub Page<AggregationEntry>);
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Activities(pub Page<Activity>);
+
+// ===== Achievement Types =====
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct AchievementQuery {
+    pub world_addresses: Vec<String>,
+    pub namespaces: Vec<String>,
+    pub hidden: Option<bool>,
+    pub pagination: Pagination,
+}
+
+impl From<AchievementQuery> for torii_proto::AchievementQuery {
+    fn from(value: AchievementQuery) -> Self {
+        Self {
+            world_addresses: value
+                .world_addresses
+                .into_iter()
+                .map(|addr| Felt::from_hex(&addr).unwrap())
+                .collect(),
+            namespaces: value.namespaces,
+            hidden: value.hidden,
+            pagination: value.pagination.into(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct PlayerAchievementQuery {
+    pub world_addresses: Vec<String>,
+    pub namespaces: Vec<String>,
+    pub player_addresses: Vec<String>,
+    pub pagination: Pagination,
+}
+
+impl From<PlayerAchievementQuery> for torii_proto::PlayerAchievementQuery {
+    fn from(value: PlayerAchievementQuery) -> Self {
+        Self {
+            world_addresses: value
+                .world_addresses
+                .into_iter()
+                .map(|addr| Felt::from_hex(&addr).unwrap())
+                .collect(),
+            namespaces: value.namespaces,
+            player_addresses: value
+                .player_addresses
+                .into_iter()
+                .map(|addr| Felt::from_hex(&addr).unwrap())
+                .collect(),
+            pagination: value.pagination.into(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Achievement {
+    pub id: String,
+    pub world_address: String,
+    pub namespace: String,
+    pub entity_id: String,
+    pub hidden: bool,
+    pub index: u32,
+    pub points: u32,
+    pub start: String,
+    pub end: String,
+    pub group: String,
+    pub icon: String,
+    pub title: String,
+    pub description: String,
+    pub tasks: Vec<AchievementTask>,
+    pub data: String,
+    pub total_completions: u32,
+    pub completion_rate: f64,
+    pub created_at: u64,
+    pub updated_at: u64,
+}
+
+impl From<torii_proto::Achievement> for Achievement {
+    fn from(value: torii_proto::Achievement) -> Self {
+        Self {
+            id: value.id,
+            world_address: format!("{:#x}", value.world_address),
+            namespace: value.namespace,
+            entity_id: value.entity_id,
+            hidden: value.hidden,
+            index: value.index,
+            points: value.points,
+            start: value.start,
+            end: value.end,
+            group: value.group,
+            icon: value.icon,
+            title: value.title,
+            description: value.description,
+            tasks: value.tasks.into_iter().map(|t| t.into()).collect(),
+            data: value.data.unwrap_or_default(),
+            total_completions: value.total_completions,
+            completion_rate: value.completion_rate,
+            created_at: value.created_at.timestamp() as u64,
+            updated_at: value.updated_at.timestamp() as u64,
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct AchievementTask {
+    pub task_id: String,
+    pub description: String,
+    pub total: u32,
+    pub total_completions: u32,
+    pub completion_rate: f64,
+    pub created_at: u64,
+}
+
+impl From<torii_proto::AchievementTask> for AchievementTask {
+    fn from(value: torii_proto::AchievementTask) -> Self {
+        Self {
+            task_id: value.task_id,
+            description: value.description,
+            total: value.total,
+            total_completions: value.total_completions,
+            completion_rate: value.completion_rate,
+            created_at: value.created_at.timestamp() as u64,
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct PlayerAchievementEntry {
+    pub player_address: String,
+    pub stats: PlayerAchievementStats,
+    pub achievements: Vec<PlayerAchievementProgress>,
+}
+
+impl From<torii_proto::PlayerAchievementEntry> for PlayerAchievementEntry {
+    fn from(value: torii_proto::PlayerAchievementEntry) -> Self {
+        Self {
+            player_address: format!("{:#x}", value.player_address),
+            stats: value.stats.into(),
+            achievements: value.achievements.into_iter().map(|a| a.into()).collect(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct PlayerAchievementStats {
+    pub total_points: u32,
+    pub completed_achievements: u32,
+    pub total_achievements: u32,
+    pub completion_percentage: f64,
+    pub last_achievement_at: Option<u64>,
+    pub created_at: u64,
+    pub updated_at: u64,
+}
+
+impl From<torii_proto::PlayerAchievementStats> for PlayerAchievementStats {
+    fn from(value: torii_proto::PlayerAchievementStats) -> Self {
+        Self {
+            total_points: value.total_points,
+            completed_achievements: value.completed_achievements,
+            total_achievements: value.total_achievements,
+            completion_percentage: value.completion_percentage,
+            last_achievement_at: value.last_achievement_at.map(|t| t.timestamp() as u64),
+            created_at: value.created_at.timestamp() as u64,
+            updated_at: value.updated_at.timestamp() as u64,
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct PlayerAchievementProgress {
+    pub achievement: Achievement,
+    pub task_progress: Vec<TaskProgress>,
+    pub completed: bool,
+    pub progress_percentage: f64,
+}
+
+impl From<torii_proto::PlayerAchievementProgress> for PlayerAchievementProgress {
+    fn from(value: torii_proto::PlayerAchievementProgress) -> Self {
+        Self {
+            achievement: value.achievement.into(),
+            task_progress: value.task_progress.into_iter().map(|t| t.into()).collect(),
+            completed: value.completed,
+            progress_percentage: value.progress_percentage,
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TaskProgress {
+    pub task_id: String,
+    pub count: u32,
+    pub completed: bool,
+}
+
+impl From<torii_proto::TaskProgress> for TaskProgress {
+    fn from(value: torii_proto::TaskProgress) -> Self {
+        Self {
+            task_id: value.task_id,
+            count: value.count,
+            completed: value.completed,
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct AchievementProgression {
+    pub id: String,
+    pub achievement_id: String,
+    pub task_id: String,
+    pub world_address: String,
+    pub namespace: String,
+    pub player_id: String,
+    pub count: u32,
+    pub completed: bool,
+    pub completed_at: Option<u64>,
+    pub created_at: u64,
+    pub updated_at: u64,
+}
+
+impl From<torii_proto::AchievementProgression> for AchievementProgression {
+    fn from(value: torii_proto::AchievementProgression) -> Self {
+        Self {
+            id: value.id,
+            achievement_id: value.achievement_id,
+            task_id: value.task_id,
+            world_address: format!("{:#x}", value.world_address),
+            namespace: value.namespace,
+            player_id: format!("{:#x}", value.player_id),
+            count: value.count,
+            completed: value.completed,
+            completed_at: value.completed_at.map(|t| t.timestamp() as u64),
+            created_at: value.created_at.timestamp() as u64,
+            updated_at: value.updated_at.timestamp() as u64,
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct Achievements(pub Page<Achievement>);
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct PlayerAchievements(pub Page<PlayerAchievementEntry>);

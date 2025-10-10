@@ -645,9 +645,9 @@ checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
 
 [[package]]
 name = "cainome"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0634cab52751732346438836fbdb264d9ab47cfaaff51bffd9667178ce7e5ab5"
+checksum = "f296568cda6f1f4934270a321151f9f51afa737450f67ef13a8534f2bd9afdac"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -672,9 +672,9 @@ dependencies = [
 
 [[package]]
 name = "cainome-cairo-serde"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "362d42b94a2402c8820debc2d05b0308e4aff6df0dc5c86569167437440764af"
+checksum = "95ae2d4c21db23c7730a85187c2e9d73fe00c123171839185fb13f31550f3240"
 dependencies = [
  "num-bigint",
  "serde",
@@ -711,9 +711,9 @@ dependencies = [
 
 [[package]]
 name = "cainome-rs"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a2f63aeefc4d30221469fffcfbdbb13e7311444ab91614729c5137c3a70cbb3"
+checksum = "93aa5c33e66b58ff6723d3e43e60fe163ac20719ea89fce921096e654b15bcd6"
 dependencies = [
  "anyhow",
  "cainome-cairo-serde",
@@ -730,9 +730,9 @@ dependencies = [
 
 [[package]]
 name = "cainome-rs-macro"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39a53ebb721a24c3f2351b9214a6c2d2aaafaeecf5da15ee0c244dea95a7490c"
+checksum = "9d679cd9a88b9d412ed4ed30264b80f1bec6c1aa9656e238f06be560ddebb652"
 dependencies = [
  "anyhow",
  "cainome-cairo-serde",
@@ -1363,7 +1363,7 @@ dependencies = [
 
 [[package]]
 name = "dojo-c"
-version = "1.7.5"
+version = "1.8.3"
 dependencies = [
  "account_sdk",
  "anyhow",
@@ -1412,8 +1412,8 @@ dependencies = [
 
 [[package]]
 name = "dojo-types"
-version = "1.7.0"
-source = "git+https://github.com/dojoengine/dojo?rev=6daa3d0#6daa3d0d08e83fd61176d9164a1df42b82ba35be"
+version = "1.7.1"
+source = "git+https://github.com/dojoengine/dojo?rev=0afeb1bc#0afeb1bc63f04bf6716e4a294366232f594edb78"
 dependencies = [
  "anyhow",
  "cainome",
@@ -1434,8 +1434,8 @@ dependencies = [
 
 [[package]]
 name = "dojo-world"
-version = "1.7.0"
-source = "git+https://github.com/dojoengine/dojo?rev=6daa3d0#6daa3d0d08e83fd61176d9164a1df42b82ba35be"
+version = "1.7.1"
+source = "git+https://github.com/dojoengine/dojo?rev=0afeb1bc#0afeb1bc63f04bf6716e4a294366232f594edb78"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5167,8 +5167,8 @@ dependencies = [
 
 [[package]]
 name = "torii-client"
-version = "1.7.4"
-source = "git+https://github.com/dojoengine/torii?rev=23d0da6#23d0da64bbb635d6a6d16b68b9d4a1755f9be310"
+version = "1.8.2"
+source = "git+https://github.com/dojoengine/torii?rev=8378c63#8378c636a6904f17ce04a011d2aee1bc3d84751a"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -5191,8 +5191,8 @@ dependencies = [
 
 [[package]]
 name = "torii-grpc-client"
-version = "1.7.4"
-source = "git+https://github.com/dojoengine/torii?rev=23d0da6#23d0da64bbb635d6a6d16b68b9d4a1755f9be310"
+version = "1.8.2"
+source = "git+https://github.com/dojoengine/torii?rev=8378c63#8378c636a6904f17ce04a011d2aee1bc3d84751a"
 dependencies = [
  "crypto-bigint",
  "dojo-types",
@@ -5217,8 +5217,8 @@ dependencies = [
 
 [[package]]
 name = "torii-proto"
-version = "1.7.4"
-source = "git+https://github.com/dojoengine/torii?rev=23d0da6#23d0da64bbb635d6a6d16b68b9d4a1755f9be310"
+version = "1.8.2"
+source = "git+https://github.com/dojoengine/torii?rev=8378c63#8378c636a6904f17ce04a011d2aee1bc3d84751a"
 dependencies = [
  "chrono",
  "crypto-bigint",

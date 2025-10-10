@@ -81,9 +81,6 @@ cdef extern from *:
     ToriiClient *ok;
     Error err;
 
-  cdef struct FieldElement:
-    uint8_t data[32];
-
   cdef enum ResultControllerAccount_Tag:
     OkControllerAccount,
     ErrControllerAccount,
@@ -92,6 +89,9 @@ cdef extern from *:
     ResultControllerAccount_Tag tag;
     ControllerAccount *ok;
     Error err;
+
+  cdef struct FieldElement:
+    uint8_t data[32];
 
   cdef enum Resultbool_Tag:
     Okbool,
@@ -111,6 +111,15 @@ cdef extern from *:
     FieldElement ok;
     Error err;
 
+  cdef enum Resultc_char_Tag:
+    Okc_char,
+    Errc_char,
+
+  cdef struct Resultc_char:
+    Resultc_char_Tag tag;
+    const char *ok;
+    Error err;
+
   cdef struct CArrayFieldElement:
     FieldElement *data;
     uintptr_t data_len;
@@ -118,14 +127,19 @@ cdef extern from *:
   cdef struct Message:
     const char *message;
     CArrayFieldElement signature;
+    FieldElement world_address;
 
-  cdef enum ResultCArrayFieldElement_Tag:
-    OkCArrayFieldElement,
-    ErrCArrayFieldElement,
+  cdef struct CArrayc_char:
+    const char **data;
+    uintptr_t data_len;
 
-  cdef struct ResultCArrayFieldElement:
-    ResultCArrayFieldElement_Tag tag;
-    CArrayFieldElement ok;
+  cdef enum ResultCArrayc_char_Tag:
+    OkCArrayc_char,
+    ErrCArrayc_char,
+
+  cdef struct ResultCArrayc_char:
+    ResultCArrayc_char_Tag tag;
+    CArrayc_char ok;
     Error err;
 
   cdef struct CArrayController:
@@ -170,10 +184,6 @@ cdef extern from *:
     COptionu32 limit;
     PaginationDirection direction;
     CArrayOrderBy order_by;
-
-  cdef struct CArrayc_char:
-    const char **data;
-    uintptr_t data_len;
 
   cdef struct ControllerQuery:
     Pagination pagination;
@@ -297,27 +307,24 @@ cdef extern from *:
     Clause some;
 
   cdef struct Query:
+    CArrayFieldElement world_addresses;
     Pagination pagination;
     COptionClause clause;
     bool no_hashed_keys;
     CArrayc_char models;
     bool historical;
 
-  cdef struct CArrayModel:
-    Model *data;
+  cdef struct CArrayWorld:
+    World *data;
     uintptr_t data_len;
 
-  cdef struct World:
-    FieldElement world_address;
-    CArrayModel models;
+  cdef enum ResultCArrayWorld_Tag:
+    OkCArrayWorld,
+    ErrCArrayWorld,
 
-  cdef enum ResultWorld_Tag:
-    OkWorld,
-    ErrWorld,
-
-  cdef struct ResultWorld:
-    ResultWorld_Tag tag;
-    World ok;
+  cdef struct ResultCArrayWorld:
+    ResultCArrayWorld_Tag tag;
+    CArrayWorld ok;
     Error err;
 
   cdef struct CArrayTransaction:
@@ -397,6 +404,7 @@ cdef extern from *:
     uintptr_t data_len;
 
   cdef struct Entity:
+    FieldElement world_address;
     FieldElement hashed_keys;
     CArrayStruct models;
     uint64_t created_at;
@@ -432,7 +440,74 @@ cdef extern from *:
     U256 value;
     const char *display_value;
     uint64_t position;
-    FieldElement model_id;
+    const char *model_id;
+    uint64_t created_at;
+    uint64_t updated_at;
+
+  cdef struct CArrayAchievement:
+    Achievement *data;
+    uintptr_t data_len;
+
+  cdef struct PageAchievement:
+    CArrayAchievement items;
+    COptionc_char next_cursor;
+
+  cdef enum ResultPageAchievement_Tag:
+    OkPageAchievement,
+    ErrPageAchievement,
+
+  cdef struct ResultPageAchievement:
+    ResultPageAchievement_Tag tag;
+    PageAchievement ok;
+    Error err;
+
+  cdef enum COptionbool_Tag:
+    Somebool,
+    Nonebool,
+
+  cdef struct COptionbool:
+    COptionbool_Tag tag;
+    bool some;
+
+  cdef struct AchievementQuery:
+    CArrayFieldElement world_addresses;
+    CArrayc_char namespaces;
+    COptionbool hidden;
+    Pagination pagination;
+
+  cdef struct CArrayPlayerAchievementEntry:
+    PlayerAchievementEntry *data;
+    uintptr_t data_len;
+
+  cdef struct PagePlayerAchievementEntry:
+    CArrayPlayerAchievementEntry items;
+    COptionc_char next_cursor;
+
+  cdef enum ResultPagePlayerAchievementEntry_Tag:
+    OkPagePlayerAchievementEntry,
+    ErrPagePlayerAchievementEntry,
+
+  cdef struct ResultPagePlayerAchievementEntry:
+    ResultPagePlayerAchievementEntry_Tag tag;
+    PagePlayerAchievementEntry ok;
+    Error err;
+
+  cdef struct PlayerAchievementQuery:
+    CArrayFieldElement world_addresses;
+    CArrayc_char namespaces;
+    CArrayFieldElement player_addresses;
+    Pagination pagination;
+
+  cdef struct AchievementProgression:
+    const char *id;
+    const char *achievement_id;
+    const char *task_id;
+    FieldElement world_address;
+    const char *namespace_;
+    FieldElement player_id;
+    uint32_t count;
+    bool completed;
+    COptionu64 completed_at;
     uint64_t created_at;
     uint64_t updated_at;
 
@@ -652,13 +727,13 @@ cdef extern from *:
     uint64_t executed_at;
     COptionc_char event_id;
 
-  cdef enum Resultc_char_Tag:
-    Okc_char,
-    Errc_char,
+  cdef enum ResultCArrayFieldElement_Tag:
+    OkCArrayFieldElement,
+    ErrCArrayFieldElement,
 
-  cdef struct Resultc_char:
-    Resultc_char_Tag tag;
-    const char *ok;
+  cdef struct ResultCArrayFieldElement:
+    ResultCArrayFieldElement_Tag tag;
+    CArrayFieldElement ok;
     Error err;
 
   cdef struct Signature:
@@ -725,6 +800,21 @@ cdef extern from *:
     const char *field;
     OrderDirection direction;
 
+  cdef struct CArrayModel:
+    Model *data;
+    uintptr_t data_len;
+
+  cdef struct World:
+    FieldElement world_address;
+    CArrayModel models;
+
+  cdef struct TransactionCall:
+    FieldElement contract_address;
+    const char *entrypoint;
+    CArrayFieldElement calldata;
+    CallType call_type;
+    FieldElement caller_address;
+
   cdef struct CArrayMember:
     Member *data;
     uintptr_t data_len;
@@ -732,6 +822,66 @@ cdef extern from *:
   cdef struct Struct:
     const char *name;
     CArrayMember children;
+
+  cdef struct CArrayAchievementTask:
+    AchievementTask *data;
+    uintptr_t data_len;
+
+  cdef struct Achievement:
+    const char *id;
+    FieldElement world_address;
+    const char *namespace_;
+    const char *entity_id;
+    bool hidden;
+    uint32_t index;
+    uint32_t points;
+    const char *start;
+    const char *end;
+    const char *group;
+    const char *icon;
+    const char *title;
+    const char *description;
+    CArrayAchievementTask tasks;
+    const char *data;
+    uint32_t total_completions;
+    double completion_rate;
+    uint64_t created_at;
+    uint64_t updated_at;
+
+  cdef struct PlayerAchievementStats:
+    uint32_t total_points;
+    uint32_t completed_achievements;
+    uint32_t total_achievements;
+    double completion_percentage;
+    COptionu64 last_achievement_at;
+    uint64_t created_at;
+    uint64_t updated_at;
+
+  cdef struct CArrayPlayerAchievementProgress:
+    PlayerAchievementProgress *data;
+    uintptr_t data_len;
+
+  cdef struct PlayerAchievementEntry:
+    FieldElement player_address;
+    PlayerAchievementStats stats;
+    CArrayPlayerAchievementProgress achievements;
+
+  cdef struct ActionCount:
+    const char *action_name;
+    uint32_t count;
+
+  cdef struct AttributeFilter:
+    const char *trait_name;
+    const char *trait_value;
+
+  cdef struct TokenContract:
+    FieldElement contract_address;
+    const char *name;
+    const char *symbol;
+    uint8_t decimals;
+    const char *metadata;
+    const char *token_metadata;
+    COptionU256 total_supply;
 
   cdef struct CArrayEnumOption:
     EnumOption *data;
@@ -770,6 +920,7 @@ cdef extern from *:
     const char *byte_array;
 
   cdef struct Model:
+    FieldElement world_address;
     Ty schema;
     const char *namespace_;
     const char *name;
@@ -781,49 +932,47 @@ cdef extern from *:
     const char *layout;
     bool use_legacy_store;
 
-  cdef struct TransactionCall:
-    FieldElement contract_address;
-    const char *entrypoint;
-    CArrayFieldElement calldata;
-    CallType call_type;
-    FieldElement caller_address;
-
-  cdef struct ActionCount:
-    const char *action_name;
-    uint32_t count;
-
-  cdef struct AttributeFilter:
-    const char *trait_name;
-    const char *trait_value;
-
-  cdef struct TokenContract:
-    FieldElement contract_address;
-    const char *name;
-    const char *symbol;
-    uint8_t decimals;
-    const char *metadata;
-    const char *token_metadata;
-    COptionU256 total_supply;
-
   cdef struct Member:
     const char *name;
     Ty *ty;
     bool key;
 
+  cdef struct AchievementTask:
+    const char *task_id;
+    const char *description;
+    uint32_t total;
+    uint32_t total_completions;
+    double completion_rate;
+    uint64_t created_at;
+
+  cdef struct CArrayTaskProgress:
+    TaskProgress *data;
+    uintptr_t data_len;
+
+  cdef struct PlayerAchievementProgress:
+    Achievement achievement;
+    CArrayTaskProgress task_progress;
+    bool completed;
+    double progress_percentage;
+
   cdef struct EnumOption:
     const char *name;
     Ty *ty;
+
+  cdef struct TaskProgress:
+    const char *task_id;
+    uint32_t count;
+    bool completed;
 
   # Creates a new Torii client instance
   #
   # # Parameters
   # * `torii_url` - URL of the Torii server
   # * `libp2p_relay_url` - URL of the libp2p relay server
-  # * `world` - World address as a FieldElement
   #
   # # Returns
   # Result containing pointer to new ToriiClient instance or error
-  ResultToriiClient client_new(const char *torii_url, FieldElement world);
+  ResultToriiClient client_new(const char *torii_url);
 
   # Initiates a connection to establish a new session account
   #
@@ -970,7 +1119,7 @@ cdef extern from *:
   #
   # # Returns
   # Result containing byte array or error
-  ResultFieldElement client_publish_message(ToriiClient *client, Message message);
+  Resultc_char client_publish_message(ToriiClient *client, Message message);
 
   # Publishes multiple messages to the network
   #
@@ -981,9 +1130,9 @@ cdef extern from *:
   #
   # # Returns
   # Result containing array of message IDs or error
-  ResultCArrayFieldElement client_publish_message_batch(ToriiClient *client,
-                                                        const Message *messages,
-                                                        uintptr_t messages_len);
+  ResultCArrayc_char client_publish_message_batch(ToriiClient *client,
+                                                  const Message *messages,
+                                                  uintptr_t messages_len);
 
   # Retrieves controllers for the given contract addresses
   #
@@ -1024,7 +1173,9 @@ cdef extern from *:
   #
   # # Returns
   # World structure containing world information
-  ResultWorld client_metadata(ToriiClient *client);
+  ResultCArrayWorld client_worlds(ToriiClient *client,
+                                  const FieldElement *world_addresses,
+                                  uintptr_t world_addresses_len);
 
   # Retrieves transactions matching the given query
   #
@@ -1061,6 +1212,8 @@ cdef extern from *:
   # Result containing pointer to Subscription or error
   ResultSubscription client_on_entity_state_update(ToriiClient *client,
                                                    COptionClause clause,
+                                                   const FieldElement *world_addresses,
+                                                   uintptr_t world_addresses_len,
                                                    void (*callback)(Entity));
 
   # Updates an existing entity subscription with new clauses
@@ -1075,7 +1228,9 @@ cdef extern from *:
   # Result containing success boolean or error
   Resultbool client_update_entity_subscription(ToriiClient *client,
                                                Subscription *subscription,
-                                               COptionClause clause);
+                                               COptionClause clause,
+                                               const FieldElement *world_addresses,
+                                               uintptr_t world_addresses_len);
 
   # Retrieves aggregations (leaderboards, stats, rankings) matching query parameter
   #
@@ -1125,16 +1280,92 @@ cdef extern from *:
                                                     const char *const *entity_ids,
                                                     uintptr_t entity_ids_len);
 
+  # Retrieves achievements matching query parameter
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `query` - AchievementQuery containing world_addresses, namespaces, hidden filter, and pagination
+  #
+  # # Returns
+  # Result containing Page of Achievement or error
+  ResultPageAchievement client_achievements(ToriiClient *client,
+                                            AchievementQuery query);
+
+  # Retrieves player achievement data matching query parameter
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses, and pagination
+  #
+  # # Returns
+  # Result containing Page of PlayerAchievementEntry or error
+  ResultPagePlayerAchievementEntry client_player_achievements(ToriiClient *client,
+                                                              PlayerAchievementQuery query);
+
+  # Subscribes to achievement progression updates
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `world_addresses` - Array of world addresses to subscribe to
+  # * `world_addresses_len` - Length of world_addresses array
+  # * `namespaces` - Array of namespaces to subscribe to
+  # * `namespaces_len` - Length of namespaces array
+  # * `player_addresses` - Array of player addresses to subscribe to
+  # * `player_addresses_len` - Length of player_addresses array
+  # * `achievement_ids` - Array of achievement IDs to subscribe to
+  # * `achievement_ids_len` - Length of achievement_ids array
+  # * `callback` - Function called when updates occur
+  #
+  # # Returns
+  # Result containing pointer to Subscription or error
+  ResultSubscription client_on_achievement_progression_update(ToriiClient *client,
+                                                              const FieldElement *world_addresses,
+                                                              uintptr_t world_addresses_len,
+                                                              const char *const *namespaces,
+                                                              uintptr_t namespaces_len,
+                                                              const FieldElement *player_addresses,
+                                                              uintptr_t player_addresses_len,
+                                                              const char *const *achievement_ids,
+                                                              uintptr_t achievement_ids_len,
+                                                              void (*callback)(AchievementProgression));
+
+  # Updates an existing achievement progression subscription with new parameters
+  #
+  # # Parameters
+  # * `client` - Pointer to ToriiClient instance
+  # * `subscription` - Pointer to existing Subscription
+  # * `world_addresses` - Array of world addresses to subscribe to
+  # * `world_addresses_len` - Length of world_addresses array
+  # * `namespaces` - Array of namespaces to subscribe to
+  # * `namespaces_len` - Length of namespaces array
+  # * `player_addresses` - Array of player addresses to subscribe to
+  # * `player_addresses_len` - Length of player_addresses array
+  # * `achievement_ids` - Array of achievement IDs to subscribe to
+  # * `achievement_ids_len` - Length of achievement_ids array
+  #
+  # # Returns
+  # Result containing success boolean or error
+  Resultbool client_update_achievement_progression_subscription(ToriiClient *client,
+                                                                Subscription *subscription,
+                                                                const FieldElement *world_addresses,
+                                                                uintptr_t world_addresses_len,
+                                                                const char *const *namespaces,
+                                                                uintptr_t namespaces_len,
+                                                                const FieldElement *player_addresses,
+                                                                uintptr_t player_addresses_len,
+                                                                const char *const *achievement_ids,
+                                                                uintptr_t achievement_ids_len);
+
   # Retrieves activities (user session tracking) matching query parameter
   #
   # # Parameters
   # * `client` - Pointer to ToriiClient instance
-  # * `query` - ActivityQuery containing world_addresses, namespaces, caller_addresses, and pagination
+  # * `query` - ActivityQuery containing world_addresses, namespaces, caller_addresses, and
+  #   pagination
   #
   # # Returns
   # Result containing Page of Activity or error
-  ResultPageActivity client_activities(ToriiClient *client,
-                                       ActivityQuery query);
+  ResultPageActivity client_activities(ToriiClient *client, ActivityQuery query);
 
   # Subscribes to activity updates (user session tracking)
   #
@@ -1194,6 +1425,8 @@ cdef extern from *:
   # Result containing pointer to Subscription or error
   ResultSubscription client_on_event_message_update(ToriiClient *client,
                                                     COptionClause clause,
+                                                    const FieldElement *world_addresses,
+                                                    uintptr_t world_addresses_len,
                                                     void (*callback)(Entity));
 
   # Updates an existing event message subscription
@@ -1208,7 +1441,9 @@ cdef extern from *:
   # Result containing success boolean or error
   Resultbool client_update_event_message_subscription(ToriiClient *client,
                                                       Subscription *subscription,
-                                                      COptionClause clause);
+                                                      COptionClause clause,
+                                                      const FieldElement *world_addresses,
+                                                      uintptr_t world_addresses_len);
 
   # Subscribes to Starknet events
   #

@@ -15,12 +15,14 @@ struct Controller;
 struct OrderBy;
 struct Entity;
 struct COptionFieldElement;
-struct Model;
+struct World;
 struct Transaction;
 struct Subscription;
 struct TransactionCall;
 struct Struct;
 struct AggregationEntry;
+struct Achievement;
+struct PlayerAchievementEntry;
 struct Activity;
 struct ActionCount;
 struct Token;
@@ -32,8 +34,12 @@ struct TokenTransfer;
 struct Provider;
 struct Account;
 struct Ty;
+struct Model;
 struct Member;
+struct AchievementTask;
+struct PlayerAchievementProgress;
 struct EnumOption;
+struct TaskProgress;
 
 typedef enum BlockTag {
   Latest,
@@ -112,10 +118,6 @@ typedef struct ResultToriiClient {
   };
 } ResultToriiClient;
 
-typedef struct FieldElement {
-  uint8_t data[32];
-} FieldElement;
-
 typedef enum ResultControllerAccount_Tag {
   OkControllerAccount,
   ErrControllerAccount,
@@ -132,6 +134,10 @@ typedef struct ResultControllerAccount {
     };
   };
 } ResultControllerAccount;
+
+typedef struct FieldElement {
+  uint8_t data[32];
+} FieldElement;
 
 typedef enum Resultbool_Tag {
   Okbool,
@@ -167,6 +173,23 @@ typedef struct ResultFieldElement {
   };
 } ResultFieldElement;
 
+typedef enum Resultc_char_Tag {
+  Okc_char,
+  Errc_char,
+} Resultc_char_Tag;
+
+typedef struct Resultc_char {
+  Resultc_char_Tag tag;
+  union {
+    struct {
+      const char *ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Resultc_char;
+
 typedef struct CArrayFieldElement {
   struct FieldElement *data;
   uintptr_t data_len;
@@ -175,24 +198,30 @@ typedef struct CArrayFieldElement {
 typedef struct Message {
   const char *message;
   struct CArrayFieldElement signature;
+  struct FieldElement world_address;
 } Message;
 
-typedef enum ResultCArrayFieldElement_Tag {
-  OkCArrayFieldElement,
-  ErrCArrayFieldElement,
-} ResultCArrayFieldElement_Tag;
+typedef struct CArrayc_char {
+  const char **data;
+  uintptr_t data_len;
+} CArrayc_char;
 
-typedef struct ResultCArrayFieldElement {
-  ResultCArrayFieldElement_Tag tag;
+typedef enum ResultCArrayc_char_Tag {
+  OkCArrayc_char,
+  ErrCArrayc_char,
+} ResultCArrayc_char_Tag;
+
+typedef struct ResultCArrayc_char {
+  ResultCArrayc_char_Tag tag;
   union {
     struct {
-      struct CArrayFieldElement ok;
+      struct CArrayc_char ok;
     };
     struct {
       struct Error err;
     };
   };
-} ResultCArrayFieldElement;
+} ResultCArrayc_char;
 
 typedef struct CArrayController {
   struct Controller *data;
@@ -260,11 +289,6 @@ typedef struct Pagination {
   enum PaginationDirection direction;
   struct CArrayOrderBy order_by;
 } Pagination;
-
-typedef struct CArrayc_char {
-  const char **data;
-  uintptr_t data_len;
-} CArrayc_char;
 
 typedef struct ControllerQuery {
   struct Pagination pagination;
@@ -470,6 +494,7 @@ typedef struct COptionClause {
 } COptionClause;
 
 typedef struct Query {
+  struct CArrayFieldElement world_addresses;
   struct Pagination pagination;
   struct COptionClause clause;
   bool no_hashed_keys;
@@ -477,32 +502,27 @@ typedef struct Query {
   bool historical;
 } Query;
 
-typedef struct CArrayModel {
-  struct Model *data;
+typedef struct CArrayWorld {
+  struct World *data;
   uintptr_t data_len;
-} CArrayModel;
+} CArrayWorld;
 
-typedef struct World {
-  struct FieldElement world_address;
-  struct CArrayModel models;
-} World;
+typedef enum ResultCArrayWorld_Tag {
+  OkCArrayWorld,
+  ErrCArrayWorld,
+} ResultCArrayWorld_Tag;
 
-typedef enum ResultWorld_Tag {
-  OkWorld,
-  ErrWorld,
-} ResultWorld_Tag;
-
-typedef struct ResultWorld {
-  ResultWorld_Tag tag;
+typedef struct ResultCArrayWorld {
+  ResultCArrayWorld_Tag tag;
   union {
     struct {
-      struct World ok;
+      struct CArrayWorld ok;
     };
     struct {
       struct Error err;
     };
   };
-} ResultWorld;
+} ResultCArrayWorld;
 
 typedef struct CArrayTransaction {
   struct Transaction *data;
@@ -616,6 +636,7 @@ typedef struct CArrayStruct {
 } CArrayStruct;
 
 typedef struct Entity {
+  struct FieldElement world_address;
   struct FieldElement hashed_keys;
   struct CArrayStruct models;
   uint64_t created_at;
@@ -663,10 +684,106 @@ typedef struct AggregationEntry {
   struct U256 value;
   const char *display_value;
   uint64_t position;
-  struct FieldElement model_id;
+  const char *model_id;
   uint64_t created_at;
   uint64_t updated_at;
 } AggregationEntry;
+
+typedef struct CArrayAchievement {
+  struct Achievement *data;
+  uintptr_t data_len;
+} CArrayAchievement;
+
+typedef struct PageAchievement {
+  struct CArrayAchievement items;
+  struct COptionc_char next_cursor;
+} PageAchievement;
+
+typedef enum ResultPageAchievement_Tag {
+  OkPageAchievement,
+  ErrPageAchievement,
+} ResultPageAchievement_Tag;
+
+typedef struct ResultPageAchievement {
+  ResultPageAchievement_Tag tag;
+  union {
+    struct {
+      struct PageAchievement ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultPageAchievement;
+
+typedef enum COptionbool_Tag {
+  Somebool,
+  Nonebool,
+} COptionbool_Tag;
+
+typedef struct COptionbool {
+  COptionbool_Tag tag;
+  union {
+    struct {
+      bool some;
+    };
+  };
+} COptionbool;
+
+typedef struct AchievementQuery {
+  struct CArrayFieldElement world_addresses;
+  struct CArrayc_char namespaces;
+  struct COptionbool hidden;
+  struct Pagination pagination;
+} AchievementQuery;
+
+typedef struct CArrayPlayerAchievementEntry {
+  struct PlayerAchievementEntry *data;
+  uintptr_t data_len;
+} CArrayPlayerAchievementEntry;
+
+typedef struct PagePlayerAchievementEntry {
+  struct CArrayPlayerAchievementEntry items;
+  struct COptionc_char next_cursor;
+} PagePlayerAchievementEntry;
+
+typedef enum ResultPagePlayerAchievementEntry_Tag {
+  OkPagePlayerAchievementEntry,
+  ErrPagePlayerAchievementEntry,
+} ResultPagePlayerAchievementEntry_Tag;
+
+typedef struct ResultPagePlayerAchievementEntry {
+  ResultPagePlayerAchievementEntry_Tag tag;
+  union {
+    struct {
+      struct PagePlayerAchievementEntry ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultPagePlayerAchievementEntry;
+
+typedef struct PlayerAchievementQuery {
+  struct CArrayFieldElement world_addresses;
+  struct CArrayc_char namespaces;
+  struct CArrayFieldElement player_addresses;
+  struct Pagination pagination;
+} PlayerAchievementQuery;
+
+typedef struct AchievementProgression {
+  const char *id;
+  const char *achievement_id;
+  const char *task_id;
+  struct FieldElement world_address;
+  const char *namespace_;
+  struct FieldElement player_id;
+  uint32_t count;
+  bool completed;
+  struct COptionu64 completed_at;
+  uint64_t created_at;
+  uint64_t updated_at;
+} AchievementProgression;
 
 typedef struct CArrayActivity {
   struct Activity *data;
@@ -971,22 +1088,22 @@ typedef struct TokenTransfer {
   struct COptionc_char event_id;
 } TokenTransfer;
 
-typedef enum Resultc_char_Tag {
-  Okc_char,
-  Errc_char,
-} Resultc_char_Tag;
+typedef enum ResultCArrayFieldElement_Tag {
+  OkCArrayFieldElement,
+  ErrCArrayFieldElement,
+} ResultCArrayFieldElement_Tag;
 
-typedef struct Resultc_char {
-  Resultc_char_Tag tag;
+typedef struct ResultCArrayFieldElement {
+  ResultCArrayFieldElement_Tag tag;
   union {
     struct {
-      const char *ok;
+      struct CArrayFieldElement ok;
     };
     struct {
       struct Error err;
     };
   };
-} Resultc_char;
+} ResultCArrayFieldElement;
 
 typedef struct Signature {
   /**
@@ -1097,6 +1214,24 @@ typedef struct OrderBy {
   enum OrderDirection direction;
 } OrderBy;
 
+typedef struct CArrayModel {
+  struct Model *data;
+  uintptr_t data_len;
+} CArrayModel;
+
+typedef struct World {
+  struct FieldElement world_address;
+  struct CArrayModel models;
+} World;
+
+typedef struct TransactionCall {
+  struct FieldElement contract_address;
+  const char *entrypoint;
+  struct CArrayFieldElement calldata;
+  enum CallType call_type;
+  struct FieldElement caller_address;
+} TransactionCall;
+
 typedef struct CArrayMember {
   struct Member *data;
   uintptr_t data_len;
@@ -1106,6 +1241,74 @@ typedef struct Struct {
   const char *name;
   struct CArrayMember children;
 } Struct;
+
+typedef struct CArrayAchievementTask {
+  struct AchievementTask *data;
+  uintptr_t data_len;
+} CArrayAchievementTask;
+
+typedef struct Achievement {
+  const char *id;
+  struct FieldElement world_address;
+  const char *namespace_;
+  const char *entity_id;
+  bool hidden;
+  uint32_t index;
+  uint32_t points;
+  const char *start;
+  const char *end;
+  const char *group;
+  const char *icon;
+  const char *title;
+  const char *description;
+  struct CArrayAchievementTask tasks;
+  const char *data;
+  uint32_t total_completions;
+  double completion_rate;
+  uint64_t created_at;
+  uint64_t updated_at;
+} Achievement;
+
+typedef struct PlayerAchievementStats {
+  uint32_t total_points;
+  uint32_t completed_achievements;
+  uint32_t total_achievements;
+  double completion_percentage;
+  struct COptionu64 last_achievement_at;
+  uint64_t created_at;
+  uint64_t updated_at;
+} PlayerAchievementStats;
+
+typedef struct CArrayPlayerAchievementProgress {
+  struct PlayerAchievementProgress *data;
+  uintptr_t data_len;
+} CArrayPlayerAchievementProgress;
+
+typedef struct PlayerAchievementEntry {
+  struct FieldElement player_address;
+  struct PlayerAchievementStats stats;
+  struct CArrayPlayerAchievementProgress achievements;
+} PlayerAchievementEntry;
+
+typedef struct ActionCount {
+  const char *action_name;
+  uint32_t count;
+} ActionCount;
+
+typedef struct AttributeFilter {
+  const char *trait_name;
+  const char *trait_value;
+} AttributeFilter;
+
+typedef struct TokenContract {
+  struct FieldElement contract_address;
+  const char *name;
+  const char *symbol;
+  uint8_t decimals;
+  const char *metadata;
+  const char *token_metadata;
+  struct COptionU256 total_supply;
+} TokenContract;
 
 typedef struct CArrayEnumOption {
   struct EnumOption *data;
@@ -1166,6 +1369,7 @@ typedef struct Ty {
 } Ty;
 
 typedef struct Model {
+  struct FieldElement world_address;
   struct Ty schema;
   const char *namespace_;
   const char *name;
@@ -1178,44 +1382,43 @@ typedef struct Model {
   bool use_legacy_store;
 } Model;
 
-typedef struct TransactionCall {
-  struct FieldElement contract_address;
-  const char *entrypoint;
-  struct CArrayFieldElement calldata;
-  enum CallType call_type;
-  struct FieldElement caller_address;
-} TransactionCall;
-
-typedef struct ActionCount {
-  const char *action_name;
-  uint32_t count;
-} ActionCount;
-
-typedef struct AttributeFilter {
-  const char *trait_name;
-  const char *trait_value;
-} AttributeFilter;
-
-typedef struct TokenContract {
-  struct FieldElement contract_address;
-  const char *name;
-  const char *symbol;
-  uint8_t decimals;
-  const char *metadata;
-  const char *token_metadata;
-  struct COptionU256 total_supply;
-} TokenContract;
-
 typedef struct Member {
   const char *name;
   struct Ty *ty;
   bool key;
 } Member;
 
+typedef struct AchievementTask {
+  const char *task_id;
+  const char *description;
+  uint32_t total;
+  uint32_t total_completions;
+  double completion_rate;
+  uint64_t created_at;
+} AchievementTask;
+
+typedef struct CArrayTaskProgress {
+  struct TaskProgress *data;
+  uintptr_t data_len;
+} CArrayTaskProgress;
+
+typedef struct PlayerAchievementProgress {
+  struct Achievement achievement;
+  struct CArrayTaskProgress task_progress;
+  bool completed;
+  double progress_percentage;
+} PlayerAchievementProgress;
+
 typedef struct EnumOption {
   const char *name;
   struct Ty *ty;
 } EnumOption;
+
+typedef struct TaskProgress {
+  const char *task_id;
+  uint32_t count;
+  bool completed;
+} TaskProgress;
 
 #ifdef __cplusplus
 extern "C" {
@@ -1227,12 +1430,11 @@ extern "C" {
  * # Parameters
  * * `torii_url` - URL of the Torii server
  * * `libp2p_relay_url` - URL of the libp2p relay server
- * * `world` - World address as a FieldElement
  *
  * # Returns
  * Result containing pointer to new ToriiClient instance or error
  */
-struct ResultToriiClient client_new(const char *torii_url, struct FieldElement world);
+struct ResultToriiClient client_new(const char *torii_url);
 
 /**
  * Initiates a connection to establish a new session account
@@ -1401,8 +1603,7 @@ void client_set_logger(struct ToriiClient *client, void (*logger)(const char*));
  * # Returns
  * Result containing byte array or error
  */
-struct ResultFieldElement client_publish_message(struct ToriiClient *client,
-                                                 struct Message message);
+struct Resultc_char client_publish_message(struct ToriiClient *client, struct Message message);
 
 /**
  * Publishes multiple messages to the network
@@ -1415,9 +1616,9 @@ struct ResultFieldElement client_publish_message(struct ToriiClient *client,
  * # Returns
  * Result containing array of message IDs or error
  */
-struct ResultCArrayFieldElement client_publish_message_batch(struct ToriiClient *client,
-                                                             const struct Message *messages,
-                                                             uintptr_t messages_len);
+struct ResultCArrayc_char client_publish_message_batch(struct ToriiClient *client,
+                                                       const struct Message *messages,
+                                                       uintptr_t messages_len);
 
 /**
  * Retrieves controllers for the given contract addresses
@@ -1467,7 +1668,9 @@ struct ResultPageEntity client_event_messages(struct ToriiClient *client, struct
  * # Returns
  * World structure containing world information
  */
-struct ResultWorld client_metadata(struct ToriiClient *client);
+struct ResultCArrayWorld client_worlds(struct ToriiClient *client,
+                                       const struct FieldElement *world_addresses,
+                                       uintptr_t world_addresses_len);
 
 /**
  * Retrieves transactions matching the given query
@@ -1511,6 +1714,8 @@ struct ResultSubscription client_on_transaction(struct ToriiClient *client,
  */
 struct ResultSubscription client_on_entity_state_update(struct ToriiClient *client,
                                                         struct COptionClause clause,
+                                                        const struct FieldElement *world_addresses,
+                                                        uintptr_t world_addresses_len,
                                                         void (*callback)(struct Entity));
 
 /**
@@ -1527,7 +1732,9 @@ struct ResultSubscription client_on_entity_state_update(struct ToriiClient *clie
  */
 struct Resultbool client_update_entity_subscription(struct ToriiClient *client,
                                                     struct Subscription *subscription,
-                                                    struct COptionClause clause);
+                                                    struct COptionClause clause,
+                                                    const struct FieldElement *world_addresses,
+                                                    uintptr_t world_addresses_len);
 
 /**
  * Retrieves aggregations (leaderboards, stats, rankings) matching query parameter
@@ -1585,17 +1792,101 @@ struct Resultbool client_update_aggregation_subscription(struct ToriiClient *cli
                                                          uintptr_t entity_ids_len);
 
 /**
+ * Retrieves achievements matching query parameter
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `query` - AchievementQuery containing world_addresses, namespaces, hidden filter, and pagination
+ *
+ * # Returns
+ * Result containing Page of Achievement or error
+ */
+struct ResultPageAchievement client_achievements(struct ToriiClient *client,
+                                                 struct AchievementQuery query);
+
+/**
+ * Retrieves player achievement data matching query parameter
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses, and pagination
+ *
+ * # Returns
+ * Result containing Page of PlayerAchievementEntry or error
+ */
+struct ResultPagePlayerAchievementEntry client_player_achievements(struct ToriiClient *client,
+                                                                   struct PlayerAchievementQuery query);
+
+/**
+ * Subscribes to achievement progression updates
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `world_addresses` - Array of world addresses to subscribe to
+ * * `world_addresses_len` - Length of world_addresses array
+ * * `namespaces` - Array of namespaces to subscribe to
+ * * `namespaces_len` - Length of namespaces array
+ * * `player_addresses` - Array of player addresses to subscribe to
+ * * `player_addresses_len` - Length of player_addresses array
+ * * `achievement_ids` - Array of achievement IDs to subscribe to
+ * * `achievement_ids_len` - Length of achievement_ids array
+ * * `callback` - Function called when updates occur
+ *
+ * # Returns
+ * Result containing pointer to Subscription or error
+ */
+struct ResultSubscription client_on_achievement_progression_update(struct ToriiClient *client,
+                                                                   const struct FieldElement *world_addresses,
+                                                                   uintptr_t world_addresses_len,
+                                                                   const char *const *namespaces,
+                                                                   uintptr_t namespaces_len,
+                                                                   const struct FieldElement *player_addresses,
+                                                                   uintptr_t player_addresses_len,
+                                                                   const char *const *achievement_ids,
+                                                                   uintptr_t achievement_ids_len,
+                                                                   void (*callback)(struct AchievementProgression));
+
+/**
+ * Updates an existing achievement progression subscription with new parameters
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `subscription` - Pointer to existing Subscription
+ * * `world_addresses` - Array of world addresses to subscribe to
+ * * `world_addresses_len` - Length of world_addresses array
+ * * `namespaces` - Array of namespaces to subscribe to
+ * * `namespaces_len` - Length of namespaces array
+ * * `player_addresses` - Array of player addresses to subscribe to
+ * * `player_addresses_len` - Length of player_addresses array
+ * * `achievement_ids` - Array of achievement IDs to subscribe to
+ * * `achievement_ids_len` - Length of achievement_ids array
+ *
+ * # Returns
+ * Result containing success boolean or error
+ */
+struct Resultbool client_update_achievement_progression_subscription(struct ToriiClient *client,
+                                                                     struct Subscription *subscription,
+                                                                     const struct FieldElement *world_addresses,
+                                                                     uintptr_t world_addresses_len,
+                                                                     const char *const *namespaces,
+                                                                     uintptr_t namespaces_len,
+                                                                     const struct FieldElement *player_addresses,
+                                                                     uintptr_t player_addresses_len,
+                                                                     const char *const *achievement_ids,
+                                                                     uintptr_t achievement_ids_len);
+
+/**
  * Retrieves activities (user session tracking) matching query parameter
  *
  * # Parameters
  * * `client` - Pointer to ToriiClient instance
- * * `query` - ActivityQuery containing world_addresses, namespaces, caller_addresses, and pagination
+ * * `query` - ActivityQuery containing world_addresses, namespaces, caller_addresses, and
+ *   pagination
  *
  * # Returns
  * Result containing Page of Activity or error
  */
-struct ResultPageActivity client_activities(struct ToriiClient *client,
-                                            struct ActivityQuery query);
+struct ResultPageActivity client_activities(struct ToriiClient *client, struct ActivityQuery query);
 
 /**
  * Subscribes to activity updates (user session tracking)
@@ -1661,6 +1952,8 @@ struct Resultbool client_update_activity_subscription(struct ToriiClient *client
  */
 struct ResultSubscription client_on_event_message_update(struct ToriiClient *client,
                                                          struct COptionClause clause,
+                                                         const struct FieldElement *world_addresses,
+                                                         uintptr_t world_addresses_len,
                                                          void (*callback)(struct Entity));
 
 /**
@@ -1677,7 +1970,9 @@ struct ResultSubscription client_on_event_message_update(struct ToriiClient *cli
  */
 struct Resultbool client_update_event_message_subscription(struct ToriiClient *client,
                                                            struct Subscription *subscription,
-                                                           struct COptionClause clause);
+                                                           struct COptionClause clause,
+                                                           const struct FieldElement *world_addresses,
+                                                           uintptr_t world_addresses_len);
 
 /**
  * Subscribes to Starknet events
