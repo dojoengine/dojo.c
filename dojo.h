@@ -8,9 +8,7 @@ namespace dojo_bindings {
 #endif  // __cplusplus
 
 struct ToriiClient;
-struct Policy;
-struct ControllerAccount;
-struct Call;
+struct FieldElement;
 struct Controller;
 struct OrderBy;
 struct Entity;
@@ -118,61 +116,6 @@ typedef struct ResultToriiClient {
   };
 } ResultToriiClient;
 
-typedef enum ResultControllerAccount_Tag {
-  OkControllerAccount,
-  ErrControllerAccount,
-} ResultControllerAccount_Tag;
-
-typedef struct ResultControllerAccount {
-  ResultControllerAccount_Tag tag;
-  union {
-    struct {
-      struct ControllerAccount *ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultControllerAccount;
-
-typedef struct FieldElement {
-  uint8_t data[32];
-} FieldElement;
-
-typedef enum Resultbool_Tag {
-  Okbool,
-  Errbool,
-} Resultbool_Tag;
-
-typedef struct Resultbool {
-  Resultbool_Tag tag;
-  union {
-    struct {
-      bool ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} Resultbool;
-
-typedef enum ResultFieldElement_Tag {
-  OkFieldElement,
-  ErrFieldElement,
-} ResultFieldElement_Tag;
-
-typedef struct ResultFieldElement {
-  ResultFieldElement_Tag tag;
-  union {
-    struct {
-      struct FieldElement ok;
-    };
-    struct {
-      struct Error err;
-    };
-  };
-} ResultFieldElement;
-
 typedef enum Resultc_char_Tag {
   Okc_char,
   Errc_char,
@@ -194,6 +137,10 @@ typedef struct CArrayFieldElement {
   struct FieldElement *data;
   uintptr_t data_len;
 } CArrayFieldElement;
+
+typedef struct FieldElement {
+  uint8_t data[32];
+} FieldElement;
 
 typedef struct Message {
   const char *message;
@@ -643,6 +590,23 @@ typedef struct Entity {
   uint64_t updated_at;
   uint64_t executed_at;
 } Entity;
+
+typedef enum Resultbool_Tag {
+  Okbool,
+  Errbool,
+} Resultbool_Tag;
+
+typedef struct Resultbool {
+  Resultbool_Tag tag;
+  union {
+    struct {
+      bool ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} Resultbool;
 
 typedef struct CArrayAggregationEntry {
   struct AggregationEntry *data;
@@ -1105,6 +1069,23 @@ typedef struct ResultCArrayFieldElement {
   };
 } ResultCArrayFieldElement;
 
+typedef enum ResultFieldElement_Tag {
+  OkFieldElement,
+  ErrFieldElement,
+} ResultFieldElement_Tag;
+
+typedef struct ResultFieldElement {
+  ResultFieldElement_Tag tag;
+  union {
+    struct {
+      struct FieldElement ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultFieldElement;
+
 typedef struct Signature {
   /**
    * The `r` value of a signature
@@ -1196,12 +1177,6 @@ typedef struct BlockId {
     };
   };
 } BlockId;
-
-typedef struct Policy {
-  struct FieldElement target;
-  const char *method;
-  const char *description;
-} Policy;
 
 typedef struct Controller {
   struct FieldElement address;
@@ -1437,152 +1412,6 @@ extern "C" {
 struct ResultToriiClient client_new(const char *torii_url);
 
 /**
- * Initiates a connection to establish a new session account
- *
- * This function:
- * 1. Generates a new signing key pair
- * 2. Starts a local HTTP server to receive the callback
- * 3. Opens the keychain session URL in browser
- * 4. Waits for callback with session details
- * 5. Creates and stores the session
- * 6. Calls the provided callback with the new session account
- *
- * # Safety
- * This function is marked as unsafe because it:
- * - Handles raw C pointers
- * - Performs FFI operations
- * - Creates system-level resources (HTTP server, keyring entries)
- *
- * # Parameters
- * * `rpc_url` - Pointer to null-terminated string containing the RPC endpoint URL
- * * `policies` - Pointer to array of Policy structs defining session permissions
- * * `policies_len` - Length of the policies array
- * * `account_callback` - Function pointer called with the new session account when ready
- *
- * # Example
- * ```c
- * void on_account(SessionAccount* account) {
- *     // Handle new session account
- * }
- *
- * controller_connect(
- *     "https://rpc.example.com",
- *     policies,
- *     policies_length,
- *     on_account
- * );
- * ```
- */
-void controller_connect(const char *rpc_url,
-                        const struct Policy *policies,
-                        uintptr_t policies_len,
-                        void (*account_callback)(struct ControllerAccount*));
-
-/**
- * Retrieves a stored session account if one exists and is valid
- *
- * # Parameters
- * * `policies` - Array of policies to match the session
- * * `policies_len` - Length of policies array
- * * `chain_id` - Chain ID to verify against
- *
- * # Returns
- * Result containing pointer to SessionAccount or error if no valid account exists
- */
-struct ResultControllerAccount controller_account(const struct Policy *policies,
-                                                  uintptr_t policies_len,
-                                                  struct FieldElement chain_id);
-
-/**
- * Clears sessions matching the specified policies and chain ID
- *
- * # Parameters
- * * `policies` - Array of policies to match
- * * `policies_len` - Length of policies array
- * * `chain_id` - Chain ID to match
- *
- * # Returns
- * Result containing success boolean or error
- */
-struct Resultbool controller_clear(const struct Policy *policies,
-                                   uintptr_t policies_len,
-                                   struct FieldElement chain_id);
-
-/**
- * Gets the username of controller
- *
- * # Parameters
- * * `account` - Pointer to Account
- *
- * # Returns
- * CString containing the username
- */
-const char *controller_username(struct ControllerAccount *controller);
-
-/**
- * Gets account address
- *
- * # Parameters
- * * `account` - Pointer to Account
- *
- * # Returns
- * FieldElement containing the account address
- */
-struct FieldElement controller_address(struct ControllerAccount *controller);
-
-/**
- * Gets account chain ID
- *
- * # Parameters
- * * `account` - Pointer to Account
- *
- * # Returns
- * FieldElement containing the chain ID
- */
-struct FieldElement controller_chain_id(struct ControllerAccount *controller);
-
-/**
- * Gets account nonce
- *
- * # Parameters
- * * `account` - Pointer to Account
- *
- * # Returns
- * Result containing FieldElement nonce or error
- */
-struct ResultFieldElement controller_nonce(struct ControllerAccount *controller);
-
-/**
- * Executes raw transaction
- *
- * # Parameters
- * * `account` - Pointer to Account
- * * `calldata` - Array of Call structs
- * * `calldata_len` - Length of calldata array
- *
- * # Returns
- * Result containing transaction hash as FieldElement or error
- */
-struct ResultFieldElement controller_execute_raw(struct ControllerAccount *controller,
-                                                 const struct Call *calldata,
-                                                 uintptr_t calldata_len);
-
-/**
- * Executes a transaction from outside (paymaster)
- *
- * # Parameters
- * * `account` - Pointer to Account
- * * `calldata` - Array of Call structs
- * * `calldata_len` - Length of calldata array
- *
- * # Returns
- * Result containing transaction hash as FieldElement or error
- */
-struct ResultFieldElement controller_execute_from_outside(struct ControllerAccount *controller,
-                                                          const struct Call *calldata,
-                                                          uintptr_t calldata_len);
-
-/**
  * Sets a logger callback function for the client
  *
  * # Parameters
@@ -1796,7 +1625,8 @@ struct Resultbool client_update_aggregation_subscription(struct ToriiClient *cli
  *
  * # Parameters
  * * `client` - Pointer to ToriiClient instance
- * * `query` - AchievementQuery containing world_addresses, namespaces, hidden filter, and pagination
+ * * `query` - AchievementQuery containing world_addresses, namespaces, hidden filter, and
+ *   pagination
  *
  * # Returns
  * Result containing Page of Achievement or error
@@ -1809,7 +1639,8 @@ struct ResultPageAchievement client_achievements(struct ToriiClient *client,
  *
  * # Parameters
  * * `client` - Pointer to ToriiClient instance
- * * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses, and pagination
+ * * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses, and
+ *   pagination
  *
  * # Returns
  * Result containing Page of PlayerAchievementEntry or error

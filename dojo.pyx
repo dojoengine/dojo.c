@@ -57,9 +57,6 @@ cdef extern from *:
   cdef struct Account:
     pass
 
-  cdef struct ControllerAccount:
-    pass
-
   cdef struct Provider:
     pass
 
@@ -81,36 +78,6 @@ cdef extern from *:
     ToriiClient *ok;
     Error err;
 
-  cdef enum ResultControllerAccount_Tag:
-    OkControllerAccount,
-    ErrControllerAccount,
-
-  cdef struct ResultControllerAccount:
-    ResultControllerAccount_Tag tag;
-    ControllerAccount *ok;
-    Error err;
-
-  cdef struct FieldElement:
-    uint8_t data[32];
-
-  cdef enum Resultbool_Tag:
-    Okbool,
-    Errbool,
-
-  cdef struct Resultbool:
-    Resultbool_Tag tag;
-    bool ok;
-    Error err;
-
-  cdef enum ResultFieldElement_Tag:
-    OkFieldElement,
-    ErrFieldElement,
-
-  cdef struct ResultFieldElement:
-    ResultFieldElement_Tag tag;
-    FieldElement ok;
-    Error err;
-
   cdef enum Resultc_char_Tag:
     Okc_char,
     Errc_char,
@@ -123,6 +90,9 @@ cdef extern from *:
   cdef struct CArrayFieldElement:
     FieldElement *data;
     uintptr_t data_len;
+
+  cdef struct FieldElement:
+    uint8_t data[32];
 
   cdef struct Message:
     const char *message;
@@ -410,6 +380,15 @@ cdef extern from *:
     uint64_t created_at;
     uint64_t updated_at;
     uint64_t executed_at;
+
+  cdef enum Resultbool_Tag:
+    Okbool,
+    Errbool,
+
+  cdef struct Resultbool:
+    Resultbool_Tag tag;
+    bool ok;
+    Error err;
 
   cdef struct CArrayAggregationEntry:
     AggregationEntry *data;
@@ -736,6 +715,15 @@ cdef extern from *:
     CArrayFieldElement ok;
     Error err;
 
+  cdef enum ResultFieldElement_Tag:
+    OkFieldElement,
+    ErrFieldElement,
+
+  cdef struct ResultFieldElement:
+    ResultFieldElement_Tag tag;
+    FieldElement ok;
+    Error err;
+
   cdef struct Signature:
     # The `r` value of a signature
     FieldElement r;
@@ -785,11 +773,6 @@ cdef extern from *:
     FieldElement hash;
     uint64_t number;
     BlockTag block_tag;
-
-  cdef struct Policy:
-    FieldElement target;
-    const char *method;
-    const char *description;
 
   cdef struct Controller:
     FieldElement address;
@@ -974,134 +957,6 @@ cdef extern from *:
   # Result containing pointer to new ToriiClient instance or error
   ResultToriiClient client_new(const char *torii_url);
 
-  # Initiates a connection to establish a new session account
-  #
-  # This function:
-  # 1. Generates a new signing key pair
-  # 2. Starts a local HTTP server to receive the callback
-  # 3. Opens the keychain session URL in browser
-  # 4. Waits for callback with session details
-  # 5. Creates and stores the session
-  # 6. Calls the provided callback with the new session account
-  #
-  # # Safety
-  # This function is marked as unsafe because it:
-  # - Handles raw C pointers
-  # - Performs FFI operations
-  # - Creates system-level resources (HTTP server, keyring entries)
-  #
-  # # Parameters
-  # * `rpc_url` - Pointer to null-terminated string containing the RPC endpoint URL
-  # * `policies` - Pointer to array of Policy structs defining session permissions
-  # * `policies_len` - Length of the policies array
-  # * `account_callback` - Function pointer called with the new session account when ready
-  #
-  # # Example
-  # ```c
-  # void on_account(SessionAccount* account) {
-  #     // Handle new session account
-  # }
-  #
-  # controller_connect(
-  #     "https://rpc.example.com",
-  #     policies,
-  #     policies_length,
-  #     on_account
-  # );
-  # ```
-  void controller_connect(const char *rpc_url,
-                          const Policy *policies,
-                          uintptr_t policies_len,
-                          void (*account_callback)(ControllerAccount*));
-
-  # Retrieves a stored session account if one exists and is valid
-  #
-  # # Parameters
-  # * `policies` - Array of policies to match the session
-  # * `policies_len` - Length of policies array
-  # * `chain_id` - Chain ID to verify against
-  #
-  # # Returns
-  # Result containing pointer to SessionAccount or error if no valid account exists
-  ResultControllerAccount controller_account(const Policy *policies,
-                                             uintptr_t policies_len,
-                                             FieldElement chain_id);
-
-  # Clears sessions matching the specified policies and chain ID
-  #
-  # # Parameters
-  # * `policies` - Array of policies to match
-  # * `policies_len` - Length of policies array
-  # * `chain_id` - Chain ID to match
-  #
-  # # Returns
-  # Result containing success boolean or error
-  Resultbool controller_clear(const Policy *policies,
-                              uintptr_t policies_len,
-                              FieldElement chain_id);
-
-  # Gets the username of controller
-  #
-  # # Parameters
-  # * `account` - Pointer to Account
-  #
-  # # Returns
-  # CString containing the username
-  const char *controller_username(ControllerAccount *controller);
-
-  # Gets account address
-  #
-  # # Parameters
-  # * `account` - Pointer to Account
-  #
-  # # Returns
-  # FieldElement containing the account address
-  FieldElement controller_address(ControllerAccount *controller);
-
-  # Gets account chain ID
-  #
-  # # Parameters
-  # * `account` - Pointer to Account
-  #
-  # # Returns
-  # FieldElement containing the chain ID
-  FieldElement controller_chain_id(ControllerAccount *controller);
-
-  # Gets account nonce
-  #
-  # # Parameters
-  # * `account` - Pointer to Account
-  #
-  # # Returns
-  # Result containing FieldElement nonce or error
-  ResultFieldElement controller_nonce(ControllerAccount *controller);
-
-  # Executes raw transaction
-  #
-  # # Parameters
-  # * `account` - Pointer to Account
-  # * `calldata` - Array of Call structs
-  # * `calldata_len` - Length of calldata array
-  #
-  # # Returns
-  # Result containing transaction hash as FieldElement or error
-  ResultFieldElement controller_execute_raw(ControllerAccount *controller,
-                                            const Call *calldata,
-                                            uintptr_t calldata_len);
-
-  # Executes a transaction from outside (paymaster)
-  #
-  # # Parameters
-  # * `account` - Pointer to Account
-  # * `calldata` - Array of Call structs
-  # * `calldata_len` - Length of calldata array
-  #
-  # # Returns
-  # Result containing transaction hash as FieldElement or error
-  ResultFieldElement controller_execute_from_outside(ControllerAccount *controller,
-                                                     const Call *calldata,
-                                                     uintptr_t calldata_len);
-
   # Sets a logger callback function for the client
   #
   # # Parameters
@@ -1284,18 +1139,19 @@ cdef extern from *:
   #
   # # Parameters
   # * `client` - Pointer to ToriiClient instance
-  # * `query` - AchievementQuery containing world_addresses, namespaces, hidden filter, and pagination
+  # * `query` - AchievementQuery containing world_addresses, namespaces, hidden filter, and
+  #   pagination
   #
   # # Returns
   # Result containing Page of Achievement or error
-  ResultPageAchievement client_achievements(ToriiClient *client,
-                                            AchievementQuery query);
+  ResultPageAchievement client_achievements(ToriiClient *client, AchievementQuery query);
 
   # Retrieves player achievement data matching query parameter
   #
   # # Parameters
   # * `client` - Pointer to ToriiClient instance
-  # * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses, and pagination
+  # * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses, and
+  #   pagination
   #
   # # Returns
   # Result containing Page of PlayerAchievementEntry or error
