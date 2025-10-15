@@ -1037,6 +1037,18 @@ name = "dojo-core"
 version = "1.8.3"
 dependencies = [
  "anyhow",
+<<<<<<< HEAD
+=======
+ "axum 0.8.4",
+ "base64 0.22.1",
+ "cainome",
+ "camino",
+ "cargo_metadata",
+ "cbindgen",
+ "chrono",
+ "crypto-bigint",
+ "directories",
+>>>>>>> 7a31aa79 (added swift and python bindings)
  "dojo-types",
  "dojo-world",
 <<<<<<< HEAD
@@ -4581,7 +4593,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c866f627c3f04c3df068b68bb2d725492caaa539dd313e2a9d26bb85b1a32f4e"
 dependencies = [
  "anyhow",
+ "camino",
  "cargo_metadata",
+ "clap",
  "uniffi_bindgen",
  "uniffi_build",
  "uniffi_core",
