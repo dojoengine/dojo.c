@@ -15,7 +15,6 @@ struct Entity;
 struct COptionFieldElement;
 struct World;
 struct Transaction;
-struct Subscription;
 struct TransactionCall;
 struct Struct;
 struct AggregationEntry;
@@ -29,8 +28,6 @@ struct TokenBalance;
 struct TokenContract;
 struct Contract;
 struct TokenTransfer;
-struct Provider;
-struct Account;
 struct Ty;
 struct Model;
 struct Member;
@@ -550,7 +547,7 @@ typedef struct ResultSubscription {
   ResultSubscription_Tag tag;
   union {
     struct {
-      struct Subscription *ok;
+      Subscription *ok;
     };
     struct {
       struct Error err;
@@ -1123,7 +1120,7 @@ typedef struct ResultProvider {
   ResultProvider_Tag tag;
   union {
     struct {
-      struct Provider *ok;
+      Provider *ok;
     };
     struct {
       struct Error err;
@@ -1140,7 +1137,7 @@ typedef struct ResultAccount {
   ResultAccount_Tag tag;
   union {
     struct {
-      struct Account *ok;
+      Account *ok;
     };
     struct {
       struct Error err;
@@ -1560,7 +1557,7 @@ struct ResultSubscription client_on_entity_state_update(struct ToriiClient *clie
  * Result containing success boolean or error
  */
 struct Resultbool client_update_entity_subscription(struct ToriiClient *client,
-                                                    struct Subscription *subscription,
+                                                    Subscription *subscription,
                                                     struct COptionClause clause,
                                                     const struct FieldElement *world_addresses,
                                                     uintptr_t world_addresses_len);
@@ -1614,7 +1611,7 @@ struct ResultSubscription client_on_aggregation_update(struct ToriiClient *clien
  * Result containing success boolean or error
  */
 struct Resultbool client_update_aggregation_subscription(struct ToriiClient *client,
-                                                         struct Subscription *subscription,
+                                                         Subscription *subscription,
                                                          const char *const *aggregator_ids,
                                                          uintptr_t aggregator_ids_len,
                                                          const char *const *entity_ids,
@@ -1696,7 +1693,7 @@ struct ResultSubscription client_on_achievement_progression_update(struct ToriiC
  * Result containing success boolean or error
  */
 struct Resultbool client_update_achievement_progression_subscription(struct ToriiClient *client,
-                                                                     struct Subscription *subscription,
+                                                                     Subscription *subscription,
                                                                      const struct FieldElement *world_addresses,
                                                                      uintptr_t world_addresses_len,
                                                                      const char *const *namespaces,
@@ -1761,7 +1758,7 @@ struct ResultSubscription client_on_activity_update(struct ToriiClient *client,
  * Result containing success boolean or error
  */
 struct Resultbool client_update_activity_subscription(struct ToriiClient *client,
-                                                      struct Subscription *subscription,
+                                                      Subscription *subscription,
                                                       const struct FieldElement *world_addresses,
                                                       uintptr_t world_addresses_len,
                                                       const char *const *namespaces,
@@ -1800,7 +1797,7 @@ struct ResultSubscription client_on_event_message_update(struct ToriiClient *cli
  * Result containing success boolean or error
  */
 struct Resultbool client_update_event_message_subscription(struct ToriiClient *client,
-                                                           struct Subscription *subscription,
+                                                           Subscription *subscription,
                                                            struct COptionClause clause,
                                                            const struct FieldElement *world_addresses,
                                                            uintptr_t world_addresses_len);
@@ -1976,7 +1973,7 @@ struct ResultSubscription client_on_token_balance_update(struct ToriiClient *cli
  * Result containing success boolean or error
  */
 struct Resultbool client_update_token_balance_subscription(struct ToriiClient *client,
-                                                           struct Subscription *subscription,
+                                                           Subscription *subscription,
                                                            const struct FieldElement *contract_addresses,
                                                            uintptr_t contract_addresses_len,
                                                            const struct FieldElement *account_addresses,
@@ -2026,7 +2023,7 @@ struct ResultSubscription client_on_token_transfer_update(struct ToriiClient *cl
  * Result containing success boolean or error
  */
 struct Resultbool client_update_token_transfer_subscription(struct ToriiClient *client,
-                                                            struct Subscription *subscription,
+                                                            Subscription *subscription,
                                                             const struct FieldElement *contract_addresses,
                                                             uintptr_t contract_addresses_len,
                                                             const struct FieldElement *account_addresses,
@@ -2205,7 +2202,7 @@ struct ResultProvider provider_new(const char *rpc_url);
  * # Returns
  * Result containing pointer to Account or error
  */
-struct ResultAccount account_new(struct Provider *rpc,
+struct ResultAccount account_new(Provider *rpc,
                                  struct FieldElement private_key,
                                  const char *address);
 
@@ -2220,7 +2217,7 @@ struct ResultAccount account_new(struct Provider *rpc,
  * # Returns
  * Result containing array of FieldElements or error
  */
-struct ResultCArrayFieldElement starknet_call(struct Provider *provider,
+struct ResultCArrayFieldElement starknet_call(Provider *provider,
                                               struct Call call,
                                               struct BlockId block_id);
 
@@ -2235,8 +2232,8 @@ struct ResultCArrayFieldElement starknet_call(struct Provider *provider,
  * # Returns
  * Result containing pointer to new Account or error
  */
-struct ResultAccount account_deploy_burner(struct Provider *provider,
-                                           struct Account *master_account,
+struct ResultAccount account_deploy_burner(Provider *provider,
+                                           Account *master_account,
                                            struct FieldElement signing_key);
 
 /**
@@ -2248,7 +2245,7 @@ struct ResultAccount account_deploy_burner(struct Provider *provider,
  * # Returns
  * FieldElement containing the account address
  */
-struct FieldElement account_address(struct Account *account);
+struct FieldElement account_address(Account *account);
 
 /**
  * Gets account chain ID
@@ -2259,7 +2256,7 @@ struct FieldElement account_address(struct Account *account);
  * # Returns
  * FieldElement containing the chain ID
  */
-struct FieldElement account_chain_id(struct Account *account);
+struct FieldElement account_chain_id(Account *account);
 
 /**
  * Sets block ID for account
@@ -2268,7 +2265,7 @@ struct FieldElement account_chain_id(struct Account *account);
  * * `account` - Pointer to Account
  * * `block_id` - New block ID
  */
-void account_set_block_id(struct Account *account, struct BlockId block_id);
+void account_set_block_id(Account *account, struct BlockId block_id);
 
 /**
  * Gets account nonce
@@ -2279,7 +2276,7 @@ void account_set_block_id(struct Account *account, struct BlockId block_id);
  * # Returns
  * Result containing FieldElement nonce or error
  */
-struct ResultFieldElement account_nonce(struct Account *account);
+struct ResultFieldElement account_nonce(Account *account);
 
 /**
  * Executes raw transaction
@@ -2292,7 +2289,7 @@ struct ResultFieldElement account_nonce(struct Account *account);
  * # Returns
  * Result containing transaction hash as FieldElement or error
  */
-struct ResultFieldElement account_execute_raw(struct Account *account,
+struct ResultFieldElement account_execute_raw(Account *account,
                                               const struct Call *calldata,
                                               uintptr_t calldata_len);
 
@@ -2306,7 +2303,7 @@ struct ResultFieldElement account_execute_raw(struct Account *account,
  * # Returns
  * Result containing success boolean or error
  */
-struct Resultbool wait_for_transaction(struct Provider *rpc, struct FieldElement txn_hash);
+struct Resultbool wait_for_transaction(Provider *rpc, struct FieldElement txn_hash);
 
 /**
  * Computes contract address
@@ -2333,7 +2330,7 @@ struct FieldElement hash_get_contract_address(struct FieldElement class_hash,
  * # Parameters
  * * `subscription` - Pointer to Subscription to cancel
  */
-void subscription_cancel(struct Subscription *subscription);
+void subscription_cancel(Subscription *subscription);
 
 /**
  * Frees a ToriiClient instance
@@ -2349,7 +2346,7 @@ void client_free(struct ToriiClient *t);
  * # Parameters
  * * `rpc` - Pointer to Provider to free
  */
-void provider_free(struct Provider *rpc);
+void provider_free(Provider *rpc);
 
 /**
  * Frees a Model instance
@@ -2365,7 +2362,7 @@ void model_free(struct Struct *model);
  * # Parameters
  * * `account` - Pointer to Account to free
  */
-void account_free(struct Account *account);
+void account_free(Account *account);
 
 /**
  * Frees a Type instance

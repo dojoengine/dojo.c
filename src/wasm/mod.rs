@@ -32,7 +32,7 @@ use tsify_next::Tsify;
 use wasm_bindgen::prelude::*;
 
 use crate::constants;
-use crate::types::{Account, Provider, Subscription, ToriiClient};
+use crate::global_types::{Account, Provider, Subscription, ToriiClient};
 use crate::utils::watch_tx;
 use crate::wasm::types::{
     ActivityQuery, AggregationQuery, ContractQuery, ControllerQuery, TokenBalanceQuery,

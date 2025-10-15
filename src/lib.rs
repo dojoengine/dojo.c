@@ -1,6 +1,6 @@
 mod constants;
-mod types;
 mod utils;
+mod global_types;
 
 #[cfg(not(target_arch = "wasm32"))]
 mod c;

@@ -429,7 +429,38 @@ class _UniffiConverterRustBuffer:
     def lower(cls, value):
         with _UniffiRustBuffer.alloc_with_builder() as builder:
             cls.write(value, builder)
-            return builder.finalize()
+            return builder.finalize()# Magic number for the Rust proxy to call using the same mechanism as every other method,
+# to free the callback once it's dropped by Rust.
+_UNIFFI_IDX_CALLBACK_FREE = 0
+# Return codes for callback calls
+_UNIFFI_CALLBACK_SUCCESS = 0
+_UNIFFI_CALLBACK_ERROR = 1
+_UNIFFI_CALLBACK_UNEXPECTED_ERROR = 2
+
+class _UniffiCallbackInterfaceFfiConverter:
+    _handle_map = _UniffiHandleMap()
+
+    @classmethod
+    def lift(cls, handle):
+        return cls._handle_map.get(handle)
+
+    @classmethod
+    def read(cls, buf):
+        handle = buf.read_u64()
+        cls.lift(handle)
+
+    @classmethod
+    def check_lower(cls, cb):
+        pass
+
+    @classmethod
+    def lower(cls, cb):
+        handle = cls._handle_map.insert(cb)
+        return handle
+
+    @classmethod
+    def write(cls, cb, buf):
+        buf.write_u64(cls.lower(cb))
 
 # Contains loading, initialization code, and the FFI Function declarations.
 # Define some ctypes FFI types that we use in the library
@@ -489,6 +520,8 @@ def _uniffi_check_api_checksums(lib):
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     if lib.uniffi_dojo_c_checksum_method_toriiclient_aggregations() != 2286:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_cancel_subscription() != 30979:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     if lib.uniffi_dojo_c_checksum_method_toriiclient_contracts() != 19355:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     if lib.uniffi_dojo_c_checksum_method_toriiclient_controllers() != 57439:
@@ -506,6 +539,16 @@ def _uniffi_check_api_checksums(lib):
     if lib.uniffi_dojo_c_checksum_method_toriiclient_sql() != 51092:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     if lib.uniffi_dojo_c_checksum_method_toriiclient_starknet_events() != 47081:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_entity_updates() != 30649:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_event_updates() != 61773:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_balance_updates() != 32318:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_updates() != 21031:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_transaction_updates() != 9579:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     if lib.uniffi_dojo_c_checksum_method_toriiclient_token_balances() != 31624:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
@@ -792,6 +835,111 @@ _UniffiLib.uniffi_dojo_c_fn_free_toriiclient.argtypes = (
     ctypes.POINTER(_UniffiRustCallStatus),
 )
 _UniffiLib.uniffi_dojo_c_fn_free_toriiclient.restype = None
+_UNIFFI_CALLBACK_INTERFACE_DOJO_ENTITY_UPDATE_CALLBACK_METHOD0 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UNIFFI_CALLBACK_INTERFACE_DOJO_ENTITY_UPDATE_CALLBACK_METHOD1 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_ENTITY_UPDATE_CALLBACK = ctypes.CFUNCTYPE(ctypes.c_uint64,ctypes.c_uint64,
+)
+_UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_ENTITY_UPDATE_CALLBACK = ctypes.CFUNCTYPE(None,ctypes.c_uint64,
+)
+class _UniffiVTableCallbackInterfaceDojoEntityUpdateCallback(ctypes.Structure):
+    _fields_ = [
+        ("uniffi_free", _UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_ENTITY_UPDATE_CALLBACK),
+        ("uniffi_clone", _UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_ENTITY_UPDATE_CALLBACK),
+        ("on_update", _UNIFFI_CALLBACK_INTERFACE_DOJO_ENTITY_UPDATE_CALLBACK_METHOD0),
+        ("on_error", _UNIFFI_CALLBACK_INTERFACE_DOJO_ENTITY_UPDATE_CALLBACK_METHOD1),
+    ]
+_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_entityupdatecallback.argtypes = (
+    ctypes.POINTER(_UniffiVTableCallbackInterfaceDojoEntityUpdateCallback),
+)
+_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_entityupdatecallback.restype = None
+_UNIFFI_CALLBACK_INTERFACE_DOJO_EVENT_UPDATE_CALLBACK_METHOD0 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UNIFFI_CALLBACK_INTERFACE_DOJO_EVENT_UPDATE_CALLBACK_METHOD1 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_EVENT_UPDATE_CALLBACK = ctypes.CFUNCTYPE(ctypes.c_uint64,ctypes.c_uint64,
+)
+_UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_EVENT_UPDATE_CALLBACK = ctypes.CFUNCTYPE(None,ctypes.c_uint64,
+)
+class _UniffiVTableCallbackInterfaceDojoEventUpdateCallback(ctypes.Structure):
+    _fields_ = [
+        ("uniffi_free", _UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_EVENT_UPDATE_CALLBACK),
+        ("uniffi_clone", _UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_EVENT_UPDATE_CALLBACK),
+        ("on_update", _UNIFFI_CALLBACK_INTERFACE_DOJO_EVENT_UPDATE_CALLBACK_METHOD0),
+        ("on_error", _UNIFFI_CALLBACK_INTERFACE_DOJO_EVENT_UPDATE_CALLBACK_METHOD1),
+    ]
+_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_eventupdatecallback.argtypes = (
+    ctypes.POINTER(_UniffiVTableCallbackInterfaceDojoEventUpdateCallback),
+)
+_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_eventupdatecallback.restype = None
+_UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK_METHOD0 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK_METHOD1 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK = ctypes.CFUNCTYPE(ctypes.c_uint64,ctypes.c_uint64,
+)
+_UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK = ctypes.CFUNCTYPE(None,ctypes.c_uint64,
+)
+class _UniffiVTableCallbackInterfaceDojoTokenBalanceUpdateCallback(ctypes.Structure):
+    _fields_ = [
+        ("uniffi_free", _UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK),
+        ("uniffi_clone", _UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK),
+        ("on_update", _UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK_METHOD0),
+        ("on_error", _UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK_METHOD1),
+    ]
+_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_tokenbalanceupdatecallback.argtypes = (
+    ctypes.POINTER(_UniffiVTableCallbackInterfaceDojoTokenBalanceUpdateCallback),
+)
+_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_tokenbalanceupdatecallback.restype = None
+_UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_UPDATE_CALLBACK_METHOD0 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_UPDATE_CALLBACK_METHOD1 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_TOKEN_UPDATE_CALLBACK = ctypes.CFUNCTYPE(ctypes.c_uint64,ctypes.c_uint64,
+)
+_UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_TOKEN_UPDATE_CALLBACK = ctypes.CFUNCTYPE(None,ctypes.c_uint64,
+)
+class _UniffiVTableCallbackInterfaceDojoTokenUpdateCallback(ctypes.Structure):
+    _fields_ = [
+        ("uniffi_free", _UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_TOKEN_UPDATE_CALLBACK),
+        ("uniffi_clone", _UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_TOKEN_UPDATE_CALLBACK),
+        ("on_update", _UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_UPDATE_CALLBACK_METHOD0),
+        ("on_error", _UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_UPDATE_CALLBACK_METHOD1),
+    ]
+_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_tokenupdatecallback.argtypes = (
+    ctypes.POINTER(_UniffiVTableCallbackInterfaceDojoTokenUpdateCallback),
+)
+_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_tokenupdatecallback.restype = None
+_UNIFFI_CALLBACK_INTERFACE_DOJO_TRANSACTION_UPDATE_CALLBACK_METHOD0 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UNIFFI_CALLBACK_INTERFACE_DOJO_TRANSACTION_UPDATE_CALLBACK_METHOD1 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_TRANSACTION_UPDATE_CALLBACK = ctypes.CFUNCTYPE(ctypes.c_uint64,ctypes.c_uint64,
+)
+_UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_TRANSACTION_UPDATE_CALLBACK = ctypes.CFUNCTYPE(None,ctypes.c_uint64,
+)
+class _UniffiVTableCallbackInterfaceDojoTransactionUpdateCallback(ctypes.Structure):
+    _fields_ = [
+        ("uniffi_free", _UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_TRANSACTION_UPDATE_CALLBACK),
+        ("uniffi_clone", _UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_TRANSACTION_UPDATE_CALLBACK),
+        ("on_update", _UNIFFI_CALLBACK_INTERFACE_DOJO_TRANSACTION_UPDATE_CALLBACK_METHOD0),
+        ("on_error", _UNIFFI_CALLBACK_INTERFACE_DOJO_TRANSACTION_UPDATE_CALLBACK_METHOD1),
+    ]
+_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_transactionupdatecallback.argtypes = (
+    ctypes.POINTER(_UniffiVTableCallbackInterfaceDojoTransactionUpdateCallback),
+)
+_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_transactionupdatecallback.restype = None
 _UniffiLib.uniffi_dojo_c_fn_constructor_toriiclient_new.argtypes = (
     _UniffiRustBuffer,
 )
@@ -816,6 +964,12 @@ _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_aggregations.argtypes = (
     _UniffiRustBuffer,
 )
 _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_aggregations.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_cancel_subscription.argtypes = (
+    ctypes.c_uint64,
+    ctypes.c_uint64,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_cancel_subscription.restype = None
 _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_contracts.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
@@ -861,6 +1015,40 @@ _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_starknet_events.argtypes = (
     _UniffiRustBuffer,
 )
 _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_starknet_events.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_entity_updates.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+    _UniffiRustBuffer,
+    ctypes.c_uint64,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_entity_updates.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_event_updates.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+    ctypes.c_uint64,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_event_updates.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_token_balance_updates.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+    _UniffiRustBuffer,
+    _UniffiRustBuffer,
+    ctypes.c_uint64,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_token_balance_updates.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_token_updates.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+    _UniffiRustBuffer,
+    ctypes.c_uint64,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_token_updates.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_transaction_updates.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+    ctypes.c_uint64,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_transaction_updates.restype = ctypes.c_uint64
 _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_balances.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
@@ -909,6 +1097,9 @@ _UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_activities.restype = ctypes
 _UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_aggregations.argtypes = (
 )
 _UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_aggregations.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_cancel_subscription.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_cancel_subscription.restype = ctypes.c_uint16
 _UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_contracts.argtypes = (
 )
 _UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_contracts.restype = ctypes.c_uint16
@@ -936,6 +1127,21 @@ _UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_sql.restype = ctypes.c_uint
 _UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_starknet_events.argtypes = (
 )
 _UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_starknet_events.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_entity_updates.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_entity_updates.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_event_updates.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_event_updates.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_balance_updates.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_balance_updates.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_updates.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_updates.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_transaction_updates.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_transaction_updates.restype = ctypes.c_uint16
 _UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_balances.argtypes = (
 )
 _UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_balances.restype = ctypes.c_uint16
@@ -7243,6 +7449,10 @@ class DojoError:  # type: ignore
         def __repr__(self):
             return "DojoError.QueryError({})".format(repr(str(self)))
     _UniffiTempDojoError.QueryError = QueryError # type: ignore
+    class SubscriptionError(_UniffiTempDojoError):
+        def __repr__(self):
+            return "DojoError.SubscriptionError({})".format(repr(str(self)))
+    _UniffiTempDojoError.SubscriptionError = SubscriptionError # type: ignore
 
 DojoError = _UniffiTempDojoError # type: ignore
 del _UniffiTempDojoError
@@ -7280,6 +7490,10 @@ class _UniffiFfiConverterTypeDojoError(_UniffiConverterRustBuffer):
             return DojoError.QueryError(
                 _UniffiFfiConverterString.read(buf),
             )
+        if variant == 8:
+            return DojoError.SubscriptionError(
+                _UniffiFfiConverterString.read(buf),
+            )
         raise InternalError("Raw enum value doesn't match any cases")
 
     @staticmethod
@@ -7298,6 +7512,8 @@ class _UniffiFfiConverterTypeDojoError(_UniffiConverterRustBuffer):
             return
         if isinstance(value, DojoError.QueryError):
             return
+        if isinstance(value, DojoError.SubscriptionError):
+            return
 
     @staticmethod
     def write(value, buf):
@@ -7315,6 +7531,8 @@ class _UniffiFfiConverterTypeDojoError(_UniffiConverterRustBuffer):
             buf.write_i32(6)
         if isinstance(value, DojoError.QueryError):
             buf.write_i32(7)
+        if isinstance(value, DojoError.SubscriptionError):
+            buf.write_i32(8)
 
 
 
@@ -7608,6 +7826,394 @@ class _UniffiFfiConverterSequenceTypeSqlRow(_UniffiConverterRustBuffer):
             _UniffiFfiConverterTypeSqlRow.read(buf) for i in range(count)
         ]
 
+
+
+
+class EntityUpdateCallback(typing.Protocol):
+    
+    def on_update(self, entity: Entity) -> None:
+        raise NotImplementedError
+    def on_error(self, error: str) -> None:
+        raise NotImplementedError
+# Put all the bits inside a class to keep the top-level namespace clean
+class _UniffiTraitImplEntityUpdateCallbackImpl:
+    # For each method, generate a callback function to pass to Rust
+
+    @_UNIFFI_CALLBACK_INTERFACE_DOJO_ENTITY_UPDATE_CALLBACK_METHOD0
+    def on_update(
+            uniffi_handle,
+            entity,
+            uniffi_out_return,
+            uniffi_call_status_ptr,
+        ):
+        uniffi_obj = _UniffiFfiConverterTypeEntityUpdateCallback._handle_map.get(uniffi_handle)
+        def make_call():
+            uniffi_args = (_UniffiFfiConverterTypeEntity.lift(entity), )
+            uniffi_method = uniffi_obj.on_update
+            return uniffi_method(*uniffi_args)
+        write_return_value = lambda v: None
+        _uniffi_trait_interface_call(
+                uniffi_call_status_ptr.contents,
+                make_call,
+                write_return_value,
+        )
+
+    @_UNIFFI_CALLBACK_INTERFACE_DOJO_ENTITY_UPDATE_CALLBACK_METHOD1
+    def on_error(
+            uniffi_handle,
+            error,
+            uniffi_out_return,
+            uniffi_call_status_ptr,
+        ):
+        uniffi_obj = _UniffiFfiConverterTypeEntityUpdateCallback._handle_map.get(uniffi_handle)
+        def make_call():
+            uniffi_args = (_UniffiFfiConverterString.lift(error), )
+            uniffi_method = uniffi_obj.on_error
+            return uniffi_method(*uniffi_args)
+        write_return_value = lambda v: None
+        _uniffi_trait_interface_call(
+                uniffi_call_status_ptr.contents,
+                make_call,
+                write_return_value,
+        )
+
+    @_UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_ENTITY_UPDATE_CALLBACK
+    def _uniffi_free(uniffi_handle):
+        _UniffiFfiConverterTypeEntityUpdateCallback._handle_map.remove(uniffi_handle)
+
+    @_UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_ENTITY_UPDATE_CALLBACK
+    def _uniffi_clone(uniffi_handle):
+        return _UniffiFfiConverterTypeEntityUpdateCallback._handle_map.clone(uniffi_handle)
+
+    # Generate the FFI VTable.  This has a field for each callback interface method.
+    _uniffi_vtable = _UniffiVTableCallbackInterfaceDojoEntityUpdateCallback(
+        _uniffi_free,
+        _uniffi_clone,
+        on_update,
+        on_error,
+    )
+    # Send Rust a pointer to the VTable.  Note: this means we need to keep the struct alive forever,
+    # or else bad things will happen when Rust tries to access it.
+    _UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_entityupdatecallback(ctypes.byref(_uniffi_vtable))
+
+# The _UniffiConverter which transforms the Callbacks in to Handles to pass to Rust.
+_UniffiFfiConverterTypeEntityUpdateCallback = _UniffiCallbackInterfaceFfiConverter()
+
+class _UniffiFfiConverterSequenceTypeKeysClause(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeKeysClause.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeKeysClause.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeKeysClause.read(buf) for i in range(count)
+        ]
+
+
+
+
+class EventUpdateCallback(typing.Protocol):
+    
+    def on_update(self, event: Event) -> None:
+        raise NotImplementedError
+    def on_error(self, error: str) -> None:
+        raise NotImplementedError
+# Put all the bits inside a class to keep the top-level namespace clean
+class _UniffiTraitImplEventUpdateCallbackImpl:
+    # For each method, generate a callback function to pass to Rust
+
+    @_UNIFFI_CALLBACK_INTERFACE_DOJO_EVENT_UPDATE_CALLBACK_METHOD0
+    def on_update(
+            uniffi_handle,
+            event,
+            uniffi_out_return,
+            uniffi_call_status_ptr,
+        ):
+        uniffi_obj = _UniffiFfiConverterTypeEventUpdateCallback._handle_map.get(uniffi_handle)
+        def make_call():
+            uniffi_args = (_UniffiFfiConverterTypeEvent.lift(event), )
+            uniffi_method = uniffi_obj.on_update
+            return uniffi_method(*uniffi_args)
+        write_return_value = lambda v: None
+        _uniffi_trait_interface_call(
+                uniffi_call_status_ptr.contents,
+                make_call,
+                write_return_value,
+        )
+
+    @_UNIFFI_CALLBACK_INTERFACE_DOJO_EVENT_UPDATE_CALLBACK_METHOD1
+    def on_error(
+            uniffi_handle,
+            error,
+            uniffi_out_return,
+            uniffi_call_status_ptr,
+        ):
+        uniffi_obj = _UniffiFfiConverterTypeEventUpdateCallback._handle_map.get(uniffi_handle)
+        def make_call():
+            uniffi_args = (_UniffiFfiConverterString.lift(error), )
+            uniffi_method = uniffi_obj.on_error
+            return uniffi_method(*uniffi_args)
+        write_return_value = lambda v: None
+        _uniffi_trait_interface_call(
+                uniffi_call_status_ptr.contents,
+                make_call,
+                write_return_value,
+        )
+
+    @_UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_EVENT_UPDATE_CALLBACK
+    def _uniffi_free(uniffi_handle):
+        _UniffiFfiConverterTypeEventUpdateCallback._handle_map.remove(uniffi_handle)
+
+    @_UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_EVENT_UPDATE_CALLBACK
+    def _uniffi_clone(uniffi_handle):
+        return _UniffiFfiConverterTypeEventUpdateCallback._handle_map.clone(uniffi_handle)
+
+    # Generate the FFI VTable.  This has a field for each callback interface method.
+    _uniffi_vtable = _UniffiVTableCallbackInterfaceDojoEventUpdateCallback(
+        _uniffi_free,
+        _uniffi_clone,
+        on_update,
+        on_error,
+    )
+    # Send Rust a pointer to the VTable.  Note: this means we need to keep the struct alive forever,
+    # or else bad things will happen when Rust tries to access it.
+    _UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_eventupdatecallback(ctypes.byref(_uniffi_vtable))
+
+# The _UniffiConverter which transforms the Callbacks in to Handles to pass to Rust.
+_UniffiFfiConverterTypeEventUpdateCallback = _UniffiCallbackInterfaceFfiConverter()
+
+
+
+
+class TokenBalanceUpdateCallback(typing.Protocol):
+    
+    def on_update(self, balance: TokenBalance) -> None:
+        raise NotImplementedError
+    def on_error(self, error: str) -> None:
+        raise NotImplementedError
+# Put all the bits inside a class to keep the top-level namespace clean
+class _UniffiTraitImplTokenBalanceUpdateCallbackImpl:
+    # For each method, generate a callback function to pass to Rust
+
+    @_UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK_METHOD0
+    def on_update(
+            uniffi_handle,
+            balance,
+            uniffi_out_return,
+            uniffi_call_status_ptr,
+        ):
+        uniffi_obj = _UniffiFfiConverterTypeTokenBalanceUpdateCallback._handle_map.get(uniffi_handle)
+        def make_call():
+            uniffi_args = (_UniffiFfiConverterTypeTokenBalance.lift(balance), )
+            uniffi_method = uniffi_obj.on_update
+            return uniffi_method(*uniffi_args)
+        write_return_value = lambda v: None
+        _uniffi_trait_interface_call(
+                uniffi_call_status_ptr.contents,
+                make_call,
+                write_return_value,
+        )
+
+    @_UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK_METHOD1
+    def on_error(
+            uniffi_handle,
+            error,
+            uniffi_out_return,
+            uniffi_call_status_ptr,
+        ):
+        uniffi_obj = _UniffiFfiConverterTypeTokenBalanceUpdateCallback._handle_map.get(uniffi_handle)
+        def make_call():
+            uniffi_args = (_UniffiFfiConverterString.lift(error), )
+            uniffi_method = uniffi_obj.on_error
+            return uniffi_method(*uniffi_args)
+        write_return_value = lambda v: None
+        _uniffi_trait_interface_call(
+                uniffi_call_status_ptr.contents,
+                make_call,
+                write_return_value,
+        )
+
+    @_UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK
+    def _uniffi_free(uniffi_handle):
+        _UniffiFfiConverterTypeTokenBalanceUpdateCallback._handle_map.remove(uniffi_handle)
+
+    @_UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK
+    def _uniffi_clone(uniffi_handle):
+        return _UniffiFfiConverterTypeTokenBalanceUpdateCallback._handle_map.clone(uniffi_handle)
+
+    # Generate the FFI VTable.  This has a field for each callback interface method.
+    _uniffi_vtable = _UniffiVTableCallbackInterfaceDojoTokenBalanceUpdateCallback(
+        _uniffi_free,
+        _uniffi_clone,
+        on_update,
+        on_error,
+    )
+    # Send Rust a pointer to the VTable.  Note: this means we need to keep the struct alive forever,
+    # or else bad things will happen when Rust tries to access it.
+    _UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_tokenbalanceupdatecallback(ctypes.byref(_uniffi_vtable))
+
+# The _UniffiConverter which transforms the Callbacks in to Handles to pass to Rust.
+_UniffiFfiConverterTypeTokenBalanceUpdateCallback = _UniffiCallbackInterfaceFfiConverter()
+
+
+
+
+class TokenUpdateCallback(typing.Protocol):
+    
+    def on_update(self, token: Token) -> None:
+        raise NotImplementedError
+    def on_error(self, error: str) -> None:
+        raise NotImplementedError
+# Put all the bits inside a class to keep the top-level namespace clean
+class _UniffiTraitImplTokenUpdateCallbackImpl:
+    # For each method, generate a callback function to pass to Rust
+
+    @_UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_UPDATE_CALLBACK_METHOD0
+    def on_update(
+            uniffi_handle,
+            token,
+            uniffi_out_return,
+            uniffi_call_status_ptr,
+        ):
+        uniffi_obj = _UniffiFfiConverterTypeTokenUpdateCallback._handle_map.get(uniffi_handle)
+        def make_call():
+            uniffi_args = (_UniffiFfiConverterTypeToken.lift(token), )
+            uniffi_method = uniffi_obj.on_update
+            return uniffi_method(*uniffi_args)
+        write_return_value = lambda v: None
+        _uniffi_trait_interface_call(
+                uniffi_call_status_ptr.contents,
+                make_call,
+                write_return_value,
+        )
+
+    @_UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_UPDATE_CALLBACK_METHOD1
+    def on_error(
+            uniffi_handle,
+            error,
+            uniffi_out_return,
+            uniffi_call_status_ptr,
+        ):
+        uniffi_obj = _UniffiFfiConverterTypeTokenUpdateCallback._handle_map.get(uniffi_handle)
+        def make_call():
+            uniffi_args = (_UniffiFfiConverterString.lift(error), )
+            uniffi_method = uniffi_obj.on_error
+            return uniffi_method(*uniffi_args)
+        write_return_value = lambda v: None
+        _uniffi_trait_interface_call(
+                uniffi_call_status_ptr.contents,
+                make_call,
+                write_return_value,
+        )
+
+    @_UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_TOKEN_UPDATE_CALLBACK
+    def _uniffi_free(uniffi_handle):
+        _UniffiFfiConverterTypeTokenUpdateCallback._handle_map.remove(uniffi_handle)
+
+    @_UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_TOKEN_UPDATE_CALLBACK
+    def _uniffi_clone(uniffi_handle):
+        return _UniffiFfiConverterTypeTokenUpdateCallback._handle_map.clone(uniffi_handle)
+
+    # Generate the FFI VTable.  This has a field for each callback interface method.
+    _uniffi_vtable = _UniffiVTableCallbackInterfaceDojoTokenUpdateCallback(
+        _uniffi_free,
+        _uniffi_clone,
+        on_update,
+        on_error,
+    )
+    # Send Rust a pointer to the VTable.  Note: this means we need to keep the struct alive forever,
+    # or else bad things will happen when Rust tries to access it.
+    _UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_tokenupdatecallback(ctypes.byref(_uniffi_vtable))
+
+# The _UniffiConverter which transforms the Callbacks in to Handles to pass to Rust.
+_UniffiFfiConverterTypeTokenUpdateCallback = _UniffiCallbackInterfaceFfiConverter()
+
+
+
+
+class TransactionUpdateCallback(typing.Protocol):
+    
+    def on_update(self, transaction: Transaction) -> None:
+        raise NotImplementedError
+    def on_error(self, error: str) -> None:
+        raise NotImplementedError
+# Put all the bits inside a class to keep the top-level namespace clean
+class _UniffiTraitImplTransactionUpdateCallbackImpl:
+    # For each method, generate a callback function to pass to Rust
+
+    @_UNIFFI_CALLBACK_INTERFACE_DOJO_TRANSACTION_UPDATE_CALLBACK_METHOD0
+    def on_update(
+            uniffi_handle,
+            transaction,
+            uniffi_out_return,
+            uniffi_call_status_ptr,
+        ):
+        uniffi_obj = _UniffiFfiConverterTypeTransactionUpdateCallback._handle_map.get(uniffi_handle)
+        def make_call():
+            uniffi_args = (_UniffiFfiConverterTypeTransaction.lift(transaction), )
+            uniffi_method = uniffi_obj.on_update
+            return uniffi_method(*uniffi_args)
+        write_return_value = lambda v: None
+        _uniffi_trait_interface_call(
+                uniffi_call_status_ptr.contents,
+                make_call,
+                write_return_value,
+        )
+
+    @_UNIFFI_CALLBACK_INTERFACE_DOJO_TRANSACTION_UPDATE_CALLBACK_METHOD1
+    def on_error(
+            uniffi_handle,
+            error,
+            uniffi_out_return,
+            uniffi_call_status_ptr,
+        ):
+        uniffi_obj = _UniffiFfiConverterTypeTransactionUpdateCallback._handle_map.get(uniffi_handle)
+        def make_call():
+            uniffi_args = (_UniffiFfiConverterString.lift(error), )
+            uniffi_method = uniffi_obj.on_error
+            return uniffi_method(*uniffi_args)
+        write_return_value = lambda v: None
+        _uniffi_trait_interface_call(
+                uniffi_call_status_ptr.contents,
+                make_call,
+                write_return_value,
+        )
+
+    @_UNIFFI_CALLBACK_INTERFACE_FREE_DOJO_TRANSACTION_UPDATE_CALLBACK
+    def _uniffi_free(uniffi_handle):
+        _UniffiFfiConverterTypeTransactionUpdateCallback._handle_map.remove(uniffi_handle)
+
+    @_UNIFFI_CALLBACK_INTERFACE_CLONE_DOJO_TRANSACTION_UPDATE_CALLBACK
+    def _uniffi_clone(uniffi_handle):
+        return _UniffiFfiConverterTypeTransactionUpdateCallback._handle_map.clone(uniffi_handle)
+
+    # Generate the FFI VTable.  This has a field for each callback interface method.
+    _uniffi_vtable = _UniffiVTableCallbackInterfaceDojoTransactionUpdateCallback(
+        _uniffi_free,
+        _uniffi_clone,
+        on_update,
+        on_error,
+    )
+    # Send Rust a pointer to the VTable.  Note: this means we need to keep the struct alive forever,
+    # or else bad things will happen when Rust tries to access it.
+    _UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_transactionupdatecallback(ctypes.byref(_uniffi_vtable))
+
+# The _UniffiConverter which transforms the Callbacks in to Handles to pass to Rust.
+_UniffiFfiConverterTypeTransactionUpdateCallback = _UniffiCallbackInterfaceFfiConverter()
+
 class _UniffiFfiConverterSequenceTypeWorld(_UniffiConverterRustBuffer):
     @classmethod
     def check_lower(cls, value):
@@ -7640,6 +8246,8 @@ class ToriiClientProtocol(typing.Protocol):
         raise NotImplementedError
     async def aggregations(self, query: AggregationQuery) -> PageAggregationEntry:
         raise NotImplementedError
+    def cancel_subscription(self, subscription_id: int) -> None:
+        raise NotImplementedError
     async def contracts(self, query: ContractQuery) -> typing.List[Contract]:
         raise NotImplementedError
     async def controllers(self, query: ControllerQuery) -> PageController:
@@ -7657,6 +8265,16 @@ class ToriiClientProtocol(typing.Protocol):
     async def sql(self, query: str) -> typing.List[SqlRow]:
         raise NotImplementedError
     async def starknet_events(self, query: EventQuery) -> PageEvent:
+        raise NotImplementedError
+    async def subscribe_entity_updates(self, clause: typing.Optional[Clause],world_addresses: typing.List[FieldElement],callback: EntityUpdateCallback) -> int:
+        raise NotImplementedError
+    async def subscribe_event_updates(self, keys: typing.List[KeysClause],callback: EventUpdateCallback) -> int:
+        raise NotImplementedError
+    async def subscribe_token_balance_updates(self, contract_addresses: typing.List[FieldElement],account_addresses: typing.List[FieldElement],token_ids: typing.List[U256],callback: TokenBalanceUpdateCallback) -> int:
+        raise NotImplementedError
+    async def subscribe_token_updates(self, contract_addresses: typing.List[FieldElement],token_ids: typing.List[U256],callback: TokenUpdateCallback) -> int:
+        raise NotImplementedError
+    async def subscribe_transaction_updates(self, filter: typing.Optional[TransactionFilter],callback: TransactionUpdateCallback) -> int:
         raise NotImplementedError
     async def token_balances(self, query: TokenBalanceQuery) -> PageTokenBalance:
         raise NotImplementedError
@@ -7765,6 +8383,21 @@ class ToriiClient(ToriiClientProtocol):
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
+    def cancel_subscription(self, subscription_id: int) -> None:
+        
+        _UniffiFfiConverterUInt64.check_lower(subscription_id)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterUInt64.lower(subscription_id),
+        )
+        _uniffi_lift_return = lambda val: None
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
+            _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_cancel_subscription,
+            *_uniffi_lowered_args,
+        )
+        return _uniffi_lift_return(_uniffi_ffi_result)
     async def contracts(self, query: ContractQuery) -> typing.List[Contract]:
         
         _UniffiFfiConverterTypeContractQuery.check_lower(query)
@@ -7915,6 +8548,118 @@ class ToriiClient(ToriiClientProtocol):
             _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
             _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
             _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def subscribe_entity_updates(self, clause: typing.Optional[Clause],world_addresses: typing.List[FieldElement],callback: EntityUpdateCallback) -> int:
+        
+        _UniffiFfiConverterOptionalTypeClause.check_lower(clause)
+        
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(world_addresses)
+        
+        _UniffiFfiConverterTypeEntityUpdateCallback.check_lower(callback)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterOptionalTypeClause.lower(clause),
+            _UniffiFfiConverterSequenceTypeFieldElement.lower(world_addresses),
+            _UniffiFfiConverterTypeEntityUpdateCallback.lower(callback),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_entity_updates(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_u64,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_u64,
+            _UniffiLib.ffi_dojo_c_rust_future_free_u64,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def subscribe_event_updates(self, keys: typing.List[KeysClause],callback: EventUpdateCallback) -> int:
+        
+        _UniffiFfiConverterSequenceTypeKeysClause.check_lower(keys)
+        
+        _UniffiFfiConverterTypeEventUpdateCallback.check_lower(callback)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterSequenceTypeKeysClause.lower(keys),
+            _UniffiFfiConverterTypeEventUpdateCallback.lower(callback),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_event_updates(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_u64,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_u64,
+            _UniffiLib.ffi_dojo_c_rust_future_free_u64,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def subscribe_token_balance_updates(self, contract_addresses: typing.List[FieldElement],account_addresses: typing.List[FieldElement],token_ids: typing.List[U256],callback: TokenBalanceUpdateCallback) -> int:
+        
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(contract_addresses)
+        
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(account_addresses)
+        
+        _UniffiFfiConverterSequenceTypeU256.check_lower(token_ids)
+        
+        _UniffiFfiConverterTypeTokenBalanceUpdateCallback.check_lower(callback)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterSequenceTypeFieldElement.lower(contract_addresses),
+            _UniffiFfiConverterSequenceTypeFieldElement.lower(account_addresses),
+            _UniffiFfiConverterSequenceTypeU256.lower(token_ids),
+            _UniffiFfiConverterTypeTokenBalanceUpdateCallback.lower(callback),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_token_balance_updates(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_u64,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_u64,
+            _UniffiLib.ffi_dojo_c_rust_future_free_u64,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def subscribe_token_updates(self, contract_addresses: typing.List[FieldElement],token_ids: typing.List[U256],callback: TokenUpdateCallback) -> int:
+        
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(contract_addresses)
+        
+        _UniffiFfiConverterSequenceTypeU256.check_lower(token_ids)
+        
+        _UniffiFfiConverterTypeTokenUpdateCallback.check_lower(callback)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterSequenceTypeFieldElement.lower(contract_addresses),
+            _UniffiFfiConverterSequenceTypeU256.lower(token_ids),
+            _UniffiFfiConverterTypeTokenUpdateCallback.lower(callback),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_token_updates(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_u64,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_u64,
+            _UniffiLib.ffi_dojo_c_rust_future_free_u64,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def subscribe_transaction_updates(self, filter: typing.Optional[TransactionFilter],callback: TransactionUpdateCallback) -> int:
+        
+        _UniffiFfiConverterOptionalTypeTransactionFilter.check_lower(filter)
+        
+        _UniffiFfiConverterTypeTransactionUpdateCallback.check_lower(callback)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterOptionalTypeTransactionFilter.lower(filter),
+            _UniffiFfiConverterTypeTransactionUpdateCallback.lower(callback),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_transaction_updates(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_u64,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_u64,
+            _UniffiLib.ffi_dojo_c_rust_future_free_u64,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8131,4 +8876,9 @@ __all__ = [
     "World",
     "ToriiClient",
     "ToriiClientProtocol",
+    "EntityUpdateCallback",
+    "EventUpdateCallback",
+    "TokenBalanceUpdateCallback",
+    "TokenUpdateCallback",
+    "TransactionUpdateCallback",
 ]

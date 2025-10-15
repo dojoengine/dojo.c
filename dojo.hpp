@@ -8,9 +8,6 @@ namespace dojo_bindings {
 
 struct ToriiClient;
 struct Ty;
-struct Subscription;
-struct Provider;
-struct Account;
 
 enum class BlockTag {
   Latest,

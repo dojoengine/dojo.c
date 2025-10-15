@@ -40,7 +40,7 @@ use crate::c::types::{
     TransactionFilter, TransactionQuery,
 };
 use crate::constants;
-use crate::types::{Account, Provider, Subscription};
+use crate::global_types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
 
 lazy_static! {
