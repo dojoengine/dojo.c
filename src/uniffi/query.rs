@@ -2,6 +2,45 @@
 use super::core::*;
 use super::schema::MemberValue;
 
+// SQL query result types
+#[derive(Debug, Clone)]
+pub struct SqlField {
+    pub name: String,
+    pub value: SqlValue,
+}
+
+#[derive(Debug, Clone)]
+pub struct SqlRow {
+    pub fields: Vec<SqlField>,
+}
+
+#[derive(Debug, Clone)]
+pub enum SqlValue {
+    Text { value: String },
+    Integer { value: i64 },
+    Real { value: f64 },
+    Blob { value: Vec<u8> },
+    Null,
+}
+
+impl TryInto<SqlRow> for torii_proto::SqlRow {
+    type Error = DojoError;
+    
+    fn try_into(self) -> Result<SqlRow, Self::Error> {
+        let fields = self.fields.into_iter().map(|(name, v)| {
+            let value = match v {
+                torii_proto::SqlValue::Text(s) => SqlValue::Text { value: s },
+                torii_proto::SqlValue::Integer(i) => SqlValue::Integer { value: i },
+                torii_proto::SqlValue::Real(r) => SqlValue::Real { value: r },
+                torii_proto::SqlValue::Blob(b) => SqlValue::Blob { value: b },
+                torii_proto::SqlValue::Null => SqlValue::Null,
+            };
+            SqlField { name, value }
+        }).collect();
+        Ok(SqlRow { fields })
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum PatternMatching {
     FixedLen,

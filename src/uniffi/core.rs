@@ -44,6 +44,14 @@ pub enum DojoError {
     NetworkError(String),
     #[error("Invalid input")]
     InvalidInput,
+    #[error("Connection error")]
+    ConnectionError,
+    #[error("Publish error")]
+    PublishError,
+    #[error("Query error")]
+    QueryError,
+    #[error("Subscription error")]
+    SubscriptionError,
 }
 
 impl From<anyhow::Error> for DojoError {
@@ -236,3 +244,86 @@ impl From<BlockId> for starknet::core::types::BlockId {
     }
 }
 
+// Pagination wrapper types for different result types
+// These are used by the client but defined here for availability
+
+use super::controller::Controller;
+use super::token::{Token, TokenBalance, TokenContract, TokenTransfer};
+use super::transaction::Transaction;
+use super::aggregation::AggregationEntry;
+use super::activity::Activity;
+use super::achievement::{Achievement, PlayerAchievementEntry};
+use super::entity::Entity;
+use super::event::Event;
+
+#[derive(Debug, Clone)]
+pub struct PageController {
+    pub items: Vec<Controller>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageToken {
+    pub items: Vec<Token>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageTokenBalance {
+    pub items: Vec<TokenBalance>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageTokenContract {
+    pub items: Vec<TokenContract>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageTokenTransfer {
+    pub items: Vec<TokenTransfer>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageTransaction {
+    pub items: Vec<Transaction>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageAggregationEntry {
+    pub items: Vec<AggregationEntry>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageActivity {
+    pub items: Vec<Activity>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageAchievement {
+    pub items: Vec<Achievement>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PagePlayerAchievement {
+    pub items: Vec<PlayerAchievementEntry>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageEntity {
+    pub items: Vec<Entity>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageEvent {
+    pub items: Vec<Event>,
+    pub next_cursor: Option<String>,
+}

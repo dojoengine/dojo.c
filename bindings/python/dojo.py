@@ -26,6 +26,7 @@ import threading
 import itertools
 import traceback
 import typing
+import asyncio
 import platform
 
 
@@ -478,7 +479,46 @@ def _uniffi_check_contract_api_version(lib):
         raise InternalError("UniFFI contract version mismatch: try cleaning and rebuilding your project")
 
 def _uniffi_check_api_checksums(lib):
-    pass
+    if lib.uniffi_dojo_c_checksum_constructor_toriiclient_new() != 9333:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_constructor_toriiclient_new_with_config() != 41101:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_achievements() != 25483:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_activities() != 47526:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_aggregations() != 2286:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_contracts() != 19355:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_controllers() != 57439:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_entities() != 58651:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_event_messages() != 13178:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_player_achievements() != 23418:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_publish_message() != 30337:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_publish_message_batch() != 62654:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_sql() != 51092:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_starknet_events() != 47081:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_token_balances() != 31624:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_token_contracts() != 34016:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_token_transfers() != 64003:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_tokens() != 8250:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_transactions() != 39655:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_c_checksum_method_toriiclient_worlds() != 61633:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
 
 # A ctypes library to expose the extern-C FFI definitions.
 # This is an implementation detail which will be called internally by the public API.
@@ -742,14 +782,245 @@ _UniffiLib.ffi_dojo_c_rust_future_free_void.argtypes = (
     ctypes.c_uint64,
 )
 _UniffiLib.ffi_dojo_c_rust_future_free_void.restype = None
+_UniffiLib.uniffi_dojo_c_fn_clone_toriiclient.argtypes = (
+    ctypes.c_uint64,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UniffiLib.uniffi_dojo_c_fn_clone_toriiclient.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_free_toriiclient.argtypes = (
+    ctypes.c_uint64,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UniffiLib.uniffi_dojo_c_fn_free_toriiclient.restype = None
+_UniffiLib.uniffi_dojo_c_fn_constructor_toriiclient_new.argtypes = (
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_constructor_toriiclient_new.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_constructor_toriiclient_new_with_config.argtypes = (
+    _UniffiRustBuffer,
+    ctypes.c_uint64,
+)
+_UniffiLib.uniffi_dojo_c_fn_constructor_toriiclient_new_with_config.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_achievements.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_achievements.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_activities.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_activities.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_aggregations.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_aggregations.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_contracts.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_contracts.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_controllers.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_controllers.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_entities.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_entities.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_event_messages.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_event_messages.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_player_achievements.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_player_achievements.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_publish_message.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_publish_message.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_publish_message_batch.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_publish_message_batch.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_sql.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_sql.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_starknet_events.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_starknet_events.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_balances.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_balances.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_contracts.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_contracts.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_transfers.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_transfers.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_tokens.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_tokens.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_transactions.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_transactions.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_worlds.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+)
+_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_worlds.restype = ctypes.c_uint64
 _UniffiLib.ffi_dojo_c_uniffi_contract_version.argtypes = (
 )
 _UniffiLib.ffi_dojo_c_uniffi_contract_version.restype = ctypes.c_uint32
+_UniffiLib.uniffi_dojo_c_checksum_constructor_toriiclient_new.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_constructor_toriiclient_new.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_constructor_toriiclient_new_with_config.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_constructor_toriiclient_new_with_config.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_achievements.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_achievements.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_activities.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_activities.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_aggregations.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_aggregations.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_contracts.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_contracts.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_controllers.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_controllers.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_entities.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_entities.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_event_messages.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_event_messages.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_player_achievements.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_player_achievements.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_publish_message.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_publish_message.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_publish_message_batch.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_publish_message_batch.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_sql.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_sql.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_starknet_events.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_starknet_events.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_balances.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_balances.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_contracts.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_contracts.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_transfers.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_transfers.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_tokens.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_tokens.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_transactions.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_transactions.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_worlds.argtypes = (
+)
+_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_worlds.restype = ctypes.c_uint16
 
 _uniffi_check_contract_api_version(_UniffiLib)
 # _uniffi_check_api_checksums(_UniffiLib)
 
+# RustFuturePoll values
+_UNIFFI_RUST_FUTURE_POLL_READY = 0
+_UNIFFI_RUST_FUTURE_POLL_WAKE = 1
 
+# Stores futures for _uniffi_continuation_callback
+_UniffiContinuationHandleMap = _UniffiHandleMap()
+
+_UNIFFI_GLOBAL_EVENT_LOOP = None
+
+"""
+Set the event loop to use for async functions
+
+This is needed if some async functions run outside of the eventloop, for example:
+    - A non-eventloop thread is spawned, maybe from `EventLoop.run_in_executor` or maybe from the
+      Rust code spawning its own thread.
+    - The Rust code calls an async callback method from a sync callback function, using something
+      like `pollster` to block on the async call.
+
+In this case, we need an event loop to run the Python async function, but there's no eventloop set
+for the thread.  Use `uniffi_set_event_loop` to force an eventloop to be used in this case.
+"""
+def uniffi_set_event_loop(eventloop: asyncio.BaseEventLoop):
+    global _UNIFFI_GLOBAL_EVENT_LOOP
+    _UNIFFI_GLOBAL_EVENT_LOOP = eventloop
+
+def _uniffi_get_event_loop():
+    if _UNIFFI_GLOBAL_EVENT_LOOP is not None:
+        return _UNIFFI_GLOBAL_EVENT_LOOP
+    else:
+        return asyncio.get_running_loop()
+
+# Continuation callback for async functions
+# lift the return value or error and resolve the future, causing the async function to resume.
+@_UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK
+def _uniffi_continuation_callback(future_ptr, poll_code):
+    (eventloop, future) = _UniffiContinuationHandleMap.remove(future_ptr)
+    eventloop.call_soon_threadsafe(_uniffi_set_future_result, future, poll_code)
+
+def _uniffi_set_future_result(future, poll_code):
+    if not future.cancelled():
+        future.set_result(poll_code)
+
+async def _uniffi_rust_call_async(rust_future, ffi_poll, ffi_complete, ffi_free, lift_func, error_ffi_converter):
+    try:
+        eventloop = _uniffi_get_event_loop()
+
+        # Loop and poll until we see a _UNIFFI_RUST_FUTURE_POLL_READY value
+        while True:
+            future = eventloop.create_future()
+            ffi_poll(
+                rust_future,
+                _uniffi_continuation_callback,
+                _UniffiContinuationHandleMap.insert((eventloop, future)),
+            )
+            poll_code = await future
+            if poll_code == _UNIFFI_RUST_FUTURE_POLL_READY:
+                break
+
+        return lift_func(
+            _uniffi_rust_call_with_error(error_ffi_converter, ffi_complete, rust_future)
+        )
+    finally:
+        ffi_free(rust_future)
 
 # Public interface members begin here.
 
@@ -3727,105 +3998,40 @@ class _UniffiFfiConverterTypeControllerQuery(_UniffiConverterRustBuffer):
         _UniffiFfiConverterSequenceString.write(value.usernames, buf)
 
 @dataclass
-class Member:
-    def __init__(self, *, name:str, ty:Ty, key:bool):
+class EnumOption:
+    def __init__(self, *, name:str, ty:Ty):
         self.name = name
         self.ty = ty
-        self.key = key
         
         
 
     
     def __str__(self):
-        return "Member(name={}, ty={}, key={})".format(self.name, self.ty, self.key)
+        return "EnumOption(name={}, ty={})".format(self.name, self.ty)
     def __eq__(self, other):
         if self.name != other.name:
             return False
         if self.ty != other.ty:
             return False
-        if self.key != other.key:
-            return False
         return True
 
-class _UniffiFfiConverterTypeMember(_UniffiConverterRustBuffer):
+class _UniffiFfiConverterTypeEnumOption(_UniffiConverterRustBuffer):
     @staticmethod
     def read(buf):
-        return Member(
+        return EnumOption(
             name=_UniffiFfiConverterString.read(buf),
             ty=_UniffiFfiConverterTypeTy.read(buf),
-            key=_UniffiFfiConverterBoolean.read(buf),
         )
 
     @staticmethod
     def check_lower(value):
         _UniffiFfiConverterString.check_lower(value.name)
         _UniffiFfiConverterTypeTy.check_lower(value.ty)
-        _UniffiFfiConverterBoolean.check_lower(value.key)
 
     @staticmethod
     def write(value, buf):
         _UniffiFfiConverterString.write(value.name, buf)
         _UniffiFfiConverterTypeTy.write(value.ty, buf)
-        _UniffiFfiConverterBoolean.write(value.key, buf)
-
-class _UniffiFfiConverterSequenceTypeMember(_UniffiConverterRustBuffer):
-    @classmethod
-    def check_lower(cls, value):
-        for item in value:
-            _UniffiFfiConverterTypeMember.check_lower(item)
-
-    @classmethod
-    def write(cls, value, buf):
-        items = len(value)
-        buf.write_i32(items)
-        for item in value:
-            _UniffiFfiConverterTypeMember.write(item, buf)
-
-    @classmethod
-    def read(cls, buf):
-        count = buf.read_i32()
-        if count < 0:
-            raise InternalError("Unexpected negative sequence length")
-
-        return [
-            _UniffiFfiConverterTypeMember.read(buf) for i in range(count)
-        ]
-
-@dataclass
-class Struct:
-    def __init__(self, *, name:str, children:typing.List[Member]):
-        self.name = name
-        self.children = children
-        
-        
-
-    
-    def __str__(self):
-        return "Struct(name={}, children={})".format(self.name, self.children)
-    def __eq__(self, other):
-        if self.name != other.name:
-            return False
-        if self.children != other.children:
-            return False
-        return True
-
-class _UniffiFfiConverterTypeStruct(_UniffiConverterRustBuffer):
-    @staticmethod
-    def read(buf):
-        return Struct(
-            name=_UniffiFfiConverterString.read(buf),
-            children=_UniffiFfiConverterSequenceTypeMember.read(buf),
-        )
-
-    @staticmethod
-    def check_lower(value):
-        _UniffiFfiConverterString.check_lower(value.name)
-        _UniffiFfiConverterSequenceTypeMember.check_lower(value.children)
-
-    @staticmethod
-    def write(value, buf):
-        _UniffiFfiConverterString.write(value.name, buf)
-        _UniffiFfiConverterSequenceTypeMember.write(value.children, buf)
 
 class _UniffiFfiConverterSequenceTypeEnumOption(_UniffiConverterRustBuffer):
     @classmethod
@@ -4249,40 +4455,777 @@ class _UniffiFfiConverterTypeTy(_UniffiConverterRustBuffer):
 
 
 @dataclass
-class EnumOption:
-    def __init__(self, *, name:str, ty:Ty):
+class Member:
+    def __init__(self, *, name:str, ty:Ty, key:bool):
         self.name = name
         self.ty = ty
+        self.key = key
         
         
 
     
     def __str__(self):
-        return "EnumOption(name={}, ty={})".format(self.name, self.ty)
+        return "Member(name={}, ty={}, key={})".format(self.name, self.ty, self.key)
     def __eq__(self, other):
         if self.name != other.name:
             return False
         if self.ty != other.ty:
             return False
+        if self.key != other.key:
+            return False
         return True
 
-class _UniffiFfiConverterTypeEnumOption(_UniffiConverterRustBuffer):
+class _UniffiFfiConverterTypeMember(_UniffiConverterRustBuffer):
     @staticmethod
     def read(buf):
-        return EnumOption(
+        return Member(
             name=_UniffiFfiConverterString.read(buf),
             ty=_UniffiFfiConverterTypeTy.read(buf),
+            key=_UniffiFfiConverterBoolean.read(buf),
         )
 
     @staticmethod
     def check_lower(value):
         _UniffiFfiConverterString.check_lower(value.name)
         _UniffiFfiConverterTypeTy.check_lower(value.ty)
+        _UniffiFfiConverterBoolean.check_lower(value.key)
 
     @staticmethod
     def write(value, buf):
         _UniffiFfiConverterString.write(value.name, buf)
         _UniffiFfiConverterTypeTy.write(value.ty, buf)
+        _UniffiFfiConverterBoolean.write(value.key, buf)
+
+class _UniffiFfiConverterSequenceTypeMember(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeMember.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeMember.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeMember.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class Struct:
+    def __init__(self, *, name:str, children:typing.List[Member]):
+        self.name = name
+        self.children = children
+        
+        
+
+    
+    def __str__(self):
+        return "Struct(name={}, children={})".format(self.name, self.children)
+    def __eq__(self, other):
+        if self.name != other.name:
+            return False
+        if self.children != other.children:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeStruct(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return Struct(
+            name=_UniffiFfiConverterString.read(buf),
+            children=_UniffiFfiConverterSequenceTypeMember.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterString.check_lower(value.name)
+        _UniffiFfiConverterSequenceTypeMember.check_lower(value.children)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterString.write(value.name, buf)
+        _UniffiFfiConverterSequenceTypeMember.write(value.children, buf)
+
+class _UniffiFfiConverterSequenceTypeStruct(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeStruct.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeStruct.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeStruct.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class Entity:
+    def __init__(self, *, world_address:FieldElement, hashed_keys:FieldElement, models:typing.List[Struct], created_at:int, updated_at:int, executed_at:int):
+        self.world_address = world_address
+        self.hashed_keys = hashed_keys
+        self.models = models
+        self.created_at = created_at
+        self.updated_at = updated_at
+        self.executed_at = executed_at
+        
+        
+
+    
+    def __str__(self):
+        return "Entity(world_address={}, hashed_keys={}, models={}, created_at={}, updated_at={}, executed_at={})".format(self.world_address, self.hashed_keys, self.models, self.created_at, self.updated_at, self.executed_at)
+    def __eq__(self, other):
+        if self.world_address != other.world_address:
+            return False
+        if self.hashed_keys != other.hashed_keys:
+            return False
+        if self.models != other.models:
+            return False
+        if self.created_at != other.created_at:
+            return False
+        if self.updated_at != other.updated_at:
+            return False
+        if self.executed_at != other.executed_at:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeEntity(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return Entity(
+            world_address=_UniffiFfiConverterTypeFieldElement.read(buf),
+            hashed_keys=_UniffiFfiConverterTypeFieldElement.read(buf),
+            models=_UniffiFfiConverterSequenceTypeStruct.read(buf),
+            created_at=_UniffiFfiConverterUInt64.read(buf),
+            updated_at=_UniffiFfiConverterUInt64.read(buf),
+            executed_at=_UniffiFfiConverterUInt64.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterTypeFieldElement.check_lower(value.world_address)
+        _UniffiFfiConverterTypeFieldElement.check_lower(value.hashed_keys)
+        _UniffiFfiConverterSequenceTypeStruct.check_lower(value.models)
+        _UniffiFfiConverterUInt64.check_lower(value.created_at)
+        _UniffiFfiConverterUInt64.check_lower(value.updated_at)
+        _UniffiFfiConverterUInt64.check_lower(value.executed_at)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterTypeFieldElement.write(value.world_address, buf)
+        _UniffiFfiConverterTypeFieldElement.write(value.hashed_keys, buf)
+        _UniffiFfiConverterSequenceTypeStruct.write(value.models, buf)
+        _UniffiFfiConverterUInt64.write(value.created_at, buf)
+        _UniffiFfiConverterUInt64.write(value.updated_at, buf)
+        _UniffiFfiConverterUInt64.write(value.executed_at, buf)
+
+@dataclass
+class Event:
+    def __init__(self, *, keys:typing.List[FieldElement], data:typing.List[FieldElement], transaction_hash:FieldElement):
+        self.keys = keys
+        self.data = data
+        self.transaction_hash = transaction_hash
+        
+        
+
+    
+    def __str__(self):
+        return "Event(keys={}, data={}, transaction_hash={})".format(self.keys, self.data, self.transaction_hash)
+    def __eq__(self, other):
+        if self.keys != other.keys:
+            return False
+        if self.data != other.data:
+            return False
+        if self.transaction_hash != other.transaction_hash:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeEvent(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return Event(
+            keys=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
+            data=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
+            transaction_hash=_UniffiFfiConverterTypeFieldElement.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.keys)
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.data)
+        _UniffiFfiConverterTypeFieldElement.check_lower(value.transaction_hash)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeFieldElement.write(value.keys, buf)
+        _UniffiFfiConverterSequenceTypeFieldElement.write(value.data, buf)
+        _UniffiFfiConverterTypeFieldElement.write(value.transaction_hash, buf)
+
+class _UniffiFfiConverterOptionalTypeKeysClause(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        if value is not None:
+            _UniffiFfiConverterTypeKeysClause.check_lower(value)
+
+    @classmethod
+    def write(cls, value, buf):
+        if value is None:
+            buf.write_u8(0)
+            return
+
+        buf.write_u8(1)
+        _UniffiFfiConverterTypeKeysClause.write(value, buf)
+
+    @classmethod
+    def read(cls, buf):
+        flag = buf.read_u8()
+        if flag == 0:
+            return None
+        elif flag == 1:
+            return _UniffiFfiConverterTypeKeysClause.read(buf)
+        else:
+            raise InternalError("Unexpected flag byte for optional type")
+
+@dataclass
+class EventQuery:
+    def __init__(self, *, keys:typing.Optional[KeysClause], pagination:Pagination):
+        self.keys = keys
+        self.pagination = pagination
+        
+        
+
+    
+    def __str__(self):
+        return "EventQuery(keys={}, pagination={})".format(self.keys, self.pagination)
+    def __eq__(self, other):
+        if self.keys != other.keys:
+            return False
+        if self.pagination != other.pagination:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeEventQuery(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return EventQuery(
+            keys=_UniffiFfiConverterOptionalTypeKeysClause.read(buf),
+            pagination=_UniffiFfiConverterTypePagination.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterOptionalTypeKeysClause.check_lower(value.keys)
+        _UniffiFfiConverterTypePagination.check_lower(value.pagination)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterOptionalTypeKeysClause.write(value.keys, buf)
+        _UniffiFfiConverterTypePagination.write(value.pagination, buf)
+
+@dataclass
+class Message:
+    def __init__(self, *, message:str, signature:typing.List[FieldElement], world_address:FieldElement):
+        self.message = message
+        self.signature = signature
+        self.world_address = world_address
+        
+        
+
+    
+    def __str__(self):
+        return "Message(message={}, signature={}, world_address={})".format(self.message, self.signature, self.world_address)
+    def __eq__(self, other):
+        if self.message != other.message:
+            return False
+        if self.signature != other.signature:
+            return False
+        if self.world_address != other.world_address:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeMessage(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return Message(
+            message=_UniffiFfiConverterString.read(buf),
+            signature=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
+            world_address=_UniffiFfiConverterTypeFieldElement.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterString.check_lower(value.message)
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.signature)
+        _UniffiFfiConverterTypeFieldElement.check_lower(value.world_address)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterString.write(value.message, buf)
+        _UniffiFfiConverterSequenceTypeFieldElement.write(value.signature, buf)
+        _UniffiFfiConverterTypeFieldElement.write(value.world_address, buf)
+
+@dataclass
+class Model:
+    def __init__(self, *, world_address:FieldElement, schema:Ty, namespace:str, name:str, selector:FieldElement, packed_size:int, unpacked_size:int, class_hash:FieldElement, contract_address:FieldElement, layout:str, use_legacy_store:bool):
+        self.world_address = world_address
+        self.schema = schema
+        self.namespace = namespace
+        self.name = name
+        self.selector = selector
+        self.packed_size = packed_size
+        self.unpacked_size = unpacked_size
+        self.class_hash = class_hash
+        self.contract_address = contract_address
+        self.layout = layout
+        self.use_legacy_store = use_legacy_store
+        
+        
+
+    
+    def __str__(self):
+        return "Model(world_address={}, schema={}, namespace={}, name={}, selector={}, packed_size={}, unpacked_size={}, class_hash={}, contract_address={}, layout={}, use_legacy_store={})".format(self.world_address, self.schema, self.namespace, self.name, self.selector, self.packed_size, self.unpacked_size, self.class_hash, self.contract_address, self.layout, self.use_legacy_store)
+    def __eq__(self, other):
+        if self.world_address != other.world_address:
+            return False
+        if self.schema != other.schema:
+            return False
+        if self.namespace != other.namespace:
+            return False
+        if self.name != other.name:
+            return False
+        if self.selector != other.selector:
+            return False
+        if self.packed_size != other.packed_size:
+            return False
+        if self.unpacked_size != other.unpacked_size:
+            return False
+        if self.class_hash != other.class_hash:
+            return False
+        if self.contract_address != other.contract_address:
+            return False
+        if self.layout != other.layout:
+            return False
+        if self.use_legacy_store != other.use_legacy_store:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeModel(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return Model(
+            world_address=_UniffiFfiConverterTypeFieldElement.read(buf),
+            schema=_UniffiFfiConverterTypeTy.read(buf),
+            namespace=_UniffiFfiConverterString.read(buf),
+            name=_UniffiFfiConverterString.read(buf),
+            selector=_UniffiFfiConverterTypeFieldElement.read(buf),
+            packed_size=_UniffiFfiConverterUInt32.read(buf),
+            unpacked_size=_UniffiFfiConverterUInt32.read(buf),
+            class_hash=_UniffiFfiConverterTypeFieldElement.read(buf),
+            contract_address=_UniffiFfiConverterTypeFieldElement.read(buf),
+            layout=_UniffiFfiConverterString.read(buf),
+            use_legacy_store=_UniffiFfiConverterBoolean.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterTypeFieldElement.check_lower(value.world_address)
+        _UniffiFfiConverterTypeTy.check_lower(value.schema)
+        _UniffiFfiConverterString.check_lower(value.namespace)
+        _UniffiFfiConverterString.check_lower(value.name)
+        _UniffiFfiConverterTypeFieldElement.check_lower(value.selector)
+        _UniffiFfiConverterUInt32.check_lower(value.packed_size)
+        _UniffiFfiConverterUInt32.check_lower(value.unpacked_size)
+        _UniffiFfiConverterTypeFieldElement.check_lower(value.class_hash)
+        _UniffiFfiConverterTypeFieldElement.check_lower(value.contract_address)
+        _UniffiFfiConverterString.check_lower(value.layout)
+        _UniffiFfiConverterBoolean.check_lower(value.use_legacy_store)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterTypeFieldElement.write(value.world_address, buf)
+        _UniffiFfiConverterTypeTy.write(value.schema, buf)
+        _UniffiFfiConverterString.write(value.namespace, buf)
+        _UniffiFfiConverterString.write(value.name, buf)
+        _UniffiFfiConverterTypeFieldElement.write(value.selector, buf)
+        _UniffiFfiConverterUInt32.write(value.packed_size, buf)
+        _UniffiFfiConverterUInt32.write(value.unpacked_size, buf)
+        _UniffiFfiConverterTypeFieldElement.write(value.class_hash, buf)
+        _UniffiFfiConverterTypeFieldElement.write(value.contract_address, buf)
+        _UniffiFfiConverterString.write(value.layout, buf)
+        _UniffiFfiConverterBoolean.write(value.use_legacy_store, buf)
+
+class _UniffiFfiConverterSequenceTypeAchievement(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeAchievement.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeAchievement.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeAchievement.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class PageAchievement:
+    def __init__(self, *, items:typing.List[Achievement], next_cursor:typing.Optional[str]):
+        self.items = items
+        self.next_cursor = next_cursor
+        
+        
+
+    
+    def __str__(self):
+        return "PageAchievement(items={}, next_cursor={})".format(self.items, self.next_cursor)
+    def __eq__(self, other):
+        if self.items != other.items:
+            return False
+        if self.next_cursor != other.next_cursor:
+            return False
+        return True
+
+class _UniffiFfiConverterTypePageAchievement(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return PageAchievement(
+            items=_UniffiFfiConverterSequenceTypeAchievement.read(buf),
+            next_cursor=_UniffiFfiConverterOptionalString.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeAchievement.check_lower(value.items)
+        _UniffiFfiConverterOptionalString.check_lower(value.next_cursor)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeAchievement.write(value.items, buf)
+        _UniffiFfiConverterOptionalString.write(value.next_cursor, buf)
+
+class _UniffiFfiConverterSequenceTypeActivity(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeActivity.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeActivity.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeActivity.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class PageActivity:
+    def __init__(self, *, items:typing.List[Activity], next_cursor:typing.Optional[str]):
+        self.items = items
+        self.next_cursor = next_cursor
+        
+        
+
+    
+    def __str__(self):
+        return "PageActivity(items={}, next_cursor={})".format(self.items, self.next_cursor)
+    def __eq__(self, other):
+        if self.items != other.items:
+            return False
+        if self.next_cursor != other.next_cursor:
+            return False
+        return True
+
+class _UniffiFfiConverterTypePageActivity(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return PageActivity(
+            items=_UniffiFfiConverterSequenceTypeActivity.read(buf),
+            next_cursor=_UniffiFfiConverterOptionalString.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeActivity.check_lower(value.items)
+        _UniffiFfiConverterOptionalString.check_lower(value.next_cursor)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeActivity.write(value.items, buf)
+        _UniffiFfiConverterOptionalString.write(value.next_cursor, buf)
+
+class _UniffiFfiConverterSequenceTypeAggregationEntry(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeAggregationEntry.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeAggregationEntry.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeAggregationEntry.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class PageAggregationEntry:
+    def __init__(self, *, items:typing.List[AggregationEntry], next_cursor:typing.Optional[str]):
+        self.items = items
+        self.next_cursor = next_cursor
+        
+        
+
+    
+    def __str__(self):
+        return "PageAggregationEntry(items={}, next_cursor={})".format(self.items, self.next_cursor)
+    def __eq__(self, other):
+        if self.items != other.items:
+            return False
+        if self.next_cursor != other.next_cursor:
+            return False
+        return True
+
+class _UniffiFfiConverterTypePageAggregationEntry(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return PageAggregationEntry(
+            items=_UniffiFfiConverterSequenceTypeAggregationEntry.read(buf),
+            next_cursor=_UniffiFfiConverterOptionalString.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeAggregationEntry.check_lower(value.items)
+        _UniffiFfiConverterOptionalString.check_lower(value.next_cursor)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeAggregationEntry.write(value.items, buf)
+        _UniffiFfiConverterOptionalString.write(value.next_cursor, buf)
+
+class _UniffiFfiConverterSequenceTypeController(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeController.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeController.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeController.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class PageController:
+    def __init__(self, *, items:typing.List[Controller], next_cursor:typing.Optional[str]):
+        self.items = items
+        self.next_cursor = next_cursor
+        
+        
+
+    
+    def __str__(self):
+        return "PageController(items={}, next_cursor={})".format(self.items, self.next_cursor)
+    def __eq__(self, other):
+        if self.items != other.items:
+            return False
+        if self.next_cursor != other.next_cursor:
+            return False
+        return True
+
+class _UniffiFfiConverterTypePageController(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return PageController(
+            items=_UniffiFfiConverterSequenceTypeController.read(buf),
+            next_cursor=_UniffiFfiConverterOptionalString.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeController.check_lower(value.items)
+        _UniffiFfiConverterOptionalString.check_lower(value.next_cursor)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeController.write(value.items, buf)
+        _UniffiFfiConverterOptionalString.write(value.next_cursor, buf)
+
+class _UniffiFfiConverterSequenceTypeEntity(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeEntity.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeEntity.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeEntity.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class PageEntity:
+    def __init__(self, *, items:typing.List[Entity], next_cursor:typing.Optional[str]):
+        self.items = items
+        self.next_cursor = next_cursor
+        
+        
+
+    
+    def __str__(self):
+        return "PageEntity(items={}, next_cursor={})".format(self.items, self.next_cursor)
+    def __eq__(self, other):
+        if self.items != other.items:
+            return False
+        if self.next_cursor != other.next_cursor:
+            return False
+        return True
+
+class _UniffiFfiConverterTypePageEntity(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return PageEntity(
+            items=_UniffiFfiConverterSequenceTypeEntity.read(buf),
+            next_cursor=_UniffiFfiConverterOptionalString.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeEntity.check_lower(value.items)
+        _UniffiFfiConverterOptionalString.check_lower(value.next_cursor)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeEntity.write(value.items, buf)
+        _UniffiFfiConverterOptionalString.write(value.next_cursor, buf)
+
+class _UniffiFfiConverterSequenceTypeEvent(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeEvent.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeEvent.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeEvent.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class PageEvent:
+    def __init__(self, *, items:typing.List[Event], next_cursor:typing.Optional[str]):
+        self.items = items
+        self.next_cursor = next_cursor
+        
+        
+
+    
+    def __str__(self):
+        return "PageEvent(items={}, next_cursor={})".format(self.items, self.next_cursor)
+    def __eq__(self, other):
+        if self.items != other.items:
+            return False
+        if self.next_cursor != other.next_cursor:
+            return False
+        return True
+
+class _UniffiFfiConverterTypePageEvent(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return PageEvent(
+            items=_UniffiFfiConverterSequenceTypeEvent.read(buf),
+            next_cursor=_UniffiFfiConverterOptionalString.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeEvent.check_lower(value.items)
+        _UniffiFfiConverterOptionalString.check_lower(value.next_cursor)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeEvent.write(value.items, buf)
+        _UniffiFfiConverterOptionalString.write(value.next_cursor, buf)
 
 @dataclass
 class PlayerAchievementStats:
@@ -4528,89 +5471,64 @@ class _UniffiFfiConverterTypePlayerAchievementEntry(_UniffiConverterRustBuffer):
         _UniffiFfiConverterTypePlayerAchievementStats.write(value.stats, buf)
         _UniffiFfiConverterSequenceTypePlayerAchievementProgress.write(value.achievements, buf)
 
+class _UniffiFfiConverterSequenceTypePlayerAchievementEntry(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypePlayerAchievementEntry.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypePlayerAchievementEntry.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypePlayerAchievementEntry.read(buf) for i in range(count)
+        ]
+
 @dataclass
-class PlayerAchievementQuery:
-    def __init__(self, *, world_addresses:typing.List[FieldElement], namespaces:typing.List[str], player_addresses:typing.List[FieldElement], pagination:Pagination):
-        self.world_addresses = world_addresses
-        self.namespaces = namespaces
-        self.player_addresses = player_addresses
-        self.pagination = pagination
+class PagePlayerAchievement:
+    def __init__(self, *, items:typing.List[PlayerAchievementEntry], next_cursor:typing.Optional[str]):
+        self.items = items
+        self.next_cursor = next_cursor
         
         
 
     
     def __str__(self):
-        return "PlayerAchievementQuery(world_addresses={}, namespaces={}, player_addresses={}, pagination={})".format(self.world_addresses, self.namespaces, self.player_addresses, self.pagination)
+        return "PagePlayerAchievement(items={}, next_cursor={})".format(self.items, self.next_cursor)
     def __eq__(self, other):
-        if self.world_addresses != other.world_addresses:
+        if self.items != other.items:
             return False
-        if self.namespaces != other.namespaces:
-            return False
-        if self.player_addresses != other.player_addresses:
-            return False
-        if self.pagination != other.pagination:
+        if self.next_cursor != other.next_cursor:
             return False
         return True
 
-class _UniffiFfiConverterTypePlayerAchievementQuery(_UniffiConverterRustBuffer):
+class _UniffiFfiConverterTypePagePlayerAchievement(_UniffiConverterRustBuffer):
     @staticmethod
     def read(buf):
-        return PlayerAchievementQuery(
-            world_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
-            namespaces=_UniffiFfiConverterSequenceString.read(buf),
-            player_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
-            pagination=_UniffiFfiConverterTypePagination.read(buf),
+        return PagePlayerAchievement(
+            items=_UniffiFfiConverterSequenceTypePlayerAchievementEntry.read(buf),
+            next_cursor=_UniffiFfiConverterOptionalString.read(buf),
         )
 
     @staticmethod
     def check_lower(value):
-        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.world_addresses)
-        _UniffiFfiConverterSequenceString.check_lower(value.namespaces)
-        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.player_addresses)
-        _UniffiFfiConverterTypePagination.check_lower(value.pagination)
+        _UniffiFfiConverterSequenceTypePlayerAchievementEntry.check_lower(value.items)
+        _UniffiFfiConverterOptionalString.check_lower(value.next_cursor)
 
     @staticmethod
     def write(value, buf):
-        _UniffiFfiConverterSequenceTypeFieldElement.write(value.world_addresses, buf)
-        _UniffiFfiConverterSequenceString.write(value.namespaces, buf)
-        _UniffiFfiConverterSequenceTypeFieldElement.write(value.player_addresses, buf)
-        _UniffiFfiConverterTypePagination.write(value.pagination, buf)
-
-@dataclass
-class Signature:
-    def __init__(self, *, r:FieldElement, s:FieldElement):
-        self.r = r
-        self.s = s
-        
-        
-
-    
-    def __str__(self):
-        return "Signature(r={}, s={})".format(self.r, self.s)
-    def __eq__(self, other):
-        if self.r != other.r:
-            return False
-        if self.s != other.s:
-            return False
-        return True
-
-class _UniffiFfiConverterTypeSignature(_UniffiConverterRustBuffer):
-    @staticmethod
-    def read(buf):
-        return Signature(
-            r=_UniffiFfiConverterTypeFieldElement.read(buf),
-            s=_UniffiFfiConverterTypeFieldElement.read(buf),
-        )
-
-    @staticmethod
-    def check_lower(value):
-        _UniffiFfiConverterTypeFieldElement.check_lower(value.r)
-        _UniffiFfiConverterTypeFieldElement.check_lower(value.s)
-
-    @staticmethod
-    def write(value, buf):
-        _UniffiFfiConverterTypeFieldElement.write(value.r, buf)
-        _UniffiFfiConverterTypeFieldElement.write(value.s, buf)
+        _UniffiFfiConverterSequenceTypePlayerAchievementEntry.write(value.items, buf)
+        _UniffiFfiConverterOptionalString.write(value.next_cursor, buf)
 
 class _UniffiFfiConverterOptionalTypeU256(_UniffiConverterRustBuffer):
     @classmethod
@@ -4703,6 +5621,65 @@ class _UniffiFfiConverterTypeToken(_UniffiConverterRustBuffer):
         _UniffiFfiConverterString.write(value.metadata, buf)
         _UniffiFfiConverterOptionalTypeU256.write(value.total_supply, buf)
 
+class _UniffiFfiConverterSequenceTypeToken(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeToken.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeToken.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeToken.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class PageToken:
+    def __init__(self, *, items:typing.List[Token], next_cursor:typing.Optional[str]):
+        self.items = items
+        self.next_cursor = next_cursor
+        
+        
+
+    
+    def __str__(self):
+        return "PageToken(items={}, next_cursor={})".format(self.items, self.next_cursor)
+    def __eq__(self, other):
+        if self.items != other.items:
+            return False
+        if self.next_cursor != other.next_cursor:
+            return False
+        return True
+
+class _UniffiFfiConverterTypePageToken(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return PageToken(
+            items=_UniffiFfiConverterSequenceTypeToken.read(buf),
+            next_cursor=_UniffiFfiConverterOptionalString.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeToken.check_lower(value.items)
+        _UniffiFfiConverterOptionalString.check_lower(value.next_cursor)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeToken.write(value.items, buf)
+        _UniffiFfiConverterOptionalString.write(value.next_cursor, buf)
+
 @dataclass
 class TokenBalance:
     def __init__(self, *, balance:U256, account_address:FieldElement, contract_address:FieldElement, token_id:typing.Optional[U256]):
@@ -4751,18 +5728,18 @@ class _UniffiFfiConverterTypeTokenBalance(_UniffiConverterRustBuffer):
         _UniffiFfiConverterTypeFieldElement.write(value.contract_address, buf)
         _UniffiFfiConverterOptionalTypeU256.write(value.token_id, buf)
 
-class _UniffiFfiConverterSequenceTypeU256(_UniffiConverterRustBuffer):
+class _UniffiFfiConverterSequenceTypeTokenBalance(_UniffiConverterRustBuffer):
     @classmethod
     def check_lower(cls, value):
         for item in value:
-            _UniffiFfiConverterTypeU256.check_lower(item)
+            _UniffiFfiConverterTypeTokenBalance.check_lower(item)
 
     @classmethod
     def write(cls, value, buf):
         items = len(value)
         buf.write_i32(items)
         for item in value:
-            _UniffiFfiConverterTypeU256.write(item, buf)
+            _UniffiFfiConverterTypeTokenBalance.write(item, buf)
 
     @classmethod
     def read(cls, buf):
@@ -4771,56 +5748,44 @@ class _UniffiFfiConverterSequenceTypeU256(_UniffiConverterRustBuffer):
             raise InternalError("Unexpected negative sequence length")
 
         return [
-            _UniffiFfiConverterTypeU256.read(buf) for i in range(count)
+            _UniffiFfiConverterTypeTokenBalance.read(buf) for i in range(count)
         ]
 
 @dataclass
-class TokenBalanceQuery:
-    def __init__(self, *, contract_addresses:typing.List[FieldElement], account_addresses:typing.List[FieldElement], token_ids:typing.List[U256], pagination:Pagination):
-        self.contract_addresses = contract_addresses
-        self.account_addresses = account_addresses
-        self.token_ids = token_ids
-        self.pagination = pagination
+class PageTokenBalance:
+    def __init__(self, *, items:typing.List[TokenBalance], next_cursor:typing.Optional[str]):
+        self.items = items
+        self.next_cursor = next_cursor
         
         
 
     
     def __str__(self):
-        return "TokenBalanceQuery(contract_addresses={}, account_addresses={}, token_ids={}, pagination={})".format(self.contract_addresses, self.account_addresses, self.token_ids, self.pagination)
+        return "PageTokenBalance(items={}, next_cursor={})".format(self.items, self.next_cursor)
     def __eq__(self, other):
-        if self.contract_addresses != other.contract_addresses:
+        if self.items != other.items:
             return False
-        if self.account_addresses != other.account_addresses:
-            return False
-        if self.token_ids != other.token_ids:
-            return False
-        if self.pagination != other.pagination:
+        if self.next_cursor != other.next_cursor:
             return False
         return True
 
-class _UniffiFfiConverterTypeTokenBalanceQuery(_UniffiConverterRustBuffer):
+class _UniffiFfiConverterTypePageTokenBalance(_UniffiConverterRustBuffer):
     @staticmethod
     def read(buf):
-        return TokenBalanceQuery(
-            contract_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
-            account_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
-            token_ids=_UniffiFfiConverterSequenceTypeU256.read(buf),
-            pagination=_UniffiFfiConverterTypePagination.read(buf),
+        return PageTokenBalance(
+            items=_UniffiFfiConverterSequenceTypeTokenBalance.read(buf),
+            next_cursor=_UniffiFfiConverterOptionalString.read(buf),
         )
 
     @staticmethod
     def check_lower(value):
-        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.contract_addresses)
-        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.account_addresses)
-        _UniffiFfiConverterSequenceTypeU256.check_lower(value.token_ids)
-        _UniffiFfiConverterTypePagination.check_lower(value.pagination)
+        _UniffiFfiConverterSequenceTypeTokenBalance.check_lower(value.items)
+        _UniffiFfiConverterOptionalString.check_lower(value.next_cursor)
 
     @staticmethod
     def write(value, buf):
-        _UniffiFfiConverterSequenceTypeFieldElement.write(value.contract_addresses, buf)
-        _UniffiFfiConverterSequenceTypeFieldElement.write(value.account_addresses, buf)
-        _UniffiFfiConverterSequenceTypeU256.write(value.token_ids, buf)
-        _UniffiFfiConverterTypePagination.write(value.pagination, buf)
+        _UniffiFfiConverterSequenceTypeTokenBalance.write(value.items, buf)
+        _UniffiFfiConverterOptionalString.write(value.next_cursor, buf)
 
 @dataclass
 class TokenContract:
@@ -4888,60 +5853,18 @@ class _UniffiFfiConverterTypeTokenContract(_UniffiConverterRustBuffer):
         _UniffiFfiConverterString.write(value.token_metadata, buf)
         _UniffiFfiConverterOptionalTypeU256.write(value.total_supply, buf)
 
-@dataclass
-class TokenContractQuery:
-    def __init__(self, *, contract_addresses:typing.List[FieldElement], contract_types:typing.List[ContractType], pagination:Pagination):
-        self.contract_addresses = contract_addresses
-        self.contract_types = contract_types
-        self.pagination = pagination
-        
-        
-
-    
-    def __str__(self):
-        return "TokenContractQuery(contract_addresses={}, contract_types={}, pagination={})".format(self.contract_addresses, self.contract_types, self.pagination)
-    def __eq__(self, other):
-        if self.contract_addresses != other.contract_addresses:
-            return False
-        if self.contract_types != other.contract_types:
-            return False
-        if self.pagination != other.pagination:
-            return False
-        return True
-
-class _UniffiFfiConverterTypeTokenContractQuery(_UniffiConverterRustBuffer):
-    @staticmethod
-    def read(buf):
-        return TokenContractQuery(
-            contract_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
-            contract_types=_UniffiFfiConverterSequenceTypeContractType.read(buf),
-            pagination=_UniffiFfiConverterTypePagination.read(buf),
-        )
-
-    @staticmethod
-    def check_lower(value):
-        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.contract_addresses)
-        _UniffiFfiConverterSequenceTypeContractType.check_lower(value.contract_types)
-        _UniffiFfiConverterTypePagination.check_lower(value.pagination)
-
-    @staticmethod
-    def write(value, buf):
-        _UniffiFfiConverterSequenceTypeFieldElement.write(value.contract_addresses, buf)
-        _UniffiFfiConverterSequenceTypeContractType.write(value.contract_types, buf)
-        _UniffiFfiConverterTypePagination.write(value.pagination, buf)
-
-class _UniffiFfiConverterSequenceTypeAttributeFilter(_UniffiConverterRustBuffer):
+class _UniffiFfiConverterSequenceTypeTokenContract(_UniffiConverterRustBuffer):
     @classmethod
     def check_lower(cls, value):
         for item in value:
-            _UniffiFfiConverterTypeAttributeFilter.check_lower(item)
+            _UniffiFfiConverterTypeTokenContract.check_lower(item)
 
     @classmethod
     def write(cls, value, buf):
         items = len(value)
         buf.write_i32(items)
         for item in value:
-            _UniffiFfiConverterTypeAttributeFilter.write(item, buf)
+            _UniffiFfiConverterTypeTokenContract.write(item, buf)
 
     @classmethod
     def read(cls, buf):
@@ -4950,56 +5873,44 @@ class _UniffiFfiConverterSequenceTypeAttributeFilter(_UniffiConverterRustBuffer)
             raise InternalError("Unexpected negative sequence length")
 
         return [
-            _UniffiFfiConverterTypeAttributeFilter.read(buf) for i in range(count)
+            _UniffiFfiConverterTypeTokenContract.read(buf) for i in range(count)
         ]
 
 @dataclass
-class TokenQuery:
-    def __init__(self, *, contract_addresses:typing.List[FieldElement], token_ids:typing.List[U256], attribute_filters:typing.List[AttributeFilter], pagination:Pagination):
-        self.contract_addresses = contract_addresses
-        self.token_ids = token_ids
-        self.attribute_filters = attribute_filters
-        self.pagination = pagination
+class PageTokenContract:
+    def __init__(self, *, items:typing.List[TokenContract], next_cursor:typing.Optional[str]):
+        self.items = items
+        self.next_cursor = next_cursor
         
         
 
     
     def __str__(self):
-        return "TokenQuery(contract_addresses={}, token_ids={}, attribute_filters={}, pagination={})".format(self.contract_addresses, self.token_ids, self.attribute_filters, self.pagination)
+        return "PageTokenContract(items={}, next_cursor={})".format(self.items, self.next_cursor)
     def __eq__(self, other):
-        if self.contract_addresses != other.contract_addresses:
+        if self.items != other.items:
             return False
-        if self.token_ids != other.token_ids:
-            return False
-        if self.attribute_filters != other.attribute_filters:
-            return False
-        if self.pagination != other.pagination:
+        if self.next_cursor != other.next_cursor:
             return False
         return True
 
-class _UniffiFfiConverterTypeTokenQuery(_UniffiConverterRustBuffer):
+class _UniffiFfiConverterTypePageTokenContract(_UniffiConverterRustBuffer):
     @staticmethod
     def read(buf):
-        return TokenQuery(
-            contract_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
-            token_ids=_UniffiFfiConverterSequenceTypeU256.read(buf),
-            attribute_filters=_UniffiFfiConverterSequenceTypeAttributeFilter.read(buf),
-            pagination=_UniffiFfiConverterTypePagination.read(buf),
+        return PageTokenContract(
+            items=_UniffiFfiConverterSequenceTypeTokenContract.read(buf),
+            next_cursor=_UniffiFfiConverterOptionalString.read(buf),
         )
 
     @staticmethod
     def check_lower(value):
-        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.contract_addresses)
-        _UniffiFfiConverterSequenceTypeU256.check_lower(value.token_ids)
-        _UniffiFfiConverterSequenceTypeAttributeFilter.check_lower(value.attribute_filters)
-        _UniffiFfiConverterTypePagination.check_lower(value.pagination)
+        _UniffiFfiConverterSequenceTypeTokenContract.check_lower(value.items)
+        _UniffiFfiConverterOptionalString.check_lower(value.next_cursor)
 
     @staticmethod
     def write(value, buf):
-        _UniffiFfiConverterSequenceTypeFieldElement.write(value.contract_addresses, buf)
-        _UniffiFfiConverterSequenceTypeU256.write(value.token_ids, buf)
-        _UniffiFfiConverterSequenceTypeAttributeFilter.write(value.attribute_filters, buf)
-        _UniffiFfiConverterTypePagination.write(value.pagination, buf)
+        _UniffiFfiConverterSequenceTypeTokenContract.write(value.items, buf)
+        _UniffiFfiConverterOptionalString.write(value.next_cursor, buf)
 
 @dataclass
 class TokenTransfer:
@@ -5073,53 +5984,64 @@ class _UniffiFfiConverterTypeTokenTransfer(_UniffiConverterRustBuffer):
         _UniffiFfiConverterUInt64.write(value.executed_at, buf)
         _UniffiFfiConverterOptionalString.write(value.event_id, buf)
 
+class _UniffiFfiConverterSequenceTypeTokenTransfer(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeTokenTransfer.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeTokenTransfer.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeTokenTransfer.read(buf) for i in range(count)
+        ]
+
 @dataclass
-class TokenTransferQuery:
-    def __init__(self, *, contract_addresses:typing.List[FieldElement], account_addresses:typing.List[FieldElement], token_ids:typing.List[U256], pagination:Pagination):
-        self.contract_addresses = contract_addresses
-        self.account_addresses = account_addresses
-        self.token_ids = token_ids
-        self.pagination = pagination
+class PageTokenTransfer:
+    def __init__(self, *, items:typing.List[TokenTransfer], next_cursor:typing.Optional[str]):
+        self.items = items
+        self.next_cursor = next_cursor
         
         
 
     
     def __str__(self):
-        return "TokenTransferQuery(contract_addresses={}, account_addresses={}, token_ids={}, pagination={})".format(self.contract_addresses, self.account_addresses, self.token_ids, self.pagination)
+        return "PageTokenTransfer(items={}, next_cursor={})".format(self.items, self.next_cursor)
     def __eq__(self, other):
-        if self.contract_addresses != other.contract_addresses:
+        if self.items != other.items:
             return False
-        if self.account_addresses != other.account_addresses:
-            return False
-        if self.token_ids != other.token_ids:
-            return False
-        if self.pagination != other.pagination:
+        if self.next_cursor != other.next_cursor:
             return False
         return True
 
-class _UniffiFfiConverterTypeTokenTransferQuery(_UniffiConverterRustBuffer):
+class _UniffiFfiConverterTypePageTokenTransfer(_UniffiConverterRustBuffer):
     @staticmethod
     def read(buf):
-        return TokenTransferQuery(
-            contract_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
-            account_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
-            token_ids=_UniffiFfiConverterSequenceTypeU256.read(buf),
-            pagination=_UniffiFfiConverterTypePagination.read(buf),
+        return PageTokenTransfer(
+            items=_UniffiFfiConverterSequenceTypeTokenTransfer.read(buf),
+            next_cursor=_UniffiFfiConverterOptionalString.read(buf),
         )
 
     @staticmethod
     def check_lower(value):
-        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.contract_addresses)
-        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.account_addresses)
-        _UniffiFfiConverterSequenceTypeU256.check_lower(value.token_ids)
-        _UniffiFfiConverterTypePagination.check_lower(value.pagination)
+        _UniffiFfiConverterSequenceTypeTokenTransfer.check_lower(value.items)
+        _UniffiFfiConverterOptionalString.check_lower(value.next_cursor)
 
     @staticmethod
     def write(value, buf):
-        _UniffiFfiConverterSequenceTypeFieldElement.write(value.contract_addresses, buf)
-        _UniffiFfiConverterSequenceTypeFieldElement.write(value.account_addresses, buf)
-        _UniffiFfiConverterSequenceTypeU256.write(value.token_ids, buf)
-        _UniffiFfiConverterTypePagination.write(value.pagination, buf)
+        _UniffiFfiConverterSequenceTypeTokenTransfer.write(value.items, buf)
+        _UniffiFfiConverterOptionalString.write(value.next_cursor, buf)
 
 
 
@@ -5328,6 +6250,770 @@ class _UniffiFfiConverterTypeTransaction(_UniffiConverterRustBuffer):
         _UniffiFfiConverterSequenceTypeTransactionCall.write(value.calls, buf)
         _UniffiFfiConverterSequenceTypeFieldElement.write(value.unique_models, buf)
 
+class _UniffiFfiConverterSequenceTypeTransaction(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeTransaction.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeTransaction.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeTransaction.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class PageTransaction:
+    def __init__(self, *, items:typing.List[Transaction], next_cursor:typing.Optional[str]):
+        self.items = items
+        self.next_cursor = next_cursor
+        
+        
+
+    
+    def __str__(self):
+        return "PageTransaction(items={}, next_cursor={})".format(self.items, self.next_cursor)
+    def __eq__(self, other):
+        if self.items != other.items:
+            return False
+        if self.next_cursor != other.next_cursor:
+            return False
+        return True
+
+class _UniffiFfiConverterTypePageTransaction(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return PageTransaction(
+            items=_UniffiFfiConverterSequenceTypeTransaction.read(buf),
+            next_cursor=_UniffiFfiConverterOptionalString.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeTransaction.check_lower(value.items)
+        _UniffiFfiConverterOptionalString.check_lower(value.next_cursor)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeTransaction.write(value.items, buf)
+        _UniffiFfiConverterOptionalString.write(value.next_cursor, buf)
+
+@dataclass
+class PlayerAchievementQuery:
+    def __init__(self, *, world_addresses:typing.List[FieldElement], namespaces:typing.List[str], player_addresses:typing.List[FieldElement], pagination:Pagination):
+        self.world_addresses = world_addresses
+        self.namespaces = namespaces
+        self.player_addresses = player_addresses
+        self.pagination = pagination
+        
+        
+
+    
+    def __str__(self):
+        return "PlayerAchievementQuery(world_addresses={}, namespaces={}, player_addresses={}, pagination={})".format(self.world_addresses, self.namespaces, self.player_addresses, self.pagination)
+    def __eq__(self, other):
+        if self.world_addresses != other.world_addresses:
+            return False
+        if self.namespaces != other.namespaces:
+            return False
+        if self.player_addresses != other.player_addresses:
+            return False
+        if self.pagination != other.pagination:
+            return False
+        return True
+
+class _UniffiFfiConverterTypePlayerAchievementQuery(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return PlayerAchievementQuery(
+            world_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
+            namespaces=_UniffiFfiConverterSequenceString.read(buf),
+            player_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
+            pagination=_UniffiFfiConverterTypePagination.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.world_addresses)
+        _UniffiFfiConverterSequenceString.check_lower(value.namespaces)
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.player_addresses)
+        _UniffiFfiConverterTypePagination.check_lower(value.pagination)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeFieldElement.write(value.world_addresses, buf)
+        _UniffiFfiConverterSequenceString.write(value.namespaces, buf)
+        _UniffiFfiConverterSequenceTypeFieldElement.write(value.player_addresses, buf)
+        _UniffiFfiConverterTypePagination.write(value.pagination, buf)
+
+class _UniffiFfiConverterOptionalTypeClause(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        if value is not None:
+            _UniffiFfiConverterTypeClause.check_lower(value)
+
+    @classmethod
+    def write(cls, value, buf):
+        if value is None:
+            buf.write_u8(0)
+            return
+
+        buf.write_u8(1)
+        _UniffiFfiConverterTypeClause.write(value, buf)
+
+    @classmethod
+    def read(cls, buf):
+        flag = buf.read_u8()
+        if flag == 0:
+            return None
+        elif flag == 1:
+            return _UniffiFfiConverterTypeClause.read(buf)
+        else:
+            raise InternalError("Unexpected flag byte for optional type")
+
+@dataclass
+class Query:
+    def __init__(self, *, world_addresses:typing.List[FieldElement], pagination:Pagination, clause:typing.Optional[Clause], no_hashed_keys:bool, models:typing.List[str], historical:bool):
+        self.world_addresses = world_addresses
+        self.pagination = pagination
+        self.clause = clause
+        self.no_hashed_keys = no_hashed_keys
+        self.models = models
+        self.historical = historical
+        
+        
+
+    
+    def __str__(self):
+        return "Query(world_addresses={}, pagination={}, clause={}, no_hashed_keys={}, models={}, historical={})".format(self.world_addresses, self.pagination, self.clause, self.no_hashed_keys, self.models, self.historical)
+    def __eq__(self, other):
+        if self.world_addresses != other.world_addresses:
+            return False
+        if self.pagination != other.pagination:
+            return False
+        if self.clause != other.clause:
+            return False
+        if self.no_hashed_keys != other.no_hashed_keys:
+            return False
+        if self.models != other.models:
+            return False
+        if self.historical != other.historical:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeQuery(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return Query(
+            world_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
+            pagination=_UniffiFfiConverterTypePagination.read(buf),
+            clause=_UniffiFfiConverterOptionalTypeClause.read(buf),
+            no_hashed_keys=_UniffiFfiConverterBoolean.read(buf),
+            models=_UniffiFfiConverterSequenceString.read(buf),
+            historical=_UniffiFfiConverterBoolean.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.world_addresses)
+        _UniffiFfiConverterTypePagination.check_lower(value.pagination)
+        _UniffiFfiConverterOptionalTypeClause.check_lower(value.clause)
+        _UniffiFfiConverterBoolean.check_lower(value.no_hashed_keys)
+        _UniffiFfiConverterSequenceString.check_lower(value.models)
+        _UniffiFfiConverterBoolean.check_lower(value.historical)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeFieldElement.write(value.world_addresses, buf)
+        _UniffiFfiConverterTypePagination.write(value.pagination, buf)
+        _UniffiFfiConverterOptionalTypeClause.write(value.clause, buf)
+        _UniffiFfiConverterBoolean.write(value.no_hashed_keys, buf)
+        _UniffiFfiConverterSequenceString.write(value.models, buf)
+        _UniffiFfiConverterBoolean.write(value.historical, buf)
+
+@dataclass
+class Signature:
+    def __init__(self, *, r:FieldElement, s:FieldElement):
+        self.r = r
+        self.s = s
+        
+        
+
+    
+    def __str__(self):
+        return "Signature(r={}, s={})".format(self.r, self.s)
+    def __eq__(self, other):
+        if self.r != other.r:
+            return False
+        if self.s != other.s:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeSignature(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return Signature(
+            r=_UniffiFfiConverterTypeFieldElement.read(buf),
+            s=_UniffiFfiConverterTypeFieldElement.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterTypeFieldElement.check_lower(value.r)
+        _UniffiFfiConverterTypeFieldElement.check_lower(value.s)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterTypeFieldElement.write(value.r, buf)
+        _UniffiFfiConverterTypeFieldElement.write(value.s, buf)
+
+
+
+
+
+
+class SqlValue:
+    def __init__(self):
+        raise RuntimeError("SqlValue cannot be instantiated directly")
+
+    # Each enum variant is a nested class of the enum itself.
+    @dataclass
+    class TEXT:
+        
+        def __init__(self, value:str):
+            self.value = value
+            
+            
+            pass
+
+    
+            
+            
+    
+        def __str__(self):
+            return "SqlValue.TEXT(value={})".format(self.value)
+        def __eq__(self, other):
+            if not other.is_TEXT():
+                return False
+            if self.value != other.value:
+                return False
+            return True
+
+    @dataclass
+    class INTEGER:
+        
+        def __init__(self, value:int):
+            self.value = value
+            
+            
+            pass
+
+    
+            
+            
+    
+        def __str__(self):
+            return "SqlValue.INTEGER(value={})".format(self.value)
+        def __eq__(self, other):
+            if not other.is_INTEGER():
+                return False
+            if self.value != other.value:
+                return False
+            return True
+
+    @dataclass
+    class REAL:
+        
+        def __init__(self, value:float):
+            self.value = value
+            
+            
+            pass
+
+    
+            
+            
+    
+        def __str__(self):
+            return "SqlValue.REAL(value={})".format(self.value)
+        def __eq__(self, other):
+            if not other.is_REAL():
+                return False
+            if self.value != other.value:
+                return False
+            return True
+
+    @dataclass
+    class BLOB:
+        
+        def __init__(self, value:typing.List[int]):
+            self.value = value
+            
+            
+            pass
+
+    
+            
+            
+    
+        def __str__(self):
+            return "SqlValue.BLOB(value={})".format(self.value)
+        def __eq__(self, other):
+            if not other.is_BLOB():
+                return False
+            if self.value != other.value:
+                return False
+            return True
+
+    @dataclass
+    class NULL:
+        
+        def __init__(self, ):
+            pass
+
+    
+            
+            
+    
+        def __str__(self):
+            return "SqlValue.NULL()".format()
+        def __eq__(self, other):
+            if not other.is_NULL():
+                return False
+            return True
+
+    
+
+    # For each variant, we have `is_NAME` and `is_name` methods for easily checking
+    # whether an instance is that variant.
+    def is_TEXT(self) -> bool:
+        return isinstance(self, SqlValue.TEXT)
+    def is_text(self) -> bool:
+        return isinstance(self, SqlValue.TEXT)
+    def is_INTEGER(self) -> bool:
+        return isinstance(self, SqlValue.INTEGER)
+    def is_integer(self) -> bool:
+        return isinstance(self, SqlValue.INTEGER)
+    def is_REAL(self) -> bool:
+        return isinstance(self, SqlValue.REAL)
+    def is_real(self) -> bool:
+        return isinstance(self, SqlValue.REAL)
+    def is_BLOB(self) -> bool:
+        return isinstance(self, SqlValue.BLOB)
+    def is_blob(self) -> bool:
+        return isinstance(self, SqlValue.BLOB)
+    def is_NULL(self) -> bool:
+        return isinstance(self, SqlValue.NULL)
+    def is_null(self) -> bool:
+        return isinstance(self, SqlValue.NULL)
+    
+
+# Now, a little trick - we make each nested variant class be a subclass of the main
+# enum class, so that method calls and instance checks etc will work intuitively.
+# We might be able to do this a little more neatly with a metaclass, but this'll do.
+SqlValue.TEXT = type("SqlValue.TEXT", (SqlValue.TEXT, SqlValue,), {})  # type: ignore
+SqlValue.INTEGER = type("SqlValue.INTEGER", (SqlValue.INTEGER, SqlValue,), {})  # type: ignore
+SqlValue.REAL = type("SqlValue.REAL", (SqlValue.REAL, SqlValue,), {})  # type: ignore
+SqlValue.BLOB = type("SqlValue.BLOB", (SqlValue.BLOB, SqlValue,), {})  # type: ignore
+SqlValue.NULL = type("SqlValue.NULL", (SqlValue.NULL, SqlValue,), {})  # type: ignore
+
+
+
+
+class _UniffiFfiConverterTypeSqlValue(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        variant = buf.read_i32()
+        if variant == 1:
+            return SqlValue.TEXT(
+                _UniffiFfiConverterString.read(buf),
+            )
+        if variant == 2:
+            return SqlValue.INTEGER(
+                _UniffiFfiConverterInt64.read(buf),
+            )
+        if variant == 3:
+            return SqlValue.REAL(
+                _UniffiFfiConverterFloat64.read(buf),
+            )
+        if variant == 4:
+            return SqlValue.BLOB(
+                _UniffiFfiConverterSequenceUInt8.read(buf),
+            )
+        if variant == 5:
+            return SqlValue.NULL(
+            )
+        raise InternalError("Raw enum value doesn't match any cases")
+
+    @staticmethod
+    def check_lower(value):
+        if value.is_TEXT():
+            _UniffiFfiConverterString.check_lower(value.value)
+            return
+        if value.is_INTEGER():
+            _UniffiFfiConverterInt64.check_lower(value.value)
+            return
+        if value.is_REAL():
+            _UniffiFfiConverterFloat64.check_lower(value.value)
+            return
+        if value.is_BLOB():
+            _UniffiFfiConverterSequenceUInt8.check_lower(value.value)
+            return
+        if value.is_NULL():
+            return
+        raise ValueError(value)
+
+    @staticmethod
+    def write(value, buf):
+        if value.is_TEXT():
+            buf.write_i32(1)
+            _UniffiFfiConverterString.write(value.value, buf)
+        if value.is_INTEGER():
+            buf.write_i32(2)
+            _UniffiFfiConverterInt64.write(value.value, buf)
+        if value.is_REAL():
+            buf.write_i32(3)
+            _UniffiFfiConverterFloat64.write(value.value, buf)
+        if value.is_BLOB():
+            buf.write_i32(4)
+            _UniffiFfiConverterSequenceUInt8.write(value.value, buf)
+        if value.is_NULL():
+            buf.write_i32(5)
+
+
+
+@dataclass
+class SqlField:
+    def __init__(self, *, name:str, value:SqlValue):
+        self.name = name
+        self.value = value
+        
+        
+
+    
+    def __str__(self):
+        return "SqlField(name={}, value={})".format(self.name, self.value)
+    def __eq__(self, other):
+        if self.name != other.name:
+            return False
+        if self.value != other.value:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeSqlField(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return SqlField(
+            name=_UniffiFfiConverterString.read(buf),
+            value=_UniffiFfiConverterTypeSqlValue.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterString.check_lower(value.name)
+        _UniffiFfiConverterTypeSqlValue.check_lower(value.value)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterString.write(value.name, buf)
+        _UniffiFfiConverterTypeSqlValue.write(value.value, buf)
+
+class _UniffiFfiConverterSequenceTypeSqlField(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeSqlField.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeSqlField.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeSqlField.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class SqlRow:
+    def __init__(self, *, fields:typing.List[SqlField]):
+        self.fields = fields
+        
+        
+
+    
+    def __str__(self):
+        return "SqlRow(fields={})".format(self.fields)
+    def __eq__(self, other):
+        if self.fields != other.fields:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeSqlRow(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return SqlRow(
+            fields=_UniffiFfiConverterSequenceTypeSqlField.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeSqlField.check_lower(value.fields)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeSqlField.write(value.fields, buf)
+
+class _UniffiFfiConverterSequenceTypeU256(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeU256.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeU256.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeU256.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class TokenBalanceQuery:
+    def __init__(self, *, contract_addresses:typing.List[FieldElement], account_addresses:typing.List[FieldElement], token_ids:typing.List[U256], pagination:Pagination):
+        self.contract_addresses = contract_addresses
+        self.account_addresses = account_addresses
+        self.token_ids = token_ids
+        self.pagination = pagination
+        
+        
+
+    
+    def __str__(self):
+        return "TokenBalanceQuery(contract_addresses={}, account_addresses={}, token_ids={}, pagination={})".format(self.contract_addresses, self.account_addresses, self.token_ids, self.pagination)
+    def __eq__(self, other):
+        if self.contract_addresses != other.contract_addresses:
+            return False
+        if self.account_addresses != other.account_addresses:
+            return False
+        if self.token_ids != other.token_ids:
+            return False
+        if self.pagination != other.pagination:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeTokenBalanceQuery(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return TokenBalanceQuery(
+            contract_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
+            account_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
+            token_ids=_UniffiFfiConverterSequenceTypeU256.read(buf),
+            pagination=_UniffiFfiConverterTypePagination.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.contract_addresses)
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.account_addresses)
+        _UniffiFfiConverterSequenceTypeU256.check_lower(value.token_ids)
+        _UniffiFfiConverterTypePagination.check_lower(value.pagination)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeFieldElement.write(value.contract_addresses, buf)
+        _UniffiFfiConverterSequenceTypeFieldElement.write(value.account_addresses, buf)
+        _UniffiFfiConverterSequenceTypeU256.write(value.token_ids, buf)
+        _UniffiFfiConverterTypePagination.write(value.pagination, buf)
+
+@dataclass
+class TokenContractQuery:
+    def __init__(self, *, contract_addresses:typing.List[FieldElement], contract_types:typing.List[ContractType], pagination:Pagination):
+        self.contract_addresses = contract_addresses
+        self.contract_types = contract_types
+        self.pagination = pagination
+        
+        
+
+    
+    def __str__(self):
+        return "TokenContractQuery(contract_addresses={}, contract_types={}, pagination={})".format(self.contract_addresses, self.contract_types, self.pagination)
+    def __eq__(self, other):
+        if self.contract_addresses != other.contract_addresses:
+            return False
+        if self.contract_types != other.contract_types:
+            return False
+        if self.pagination != other.pagination:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeTokenContractQuery(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return TokenContractQuery(
+            contract_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
+            contract_types=_UniffiFfiConverterSequenceTypeContractType.read(buf),
+            pagination=_UniffiFfiConverterTypePagination.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.contract_addresses)
+        _UniffiFfiConverterSequenceTypeContractType.check_lower(value.contract_types)
+        _UniffiFfiConverterTypePagination.check_lower(value.pagination)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeFieldElement.write(value.contract_addresses, buf)
+        _UniffiFfiConverterSequenceTypeContractType.write(value.contract_types, buf)
+        _UniffiFfiConverterTypePagination.write(value.pagination, buf)
+
+class _UniffiFfiConverterSequenceTypeAttributeFilter(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeAttributeFilter.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeAttributeFilter.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeAttributeFilter.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class TokenQuery:
+    def __init__(self, *, contract_addresses:typing.List[FieldElement], token_ids:typing.List[U256], attribute_filters:typing.List[AttributeFilter], pagination:Pagination):
+        self.contract_addresses = contract_addresses
+        self.token_ids = token_ids
+        self.attribute_filters = attribute_filters
+        self.pagination = pagination
+        
+        
+
+    
+    def __str__(self):
+        return "TokenQuery(contract_addresses={}, token_ids={}, attribute_filters={}, pagination={})".format(self.contract_addresses, self.token_ids, self.attribute_filters, self.pagination)
+    def __eq__(self, other):
+        if self.contract_addresses != other.contract_addresses:
+            return False
+        if self.token_ids != other.token_ids:
+            return False
+        if self.attribute_filters != other.attribute_filters:
+            return False
+        if self.pagination != other.pagination:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeTokenQuery(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return TokenQuery(
+            contract_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
+            token_ids=_UniffiFfiConverterSequenceTypeU256.read(buf),
+            attribute_filters=_UniffiFfiConverterSequenceTypeAttributeFilter.read(buf),
+            pagination=_UniffiFfiConverterTypePagination.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.contract_addresses)
+        _UniffiFfiConverterSequenceTypeU256.check_lower(value.token_ids)
+        _UniffiFfiConverterSequenceTypeAttributeFilter.check_lower(value.attribute_filters)
+        _UniffiFfiConverterTypePagination.check_lower(value.pagination)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeFieldElement.write(value.contract_addresses, buf)
+        _UniffiFfiConverterSequenceTypeU256.write(value.token_ids, buf)
+        _UniffiFfiConverterSequenceTypeAttributeFilter.write(value.attribute_filters, buf)
+        _UniffiFfiConverterTypePagination.write(value.pagination, buf)
+
+@dataclass
+class TokenTransferQuery:
+    def __init__(self, *, contract_addresses:typing.List[FieldElement], account_addresses:typing.List[FieldElement], token_ids:typing.List[U256], pagination:Pagination):
+        self.contract_addresses = contract_addresses
+        self.account_addresses = account_addresses
+        self.token_ids = token_ids
+        self.pagination = pagination
+        
+        
+
+    
+    def __str__(self):
+        return "TokenTransferQuery(contract_addresses={}, account_addresses={}, token_ids={}, pagination={})".format(self.contract_addresses, self.account_addresses, self.token_ids, self.pagination)
+    def __eq__(self, other):
+        if self.contract_addresses != other.contract_addresses:
+            return False
+        if self.account_addresses != other.account_addresses:
+            return False
+        if self.token_ids != other.token_ids:
+            return False
+        if self.pagination != other.pagination:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeTokenTransferQuery(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return TokenTransferQuery(
+            contract_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
+            account_addresses=_UniffiFfiConverterSequenceTypeFieldElement.read(buf),
+            token_ids=_UniffiFfiConverterSequenceTypeU256.read(buf),
+            pagination=_UniffiFfiConverterTypePagination.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.contract_addresses)
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(value.account_addresses)
+        _UniffiFfiConverterSequenceTypeU256.check_lower(value.token_ids)
+        _UniffiFfiConverterTypePagination.check_lower(value.pagination)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterSequenceTypeFieldElement.write(value.contract_addresses, buf)
+        _UniffiFfiConverterSequenceTypeFieldElement.write(value.account_addresses, buf)
+        _UniffiFfiConverterSequenceTypeU256.write(value.token_ids, buf)
+        _UniffiFfiConverterTypePagination.write(value.pagination, buf)
+
 @dataclass
 class TransactionFilter:
     def __init__(self, *, transaction_hashes:typing.List[FieldElement], caller_addresses:typing.List[FieldElement], contract_addresses:typing.List[FieldElement], entrypoints:typing.List[str], model_selectors:typing.List[FieldElement], from_block:typing.Optional[int], to_block:typing.Optional[int]):
@@ -5455,6 +7141,65 @@ class _UniffiFfiConverterTypeTransactionQuery(_UniffiConverterRustBuffer):
         _UniffiFfiConverterOptionalTypeTransactionFilter.write(value.filter, buf)
         _UniffiFfiConverterTypePagination.write(value.pagination, buf)
 
+class _UniffiFfiConverterSequenceTypeModel(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeModel.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeModel.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeModel.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class World:
+    def __init__(self, *, world_address:FieldElement, models:typing.List[Model]):
+        self.world_address = world_address
+        self.models = models
+        
+        
+
+    
+    def __str__(self):
+        return "World(world_address={}, models={})".format(self.world_address, self.models)
+    def __eq__(self, other):
+        if self.world_address != other.world_address:
+            return False
+        if self.models != other.models:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeWorld(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return World(
+            world_address=_UniffiFfiConverterTypeFieldElement.read(buf),
+            models=_UniffiFfiConverterSequenceTypeModel.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterTypeFieldElement.check_lower(value.world_address)
+        _UniffiFfiConverterSequenceTypeModel.check_lower(value.models)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterTypeFieldElement.write(value.world_address, buf)
+        _UniffiFfiConverterSequenceTypeModel.write(value.models, buf)
+
 
 
 # DojoError
@@ -5486,6 +7231,18 @@ class DojoError:  # type: ignore
         def __repr__(self):
             return "DojoError.InvalidInput({})".format(repr(str(self)))
     _UniffiTempDojoError.InvalidInput = InvalidInput # type: ignore
+    class ConnectionError(_UniffiTempDojoError):
+        def __repr__(self):
+            return "DojoError.ConnectionError({})".format(repr(str(self)))
+    _UniffiTempDojoError.ConnectionError = ConnectionError # type: ignore
+    class PublishError(_UniffiTempDojoError):
+        def __repr__(self):
+            return "DojoError.PublishError({})".format(repr(str(self)))
+    _UniffiTempDojoError.PublishError = PublishError # type: ignore
+    class QueryError(_UniffiTempDojoError):
+        def __repr__(self):
+            return "DojoError.QueryError({})".format(repr(str(self)))
+    _UniffiTempDojoError.QueryError = QueryError # type: ignore
 
 DojoError = _UniffiTempDojoError # type: ignore
 del _UniffiTempDojoError
@@ -5511,6 +7268,18 @@ class _UniffiFfiConverterTypeDojoError(_UniffiConverterRustBuffer):
             return DojoError.InvalidInput(
                 _UniffiFfiConverterString.read(buf),
             )
+        if variant == 5:
+            return DojoError.ConnectionError(
+                _UniffiFfiConverterString.read(buf),
+            )
+        if variant == 6:
+            return DojoError.PublishError(
+                _UniffiFfiConverterString.read(buf),
+            )
+        if variant == 7:
+            return DojoError.QueryError(
+                _UniffiFfiConverterString.read(buf),
+            )
         raise InternalError("Raw enum value doesn't match any cases")
 
     @staticmethod
@@ -5523,6 +7292,12 @@ class _UniffiFfiConverterTypeDojoError(_UniffiConverterRustBuffer):
             return
         if isinstance(value, DojoError.InvalidInput):
             return
+        if isinstance(value, DojoError.ConnectionError):
+            return
+        if isinstance(value, DojoError.PublishError):
+            return
+        if isinstance(value, DojoError.QueryError):
+            return
 
     @staticmethod
     def write(value, buf):
@@ -5534,6 +7309,12 @@ class _UniffiFfiConverterTypeDojoError(_UniffiConverterRustBuffer):
             buf.write_i32(3)
         if isinstance(value, DojoError.InvalidInput):
             buf.write_i32(4)
+        if isinstance(value, DojoError.ConnectionError):
+            buf.write_i32(5)
+        if isinstance(value, DojoError.PublishError):
+            buf.write_i32(6)
+        if isinstance(value, DojoError.QueryError):
+            buf.write_i32(7)
 
 
 
@@ -5758,6 +7539,517 @@ class _UniffiFfiConverterTypeValueType(_UniffiConverterRustBuffer):
 
 
 
+class _UniffiFfiConverterSequenceTypeContract(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeContract.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeContract.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeContract.read(buf) for i in range(count)
+        ]
+
+class _UniffiFfiConverterSequenceTypeMessage(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeMessage.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeMessage.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeMessage.read(buf) for i in range(count)
+        ]
+
+class _UniffiFfiConverterSequenceTypeSqlRow(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeSqlRow.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeSqlRow.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeSqlRow.read(buf) for i in range(count)
+        ]
+
+class _UniffiFfiConverterSequenceTypeWorld(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeWorld.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeWorld.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeWorld.read(buf) for i in range(count)
+        ]
+
+
+class ToriiClientProtocol(typing.Protocol):
+    
+    async def achievements(self, query: AchievementQuery) -> PageAchievement:
+        raise NotImplementedError
+    async def activities(self, query: ActivityQuery) -> PageActivity:
+        raise NotImplementedError
+    async def aggregations(self, query: AggregationQuery) -> PageAggregationEntry:
+        raise NotImplementedError
+    async def contracts(self, query: ContractQuery) -> typing.List[Contract]:
+        raise NotImplementedError
+    async def controllers(self, query: ControllerQuery) -> PageController:
+        raise NotImplementedError
+    async def entities(self, query: Query) -> PageEntity:
+        raise NotImplementedError
+    async def event_messages(self, query: Query) -> PageEntity:
+        raise NotImplementedError
+    async def player_achievements(self, query: PlayerAchievementQuery) -> PagePlayerAchievement:
+        raise NotImplementedError
+    async def publish_message(self, message: Message) -> str:
+        raise NotImplementedError
+    async def publish_message_batch(self, messages: typing.List[Message]) -> typing.List[str]:
+        raise NotImplementedError
+    async def sql(self, query: str) -> typing.List[SqlRow]:
+        raise NotImplementedError
+    async def starknet_events(self, query: EventQuery) -> PageEvent:
+        raise NotImplementedError
+    async def token_balances(self, query: TokenBalanceQuery) -> PageTokenBalance:
+        raise NotImplementedError
+    async def token_contracts(self, query: TokenContractQuery) -> PageTokenContract:
+        raise NotImplementedError
+    async def token_transfers(self, query: TokenTransferQuery) -> PageTokenTransfer:
+        raise NotImplementedError
+    async def tokens(self, query: TokenQuery) -> PageToken:
+        raise NotImplementedError
+    async def transactions(self, query: TransactionQuery) -> PageTransaction:
+        raise NotImplementedError
+    async def worlds(self, world_addresses: typing.List[FieldElement]) -> typing.List[World]:
+        raise NotImplementedError
+
+class ToriiClient(ToriiClientProtocol):
+    
+    _handle: ctypes.c_uint64
+    def __init__(self, *args, **kw):
+        raise ValueError("async constructors not supported.")
+    @classmethod
+    async def new_with_config(cls, torii_url: str,max_message_size: int) -> ToriiClient:
+        
+        _UniffiFfiConverterString.check_lower(torii_url)
+        
+        _UniffiFfiConverterUInt64.check_lower(max_message_size)
+        _uniffi_lowered_args = (
+            _UniffiFfiConverterString.lower(torii_url),
+            _UniffiFfiConverterUInt64.lower(max_message_size),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypeToriiClient.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_constructor_toriiclient_new_with_config(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_u64,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_u64,
+            _UniffiLib.ffi_dojo_c_rust_future_free_u64,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+
+    def __del__(self):
+        # In case of partial initialization of instances.
+        handle = getattr(self, "_handle", None)
+        if handle is not None:
+            _uniffi_rust_call(_UniffiLib.uniffi_dojo_c_fn_free_toriiclient, handle)
+
+    def _uniffi_clone_handle(self):
+        return _uniffi_rust_call(_UniffiLib.uniffi_dojo_c_fn_clone_toriiclient, self._handle)
+
+    # Used by alternative constructors or any methods which return this type.
+    @classmethod
+    def _uniffi_make_instance(cls, handle):
+        # Lightly yucky way to bypass the usual __init__ logic
+        # and just create a new instance with the required handle.
+        inst = cls.__new__(cls)
+        inst._handle = handle
+        return inst
+    async def achievements(self, query: AchievementQuery) -> PageAchievement:
+        
+        _UniffiFfiConverterTypeAchievementQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeAchievementQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypePageAchievement.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_achievements(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def activities(self, query: ActivityQuery) -> PageActivity:
+        
+        _UniffiFfiConverterTypeActivityQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeActivityQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypePageActivity.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_activities(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def aggregations(self, query: AggregationQuery) -> PageAggregationEntry:
+        
+        _UniffiFfiConverterTypeAggregationQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeAggregationQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypePageAggregationEntry.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_aggregations(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def contracts(self, query: ContractQuery) -> typing.List[Contract]:
+        
+        _UniffiFfiConverterTypeContractQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeContractQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterSequenceTypeContract.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_contracts(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def controllers(self, query: ControllerQuery) -> PageController:
+        
+        _UniffiFfiConverterTypeControllerQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeControllerQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypePageController.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_controllers(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def entities(self, query: Query) -> PageEntity:
+        
+        _UniffiFfiConverterTypeQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypePageEntity.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_entities(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def event_messages(self, query: Query) -> PageEntity:
+        
+        _UniffiFfiConverterTypeQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypePageEntity.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_event_messages(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def player_achievements(self, query: PlayerAchievementQuery) -> PagePlayerAchievement:
+        
+        _UniffiFfiConverterTypePlayerAchievementQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypePlayerAchievementQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypePagePlayerAchievement.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_player_achievements(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def publish_message(self, message: Message) -> str:
+        
+        _UniffiFfiConverterTypeMessage.check_lower(message)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeMessage.lower(message),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterString.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_publish_message(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def publish_message_batch(self, messages: typing.List[Message]) -> typing.List[str]:
+        
+        _UniffiFfiConverterSequenceTypeMessage.check_lower(messages)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterSequenceTypeMessage.lower(messages),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterSequenceString.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_publish_message_batch(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def sql(self, query: str) -> typing.List[SqlRow]:
+        
+        _UniffiFfiConverterString.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterString.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterSequenceTypeSqlRow.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_sql(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def starknet_events(self, query: EventQuery) -> PageEvent:
+        
+        _UniffiFfiConverterTypeEventQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeEventQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypePageEvent.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_starknet_events(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def token_balances(self, query: TokenBalanceQuery) -> PageTokenBalance:
+        
+        _UniffiFfiConverterTypeTokenBalanceQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeTokenBalanceQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypePageTokenBalance.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_balances(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def token_contracts(self, query: TokenContractQuery) -> PageTokenContract:
+        
+        _UniffiFfiConverterTypeTokenContractQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeTokenContractQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypePageTokenContract.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_contracts(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def token_transfers(self, query: TokenTransferQuery) -> PageTokenTransfer:
+        
+        _UniffiFfiConverterTypeTokenTransferQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeTokenTransferQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypePageTokenTransfer.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_transfers(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def tokens(self, query: TokenQuery) -> PageToken:
+        
+        _UniffiFfiConverterTypeTokenQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeTokenQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypePageToken.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_tokens(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def transactions(self, query: TransactionQuery) -> PageTransaction:
+        
+        _UniffiFfiConverterTypeTransactionQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeTransactionQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypePageTransaction.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_transactions(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+    async def worlds(self, world_addresses: typing.List[FieldElement]) -> typing.List[World]:
+        
+        _UniffiFfiConverterSequenceTypeFieldElement.check_lower(world_addresses)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterSequenceTypeFieldElement.lower(world_addresses),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterSequenceTypeWorld.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        return await _uniffi_rust_call_async(
+            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_worlds(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _uniffi_lift_return,
+            _uniffi_error_converter,
+        )
+
+
+
+
+
+class _UniffiFfiConverterTypeToriiClient:
+    @staticmethod
+    def lift(value: int) -> ToriiClient:
+        return ToriiClient._uniffi_make_instance(value)
+
+    @staticmethod
+    def check_lower(value: ToriiClient):
+        if not isinstance(value, ToriiClient):
+            raise TypeError("Expected ToriiClient instance, {} found".format(type(value).__name__))
+
+    @staticmethod
+    def lower(value: ToriiClient) -> ctypes.c_uint64:
+        return value._uniffi_clone_handle()
+
+    @classmethod
+    def read(cls, buf: _UniffiRustBuffer) -> ToriiClient:
+        ptr = buf.read_u64()
+        if ptr == 0:
+            raise InternalError("Raw handle value was null")
+        return cls.lift(ptr)
+
+    @classmethod
+    def write(cls, value: ToriiClient, buf: _UniffiRustBuffer):
+        buf.write_u64(cls.lower(value))
+
 __all__ = [
     "InternalError",
     "PaginationDirection",
@@ -5771,6 +8063,7 @@ __all__ = [
     "ContractType",
     "Ty",
     "CallType",
+    "SqlValue",
     "DojoError",
     "ValueType",
     "AchievementTask",
@@ -5792,27 +8085,50 @@ __all__ = [
     "ContractQuery",
     "Controller",
     "ControllerQuery",
-    "Member",
-    "Struct",
+    "EnumOption",
     "EnumType",
     "FixedSizeArray",
-    "EnumOption",
+    "Member",
+    "Struct",
+    "Entity",
+    "Event",
+    "EventQuery",
+    "Message",
+    "Model",
+    "PageAchievement",
+    "PageActivity",
+    "PageAggregationEntry",
+    "PageController",
+    "PageEntity",
+    "PageEvent",
     "PlayerAchievementStats",
     "TaskProgress",
     "PlayerAchievementProgress",
     "PlayerAchievementEntry",
-    "PlayerAchievementQuery",
-    "Signature",
+    "PagePlayerAchievement",
     "Token",
+    "PageToken",
     "TokenBalance",
-    "TokenBalanceQuery",
+    "PageTokenBalance",
     "TokenContract",
-    "TokenContractQuery",
-    "TokenQuery",
+    "PageTokenContract",
     "TokenTransfer",
-    "TokenTransferQuery",
+    "PageTokenTransfer",
     "TransactionCall",
     "Transaction",
+    "PageTransaction",
+    "PlayerAchievementQuery",
+    "Query",
+    "Signature",
+    "SqlField",
+    "SqlRow",
+    "TokenBalanceQuery",
+    "TokenContractQuery",
+    "TokenQuery",
+    "TokenTransferQuery",
     "TransactionFilter",
     "TransactionQuery",
+    "World",
+    "ToriiClient",
+    "ToriiClientProtocol",
 ]

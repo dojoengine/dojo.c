@@ -342,6 +342,41 @@ dictionary PlayerAchievementQuery {
     Pagination pagination;
 };
 
+// General entity query  
+dictionary Query {
+    sequence<FieldElement> world_addresses;
+    Pagination pagination;
+    Clause? clause;
+    boolean no_hashed_keys;
+    sequence<string> models;
+    boolean historical;
+};
+
+// Event query
+dictionary EventQuery {
+    KeysClause? keys;
+    Pagination pagination;
+};
+
+// SQL query result types
+dictionary SqlField {
+    string name;
+    SqlValue value;
+};
+
+dictionary SqlRow {
+    sequence<SqlField> fields;
+};
+
+[Enum]
+interface SqlValue {
+    Text(string value);
+    Integer(i64 value);
+    Real(f64 value);
+    Blob(sequence<u8> value);
+    Null();
+};
+
 dictionary AchievementProgression {
     string id;
     string achievement_id;
@@ -460,6 +495,48 @@ interface Clause {
     Composite(CompositeClause clause);
 };
 
+// Event and Message types
+dictionary Event {
+    sequence<FieldElement> keys;
+    sequence<FieldElement> data;
+    FieldElement transaction_hash;
+};
+
+dictionary Message {
+    string message;
+    sequence<FieldElement> signature;
+    FieldElement world_address;
+};
+
+// Entity, Model, and World types
+dictionary Entity {
+    FieldElement world_address;
+    FieldElement hashed_keys;
+    sequence<Struct> models;
+    u64 created_at;
+    u64 updated_at;
+    u64 executed_at;
+};
+
+dictionary Model {
+    FieldElement world_address;
+    Ty schema;
+    string namespace;
+    string name;
+    FieldElement selector;
+    u32 packed_size;
+    u32 unpacked_size;
+    FieldElement class_hash;
+    FieldElement contract_address;
+    string layout;
+    boolean use_legacy_store;
+};
+
+dictionary World {
+    FieldElement world_address;
+    sequence<Model> models;
+};
+
 // Error type
 [Error]
 enum DojoError {
@@ -467,4 +544,203 @@ enum DojoError {
     "SerializationError",
     "NetworkError",
     "InvalidInput",
+    "ConnectionError",
+    "PublishError",
+    "QueryError",
+    "SubscriptionError",
+};
+
+// Callback interfaces for subscriptions
+callback interface EntityUpdateCallback {
+    void on_update(Entity entity);
+    void on_error(string error);
+};
+
+callback interface TokenBalanceUpdateCallback {
+    void on_update(TokenBalance balance);
+    void on_error(string error);
+};
+
+callback interface TokenUpdateCallback {
+    void on_update(Token token);
+    void on_error(string error);
+};
+
+callback interface TransactionUpdateCallback {
+    void on_update(Transaction transaction);
+    void on_error(string error);
+};
+
+callback interface EventUpdateCallback {
+    void on_update(Event event);
+    void on_error(string error);
+};
+
+// Pagination wrapper types for different result types
+dictionary PageController {
+    sequence<Controller> items;
+    string? next_cursor;
+};
+
+dictionary PageToken {
+    sequence<Token> items;
+    string? next_cursor;
+};
+
+dictionary PageTokenBalance {
+    sequence<TokenBalance> items;
+    string? next_cursor;
+};
+
+dictionary PageTokenContract {
+    sequence<TokenContract> items;
+    string? next_cursor;
+};
+
+dictionary PageTokenTransfer {
+    sequence<TokenTransfer> items;
+    string? next_cursor;
+};
+
+dictionary PageTransaction {
+    sequence<Transaction> items;
+    string? next_cursor;
+};
+
+dictionary PageAggregationEntry {
+    sequence<AggregationEntry> items;
+    string? next_cursor;
+};
+
+dictionary PageActivity {
+    sequence<Activity> items;
+    string? next_cursor;
+};
+
+dictionary PageAchievement {
+    sequence<Achievement> items;
+    string? next_cursor;
+};
+
+dictionary PagePlayerAchievement {
+    sequence<PlayerAchievementEntry> items;
+    string? next_cursor;
+};
+
+dictionary PageEntity {
+    sequence<Entity> items;
+    string? next_cursor;
+};
+
+dictionary PageEvent {
+    sequence<Event> items;
+    string? next_cursor;
+};
+
+// Main Dojo client interface
+interface ToriiClient {
+    // Constructor - create a new client with default config (4MB max message size)
+    [Async, Throws=DojoError]
+    constructor(string torii_url);
+    
+    // Constructor - create a new client with custom max message size
+    [Async, Throws=DojoError, Name=new_with_config]
+    constructor(string torii_url, u64 max_message_size);
+    
+    // Publish offchain message
+    [Async, Throws=DojoError]
+    string publish_message(Message message);
+    
+    // Publish multiple offchain messages
+    [Async, Throws=DojoError]
+    sequence<string> publish_message_batch(sequence<Message> messages);
+    
+    // Get world metadata
+    [Async, Throws=DojoError]
+    sequence<World> worlds(sequence<FieldElement> world_addresses);
+    
+    // Query controllers
+    [Async, Throws=DojoError]
+    PageController controllers(ControllerQuery query);
+    
+    // Query contracts
+    [Async, Throws=DojoError]
+    sequence<Contract> contracts(ContractQuery query);
+    
+    // Query tokens
+    [Async, Throws=DojoError]
+    PageToken tokens(TokenQuery query);
+    
+    // Query token balances
+    [Async, Throws=DojoError]
+    PageTokenBalance token_balances(TokenBalanceQuery query);
+    
+    // Query token contracts
+    [Async, Throws=DojoError]
+    PageTokenContract token_contracts(TokenContractQuery query);
+    
+    // Query token transfers
+    [Async, Throws=DojoError]
+    PageTokenTransfer token_transfers(TokenTransferQuery query);
+    
+    // Query transactions
+    [Async, Throws=DojoError]
+    PageTransaction transactions(TransactionQuery query);
+    
+    // Query aggregations (leaderboards, stats, rankings)
+    [Async, Throws=DojoError]
+    PageAggregationEntry aggregations(AggregationQuery query);
+    
+    // Query activities (user session tracking)
+    [Async, Throws=DojoError]
+    PageActivity activities(ActivityQuery query);
+    
+    // Query achievements
+    [Async, Throws=DojoError]
+    PageAchievement achievements(AchievementQuery query);
+    
+    // Query player achievements
+    [Async, Throws=DojoError]
+    PagePlayerAchievement player_achievements(PlayerAchievementQuery query);
+    
+    // Query entities
+    [Async, Throws=DojoError]
+    PageEntity entities(Query query);
+    
+    // Query event messages
+    [Async, Throws=DojoError]
+    PageEntity event_messages(Query query);
+    
+    // Query Starknet events
+    [Async, Throws=DojoError]
+    PageEvent starknet_events(EventQuery query);
+    
+    // Execute SQL query
+    [Async, Throws=DojoError]
+    sequence<SqlRow> sql(string query);
+    
+    // Subscription methods
+    // Subscribe to entity updates
+    [Async, Throws=DojoError]
+    u64 subscribe_entity_updates(Clause? clause, sequence<FieldElement> world_addresses, EntityUpdateCallback callback);
+    
+    // Subscribe to token balance updates
+    [Async, Throws=DojoError]
+    u64 subscribe_token_balance_updates(sequence<FieldElement> contract_addresses, sequence<FieldElement> account_addresses, sequence<U256> token_ids, TokenBalanceUpdateCallback callback);
+    
+    // Subscribe to token updates
+    [Async, Throws=DojoError]
+    u64 subscribe_token_updates(sequence<FieldElement> contract_addresses, sequence<U256> token_ids, TokenUpdateCallback callback);
+    
+    // Subscribe to transaction updates
+    [Async, Throws=DojoError]
+    u64 subscribe_transaction_updates(TransactionFilter? filter, TransactionUpdateCallback callback);
+    
+    // Subscribe to starknet event updates
+    [Async, Throws=DojoError]
+    u64 subscribe_event_updates(sequence<KeysClause> keys, EventUpdateCallback callback);
+    
+    // Cancel a subscription
+    [Throws=DojoError]
+    void cancel_subscription(u64 subscription_id);
 };
