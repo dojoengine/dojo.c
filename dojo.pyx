@@ -54,15 +54,10 @@ cdef extern from *:
     FixedLen # = 0,
     VariableLen # = 1,
 
-  cdef struct Account:
+  cdef struct ToriiClient:
     pass
 
-  cdef struct Provider:
-    pass
-
-  cdef struct Subscription:
-    pass
-
+  # Main Dojo client for interacting with the Torii indexer
   cdef struct ToriiClient:
     pass
 
