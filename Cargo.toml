@@ -49,6 +49,10 @@ gloo-utils = { version = "0.2.0", features = ["serde"] }
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
 chrono = "0.4.41"
+uniffi = "0.30"
+uniffi_bindgen = "0.30"
+thiserror = "2"
+hex = "0.4"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 axum = "0.8.1"
@@ -70,10 +74,15 @@ base64 = "0.22.1"
 # cbindgen = { git = "https://github.com/flaviojs/cbindgen_tmp", branch = "resolve-order-dependencies-clike" }
 # cbindgen = "0.29"
 cbindgen = { git = "https://github.com/Larkooo/cbindgen", branch = "no-c-forward-enum" }
+uniffi = { version = "0.30", features = ["build"] }
 
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.33"
+uniffi = { version = "0.30", features = ["bindgen-tests"] }
+
+[features]
+default = []
 
 [patch.crates-io]
 crunchy = { git = "https://github.com/nmathewson/crunchy", branch = "cross-compilation-fix" }
