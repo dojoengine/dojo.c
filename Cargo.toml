@@ -49,10 +49,12 @@ gloo-utils = { version = "0.2.0", features = ["serde"] }
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
 chrono = "0.4.41"
-uniffi = "0.30"
+uniffi = { version = "0.30", features = ["bindgen", "cli"] }
 uniffi_bindgen = "0.30"
+camino = "1.1"
 thiserror = "2"
 hex = "0.4"
+cargo_metadata = "0.19"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 axum = "0.8.1"
@@ -67,6 +69,18 @@ directories = "6.0.0"
 tower-http = { version = "0.6.2", features = ["cors"] }
 base64 = "0.22.1"
 
+# UniFFI bindgen binaries using uniffi_bindgen library
+[[bin]]
+name = "uniffi-bindgen-swift"
+path = "src/bin/uniffi-bindgen-swift.rs"
+
+[[bin]]
+name = "uniffi-bindgen-kotlin"
+path = "src/bin/uniffi-bindgen-kotlin.rs"
+
+[[bin]]
+name = "uniffi-bindgen-python"
+path = "src/bin/uniffi-bindgen-python.rs"
 
 [build-dependencies]
 # this addresses issue with cyclical dependencies when generating C header
