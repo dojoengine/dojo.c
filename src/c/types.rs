@@ -82,37 +82,6 @@ impl<T> From<COption<T>> for Option<T> {
 
 #[derive(Debug, Clone)]
 #[repr(C)]
-pub struct Policy {
-    pub target: FieldElement,
-    pub method: *const c_char,
-    pub description: *const c_char,
-}
-
-impl From<Policy> for crate::types::Policy {
-    fn from(val: Policy) -> Self {
-        crate::types::Policy {
-            target: val.target.into(),
-            method: unsafe { CStr::from_ptr(val.method).to_string_lossy().to_string() },
-            description: unsafe { CStr::from_ptr(val.description).to_string_lossy().to_string() },
-        }
-    }
-}
-
-impl From<Policy> for account_sdk::account::session::policy::CallPolicy {
-    fn from(val: Policy) -> Self {
-        account_sdk::account::session::policy::CallPolicy {
-            contract_address: val.target.into(),
-            selector: get_selector_from_name(&unsafe {
-                CStr::from_ptr(val.method).to_string_lossy().to_string()
-            })
-            .unwrap(),
-            authorized: Some(true),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-#[repr(C)]
 pub struct Controller {
     pub address: FieldElement,
     pub username: *const c_char,
