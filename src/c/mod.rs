@@ -10,6 +10,7 @@ use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use crypto_bigint::U256;
 use dojo_world::contracts::naming::compute_selector_from_tag;
 use futures::FutureExt;
+use lazy_static::lazy_static;
 use starknet::accounts::{
     Account as StarknetAccount, ConnectedAccount, ExecutionEncoding, SingleOwnerAccount,
 };
@@ -29,8 +30,8 @@ use torii_proto::Message;
 use types::{
     Achievement, AchievementProgression, Activity, AggregationEntry, BlockId, CArray, COption,
     Call, Clause, Contract, Controller, Entity, Error, Event, KeysClause, Page,
-    PlayerAchievementEntry, Query, Result, Signature, Struct, Token, TokenBalance,
-    TokenContract, TokenTransfer, TokenTransferQuery, ToriiClient, Ty, World,
+    PlayerAchievementEntry, Query, Result, Signature, Struct, Token, TokenBalance, TokenContract,
+    TokenTransfer, TokenTransferQuery, ToriiClient, Ty, World,
 };
 
 use crate::c::types::{
@@ -39,12 +40,8 @@ use crate::c::types::{
     TransactionFilter, TransactionQuery,
 };
 use crate::constants;
-use crate::types::{
-    Account, Provider,
-    Subscription,
-};
+use crate::types::{Account, Provider, Subscription};
 use crate::utils::watch_tx;
-use lazy_static::lazy_static;
 
 lazy_static! {
     static ref RUNTIME: Arc<Runtime> =

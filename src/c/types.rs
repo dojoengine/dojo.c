@@ -80,7 +80,6 @@ impl<T> From<COption<T>> for Option<T> {
     }
 }
 
-
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub struct Controller {
