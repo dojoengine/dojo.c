@@ -1126,6 +1126,7 @@ dependencies = [
  "dojo-world",
  "futures",
  "futures-channel",
+ "futures-util",
  "gloo-timers",
  "gloo-utils",
  "hex",
