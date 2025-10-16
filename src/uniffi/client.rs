@@ -34,7 +34,7 @@ pub trait EventUpdateCallback: Send + Sync {
 
 /// Main Dojo client for interacting with the Torii indexer
 pub struct ToriiClient {
-    inner: torii_client::Client,
+    inner: Arc<torii_client::Client>,
     subscriptions: Arc<Mutex<HashMap<u64, JoinHandle<()>>>>,
     next_sub_id: Arc<AtomicU64>,
 }
@@ -45,8 +45,9 @@ impl ToriiClient {
         let client = torii_client::Client::new(torii_url)
             .await
             .map_err(|_e| DojoError::ConnectionError)?;
+        
         Ok(Self {
-            inner: client,
+            inner: Arc::new(client),
             subscriptions: Arc::new(Mutex::new(HashMap::new())),
             next_sub_id: Arc::new(AtomicU64::new(0)),
         })
@@ -60,8 +61,9 @@ impl ToriiClient {
         let client = torii_client::Client::new_with_config(torii_url, max_message_size as usize)
             .await
             .map_err(|_e| DojoError::ConnectionError)?;
+        
         Ok(Self {
-            inner: client,
+            inner: Arc::new(client),
             subscriptions: Arc::new(Mutex::new(HashMap::new())),
             next_sub_id: Arc::new(AtomicU64::new(0)),
         })
@@ -96,11 +98,12 @@ impl ToriiClient {
             .iter()
             .map(field_element_to_felt)
             .collect();
+        let addrs = addrs?;
         
         let worlds = self.inner
-            .worlds(addrs?)
+            .worlds(addrs)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(worlds.into_iter().map(|w| w.into()).collect())
     }
@@ -111,7 +114,7 @@ impl ToriiClient {
         let page = self.inner
             .controllers(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(PageController {
             items: page.items.into_iter().map(|c| c.into()).collect(),
@@ -125,7 +128,7 @@ impl ToriiClient {
         let contracts = self.inner
             .contracts(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(contracts.into_iter().map(|c| c.into()).collect())
     }
@@ -136,7 +139,7 @@ impl ToriiClient {
         let page = self.inner
             .tokens(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(PageToken {
             items: page.items.into_iter().map(|t| t.into()).collect(),
@@ -150,7 +153,7 @@ impl ToriiClient {
         let page = self.inner
             .token_balances(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(PageTokenBalance {
             items: page.items.into_iter().map(|b| b.into()).collect(),
@@ -164,7 +167,7 @@ impl ToriiClient {
         let page = self.inner
             .token_contracts(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(PageTokenContract {
             items: page.items.into_iter().map(|tc| tc.into()).collect(),
@@ -178,7 +181,7 @@ impl ToriiClient {
         let page = self.inner
             .token_transfers(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(PageTokenTransfer {
             items: page.items.into_iter().map(|t| t.into()).collect(),
@@ -192,7 +195,7 @@ impl ToriiClient {
         let page = self.inner
             .transactions(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(PageTransaction {
             items: page.items.into_iter().map(|t| t.into()).collect(),
@@ -206,7 +209,7 @@ impl ToriiClient {
         let page = self.inner
             .aggregations(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(PageAggregationEntry {
             items: page.items.into_iter().map(|a| a.into()).collect(),
@@ -220,7 +223,7 @@ impl ToriiClient {
         let page = self.inner
             .activities(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(PageActivity {
             items: page.items.into_iter().map(|a| a.into()).collect(),
@@ -234,7 +237,7 @@ impl ToriiClient {
         let page = self.inner
             .achievements(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(PageAchievement {
             items: page.items.into_iter().map(|a| a.into()).collect(),
@@ -248,7 +251,7 @@ impl ToriiClient {
         let page = self.inner
             .player_achievements(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(PagePlayerAchievement {
             items: page.items.into_iter().map(|p| p.into()).collect(),
@@ -262,7 +265,7 @@ impl ToriiClient {
         let page = self.inner
             .entities(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(PageEntity {
             items: page.items.into_iter().map(|e| e.into()).collect(),
@@ -276,7 +279,7 @@ impl ToriiClient {
         let page = self.inner
             .event_messages(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(PageEntity {
             items: page.items.into_iter().map(|e| e.into()).collect(),
@@ -290,7 +293,7 @@ impl ToriiClient {
         let page = self.inner
             .starknet_events(q)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         Ok(PageEvent {
             items: page.items.into_iter().map(|e| e.into()).collect(),
@@ -303,7 +306,7 @@ impl ToriiClient {
         let rows = self.inner
             .sql(query)
             .await
-            .map_err(|_| DojoError::QueryError)?;
+            .map_err(|e| DojoError::QueryError(e.to_string()))?;
         
         rows.into_iter().map(|r| r.try_into()).collect()
     }
