@@ -1,0 +1,26 @@
+# UniFFI Configuration for Dojo
+# This file configures language-specific bindings generation
+
+# Global async runtime configuration
+[async_runtime]
+runtime = "tokio"
+
+[bindings.kotlin]
+package_name = "com.dojoengine.dojo"
+cdylib_name = "dojo_c"
+generate_immutable_records = true
+
+[bindings.swift]
+module_name = "DojoEngine"
+cdylib_name = "dojo_c"
+generate_immutable_records = true
+# Swift-specific naming conventions
+omit_argument_labels = false
+
+[bindings.python]
+module_name = "dojo"
+cdylib_name = "dojo_c"
+
+[bindings.ruby]
+module_name = "Dojo"
+cdylib_name = "dojo_c"

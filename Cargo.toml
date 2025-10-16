@@ -18,7 +18,7 @@ starknet-crypto = "0.8"
 starknet-types-core = { version = "0.2.0", features = ["arbitrary"] }
 
 parking_lot = "0.12.1"
-tokio = { version = "1.39.2", default-features = false, features = ["rt"] }
+tokio = { version = "1.39.2", default-features = false, features = ["rt", "rt-multi-thread", "macros"] }
 url = "2.5.0"
 anyhow = "1.0.89"
 serde = { version = "1.0.193", features = ["derive"] }
@@ -49,6 +49,13 @@ gloo-utils = { version = "0.2.0", features = ["serde"] }
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
 chrono = "0.4.41"
+uniffi = { version = "0.30", features = ["bindgen", "cli"] }
+uniffi_bindgen = "0.30"
+camino = "1.1"
+thiserror = "2"
+hex = "0.4"
+cargo_metadata = "0.19"
+futures-util = "0.3"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 axum = "0.8.1"
@@ -63,6 +70,18 @@ directories = "6.0.0"
 tower-http = { version = "0.6.2", features = ["cors"] }
 base64 = "0.22.1"
 
+# UniFFI bindgen binaries using uniffi_bindgen library
+[[bin]]
+name = "uniffi-bindgen-swift"
+path = "src/bin/uniffi-bindgen-swift.rs"
+
+[[bin]]
+name = "uniffi-bindgen-kotlin"
+path = "src/bin/uniffi-bindgen-kotlin.rs"
+
+[[bin]]
+name = "uniffi-bindgen-python"
+path = "src/bin/uniffi-bindgen-python.rs"
 
 [build-dependencies]
 # this addresses issue with cyclical dependencies when generating C header
@@ -70,10 +89,15 @@ base64 = "0.22.1"
 # cbindgen = { git = "https://github.com/flaviojs/cbindgen_tmp", branch = "resolve-order-dependencies-clike" }
 # cbindgen = "0.29"
 cbindgen = { git = "https://github.com/Larkooo/cbindgen", branch = "no-c-forward-enum" }
+uniffi = { version = "0.30", features = ["build"] }
 
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.33"
+uniffi = { version = "0.30", features = ["bindgen-tests"] }
+
+[features]
+default = []
 
 [patch.crates-io]
 crunchy = { git = "https://github.com/nmathewson/crunchy", branch = "cross-compilation-fix" }
