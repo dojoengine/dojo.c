@@ -414,7 +414,13 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
 
 
 // Public interface members begin here.
-
+// Magic number for the Rust proxy to call using the same mechanism as every other method,
+// to free the callback once it's dropped by Rust.
+private let IDX_CALLBACK_FREE: Int32 = 0
+// Callback return codes
+private let UNIFFI_CALLBACK_SUCCESS: Int32 = 0
+private let UNIFFI_CALLBACK_ERROR: Int32 = 1
+private let UNIFFI_CALLBACK_UNEXPECTED_ERROR: Int32 = 2
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
@@ -636,6 +642,8 @@ public protocol ToriiClientProtocol: AnyObject, Sendable {
     
     func aggregations(query: AggregationQuery) async throws  -> PageAggregationEntry
     
+    func cancelSubscription(subscriptionId: UInt64) throws 
+    
     func contracts(query: ContractQuery) async throws  -> [Contract]
     
     func controllers(query: ControllerQuery) async throws  -> PageController
@@ -653,6 +661,16 @@ public protocol ToriiClientProtocol: AnyObject, Sendable {
     func sql(query: String) async throws  -> [SqlRow]
     
     func starknetEvents(query: EventQuery) async throws  -> PageEvent
+    
+    func subscribeEntityUpdates(clause: Clause?, worldAddresses: [FieldElement], callback: EntityUpdateCallback) async throws  -> UInt64
+    
+    func subscribeEventUpdates(keys: [KeysClause], callback: EventUpdateCallback) async throws  -> UInt64
+    
+    func subscribeTokenBalanceUpdates(contractAddresses: [FieldElement], accountAddresses: [FieldElement], tokenIds: [U256], callback: TokenBalanceUpdateCallback) async throws  -> UInt64
+    
+    func subscribeTokenUpdates(contractAddresses: [FieldElement], tokenIds: [U256], callback: TokenUpdateCallback) async throws  -> UInt64
+    
+    func subscribeTransactionUpdates(filter: TransactionFilter?, callback: TransactionUpdateCallback) async throws  -> UInt64
     
     func tokenBalances(query: TokenBalanceQuery) async throws  -> PageTokenBalance
     
@@ -795,6 +813,14 @@ open func aggregations(query: AggregationQuery)async throws  -> PageAggregationE
             liftFunc: FfiConverterTypePageAggregationEntry_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
+}
+    
+open func cancelSubscription(subscriptionId: UInt64)throws   {try rustCallWithError(FfiConverterTypeDojoError_lift) {
+    uniffi_dojo_c_fn_method_toriiclient_cancel_subscription(
+            self.uniffiCloneHandle(),
+        FfiConverterUInt64.lower(subscriptionId),$0
+    )
+}
 }
     
 open func contracts(query: ContractQuery)async throws  -> [Contract]  {
@@ -946,6 +972,91 @@ open func starknetEvents(query: EventQuery)async throws  -> PageEvent  {
             completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
             freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePageEvent_lift,
+            errorHandler: FfiConverterTypeDojoError_lift
+        )
+}
+    
+open func subscribeEntityUpdates(clause: Clause?, worldAddresses: [FieldElement], callback: EntityUpdateCallback)async throws  -> UInt64  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_dojo_c_fn_method_toriiclient_subscribe_entity_updates(
+                    self.uniffiCloneHandle(),
+                    FfiConverterOptionTypeClause.lower(clause),FfiConverterSequenceTypeFieldElement.lower(worldAddresses),FfiConverterCallbackInterfaceEntityUpdateCallback_lower(callback)
+                )
+            },
+            pollFunc: ffi_dojo_c_rust_future_poll_u64,
+            completeFunc: ffi_dojo_c_rust_future_complete_u64,
+            freeFunc: ffi_dojo_c_rust_future_free_u64,
+            liftFunc: FfiConverterUInt64.lift,
+            errorHandler: FfiConverterTypeDojoError_lift
+        )
+}
+    
+open func subscribeEventUpdates(keys: [KeysClause], callback: EventUpdateCallback)async throws  -> UInt64  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_dojo_c_fn_method_toriiclient_subscribe_event_updates(
+                    self.uniffiCloneHandle(),
+                    FfiConverterSequenceTypeKeysClause.lower(keys),FfiConverterCallbackInterfaceEventUpdateCallback_lower(callback)
+                )
+            },
+            pollFunc: ffi_dojo_c_rust_future_poll_u64,
+            completeFunc: ffi_dojo_c_rust_future_complete_u64,
+            freeFunc: ffi_dojo_c_rust_future_free_u64,
+            liftFunc: FfiConverterUInt64.lift,
+            errorHandler: FfiConverterTypeDojoError_lift
+        )
+}
+    
+open func subscribeTokenBalanceUpdates(contractAddresses: [FieldElement], accountAddresses: [FieldElement], tokenIds: [U256], callback: TokenBalanceUpdateCallback)async throws  -> UInt64  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_dojo_c_fn_method_toriiclient_subscribe_token_balance_updates(
+                    self.uniffiCloneHandle(),
+                    FfiConverterSequenceTypeFieldElement.lower(contractAddresses),FfiConverterSequenceTypeFieldElement.lower(accountAddresses),FfiConverterSequenceTypeU256.lower(tokenIds),FfiConverterCallbackInterfaceTokenBalanceUpdateCallback_lower(callback)
+                )
+            },
+            pollFunc: ffi_dojo_c_rust_future_poll_u64,
+            completeFunc: ffi_dojo_c_rust_future_complete_u64,
+            freeFunc: ffi_dojo_c_rust_future_free_u64,
+            liftFunc: FfiConverterUInt64.lift,
+            errorHandler: FfiConverterTypeDojoError_lift
+        )
+}
+    
+open func subscribeTokenUpdates(contractAddresses: [FieldElement], tokenIds: [U256], callback: TokenUpdateCallback)async throws  -> UInt64  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_dojo_c_fn_method_toriiclient_subscribe_token_updates(
+                    self.uniffiCloneHandle(),
+                    FfiConverterSequenceTypeFieldElement.lower(contractAddresses),FfiConverterSequenceTypeU256.lower(tokenIds),FfiConverterCallbackInterfaceTokenUpdateCallback_lower(callback)
+                )
+            },
+            pollFunc: ffi_dojo_c_rust_future_poll_u64,
+            completeFunc: ffi_dojo_c_rust_future_complete_u64,
+            freeFunc: ffi_dojo_c_rust_future_free_u64,
+            liftFunc: FfiConverterUInt64.lift,
+            errorHandler: FfiConverterTypeDojoError_lift
+        )
+}
+    
+open func subscribeTransactionUpdates(filter: TransactionFilter?, callback: TransactionUpdateCallback)async throws  -> UInt64  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_dojo_c_fn_method_toriiclient_subscribe_transaction_updates(
+                    self.uniffiCloneHandle(),
+                    FfiConverterOptionTypeTransactionFilter.lower(filter),FfiConverterCallbackInterfaceTransactionUpdateCallback_lower(callback)
+                )
+            },
+            pollFunc: ffi_dojo_c_rust_future_poll_u64,
+            completeFunc: ffi_dojo_c_rust_future_complete_u64,
+            freeFunc: ffi_dojo_c_rust_future_free_u64,
+            liftFunc: FfiConverterUInt64.lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
 }
@@ -5340,6 +5451,8 @@ public enum DojoError: Swift.Error, Equatable, Hashable, Foundation.LocalizedErr
     
     case QueryError(message: String)
     
+    case SubscriptionError(message: String)
+    
 
     
 
@@ -5395,6 +5508,10 @@ public struct FfiConverterTypeDojoError: FfiConverterRustBuffer {
             message: try FfiConverterString.read(from: &buf)
         )
         
+        case 8: return .SubscriptionError(
+            message: try FfiConverterString.read(from: &buf)
+        )
+        
 
         default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -5420,6 +5537,8 @@ public struct FfiConverterTypeDojoError: FfiConverterRustBuffer {
             writeInt(&buf, Int32(6))
         case .QueryError(_ /* message is ignored*/):
             writeInt(&buf, Int32(7))
+        case .SubscriptionError(_ /* message is ignored*/):
+            writeInt(&buf, Int32(8))
 
         
         }
@@ -6313,6 +6432,756 @@ public func FfiConverterTypeValueType_lower(_ value: ValueType) -> RustBuffer {
 }
 
 
+
+
+
+public protocol EntityUpdateCallback: AnyObject, Sendable {
+    
+    func onUpdate(entity: Entity) 
+    
+    func onError(error: String) 
+    
+}
+
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+fileprivate struct UniffiCallbackInterfaceEntityUpdateCallback {
+
+    // Create the VTable using a series of closures.
+    // Swift automatically converts these into C callback functions.
+    //
+    // This creates 1-element array, since this seems to be the only way to construct a const
+    // pointer that we can pass to the Rust code.
+    static let vtable: [UniffiVTableCallbackInterfaceEntityUpdateCallback] = [UniffiVTableCallbackInterfaceEntityUpdateCallback(
+        uniffiFree: { (uniffiHandle: UInt64) -> () in
+            do {
+                try FfiConverterCallbackInterfaceEntityUpdateCallback.handleMap.remove(handle: uniffiHandle)
+            } catch {
+                print("Uniffi callback interface EntityUpdateCallback: handle missing in uniffiFree")
+            }
+        },
+        uniffiClone: { (uniffiHandle: UInt64) -> UInt64 in
+            do {
+                return try FfiConverterCallbackInterfaceEntityUpdateCallback.handleMap.clone(handle: uniffiHandle)
+            } catch {
+                fatalError("Uniffi callback interface EntityUpdateCallback: handle missing in uniffiClone")
+            }
+        },
+        onUpdate: { (
+            uniffiHandle: UInt64,
+            entity: RustBuffer,
+            uniffiOutReturn: UnsafeMutableRawPointer,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> () in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceEntityUpdateCallback.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return uniffiObj.onUpdate(
+                     entity: try FfiConverterTypeEntity_lift(entity)
+                )
+            }
+
+            
+            let writeReturn = { () }
+            uniffiTraitInterfaceCall(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn
+            )
+        },
+        onError: { (
+            uniffiHandle: UInt64,
+            error: RustBuffer,
+            uniffiOutReturn: UnsafeMutableRawPointer,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> () in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceEntityUpdateCallback.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return uniffiObj.onError(
+                     error: try FfiConverterString.lift(error)
+                )
+            }
+
+            
+            let writeReturn = { () }
+            uniffiTraitInterfaceCall(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn
+            )
+        }
+    )]
+}
+
+private func uniffiCallbackInitEntityUpdateCallback() {
+    uniffi_dojo_c_fn_init_callback_vtable_entityupdatecallback(UniffiCallbackInterfaceEntityUpdateCallback.vtable)
+}
+
+// FfiConverter protocol for callback interfaces
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterCallbackInterfaceEntityUpdateCallback {
+    fileprivate static let handleMap = UniffiHandleMap<EntityUpdateCallback>()
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+extension FfiConverterCallbackInterfaceEntityUpdateCallback : FfiConverter {
+    typealias SwiftType = EntityUpdateCallback
+    typealias FfiType = UInt64
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func lift(_ handle: UInt64) throws -> SwiftType {
+        try handleMap.get(handle: handle)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        let handle: UInt64 = try readInt(&buf)
+        return try lift(handle)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func lower(_ v: SwiftType) -> UInt64 {
+        return handleMap.insert(obj: v)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func write(_ v: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(v))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterCallbackInterfaceEntityUpdateCallback_lift(_ handle: UInt64) throws -> EntityUpdateCallback {
+    return try FfiConverterCallbackInterfaceEntityUpdateCallback.lift(handle)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterCallbackInterfaceEntityUpdateCallback_lower(_ v: EntityUpdateCallback) -> UInt64 {
+    return FfiConverterCallbackInterfaceEntityUpdateCallback.lower(v)
+}
+
+
+
+
+public protocol EventUpdateCallback: AnyObject, Sendable {
+    
+    func onUpdate(event: Event) 
+    
+    func onError(error: String) 
+    
+}
+
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+fileprivate struct UniffiCallbackInterfaceEventUpdateCallback {
+
+    // Create the VTable using a series of closures.
+    // Swift automatically converts these into C callback functions.
+    //
+    // This creates 1-element array, since this seems to be the only way to construct a const
+    // pointer that we can pass to the Rust code.
+    static let vtable: [UniffiVTableCallbackInterfaceEventUpdateCallback] = [UniffiVTableCallbackInterfaceEventUpdateCallback(
+        uniffiFree: { (uniffiHandle: UInt64) -> () in
+            do {
+                try FfiConverterCallbackInterfaceEventUpdateCallback.handleMap.remove(handle: uniffiHandle)
+            } catch {
+                print("Uniffi callback interface EventUpdateCallback: handle missing in uniffiFree")
+            }
+        },
+        uniffiClone: { (uniffiHandle: UInt64) -> UInt64 in
+            do {
+                return try FfiConverterCallbackInterfaceEventUpdateCallback.handleMap.clone(handle: uniffiHandle)
+            } catch {
+                fatalError("Uniffi callback interface EventUpdateCallback: handle missing in uniffiClone")
+            }
+        },
+        onUpdate: { (
+            uniffiHandle: UInt64,
+            event: RustBuffer,
+            uniffiOutReturn: UnsafeMutableRawPointer,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> () in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceEventUpdateCallback.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return uniffiObj.onUpdate(
+                     event: try FfiConverterTypeEvent_lift(event)
+                )
+            }
+
+            
+            let writeReturn = { () }
+            uniffiTraitInterfaceCall(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn
+            )
+        },
+        onError: { (
+            uniffiHandle: UInt64,
+            error: RustBuffer,
+            uniffiOutReturn: UnsafeMutableRawPointer,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> () in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceEventUpdateCallback.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return uniffiObj.onError(
+                     error: try FfiConverterString.lift(error)
+                )
+            }
+
+            
+            let writeReturn = { () }
+            uniffiTraitInterfaceCall(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn
+            )
+        }
+    )]
+}
+
+private func uniffiCallbackInitEventUpdateCallback() {
+    uniffi_dojo_c_fn_init_callback_vtable_eventupdatecallback(UniffiCallbackInterfaceEventUpdateCallback.vtable)
+}
+
+// FfiConverter protocol for callback interfaces
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterCallbackInterfaceEventUpdateCallback {
+    fileprivate static let handleMap = UniffiHandleMap<EventUpdateCallback>()
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+extension FfiConverterCallbackInterfaceEventUpdateCallback : FfiConverter {
+    typealias SwiftType = EventUpdateCallback
+    typealias FfiType = UInt64
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func lift(_ handle: UInt64) throws -> SwiftType {
+        try handleMap.get(handle: handle)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        let handle: UInt64 = try readInt(&buf)
+        return try lift(handle)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func lower(_ v: SwiftType) -> UInt64 {
+        return handleMap.insert(obj: v)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func write(_ v: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(v))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterCallbackInterfaceEventUpdateCallback_lift(_ handle: UInt64) throws -> EventUpdateCallback {
+    return try FfiConverterCallbackInterfaceEventUpdateCallback.lift(handle)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterCallbackInterfaceEventUpdateCallback_lower(_ v: EventUpdateCallback) -> UInt64 {
+    return FfiConverterCallbackInterfaceEventUpdateCallback.lower(v)
+}
+
+
+
+
+public protocol TokenBalanceUpdateCallback: AnyObject, Sendable {
+    
+    func onUpdate(balance: TokenBalance) 
+    
+    func onError(error: String) 
+    
+}
+
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+fileprivate struct UniffiCallbackInterfaceTokenBalanceUpdateCallback {
+
+    // Create the VTable using a series of closures.
+    // Swift automatically converts these into C callback functions.
+    //
+    // This creates 1-element array, since this seems to be the only way to construct a const
+    // pointer that we can pass to the Rust code.
+    static let vtable: [UniffiVTableCallbackInterfaceTokenBalanceUpdateCallback] = [UniffiVTableCallbackInterfaceTokenBalanceUpdateCallback(
+        uniffiFree: { (uniffiHandle: UInt64) -> () in
+            do {
+                try FfiConverterCallbackInterfaceTokenBalanceUpdateCallback.handleMap.remove(handle: uniffiHandle)
+            } catch {
+                print("Uniffi callback interface TokenBalanceUpdateCallback: handle missing in uniffiFree")
+            }
+        },
+        uniffiClone: { (uniffiHandle: UInt64) -> UInt64 in
+            do {
+                return try FfiConverterCallbackInterfaceTokenBalanceUpdateCallback.handleMap.clone(handle: uniffiHandle)
+            } catch {
+                fatalError("Uniffi callback interface TokenBalanceUpdateCallback: handle missing in uniffiClone")
+            }
+        },
+        onUpdate: { (
+            uniffiHandle: UInt64,
+            balance: RustBuffer,
+            uniffiOutReturn: UnsafeMutableRawPointer,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> () in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceTokenBalanceUpdateCallback.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return uniffiObj.onUpdate(
+                     balance: try FfiConverterTypeTokenBalance_lift(balance)
+                )
+            }
+
+            
+            let writeReturn = { () }
+            uniffiTraitInterfaceCall(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn
+            )
+        },
+        onError: { (
+            uniffiHandle: UInt64,
+            error: RustBuffer,
+            uniffiOutReturn: UnsafeMutableRawPointer,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> () in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceTokenBalanceUpdateCallback.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return uniffiObj.onError(
+                     error: try FfiConverterString.lift(error)
+                )
+            }
+
+            
+            let writeReturn = { () }
+            uniffiTraitInterfaceCall(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn
+            )
+        }
+    )]
+}
+
+private func uniffiCallbackInitTokenBalanceUpdateCallback() {
+    uniffi_dojo_c_fn_init_callback_vtable_tokenbalanceupdatecallback(UniffiCallbackInterfaceTokenBalanceUpdateCallback.vtable)
+}
+
+// FfiConverter protocol for callback interfaces
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterCallbackInterfaceTokenBalanceUpdateCallback {
+    fileprivate static let handleMap = UniffiHandleMap<TokenBalanceUpdateCallback>()
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+extension FfiConverterCallbackInterfaceTokenBalanceUpdateCallback : FfiConverter {
+    typealias SwiftType = TokenBalanceUpdateCallback
+    typealias FfiType = UInt64
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func lift(_ handle: UInt64) throws -> SwiftType {
+        try handleMap.get(handle: handle)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        let handle: UInt64 = try readInt(&buf)
+        return try lift(handle)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func lower(_ v: SwiftType) -> UInt64 {
+        return handleMap.insert(obj: v)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func write(_ v: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(v))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterCallbackInterfaceTokenBalanceUpdateCallback_lift(_ handle: UInt64) throws -> TokenBalanceUpdateCallback {
+    return try FfiConverterCallbackInterfaceTokenBalanceUpdateCallback.lift(handle)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterCallbackInterfaceTokenBalanceUpdateCallback_lower(_ v: TokenBalanceUpdateCallback) -> UInt64 {
+    return FfiConverterCallbackInterfaceTokenBalanceUpdateCallback.lower(v)
+}
+
+
+
+
+public protocol TokenUpdateCallback: AnyObject, Sendable {
+    
+    func onUpdate(token: Token) 
+    
+    func onError(error: String) 
+    
+}
+
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+fileprivate struct UniffiCallbackInterfaceTokenUpdateCallback {
+
+    // Create the VTable using a series of closures.
+    // Swift automatically converts these into C callback functions.
+    //
+    // This creates 1-element array, since this seems to be the only way to construct a const
+    // pointer that we can pass to the Rust code.
+    static let vtable: [UniffiVTableCallbackInterfaceTokenUpdateCallback] = [UniffiVTableCallbackInterfaceTokenUpdateCallback(
+        uniffiFree: { (uniffiHandle: UInt64) -> () in
+            do {
+                try FfiConverterCallbackInterfaceTokenUpdateCallback.handleMap.remove(handle: uniffiHandle)
+            } catch {
+                print("Uniffi callback interface TokenUpdateCallback: handle missing in uniffiFree")
+            }
+        },
+        uniffiClone: { (uniffiHandle: UInt64) -> UInt64 in
+            do {
+                return try FfiConverterCallbackInterfaceTokenUpdateCallback.handleMap.clone(handle: uniffiHandle)
+            } catch {
+                fatalError("Uniffi callback interface TokenUpdateCallback: handle missing in uniffiClone")
+            }
+        },
+        onUpdate: { (
+            uniffiHandle: UInt64,
+            token: RustBuffer,
+            uniffiOutReturn: UnsafeMutableRawPointer,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> () in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceTokenUpdateCallback.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return uniffiObj.onUpdate(
+                     token: try FfiConverterTypeToken_lift(token)
+                )
+            }
+
+            
+            let writeReturn = { () }
+            uniffiTraitInterfaceCall(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn
+            )
+        },
+        onError: { (
+            uniffiHandle: UInt64,
+            error: RustBuffer,
+            uniffiOutReturn: UnsafeMutableRawPointer,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> () in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceTokenUpdateCallback.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return uniffiObj.onError(
+                     error: try FfiConverterString.lift(error)
+                )
+            }
+
+            
+            let writeReturn = { () }
+            uniffiTraitInterfaceCall(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn
+            )
+        }
+    )]
+}
+
+private func uniffiCallbackInitTokenUpdateCallback() {
+    uniffi_dojo_c_fn_init_callback_vtable_tokenupdatecallback(UniffiCallbackInterfaceTokenUpdateCallback.vtable)
+}
+
+// FfiConverter protocol for callback interfaces
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterCallbackInterfaceTokenUpdateCallback {
+    fileprivate static let handleMap = UniffiHandleMap<TokenUpdateCallback>()
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+extension FfiConverterCallbackInterfaceTokenUpdateCallback : FfiConverter {
+    typealias SwiftType = TokenUpdateCallback
+    typealias FfiType = UInt64
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func lift(_ handle: UInt64) throws -> SwiftType {
+        try handleMap.get(handle: handle)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        let handle: UInt64 = try readInt(&buf)
+        return try lift(handle)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func lower(_ v: SwiftType) -> UInt64 {
+        return handleMap.insert(obj: v)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func write(_ v: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(v))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterCallbackInterfaceTokenUpdateCallback_lift(_ handle: UInt64) throws -> TokenUpdateCallback {
+    return try FfiConverterCallbackInterfaceTokenUpdateCallback.lift(handle)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterCallbackInterfaceTokenUpdateCallback_lower(_ v: TokenUpdateCallback) -> UInt64 {
+    return FfiConverterCallbackInterfaceTokenUpdateCallback.lower(v)
+}
+
+
+
+
+public protocol TransactionUpdateCallback: AnyObject, Sendable {
+    
+    func onUpdate(transaction: Transaction) 
+    
+    func onError(error: String) 
+    
+}
+
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+fileprivate struct UniffiCallbackInterfaceTransactionUpdateCallback {
+
+    // Create the VTable using a series of closures.
+    // Swift automatically converts these into C callback functions.
+    //
+    // This creates 1-element array, since this seems to be the only way to construct a const
+    // pointer that we can pass to the Rust code.
+    static let vtable: [UniffiVTableCallbackInterfaceTransactionUpdateCallback] = [UniffiVTableCallbackInterfaceTransactionUpdateCallback(
+        uniffiFree: { (uniffiHandle: UInt64) -> () in
+            do {
+                try FfiConverterCallbackInterfaceTransactionUpdateCallback.handleMap.remove(handle: uniffiHandle)
+            } catch {
+                print("Uniffi callback interface TransactionUpdateCallback: handle missing in uniffiFree")
+            }
+        },
+        uniffiClone: { (uniffiHandle: UInt64) -> UInt64 in
+            do {
+                return try FfiConverterCallbackInterfaceTransactionUpdateCallback.handleMap.clone(handle: uniffiHandle)
+            } catch {
+                fatalError("Uniffi callback interface TransactionUpdateCallback: handle missing in uniffiClone")
+            }
+        },
+        onUpdate: { (
+            uniffiHandle: UInt64,
+            transaction: RustBuffer,
+            uniffiOutReturn: UnsafeMutableRawPointer,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> () in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceTransactionUpdateCallback.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return uniffiObj.onUpdate(
+                     transaction: try FfiConverterTypeTransaction_lift(transaction)
+                )
+            }
+
+            
+            let writeReturn = { () }
+            uniffiTraitInterfaceCall(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn
+            )
+        },
+        onError: { (
+            uniffiHandle: UInt64,
+            error: RustBuffer,
+            uniffiOutReturn: UnsafeMutableRawPointer,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> () in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceTransactionUpdateCallback.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return uniffiObj.onError(
+                     error: try FfiConverterString.lift(error)
+                )
+            }
+
+            
+            let writeReturn = { () }
+            uniffiTraitInterfaceCall(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn
+            )
+        }
+    )]
+}
+
+private func uniffiCallbackInitTransactionUpdateCallback() {
+    uniffi_dojo_c_fn_init_callback_vtable_transactionupdatecallback(UniffiCallbackInterfaceTransactionUpdateCallback.vtable)
+}
+
+// FfiConverter protocol for callback interfaces
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterCallbackInterfaceTransactionUpdateCallback {
+    fileprivate static let handleMap = UniffiHandleMap<TransactionUpdateCallback>()
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+extension FfiConverterCallbackInterfaceTransactionUpdateCallback : FfiConverter {
+    typealias SwiftType = TransactionUpdateCallback
+    typealias FfiType = UInt64
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func lift(_ handle: UInt64) throws -> SwiftType {
+        try handleMap.get(handle: handle)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        let handle: UInt64 = try readInt(&buf)
+        return try lift(handle)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func lower(_ v: SwiftType) -> UInt64 {
+        return handleMap.insert(obj: v)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func write(_ v: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(v))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterCallbackInterfaceTransactionUpdateCallback_lift(_ handle: UInt64) throws -> TransactionUpdateCallback {
+    return try FfiConverterCallbackInterfaceTransactionUpdateCallback.lift(handle)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterCallbackInterfaceTransactionUpdateCallback_lower(_ v: TransactionUpdateCallback) -> UInt64 {
+    return FfiConverterCallbackInterfaceTransactionUpdateCallback.lower(v)
+}
+
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
@@ -6849,6 +7718,31 @@ fileprivate struct FfiConverterSequenceTypeEvent: FfiConverterRustBuffer {
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeEvent.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeKeysClause: FfiConverterRustBuffer {
+    typealias SwiftType = [KeysClause]
+
+    public static func write(_ value: [KeysClause], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeKeysClause.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [KeysClause] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [KeysClause]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeKeysClause.read(from: &buf))
         }
         return seq
     }
@@ -7614,6 +8508,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_dojo_c_checksum_method_toriiclient_aggregations() != 38469) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_dojo_c_checksum_method_toriiclient_cancel_subscription() != 30154) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_dojo_c_checksum_method_toriiclient_contracts() != 25010) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -7641,6 +8538,21 @@ private let initializationResult: InitializationResult = {
     if (uniffi_dojo_c_checksum_method_toriiclient_starknet_events() != 46078) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_dojo_c_checksum_method_toriiclient_subscribe_entity_updates() != 44939) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_c_checksum_method_toriiclient_subscribe_event_updates() != 43018) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_balance_updates() != 20) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_updates() != 10959) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_c_checksum_method_toriiclient_subscribe_transaction_updates() != 60034) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_dojo_c_checksum_method_toriiclient_token_balances() != 54254) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -7665,7 +8577,42 @@ private let initializationResult: InitializationResult = {
     if (uniffi_dojo_c_checksum_constructor_toriiclient_new_with_config() != 41101) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_dojo_c_checksum_method_entityupdatecallback_on_update() != 29314) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_c_checksum_method_entityupdatecallback_on_error() != 30422) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_c_checksum_method_eventupdatecallback_on_update() != 13422) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_c_checksum_method_eventupdatecallback_on_error() != 34950) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_c_checksum_method_tokenbalanceupdatecallback_on_update() != 11123) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_c_checksum_method_tokenbalanceupdatecallback_on_error() != 61336) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_c_checksum_method_tokenupdatecallback_on_update() != 40580) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_c_checksum_method_tokenupdatecallback_on_error() != 48181) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_c_checksum_method_transactionupdatecallback_on_update() != 22881) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_c_checksum_method_transactionupdatecallback_on_error() != 17505) {
+        return InitializationResult.apiChecksumMismatch
+    }
 
+    uniffiCallbackInitEntityUpdateCallback()
+    uniffiCallbackInitEventUpdateCallback()
+    uniffiCallbackInitTokenBalanceUpdateCallback()
+    uniffiCallbackInitTokenUpdateCallback()
+    uniffiCallbackInitTransactionUpdateCallback()
     return InitializationResult.ok
 }()
 

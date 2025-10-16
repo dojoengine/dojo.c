@@ -1,6 +1,10 @@
 # UniFFI Configuration for Dojo
 # This file configures language-specific bindings generation
 
+# Global async runtime configuration
+[async_runtime]
+runtime = "tokio"
+
 [bindings.kotlin]
 package_name = "com.dojoengine.dojo"
 cdylib_name = "dojo_c"

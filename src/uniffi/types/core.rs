@@ -48,8 +48,8 @@ pub enum DojoError {
     ConnectionError,
     #[error("Publish error")]
     PublishError,
-    #[error("Query error")]
-    QueryError,
+    #[error("Query error: {0}")]
+    QueryError(String),
     #[error("Subscription error")]
     SubscriptionError,
 }
