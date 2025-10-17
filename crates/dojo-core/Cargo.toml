@@ -1,5 +1,5 @@
 [package]
-name = "core"
+name = "dojo-core"
 version.workspace = true
 edition.workspace = true
 

@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/core",
+    "crates/dojo-core",
     "crates/c",
     "crates/wasm",
 ]
@@ -56,10 +56,11 @@ instant = { version = "0.1.13", features = ["wasm-bindgen"] }
 gloo-timers = { version = "0.3.0", features = ["futures"] }
 gloo-utils = { version = "0.2.0", features = ["serde"] }
 num-bigint = "0.4.6"
+console_error_panic_hook = "0.1.5"
 num-traits = "0.2.19"
 
 # Internal crates
-core = { path = "crates/core" }
+dojo-core = { path = "crates/dojo-core" }
 c = { path = "crates/c" }
 wasm = { path = "crates/wasm" }
 

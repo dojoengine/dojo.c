@@ -1453,3 +1453,25 @@ pub struct Achievements(pub Page<Achievement>);
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct PlayerAchievements(pub Page<PlayerAchievementEntry>);
+
+// WASM-specific client types
+#[wasm_bindgen]
+pub struct ToriiClient {
+    #[wasm_bindgen(skip)]
+    pub inner: std::sync::Arc<torii_client::Client>,
+}
+
+#[wasm_bindgen]
+pub struct Provider(pub(crate) std::sync::Arc<starknet::providers::JsonRpcClient<starknet::providers::jsonrpc::HttpTransport>>);
+
+#[wasm_bindgen]
+pub struct Account(pub(crate) starknet::accounts::SingleOwnerAccount<
+    std::sync::Arc<starknet::providers::JsonRpcClient<starknet::providers::jsonrpc::HttpTransport>>,
+    starknet::signers::LocalWallet,
+>);
+
+#[wasm_bindgen]
+pub struct Subscription {
+    pub id: u64,
+    pub(crate) trigger: stream_cancel::Trigger,
+}

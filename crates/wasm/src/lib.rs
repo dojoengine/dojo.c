@@ -5,19 +5,14 @@
 /// and Torii client interactions
 mod utils;
 
-use std::collections::HashMap;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use std::time::Duration;
 
 use cainome::cairo_serde::{self, CairoSerde};
-use crypto_bigint::U256;
 use dojo_world::contracts::naming::compute_selector_from_tag;
 use futures::{FutureExt, StreamExt};
 use js_sys::Array;
-use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde::Serialize;
 use starknet::accounts::{
     Account as _, ConnectedAccount as _, ExecutionEncoding, SingleOwnerAccount,
 };
@@ -28,18 +23,17 @@ use starknet::signers::LocalWallet;
 use starknet_crypto::poseidon_hash_many;
 use stream_cancel::{StreamExt as _, Tripwire};
 use tokio::sync::oneshot;
-use tsify_next::Tsify;
 use wasm_bindgen::prelude::*;
 
-use crate::constants;
-use crate::types::{Account, Provider, Subscription, ToriiClient};
-use crate::utils::watch_tx;
-use crate::wasm::types::{
-    ActivityQuery, AggregationQuery, ContractQuery, ControllerQuery, TokenBalanceQuery,
-    TokenContractQuery, TokenQuery, TokenTransferQuery, TransactionFilter, TransactionQuery,
-};
+use dojo_core::{constants, utils::watch_tx};
 
 mod types;
+
+use crate::types::{
+    Account, ActivityQuery, AggregationQuery, ContractQuery, ControllerQuery, Provider,
+    Subscription, TokenBalanceQuery, TokenContractQuery, TokenQuery, TokenTransferQuery,
+    ToriiClient, TransactionFilter, TransactionQuery,
+};
 
 use types::{
     Achievement, AchievementProgression, AchievementQuery, Achievements, Activities, Activity,
@@ -696,9 +690,7 @@ impl ToriiClient {
     /// Result containing ToriiClient instance or error
     #[wasm_bindgen(constructor)]
     pub async fn new(config: ClientConfig) -> Result<ToriiClient, JsValue> {
-        #[cfg(feature = "console-error-panic")]
         console_error_panic_hook::set_once();
-
         let ClientConfig { torii_url, .. } = config;
 
         let client = torii_client::Client::new(torii_url)
@@ -781,9 +773,6 @@ impl ToriiClient {
         filter: Option<TransactionFilter>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let filter: Option<torii_proto::TransactionFilter> = filter.map(|f| f.into()).into();
 
         let (sub_id_tx, sub_id_rx) = oneshot::channel();
@@ -875,9 +864,6 @@ impl ToriiClient {
         token_ids: Option<Vec<WasmU256>>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let contract_addresses = contract_addresses
             .unwrap_or_default()
             .iter()
@@ -1050,9 +1036,6 @@ impl ToriiClient {
     /// Result containing achievements or error
     #[wasm_bindgen(js_name = getAchievements)]
     pub async fn get_achievements(&self, query: AchievementQuery) -> Result<Achievements, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let query = query.into();
 
         let achievements = self
@@ -1076,9 +1059,6 @@ impl ToriiClient {
         &self,
         query: PlayerAchievementQuery,
     ) -> Result<PlayerAchievements, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let query = query.into();
 
         let player_achievements =
@@ -1119,9 +1099,6 @@ impl ToriiClient {
     /// Result containing matching entities or error
     #[wasm_bindgen(js_name = getEntities)]
     pub async fn get_entities(&self, query: Query) -> Result<Entities, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let results = self.inner.entities(query.into()).await;
 
         match results {
@@ -1144,9 +1121,6 @@ impl ToriiClient {
         limit: u32,
         cursor: Option<String>,
     ) -> Result<Entities, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let results = self
             .inner
             .entities(torii_proto::Query {
@@ -1179,9 +1153,6 @@ impl ToriiClient {
     /// Result containing matching event messages or error
     #[wasm_bindgen(js_name = getEventMessages)]
     pub async fn get_event_messages(&self, query: Query) -> Result<Entities, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let results = self.inner.event_messages(query.into()).await;
 
         match results {
@@ -1205,9 +1176,6 @@ impl ToriiClient {
         world_addresses: Option<Vec<String>>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let clause = clause.map(|c| c.into());
         let world_addresses = world_addresses
             .unwrap_or_default()
@@ -1309,9 +1277,6 @@ impl ToriiClient {
         world_addresses: Option<Vec<String>>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let clause = clause.map(|c| c.into());
         let world_addresses = world_addresses
             .unwrap_or_default()
@@ -1412,9 +1377,6 @@ impl ToriiClient {
         clauses: KeysClauses,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let clauses: Vec<_> = clauses.into_iter().map(|c| c.into()).collect();
         let (trigger, tripwire) = Tripwire::new();
         let (sub_id_tx, sub_id_rx) = oneshot::channel();
@@ -1480,9 +1442,6 @@ impl ToriiClient {
         contract_address: Option<String>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let contract_address = contract_address
             .map(|c| {
                 Felt::from_str(c.as_str()).map_err(|err| {
@@ -1559,9 +1518,6 @@ impl ToriiClient {
         token_ids: Option<Vec<WasmU256>>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let account_addresses = account_addresses
             .unwrap_or_default()
             .iter()
@@ -1707,9 +1663,6 @@ impl ToriiClient {
         token_ids: Option<Vec<WasmU256>>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let account_addresses = account_addresses
             .unwrap_or_default()
             .iter()
@@ -1806,9 +1759,6 @@ impl ToriiClient {
         entity_ids: Option<Vec<String>>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let aggregator_ids = aggregator_ids.unwrap_or_default();
         let entity_ids = entity_ids.unwrap_or_default();
 
@@ -1883,9 +1833,6 @@ impl ToriiClient {
         caller_addresses: Option<Vec<String>>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let world_addresses = world_addresses
             .unwrap_or_default()
             .iter()
@@ -2054,9 +2001,6 @@ impl ToriiClient {
         achievement_ids: Option<Vec<String>>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let world_addresses = world_addresses
             .unwrap_or_default()
             .into_iter()
@@ -2231,9 +2175,6 @@ impl ToriiClient {
     /// Result containing entity id of the offchain message or error
     #[wasm_bindgen(js_name = publishMessage)]
     pub async fn publish_message(&mut self, message: Message) -> Result<String, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let entity_id = self
             .inner
             .publish_message(message.into())
@@ -2255,9 +2196,6 @@ impl ToriiClient {
         &mut self,
         messages: Vec<Message>,
     ) -> Result<Vec<String>, JsValue> {
-        #[cfg(feature = "console-error-panic")]
-        console_error_panic_hook::set_once();
-
         let messages: Vec<torii_proto::Message> =
             messages.into_iter().map(|msg| msg.into()).collect::<Vec<_>>();
 

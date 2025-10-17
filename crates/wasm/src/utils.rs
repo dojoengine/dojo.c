@@ -7,7 +7,7 @@ use serde_json::Value as JsonValue;
 use wasm_bindgen::JsValue;
 
 use super::types::{EnumValue, Ty};
-use crate::wasm::types::FixedSizeArray;
+use crate::types::FixedSizeArray;
 
 fn json_value_to_js_value(json_value: &JsonValue) -> JsValue {
     JsValue::from_serde(json_value).unwrap()
@@ -142,6 +142,7 @@ pub fn pad_to_hex(input: &str) -> Result<String, String> {
 mod tests {
     use dojo_types::primitive::Primitive;
     use serde_json::json;
+    use starknet_crypto::Felt;
     use wasm_bindgen_test::*;
 
     use super::*;
@@ -222,7 +223,7 @@ mod tests {
 
         // Test ContractAddress (should be hex string)
         let primitive =
-            Primitive::ContractAddress(Some(starknet_types_core::felt::Felt::from(42u32)));
+            Primitive::ContractAddress(Some(Felt::from(42u32)));
         let json_val = primitive.to_json_value().unwrap();
         let js_val = json_value_to_js_value(&json_val);
         assert!(js_val.is_string());
