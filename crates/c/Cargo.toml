@@ -32,4 +32,3 @@ chrono.workspace = true
 
 [build-dependencies]
 cbindgen = { git = "https://github.com/Larkooo/cbindgen", branch = "no-c-forward-enum" }
-

@@ -30,10 +30,10 @@ use wasm_bindgen::prelude::*;
 mod types;
 
 use types::{
-    Achievement, AchievementProgression, AchievementQuery, Achievements, Activities, Activity,
+    AchievementProgression, AchievementQuery, Achievements, Activities, Activity,
     AggregationEntry, Aggregations, BlockId, Call, Calls, Clause, ClientConfig, Contract,
-    Contracts, Controller, Controllers, Entities, Entity, KeysClause, KeysClauses, Message, Model,
-    Page, PlayerAchievementQuery, PlayerAchievements, Query, Signature, Token, TokenBalance,
+    Contracts, Controllers, Entities, Entity, KeysClauses, Message,
+    PlayerAchievementQuery, PlayerAchievements, Query, Signature, Token, TokenBalance,
     TokenBalances, TokenContracts, TokenTransfer, TokenTransfers, Tokens, Transaction,
     Transactions, WasmU256,
 };
@@ -216,7 +216,7 @@ impl TypedData {
     /// Result containing encoded data as hex string or error
     #[wasm_bindgen]
     pub fn encode(&self, address: &str) -> Result<String, JsValue> {
-        let address = Felt::from_str(&address)
+        let address = Felt::from_str(address)
             .map_err(|err| JsValue::from(format!("failed to parse address: {err}")))?;
 
         self.0
@@ -311,6 +311,7 @@ impl Account {
     /// # Returns
     /// Result containing Account instance or error
     #[wasm_bindgen(constructor)]
+    #[allow(deprecated)]
     pub async fn new(
         provider: &Provider,
         private_key: &str,
@@ -689,6 +690,7 @@ impl ToriiClient {
     /// # Returns
     /// Result containing ToriiClient instance or error
     #[wasm_bindgen(constructor)]
+    #[allow(deprecated)]
     pub async fn new(config: ClientConfig) -> Result<ToriiClient, JsValue> {
         console_error_panic_hook::set_once();
         let ClientConfig { torii_url, .. } = config;
@@ -773,7 +775,7 @@ impl ToriiClient {
         filter: Option<TransactionFilter>,
         callback: js_sys::Function,
     ) -> Result<Subscription, JsValue> {
-        let filter: Option<torii_proto::TransactionFilter> = filter.map(|f| f.into()).into();
+        let filter: Option<torii_proto::TransactionFilter> = filter.map(|f| f.into());
 
         let (sub_id_tx, sub_id_rx) = oneshot::channel();
         let mut sub_id_tx = Some(sub_id_tx);
