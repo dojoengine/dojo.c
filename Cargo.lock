@@ -109,12 +109,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0674a1ddeecb70197781e945de4b3b8ffb61fa939a5597bcf48503737663100"
 
 [[package]]
-name = "arbitrary"
-version = "1.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
-
-[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -358,6 +352,32 @@ name = "bytes"
 version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
+
+[[package]]
+name = "c"
+version = "1.8.3"
+dependencies = [
+ "anyhow",
+ "cainome",
+ "cbindgen",
+ "chrono",
+ "crypto-bigint",
+ "dojo-core",
+ "dojo-types",
+ "dojo-world",
+ "futures",
+ "lazy_static",
+ "serde",
+ "serde_json",
+ "starknet",
+ "starknet-crypto",
+ "stream-cancel",
+ "tokio",
+ "tokio-stream",
+ "torii-client",
+ "torii-proto",
+ "url",
+]
 
 [[package]]
 name = "cainome"
@@ -745,6 +765,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 
 [[package]]
+name = "console_error_panic_hook"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a06aeb73f470f66dcdbf7223caeebb85984942f22f1adb2a088cf9668146bbbc"
+dependencies = [
+ "cfg-if",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "const-fnv1a-hash"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -929,44 +959,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "dojo-c"
+name = "dojo-core"
 version = "1.8.3"
 dependencies = [
  "anyhow",
- "cainome",
- "cbindgen",
- "chrono",
- "crypto-bigint",
  "dojo-types",
  "dojo-world",
- "futures",
- "futures-channel",
- "gloo-timers",
- "gloo-utils",
- "instant",
- "js-sys",
- "lazy_static",
- "num-bigint",
- "num-traits",
- "parking_lot",
- "serde",
- "serde-wasm-bindgen",
- "serde_json",
  "starknet",
  "starknet-crypto",
- "starknet-types-core",
  "stream-cancel",
  "tokio",
- "tokio-stream",
  "torii-client",
- "torii-grpc-client",
  "torii-proto",
- "tsify-next",
  "url",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "wasm-bindgen-test",
- "web-sys",
 ]
 
 [[package]]
@@ -3491,7 +3496,6 @@ version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c043ab183b1cb1daab10d592719d27f283e7ef7e7ac8accd243b4e70b4e1c0d8"
 dependencies = [
- "arbitrary",
  "blake2",
  "digest",
  "lambdaworks-crypto",
@@ -4465,6 +4469,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0562428422c63773dad2c345a1882263bbf4d65cf3f42e90921f787ef5ad58e7"
 dependencies = [
  "wit-bindgen",
+]
+
+[[package]]
+name = "wasm"
+version = "1.8.3"
+dependencies = [
+ "anyhow",
+ "cainome",
+ "chrono",
+ "console_error_panic_hook",
+ "crypto-bigint",
+ "dojo-core",
+ "dojo-types",
+ "dojo-world",
+ "futures",
+ "gloo-timers",
+ "gloo-utils",
+ "instant",
+ "js-sys",
+ "num-bigint",
+ "num-traits",
+ "serde",
+ "serde-wasm-bindgen",
+ "serde_json",
+ "starknet",
+ "starknet-crypto",
+ "stream-cancel",
+ "tokio",
+ "torii-client",
+ "torii-proto",
+ "tsify-next",
+ "url",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-bindgen-test",
+ "web-sys",
 ]
 
 [[package]]

@@ -1,0 +1,21 @@
+[package]
+name = "dojo-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+starknet.workspace = true
+starknet-crypto.workspace = true
+anyhow.workspace = true
+tokio.workspace = true
+url.workspace = true
+stream-cancel.workspace = true
+
+dojo-world.workspace = true
+dojo-types.workspace = true
+torii-client.workspace = true
+torii-proto.workspace = true
+
+[lib]
+crate-type = ["rlib"]
+
