@@ -1,22 +1,29 @@
-[package]
+[workspace]
+resolver = "2"
+members = [
+    "crates/core",
+    "crates/c",
+    "crates/wasm",
+]
+
+[workspace.package]
 edition = "2021"
-name = "dojo-c"
 version = "1.8.3"
 
-[lib]
-crate-type = ["cdylib", "rlib", "staticlib"]
-
-[dependencies]
+[workspace.dependencies]
+# Dojo dependencies
 dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "0afeb1bc" }
 dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "0afeb1bc" }
 torii-proto = { git = "https://github.com/dojoengine/torii", rev = "8378c63" }
 torii-client = { git = "https://github.com/dojoengine/torii", rev = "8378c63" }
 torii-grpc-client = { git = "https://github.com/dojoengine/torii", rev = "8378c63" }
 
+# Starknet dependencies
 starknet = "0.17.0"
 starknet-crypto = "0.8"
 starknet-types-core = { version = "0.2.0", features = ["arbitrary"] }
 
+# Core dependencies
 parking_lot = "0.12.1"
 tokio = { version = "1.39.2", default-features = false, features = ["rt"] }
 url = "2.5.0"
@@ -26,11 +33,14 @@ serde_json = "1.0.115"
 tokio-stream = "0.1.14"
 futures = "0.3.30"
 futures-channel = "0.3.30"
-wasm-bindgen = "0.2.92"
 stream-cancel = "0.8.2"
 cainome = "0.10.1"
 lazy_static = "1.5.0"
+crypto-bigint = "0.5.5"
+chrono = "0.4.41"
 
+# WASM dependencies
+wasm-bindgen = "0.2.92"
 serde-wasm-bindgen = "0.6.3"
 wasm-bindgen-futures = "0.4.39"
 js-sys = "0.3.77"
@@ -41,25 +51,17 @@ web-sys = { version = "0.3.77", features = [
   'WorkerGlobalScope',
   'console',
 ] }
-crypto-bigint = "0.5.5"
 tsify-next = { version = "0.5.4", features = ["js"] }
 instant = { version = "0.1.13", features = ["wasm-bindgen"] }
 gloo-timers = { version = "0.3.0", features = ["futures"] }
 gloo-utils = { version = "0.2.0", features = ["serde"] }
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
-chrono = "0.4.41"
 
-[build-dependencies]
-# this addresses issue with cyclical dependencies when generating C header
-# see. https://github.com/mozilla/cbindgen/issues/43
-# cbindgen = { git = "https://github.com/flaviojs/cbindgen_tmp", branch = "resolve-order-dependencies-clike" }
-# cbindgen = "0.29"
-cbindgen = { git = "https://github.com/Larkooo/cbindgen", branch = "no-c-forward-enum" }
-
-
-[dev-dependencies]
-wasm-bindgen-test = "0.3.33"
+# Internal crates
+core = { path = "crates/core" }
+c = { path = "crates/c" }
+wasm = { path = "crates/wasm" }
 
 [patch.crates-io]
 crunchy = { git = "https://github.com/nmathewson/crunchy", branch = "cross-compilation-fix" }

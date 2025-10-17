@@ -1,0 +1,35 @@
+[package]
+name = "c"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib", "staticlib"]
+
+[dependencies]
+core = { workspace = true }
+
+dojo-world.workspace = true
+dojo-types.workspace = true
+torii-proto.workspace = true
+torii-client.workspace = true
+
+starknet.workspace = true
+starknet-crypto.workspace = true
+
+tokio.workspace = true
+url.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio-stream.workspace = true
+futures.workspace = true
+stream-cancel.workspace = true
+cainome.workspace = true
+lazy_static.workspace = true
+crypto-bigint.workspace = true
+chrono.workspace = true
+
+[build-dependencies]
+cbindgen = { git = "https://github.com/Larkooo/cbindgen", branch = "no-c-forward-enum" }
+
