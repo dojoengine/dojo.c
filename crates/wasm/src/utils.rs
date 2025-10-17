@@ -222,8 +222,7 @@ mod tests {
         assert!(js_val.as_string().unwrap().starts_with("0x"));
 
         // Test ContractAddress (should be hex string)
-        let primitive =
-            Primitive::ContractAddress(Some(Felt::from(42u32)));
+        let primitive = Primitive::ContractAddress(Some(Felt::from(42u32)));
         let json_val = primitive.to_json_value().unwrap();
         let js_val = json_value_to_js_value(&json_val);
         assert!(js_val.is_string());

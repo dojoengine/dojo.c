@@ -1462,13 +1462,21 @@ pub struct ToriiClient {
 }
 
 #[wasm_bindgen]
-pub struct Provider(pub(crate) std::sync::Arc<starknet::providers::JsonRpcClient<starknet::providers::jsonrpc::HttpTransport>>);
+pub struct Provider(
+    pub(crate)  std::sync::Arc<
+        starknet::providers::JsonRpcClient<starknet::providers::jsonrpc::HttpTransport>,
+    >,
+);
 
 #[wasm_bindgen]
-pub struct Account(pub(crate) starknet::accounts::SingleOwnerAccount<
-    std::sync::Arc<starknet::providers::JsonRpcClient<starknet::providers::jsonrpc::HttpTransport>>,
-    starknet::signers::LocalWallet,
->);
+pub struct Account(
+    pub(crate)  starknet::accounts::SingleOwnerAccount<
+        std::sync::Arc<
+            starknet::providers::JsonRpcClient<starknet::providers::jsonrpc::HttpTransport>,
+        >,
+        starknet::signers::LocalWallet,
+    >,
+);
 
 #[wasm_bindgen]
 pub struct Subscription {

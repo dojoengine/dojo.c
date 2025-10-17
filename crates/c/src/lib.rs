@@ -8,6 +8,8 @@ use std::time::Duration;
 
 use cainome::cairo_serde::{self, ByteArray, CairoSerde};
 use crypto_bigint::U256;
+use dojo_core::constants;
+use dojo_core::utils::watch_tx;
 use dojo_world::contracts::naming::compute_selector_from_tag;
 use futures::FutureExt;
 use lazy_static::lazy_static;
@@ -36,10 +38,9 @@ use types::{
 
 use crate::types::{
     Account, AchievementQuery, ActivityQuery, AggregationQuery, ContractQuery, ControllerQuery,
-    PlayerAchievementQuery, Provider, Subscription, TokenBalanceQuery, TokenContractQuery, 
+    PlayerAchievementQuery, Provider, Subscription, TokenBalanceQuery, TokenContractQuery,
     TokenQuery, Transaction, TransactionFilter, TransactionQuery,
 };
-use dojo_core::{constants, utils::watch_tx};
 
 lazy_static! {
     static ref RUNTIME: Arc<Runtime> =

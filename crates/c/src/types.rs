@@ -2095,12 +2095,20 @@ impl From<torii_proto::AchievementProgression> for AchievementProgression {
 }
 
 // C-specific types for accounts and providers
-pub struct Provider(pub(crate) std::sync::Arc<starknet::providers::JsonRpcClient<starknet::providers::jsonrpc::HttpTransport>>);
+pub struct Provider(
+    pub(crate)  std::sync::Arc<
+        starknet::providers::JsonRpcClient<starknet::providers::jsonrpc::HttpTransport>,
+    >,
+);
 
-pub struct Account(pub(crate) starknet::accounts::SingleOwnerAccount<
-    std::sync::Arc<starknet::providers::JsonRpcClient<starknet::providers::jsonrpc::HttpTransport>>,
-    starknet::signers::LocalWallet,
->);
+pub struct Account(
+    pub(crate)  starknet::accounts::SingleOwnerAccount<
+        std::sync::Arc<
+            starknet::providers::JsonRpcClient<starknet::providers::jsonrpc::HttpTransport>,
+        >,
+        starknet::signers::LocalWallet,
+    >,
+);
 
 pub struct Subscription {
     pub id: u64,

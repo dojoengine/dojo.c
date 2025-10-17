@@ -9,6 +9,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use cainome::cairo_serde::{self, CairoSerde};
+use dojo_core::constants;
+use dojo_core::utils::watch_tx;
 use dojo_world::contracts::naming::compute_selector_from_tag;
 use futures::{FutureExt, StreamExt};
 use js_sys::Array;
@@ -25,15 +27,7 @@ use stream_cancel::{StreamExt as _, Tripwire};
 use tokio::sync::oneshot;
 use wasm_bindgen::prelude::*;
 
-use dojo_core::{constants, utils::watch_tx};
-
 mod types;
-
-use crate::types::{
-    Account, ActivityQuery, AggregationQuery, ContractQuery, ControllerQuery, Provider,
-    Subscription, TokenBalanceQuery, TokenContractQuery, TokenQuery, TokenTransferQuery,
-    ToriiClient, TransactionFilter, TransactionQuery,
-};
 
 use types::{
     Achievement, AchievementProgression, AchievementQuery, Achievements, Activities, Activity,
@@ -42,6 +36,12 @@ use types::{
     Page, PlayerAchievementQuery, PlayerAchievements, Query, Signature, Token, TokenBalance,
     TokenBalances, TokenContracts, TokenTransfer, TokenTransfers, Tokens, Transaction,
     Transactions, WasmU256,
+};
+
+use crate::types::{
+    Account, ActivityQuery, AggregationQuery, ContractQuery, ControllerQuery, Provider,
+    Subscription, TokenBalanceQuery, TokenContractQuery, TokenQuery, TokenTransferQuery,
+    ToriiClient, TransactionFilter, TransactionQuery,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
