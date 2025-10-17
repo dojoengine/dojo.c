@@ -1,7 +1,23 @@
 use std::env;
+use std::path::PathBuf;
 
 fn main() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+    
+    // Generate Swift bindings
+    let out_dir = PathBuf::from("./generated");
+    
+    // Only generate Swift bindings for non-wasm targets
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let bridges = vec!["src/swift/mod.rs"];
+        for path in &bridges {
+            println!("cargo:rerun-if-changed={}", path);
+        }
+        
+        swift_bridge_build::parse_bridges(bridges)
+            .write_all_concatenated(out_dir, env!("CARGO_PKG_NAME"));
+    }
 
     cbindgen::Builder::new()
         .with_config({
