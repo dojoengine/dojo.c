@@ -115,7 +115,9 @@ pub fn pad_to_hex(input: &str) -> Result<String, String> {
             Ok(v) => v,
             Err(_) => return Err(format!("Invalid hexadecimal input: {}", input)),
         }
-    } else if input.chars().all(|c| c.is_ascii_hexdigit()) && input.chars().any(|c| !c.is_ascii_digit()) {
+    } else if input.chars().all(|c| c.is_ascii_hexdigit())
+        && input.chars().any(|c| !c.is_ascii_digit())
+    {
         // Input contains non-decimal digits (a-f, A-F) without 0x prefix, assume hex
         match BigUint::from_str_radix(input, 16) {
             Ok(v) => v,

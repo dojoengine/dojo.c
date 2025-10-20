@@ -30,12 +30,11 @@ use wasm_bindgen::prelude::*;
 mod types;
 
 use types::{
-    AchievementProgression, AchievementQuery, Achievements, Activities, Activity,
-    AggregationEntry, Aggregations, BlockId, Call, Calls, Clause, ClientConfig, Contract,
-    Contracts, Controllers, Entities, Entity, KeysClauses, Message,
-    PlayerAchievementQuery, PlayerAchievements, Query, Signature, Token, TokenBalance,
-    TokenBalances, TokenContracts, TokenTransfer, TokenTransfers, Tokens, Transaction,
-    Transactions, WasmU256,
+    AchievementProgression, AchievementQuery, Achievements, Activities, Activity, AggregationEntry,
+    Aggregations, BlockId, Call, Calls, Clause, ClientConfig, Contract, Contracts, Controllers,
+    Entities, Entity, KeysClauses, Message, PlayerAchievementQuery, PlayerAchievements, Query,
+    Signature, Token, TokenBalance, TokenBalances, TokenContracts, TokenTransfer, TokenTransfers,
+    Tokens, Transaction, Transactions, WasmU256,
 };
 
 use crate::types::{

@@ -1,6 +1,6 @@
 mod types;
 
-use std::ffi::{CStr, CString, c_void};
+use std::ffi::{c_void, CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
 use std::sync::Arc;
@@ -21,7 +21,7 @@ use starknet::core::utils::get_contract_address;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Provider as _};
 use starknet::signers::{LocalWallet, SigningKey, VerifyingKey};
-use starknet_crypto::{Felt, poseidon_hash_many};
+use starknet_crypto::{poseidon_hash_many, Felt};
 use stream_cancel::{StreamExt as _, Tripwire};
 use tokio::runtime::Runtime;
 use tokio::sync::oneshot;
@@ -633,8 +633,8 @@ mod ffi {
     ///
     /// # Parameters
     /// * `client` - Pointer to ToriiClient instance
-    /// * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses, and
-    ///   pagination
+    /// * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses,
+    ///   and pagination
     ///
     /// # Returns
     /// Result containing Page of PlayerAchievementEntry or error
