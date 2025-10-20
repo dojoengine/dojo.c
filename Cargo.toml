@@ -65,7 +65,7 @@ num-traits = "0.2.19"
 dojo-core = { path = "crates/dojo-core" }
 c = { path = "crates/c" }
 wasm = { path = "crates/wasm" }
-uniffi = { path = "crates/uniffi" }
+dojo-uniffi = { path = "crates/uniffi" }
 
 [patch.crates-io]
 crunchy = { git = "https://github.com/nmathewson/crunchy", branch = "cross-compilation-fix" }

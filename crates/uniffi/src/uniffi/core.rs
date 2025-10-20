@@ -9,32 +9,9 @@ pub struct FieldElement(pub String);
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct U256(pub String);
 
-// Custom type converter implementations for UniFFI
-// Note: uniffi::custom_type! is called by the generated scaffolding from the UDL
-// The UniffiCustomTypeConverter trait is defined in the generated scaffolding
-impl crate::UniffiCustomTypeConverter for FieldElement {
-    type Builtin = String;
-
-    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
-        Ok(FieldElement(val))
-    }
-
-    fn from_custom(obj: Self) -> Self::Builtin {
-        obj.0
-    }
-}
-
-impl crate::UniffiCustomTypeConverter for U256 {
-    type Builtin = String;
-
-    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
-        Ok(U256(val))
-    }
-
-    fn from_custom(obj: Self) -> Self::Builtin {
-        obj.0
-    }
-}
+// Custom type converter implementations for UniFFI using the macro
+uniffi::custom_newtype!(FieldElement, String);
+uniffi::custom_newtype!(U256, String);
 
 // Helper functions to convert between internal types and UniFFI types
 pub fn felt_to_field_element(felt: starknet::core::types::Felt) -> FieldElement {

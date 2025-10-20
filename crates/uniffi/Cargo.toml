@@ -1,5 +1,5 @@
 [package]
-name = "uniffi"
+name = "dojo-uniffi"
 version.workspace = true
 edition.workspace = true
 

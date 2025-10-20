@@ -3,10 +3,6 @@ use std::env;
 fn main() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
-    // Generate UniFFI scaffolding
-    uniffi::generate_scaffolding("src/dojo.udl")
-        .expect("Failed to generate UniFFI scaffolding");
-
     cbindgen::Builder::new()
         .with_config({
             let mut config = cbindgen::Config {
