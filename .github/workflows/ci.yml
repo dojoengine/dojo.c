@@ -28,7 +28,7 @@ jobs:
       - name: Install nextest test runner
         uses: taiki-e/install-action@nextest
       - run: |
-          cargo nextest run --all-features --no-tests=pass
+          cargo nextest run --workspace --all-features --no-tests=pass
 
   ensure-wasm:
     name: Check WASM compilation
@@ -46,7 +46,25 @@ jobs:
       - name: Install wasm32 target
         run: rustup target add wasm32-unknown-unknown
       - name: Compile WASM
-        run: cargo build --release --target wasm32-unknown-unknown
+        run: cargo build --release --target wasm32-unknown-unknown -p wasm
+
+  ensure-c:
+    name: Check C bindings compilation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      # Install system dependencies
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - uses: Swatinem/rust-cache@v2
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compile C bindings
+        run: cargo build --release -p c
 
   clippy:
     runs-on: ubuntu-latest
