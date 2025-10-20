@@ -7,23 +7,60 @@ use camino::Utf8PathBuf;
 fn main() {
     let args: Vec<String> = env::args().collect();
     
-    if args.len() < 3 {
+    // Show help if requested
+    if args.len() > 1 && (args[1] == "--help" || args[1] == "-h") {
         eprintln!("UniFFI Kotlin Binding Generator");
         eprintln!();
-        eprintln!("Usage: {} <library_path> <output_dir>", args[0]);
+        eprintln!("Usage: {} [library_path] [output_dir]", args[0]);
         eprintln!();
-        eprintln!("Example:");
-        eprintln!("  {} target/release/libdojo_c.dylib bindings/kotlin", args[0]);
+        eprintln!("Arguments:");
+        eprintln!("  library_path          Path to the compiled library (default: target/release/libdojo.dylib)");
+        eprintln!("  output_dir            Output directory for bindings (default: bindings/kotlin)");
         eprintln!();
-        process::exit(1);
+        eprintln!("Examples:");
+        eprintln!("  {}                    # Use defaults", args[0]);
+        eprintln!("  {} target/release/libdojo.dylib bindings/kotlin", args[0]);
+        eprintln!();
+        process::exit(0);
     }
     
-    let library_path = Utf8PathBuf::from(&args[1]);
-    let out_dir = Utf8PathBuf::from(&args[2]);
+    // Determine library extension based on platform
+    let lib_ext = if cfg!(target_os = "macos") {
+        "dylib"
+    } else if cfg!(target_os = "windows") {
+        "dll"
+    } else {
+        "so"
+    };
+    
+    // Default paths
+    let default_lib = format!("target/release/libdojo.{}", lib_ext);
+    let default_out = "bindings/kotlin";
+    
+    // Parse arguments
+    let positional_args: Vec<&String> = args.iter()
+        .skip(1)
+        .filter(|arg| !arg.starts_with("--"))
+        .collect();
+    
+    let library_path = Utf8PathBuf::from(
+        positional_args.get(0).map(|s| s.as_str()).unwrap_or(&default_lib)
+    );
+    let out_dir = Utf8PathBuf::from(
+        positional_args.get(1).map(|s| s.as_str()).unwrap_or(default_out)
+    );
     
     if !library_path.exists() {
         eprintln!("Error: Library file not found: {}", library_path);
-        eprintln!("Build the library first with: cargo build --release");
+        eprintln!("Build the library first with: cargo build --release -p dojo-uniffi");
+        eprintln!();
+        eprintln!("Hint: Run with --help to see usage information");
+        process::exit(1);
+    }
+    
+    // Create output directory if it doesn't exist
+    if let Err(e) = std::fs::create_dir_all(&out_dir) {
+        eprintln!("Error: Failed to create output directory {}: {}", out_dir, e);
         process::exit(1);
     }
     
