@@ -9,7 +9,8 @@ pub struct FieldElement(pub String);
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct U256(pub String);
 
-// Custom type converter implementations for UniFFI using the macro
+// Custom type implementations for UniFFI
+// These newtype wrappers will be represented as their inner type (String) in foreign languages
 uniffi::custom_newtype!(FieldElement, String);
 uniffi::custom_newtype!(U256, String);
 
@@ -35,19 +36,27 @@ pub fn uniffi_to_u256(u: &U256) -> Result<crypto_bigint::U256, DojoError> {
 // Error types
 #[derive(Debug, thiserror::Error)]
 pub enum DojoError {
-    #[error("Client error: {0}")]
-    ClientError(String),
-    #[error("Serialization error: {0}")]
-    SerializationError(String),
-    #[error("Network error: {0}")]
-    NetworkError(String),
+    #[error("Client error: {message}")]
+    ClientError { message: String },
+    #[error("Serialization error: {message}")]
+    SerializationError { message: String },
+    #[error("Network error: {message}")]
+    NetworkError { message: String },
     #[error("Invalid input")]
     InvalidInput,
+    #[error("Connection error")]
+    ConnectionError,
+    #[error("Publish error")]
+    PublishError,
+    #[error("Query error: {message}")]
+    QueryError { message: String },
+    #[error("Subscription error")]
+    SubscriptionError,
 }
 
 impl From<anyhow::Error> for DojoError {
     fn from(e: anyhow::Error) -> Self {
-        DojoError::ClientError(e.to_string())
+        DojoError::ClientError { message: e.to_string() }
     }
 }
 
@@ -235,3 +244,86 @@ impl From<BlockId> for starknet::core::types::BlockId {
     }
 }
 
+// Pagination wrapper types for different result types
+// These are used by the client but defined here for availability
+
+use super::controller::Controller;
+use super::token::{Token, TokenBalance, TokenContract, TokenTransfer};
+use super::transaction::Transaction;
+use super::aggregation::AggregationEntry;
+use super::activity::Activity;
+use super::achievement::{Achievement, PlayerAchievementEntry};
+use super::entity::Entity;
+use super::event::Event;
+
+#[derive(Debug, Clone)]
+pub struct PageController {
+    pub items: Vec<Controller>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageToken {
+    pub items: Vec<Token>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageTokenBalance {
+    pub items: Vec<TokenBalance>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageTokenContract {
+    pub items: Vec<TokenContract>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageTokenTransfer {
+    pub items: Vec<TokenTransfer>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageTransaction {
+    pub items: Vec<Transaction>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageAggregationEntry {
+    pub items: Vec<AggregationEntry>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageActivity {
+    pub items: Vec<Activity>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageAchievement {
+    pub items: Vec<Achievement>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PagePlayerAchievement {
+    pub items: Vec<PlayerAchievementEntry>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageEntity {
+    pub items: Vec<Entity>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageEvent {
+    pub items: Vec<Event>,
+    pub next_cursor: Option<String>,
+}

@@ -462,9 +462,13 @@ interface Clause {
 
 // Error type
 [Error]
-enum DojoError {
-    "ClientError",
-    "SerializationError",
-    "NetworkError",
-    "InvalidInput",
+interface DojoError {
+    ClientError(string message);
+    SerializationError(string message);
+    NetworkError(string message);
+    InvalidInput();
+    ConnectionError();
+    PublishError();
+    QueryError(string message);
+    SubscriptionError();
 };

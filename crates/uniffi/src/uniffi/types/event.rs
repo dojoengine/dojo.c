@@ -1,11 +1,18 @@
 // Event and Message types
 use super::core::*;
+use super::query::*;
 
 #[derive(Debug, Clone)]
 pub struct Event {
     pub keys: Vec<FieldElement>,
     pub data: Vec<FieldElement>,
     pub transaction_hash: FieldElement,
+}
+
+#[derive(Debug, Clone)]
+pub struct EventQuery {
+    pub keys: Option<KeysClause>,
+    pub pagination: Pagination,
 }
 
 impl From<Event> for torii_proto::Event {
@@ -42,6 +49,17 @@ impl From<Message> for torii_proto::Message {
             signature: val.signature.into_iter().map(|s| field_element_to_felt(&s).unwrap()).collect(),
             world_address: field_element_to_felt(&val.world_address).unwrap(),
         }
+    }
+}
+
+impl TryInto<torii_proto::EventQuery> for EventQuery {
+    type Error = DojoError;
+    
+    fn try_into(self) -> Result<torii_proto::EventQuery, Self::Error> {
+        Ok(torii_proto::EventQuery {
+            keys: self.keys.map(|k| k.into()),
+            pagination: self.pagination.into(),
+        })
     }
 }
 

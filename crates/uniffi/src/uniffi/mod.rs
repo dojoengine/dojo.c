@@ -1,32 +1,14 @@
-// UniFFI module - exposes Dojo types to multiple languages
-// This module provides a cleaner, idiomatic API compared to C FFI
+// UniFFI bindings for Dojo
+//
+// This module provides foreign function interface bindings for multiple languages
+// (Swift, Kotlin, Python) using Mozilla's UniFFI framework.
 
-// Core types and utilities
-pub mod core;
+// Type definitions organized by domain
+pub mod types;
 
-// Domain-specific type modules
-pub mod achievement;
-pub mod activity;
-pub mod aggregation;
-pub mod contract;
-pub mod controller;
-pub mod entity;
-pub mod event;
-pub mod query;
-pub mod schema;
-pub mod token;
-pub mod transaction;
+// Client implementation
+pub mod client;
 
-// Re-export all public types for convenience
-pub use achievement::*;
-pub use activity::*;
-pub use aggregation::*;
-pub use contract::*;
-pub use controller::*;
-pub use core::*;
-pub use entity::*;
-pub use event::*;
-pub use query::*;
-pub use schema::*;
-pub use token::*;
-pub use transaction::*;
+// Re-export everything for convenience
+pub use client::*;
+pub use types::*;
