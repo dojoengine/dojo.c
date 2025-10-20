@@ -1,1 +1,1 @@
-npx wasm-pack build --out-dir pkg --release --target no-modules
+npx wasm-pack build crates/wasm --out-dir ../../pkg --release --target no-modules

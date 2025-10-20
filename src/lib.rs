@@ -1,9 +1,7 @@
-mod constants;
-mod types;
-mod utils;
+// Re-export the appropriate crate based on compilation target
 
 #[cfg(not(target_arch = "wasm32"))]
-mod c;
+pub use c::*;
+
 #[cfg(target_arch = "wasm32")]
-/// cbindgen:ignore
-mod wasm;
+pub use wasm::*;

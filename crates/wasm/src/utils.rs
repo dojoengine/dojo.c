@@ -7,7 +7,7 @@ use serde_json::Value as JsonValue;
 use wasm_bindgen::JsValue;
 
 use super::types::{EnumValue, Ty};
-use crate::wasm::types::FixedSizeArray;
+use crate::types::FixedSizeArray;
 
 fn json_value_to_js_value(json_value: &JsonValue) -> JsValue {
     JsValue::from_serde(json_value).unwrap()
@@ -115,7 +115,9 @@ pub fn pad_to_hex(input: &str) -> Result<String, String> {
             Ok(v) => v,
             Err(_) => return Err(format!("Invalid hexadecimal input: {}", input)),
         }
-    } else if input.chars().all(|c| c.is_digit(16)) && input.chars().any(|c| !c.is_digit(10)) {
+    } else if input.chars().all(|c| c.is_ascii_hexdigit())
+        && input.chars().any(|c| !c.is_ascii_digit())
+    {
         // Input contains non-decimal digits (a-f, A-F) without 0x prefix, assume hex
         match BigUint::from_str_radix(input, 16) {
             Ok(v) => v,
@@ -142,6 +144,7 @@ pub fn pad_to_hex(input: &str) -> Result<String, String> {
 mod tests {
     use dojo_types::primitive::Primitive;
     use serde_json::json;
+    use starknet_crypto::Felt;
     use wasm_bindgen_test::*;
 
     use super::*;
@@ -221,8 +224,7 @@ mod tests {
         assert!(js_val.as_string().unwrap().starts_with("0x"));
 
         // Test ContractAddress (should be hex string)
-        let primitive =
-            Primitive::ContractAddress(Some(starknet_types_core::felt::Felt::from(42u32)));
+        let primitive = Primitive::ContractAddress(Some(Felt::from(42u32)));
         let json_val = primitive.to_json_value().unwrap();
         let js_val = json_value_to_js_value(&json_val);
         assert!(js_val.is_string());

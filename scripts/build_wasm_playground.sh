@@ -1,1 +1,1 @@
-npx wasm-pack build --out-dir playground/pkg --release --target web 
+npx wasm-pack build crates/wasm --out-dir ../../playground/pkg --release --target web 

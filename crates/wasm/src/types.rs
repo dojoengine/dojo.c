@@ -247,8 +247,8 @@ impl From<TransactionFilter> for torii_proto::TransactionFilter {
                 .into_iter()
                 .map(|h| Felt::from_str(h.as_str()).unwrap())
                 .collect(),
-            from_block: val.from_block.into(),
-            to_block: val.to_block.into(),
+            from_block: val.from_block,
+            to_block: val.to_block,
         }
     }
 }
@@ -456,6 +456,7 @@ impl From<TokenContractQuery> for torii_proto::TokenContractQuery {
 
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum ContractType {
     WORLD,
     ERC20,
@@ -733,7 +734,7 @@ pub struct Pagination {
 impl From<Pagination> for torii_proto::Pagination {
     fn from(value: Pagination) -> Self {
         Self {
-            limit: value.limit.map(|l| l as u32),
+            limit: value.limit,
             cursor: value.cursor.map(|c| c.to_string()),
             direction: value.direction.into(),
             order_by: value.order_by.into_iter().map(|o| o.into()).collect(),
@@ -1453,3 +1454,33 @@ pub struct Achievements(pub Page<Achievement>);
 #[derive(Tsify, Serialize, Deserialize, Debug)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct PlayerAchievements(pub Page<PlayerAchievementEntry>);
+
+// WASM-specific client types
+#[wasm_bindgen]
+pub struct ToriiClient {
+    #[wasm_bindgen(skip)]
+    pub inner: std::sync::Arc<torii_client::Client>,
+}
+
+#[wasm_bindgen]
+pub struct Provider(
+    pub(crate)  std::sync::Arc<
+        starknet::providers::JsonRpcClient<starknet::providers::jsonrpc::HttpTransport>,
+    >,
+);
+
+#[wasm_bindgen]
+pub struct Account(
+    pub(crate)  starknet::accounts::SingleOwnerAccount<
+        std::sync::Arc<
+            starknet::providers::JsonRpcClient<starknet::providers::jsonrpc::HttpTransport>,
+        >,
+        starknet::signers::LocalWallet,
+    >,
+);
+
+#[wasm_bindgen]
+pub struct Subscription {
+    pub id: u64,
+    pub(crate) trigger: stream_cancel::Trigger,
+}
