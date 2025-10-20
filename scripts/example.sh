@@ -16,19 +16,19 @@ done
 # Build the Rust library in release mode if requested
 if [ $REBUILD -eq 1 ]; then
     echo "Building Rust library in release mode..."
-    cargo build --release
+    cargo build --release -p c
 fi
 
 # Check if the dylib/so was built successfully
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    LIB_PATH="./target/release/libdojo_c.dylib"
+    LIB_PATH="./target/release/libc.dylib"
 else
-    LIB_PATH="./target/release/libdojo_c.so"
+    LIB_PATH="./target/release/libc.so"
 fi
 
 if [ ! -f "$LIB_PATH" ]; then
     echo "Rust library not found at $LIB_PATH. Building..."
-    cargo build --release
+    cargo build --release -p c
     if [ ! -f "$LIB_PATH" ]; then
         echo "Failed to build Rust library"
         exit 1
@@ -38,9 +38,9 @@ fi
 # Compile the C program
 echo "Compiling C program..."
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    clang -o example/main example/main.c -I. -L./target/release -ldojo_c -Wl,-rpath,./target/release
+    clang -o example/main example/main.c -I./crates/c -L./target/release -lc -Wl,-rpath,./target/release
 else
-    clang -o example/main example/main.c -I. -L./target/release -ldojo_c -Wl,-rpath=$PWD/target/release
+    clang -o example/main example/main.c -I./crates/c -L./target/release -lc -Wl,-rpath=$PWD/target/release
 fi
 
 if [ $? -ne 0 ]; then

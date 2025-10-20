@@ -46,10 +46,10 @@ jobs:
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Build WASM (no-modules)
-        run: wasm-pack build --out-dir pkg-no-modules --release --target no-modules
+        run: wasm-pack build crates/wasm --out-dir ../../pkg-no-modules --release --target no-modules
 
       - name: Build WASM (web)
-        run: wasm-pack build --out-dir pkg-web --release --target web
+        run: wasm-pack build crates/wasm --out-dir ../../pkg-web --release --target web
 
       - name: Package WASM builds
         id: wasm_artifacts
@@ -82,6 +82,22 @@ jobs:
             platform: linux
             target: aarch64-unknown-linux-gnu
             arch: arm64
+          - os: ubuntu-latest
+            platform: android
+            target: aarch64-linux-android
+            arch: arm64
+          - os: ubuntu-latest
+            platform: android
+            target: armv7-linux-androideabi
+            arch: armv7
+          - os: ubuntu-latest
+            platform: android
+            target: i686-linux-android
+            arch: x86
+          - os: ubuntu-latest
+            platform: android
+            target: x86_64-linux-android
+            arch: x86_64
           - os: macos-latest
             platform: darwin
             target: x86_64-apple-darwin
@@ -133,9 +149,9 @@ jobs:
       - name: Build binaries
         run: |
           if [[ "${{ runner.os }}" == "Linux" ]]; then
-            cross build --release --target ${{ matrix.job.target }}
+            cross build --release --target ${{ matrix.job.target }} -p c
           else
-            cargo build --release --target ${{ matrix.job.target }}
+            cargo build --release --target ${{ matrix.job.target }} -p c
           fi
         shell: bash
 
@@ -144,13 +160,13 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.job.os }}" == "macos-latest" ]]; then
-            tar -czvf torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz dojo.h target/${{ matrix.job.target }}/release/libdojo_c.dylib
+            tar -czvf dojo-c-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz crates/c/dojo.h target/${{ matrix.job.target }}/release/libc.dylib
           elif [[ "${{ matrix.job.os }}" == "windows-latest" ]]; then
-            tar -czvf torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz dojo.h target/${{ matrix.job.target }}/release/dojo_c.dll
+            tar -czvf dojo-c-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz crates/c/dojo.h target/${{ matrix.job.target }}/release/c.dll
           else
-            tar -czvf torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz dojo.h target/${{ matrix.job.target }}/release/libdojo_c.so
+            tar -czvf dojo-c-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz crates/c/dojo.h target/${{ matrix.job.target }}/release/libc.so
           fi
-          echo "file_name=torii-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz" >> $GITHUB_OUTPUT
+          echo "file_name=dojo-c-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz" >> $GITHUB_OUTPUT
 
       - name: Create release
         uses: softprops/action-gh-release@v1
