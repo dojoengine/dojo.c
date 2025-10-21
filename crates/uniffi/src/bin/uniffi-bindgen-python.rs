@@ -15,12 +15,12 @@ fn main() {
         eprintln!("Usage: {} [library_path] [output_dir]", args[0]);
         eprintln!();
         eprintln!("Arguments:");
-        eprintln!("  library_path          Path to the compiled library (default: target/release/libdojo.dylib)");
+        eprintln!("  library_path          Path to the compiled library (default: target/release/libdojo_uniffi.dylib)");
         eprintln!("  output_dir            Output directory for bindings (default: bindings/python)");
         eprintln!();
         eprintln!("Examples:");
         eprintln!("  {}                    # Use defaults", args[0]);
-        eprintln!("  {} target/release/libdojo.dylib bindings/python", args[0]);
+        eprintln!("  {} target/release/libdojo_uniffi.dylib bindings/python", args[0]);
         eprintln!();
         process::exit(0);
     }
@@ -34,8 +34,8 @@ fn main() {
         "so"
     };
     
-    // Default paths
-    let default_lib = format!("target/release/libdojo.{}", lib_ext);
+    // Default paths (must match the library output name)
+    let default_lib = format!("target/release/libdojo_uniffi.{}", lib_ext);
     let default_out = "bindings/python";
     
     // Parse arguments
@@ -69,6 +69,12 @@ fn main() {
     println!("Library: {}", library_path);
     println!("Output:  {}", out_dir);
     
+    // Find uniffi.toml config file
+    let config_file = Utf8PathBuf::from("crates/uniffi/uniffi.toml");
+    if !config_file.exists() {
+        eprintln!("Warning: uniffi.toml not found at {}", config_file);
+    }
+    
     // Use cargo metadata to get crate configuration
     let metadata = match cargo_metadata::MetadataCommand::new().exec() {
         Ok(m) => m,
@@ -81,7 +87,7 @@ fn main() {
     
     let config_supplier = CrateConfigSupplier::from(metadata);
     
-    match Root::from_library(config_supplier, &library_path, None) {
+    match Root::from_library(config_supplier, &library_path, Some(config_file.to_string())) {
         Ok(root) => {
             match run_pipeline(root, &out_dir) {
                 Ok(_) => {

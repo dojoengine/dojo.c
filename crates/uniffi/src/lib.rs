@@ -8,4 +8,3 @@ pub use uniffi::*;
 
 // Include the generated UniFFI scaffolding
 ::uniffi::include_scaffolding!("dojo");
-

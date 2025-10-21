@@ -433,32 +433,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
 
 [[package]]
-name = "c"
-version = "1.8.3"
-dependencies = [
- "anyhow",
- "cainome",
- "cbindgen",
- "chrono",
- "crypto-bigint",
- "dojo-core",
- "dojo-types",
- "dojo-world",
- "futures",
- "lazy_static",
- "serde",
- "serde_json",
- "starknet",
- "starknet-crypto",
- "stream-cancel",
- "tokio",
- "tokio-stream",
- "torii-client",
- "torii-proto",
- "url",
-]
-
-[[package]]
 name = "cainome"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1113,6 +1087,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "dojo-c"
+version = "1.8.3"
+dependencies = [
+ "anyhow",
+ "cainome",
+ "cbindgen",
+ "chrono",
+ "crypto-bigint",
+ "dojo-core",
+ "dojo-types",
+ "dojo-world",
+ "futures",
+ "lazy_static",
+ "serde",
+ "serde_json",
+ "starknet",
+ "starknet-crypto",
+ "stream-cancel",
+ "tokio",
+ "tokio-stream",
+ "torii-client",
+ "torii-proto",
+ "url",
+]
+
+[[package]]
 name = "dojo-core"
 version = "1.8.3"
 dependencies = [
@@ -1190,6 +1190,42 @@ dependencies = [
  "uniffi_bindgen",
  "url",
  "urlencoding",
+]
+
+[[package]]
+name = "dojo-wasm"
+version = "1.8.3"
+dependencies = [
+ "anyhow",
+ "cainome",
+ "chrono",
+ "console_error_panic_hook",
+ "crypto-bigint",
+ "dojo-core",
+ "dojo-types",
+ "dojo-world",
+ "futures",
+ "gloo-timers",
+ "gloo-utils",
+ "instant",
+ "js-sys",
+ "num-bigint",
+ "num-traits",
+ "serde",
+ "serde-wasm-bindgen",
+ "serde_json",
+ "starknet",
+ "starknet-crypto",
+ "stream-cancel",
+ "tokio",
+ "torii-client",
+ "torii-proto",
+ "tsify-next",
+ "url",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-bindgen-test",
+ "web-sys",
 ]
 
 [[package]]
@@ -5035,42 +5071,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0562428422c63773dad2c345a1882263bbf4d65cf3f42e90921f787ef5ad58e7"
 dependencies = [
  "wit-bindgen",
-]
-
-[[package]]
-name = "wasm"
-version = "1.8.3"
-dependencies = [
- "anyhow",
- "cainome",
- "chrono",
- "console_error_panic_hook",
- "crypto-bigint",
- "dojo-core",
- "dojo-types",
- "dojo-world",
- "futures",
- "gloo-timers",
- "gloo-utils",
- "instant",
- "js-sys",
- "num-bigint",
- "num-traits",
- "serde",
- "serde-wasm-bindgen",
- "serde_json",
- "starknet",
- "starknet-crypto",
- "stream-cancel",
- "tokio",
- "torii-client",
- "torii-proto",
- "tsify-next",
- "url",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "wasm-bindgen-test",
- "web-sys",
 ]
 
 [[package]]

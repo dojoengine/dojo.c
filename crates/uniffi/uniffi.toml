@@ -7,20 +7,20 @@ runtime = "tokio"
 
 [bindings.kotlin]
 package_name = "com.dojoengine.dojo"
-cdylib_name = "dojo_c"
+cdylib_name = "dojo_uniffi"
 generate_immutable_records = true
 
 [bindings.swift]
 module_name = "DojoEngine"
-cdylib_name = "dojo_c"
+cdylib_name = "dojo_uniffi"
 generate_immutable_records = true
 # Swift-specific naming conventions
 omit_argument_labels = false
 
 [bindings.python]
 module_name = "dojo"
-cdylib_name = "dojo_c"
+cdylib_name = "dojo_uniffi"
 
 [bindings.ruby]
 module_name = "Dojo"
-cdylib_name = "dojo_c"
+cdylib_name = "dojo_uniffi"

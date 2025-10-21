@@ -25,13 +25,13 @@ fileprivate extension RustBuffer {
     }
 
     static func from(_ ptr: UnsafeBufferPointer<UInt8>) -> RustBuffer {
-        try! rustCall { ffi_dojo_c_rustbuffer_from_bytes(ForeignBytes(bufferPointer: ptr), $0) }
+        try! rustCall { ffi_dojo_uniffi_rustbuffer_from_bytes(ForeignBytes(bufferPointer: ptr), $0) }
     }
 
     // Frees the buffer in place.
     // The buffer must not be used after this is called.
     func deallocate() {
-        try! rustCall { ffi_dojo_c_rustbuffer_free(self, $0) }
+        try! rustCall { ffi_dojo_uniffi_rustbuffer_free(self, $0) }
     }
 }
 
@@ -281,7 +281,7 @@ private func makeRustCall<T, E: Swift.Error>(
     _ callback: (UnsafeMutablePointer<RustCallStatus>) -> T,
     errorHandler: ((RustBuffer) throws -> E)?
 ) throws -> T {
-    uniffiEnsureDojoCInitialized()
+    uniffiEnsureDojoUniffiInitialized()
     var callStatus = RustCallStatus.init()
     let returnedVal = callback(&callStatus)
     try uniffiCheckCallStatus(callStatus: callStatus, errorHandler: errorHandler)
@@ -722,18 +722,18 @@ open class ToriiClient: ToriiClientProtocol, @unchecked Sendable {
     @_documentation(visibility: private)
 #endif
     public func uniffiCloneHandle() -> UInt64 {
-        return try! rustCall { uniffi_dojo_c_fn_clone_toriiclient(self.handle, $0) }
+        return try! rustCall { uniffi_dojo_uniffi_fn_clone_toriiclient(self.handle, $0) }
     }
 public convenience init(toriiUrl: String)async throws  {
     let handle =
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_constructor_toriiclient_new(FfiConverterString.lower(toriiUrl)
+                uniffi_dojo_uniffi_fn_constructor_toriiclient_new(FfiConverterString.lower(toriiUrl)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_u64,
-            completeFunc: ffi_dojo_c_rust_future_complete_u64,
-            freeFunc: ffi_dojo_c_rust_future_free_u64,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_u64,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_u64,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_u64,
             liftFunc: FfiConverterTypeToriiClient_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -743,7 +743,7 @@ public convenience init(toriiUrl: String)async throws  {
 }
 
     deinit {
-        try! rustCall { uniffi_dojo_c_fn_free_toriiclient(handle, $0) }
+        try! rustCall { uniffi_dojo_uniffi_fn_free_toriiclient(handle, $0) }
     }
 
     
@@ -751,12 +751,12 @@ public static func newWithConfig(toriiUrl: String, maxMessageSize: UInt64)async 
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_constructor_toriiclient_new_with_config(FfiConverterString.lower(toriiUrl),FfiConverterUInt64.lower(maxMessageSize)
+                uniffi_dojo_uniffi_fn_constructor_toriiclient_new_with_config(FfiConverterString.lower(toriiUrl),FfiConverterUInt64.lower(maxMessageSize)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_u64,
-            completeFunc: ffi_dojo_c_rust_future_complete_u64,
-            freeFunc: ffi_dojo_c_rust_future_free_u64,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_u64,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_u64,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_u64,
             liftFunc: FfiConverterTypeToriiClient_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -768,14 +768,14 @@ open func achievements(query: AchievementQuery)async throws  -> PageAchievement 
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_achievements(
+                uniffi_dojo_uniffi_fn_method_toriiclient_achievements(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeAchievementQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePageAchievement_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -785,14 +785,14 @@ open func activities(query: ActivityQuery)async throws  -> PageActivity  {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_activities(
+                uniffi_dojo_uniffi_fn_method_toriiclient_activities(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeActivityQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePageActivity_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -802,21 +802,21 @@ open func aggregations(query: AggregationQuery)async throws  -> PageAggregationE
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_aggregations(
+                uniffi_dojo_uniffi_fn_method_toriiclient_aggregations(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeAggregationQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePageAggregationEntry_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
 }
     
 open func cancelSubscription(subscriptionId: UInt64)throws   {try rustCallWithError(FfiConverterTypeDojoError_lift) {
-    uniffi_dojo_c_fn_method_toriiclient_cancel_subscription(
+    uniffi_dojo_uniffi_fn_method_toriiclient_cancel_subscription(
             self.uniffiCloneHandle(),
         FfiConverterUInt64.lower(subscriptionId),$0
     )
@@ -827,14 +827,14 @@ open func contracts(query: ContractQuery)async throws  -> [Contract]  {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_contracts(
+                uniffi_dojo_uniffi_fn_method_toriiclient_contracts(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeContractQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceTypeContract.lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -844,14 +844,14 @@ open func controllers(query: ControllerQuery)async throws  -> PageController  {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_controllers(
+                uniffi_dojo_uniffi_fn_method_toriiclient_controllers(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeControllerQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePageController_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -861,14 +861,14 @@ open func entities(query: Query)async throws  -> PageEntity  {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_entities(
+                uniffi_dojo_uniffi_fn_method_toriiclient_entities(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePageEntity_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -878,14 +878,14 @@ open func eventMessages(query: Query)async throws  -> PageEntity  {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_event_messages(
+                uniffi_dojo_uniffi_fn_method_toriiclient_event_messages(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePageEntity_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -895,14 +895,14 @@ open func playerAchievements(query: PlayerAchievementQuery)async throws  -> Page
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_player_achievements(
+                uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements(
                     self.uniffiCloneHandle(),
                     FfiConverterTypePlayerAchievementQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePagePlayerAchievement_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -912,14 +912,14 @@ open func publishMessage(message: Message)async throws  -> String  {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_publish_message(
+                uniffi_dojo_uniffi_fn_method_toriiclient_publish_message(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeMessage_lower(message)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -929,14 +929,14 @@ open func publishMessageBatch(messages: [Message])async throws  -> [String]  {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_publish_message_batch(
+                uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch(
                     self.uniffiCloneHandle(),
                     FfiConverterSequenceTypeMessage.lower(messages)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceString.lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -946,14 +946,14 @@ open func sql(query: String)async throws  -> [SqlRow]  {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_sql(
+                uniffi_dojo_uniffi_fn_method_toriiclient_sql(
                     self.uniffiCloneHandle(),
                     FfiConverterString.lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceTypeSqlRow.lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -963,14 +963,14 @@ open func starknetEvents(query: EventQuery)async throws  -> PageEvent  {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_starknet_events(
+                uniffi_dojo_uniffi_fn_method_toriiclient_starknet_events(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeEventQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePageEvent_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -980,14 +980,14 @@ open func subscribeEntityUpdates(clause: Clause?, worldAddresses: [FieldElement]
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_subscribe_entity_updates(
+                uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_entity_updates(
                     self.uniffiCloneHandle(),
                     FfiConverterOptionTypeClause.lower(clause),FfiConverterSequenceTypeFieldElement.lower(worldAddresses),FfiConverterCallbackInterfaceEntityUpdateCallback_lower(callback)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_u64,
-            completeFunc: ffi_dojo_c_rust_future_complete_u64,
-            freeFunc: ffi_dojo_c_rust_future_free_u64,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_u64,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_u64,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_u64,
             liftFunc: FfiConverterUInt64.lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -997,14 +997,14 @@ open func subscribeEventUpdates(keys: [KeysClause], callback: EventUpdateCallbac
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_subscribe_event_updates(
+                uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_event_updates(
                     self.uniffiCloneHandle(),
                     FfiConverterSequenceTypeKeysClause.lower(keys),FfiConverterCallbackInterfaceEventUpdateCallback_lower(callback)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_u64,
-            completeFunc: ffi_dojo_c_rust_future_complete_u64,
-            freeFunc: ffi_dojo_c_rust_future_free_u64,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_u64,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_u64,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_u64,
             liftFunc: FfiConverterUInt64.lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -1014,14 +1014,14 @@ open func subscribeTokenBalanceUpdates(contractAddresses: [FieldElement], accoun
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_subscribe_token_balance_updates(
+                uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_balance_updates(
                     self.uniffiCloneHandle(),
                     FfiConverterSequenceTypeFieldElement.lower(contractAddresses),FfiConverterSequenceTypeFieldElement.lower(accountAddresses),FfiConverterSequenceTypeU256.lower(tokenIds),FfiConverterCallbackInterfaceTokenBalanceUpdateCallback_lower(callback)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_u64,
-            completeFunc: ffi_dojo_c_rust_future_complete_u64,
-            freeFunc: ffi_dojo_c_rust_future_free_u64,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_u64,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_u64,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_u64,
             liftFunc: FfiConverterUInt64.lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -1031,14 +1031,14 @@ open func subscribeTokenUpdates(contractAddresses: [FieldElement], tokenIds: [U2
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_subscribe_token_updates(
+                uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_updates(
                     self.uniffiCloneHandle(),
                     FfiConverterSequenceTypeFieldElement.lower(contractAddresses),FfiConverterSequenceTypeU256.lower(tokenIds),FfiConverterCallbackInterfaceTokenUpdateCallback_lower(callback)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_u64,
-            completeFunc: ffi_dojo_c_rust_future_complete_u64,
-            freeFunc: ffi_dojo_c_rust_future_free_u64,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_u64,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_u64,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_u64,
             liftFunc: FfiConverterUInt64.lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -1048,14 +1048,14 @@ open func subscribeTransactionUpdates(filter: TransactionFilter?, callback: Tran
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_subscribe_transaction_updates(
+                uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_transaction_updates(
                     self.uniffiCloneHandle(),
                     FfiConverterOptionTypeTransactionFilter.lower(filter),FfiConverterCallbackInterfaceTransactionUpdateCallback_lower(callback)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_u64,
-            completeFunc: ffi_dojo_c_rust_future_complete_u64,
-            freeFunc: ffi_dojo_c_rust_future_free_u64,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_u64,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_u64,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_u64,
             liftFunc: FfiConverterUInt64.lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -1065,14 +1065,14 @@ open func tokenBalances(query: TokenBalanceQuery)async throws  -> PageTokenBalan
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_token_balances(
+                uniffi_dojo_uniffi_fn_method_toriiclient_token_balances(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeTokenBalanceQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePageTokenBalance_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -1082,14 +1082,14 @@ open func tokenContracts(query: TokenContractQuery)async throws  -> PageTokenCon
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_token_contracts(
+                uniffi_dojo_uniffi_fn_method_toriiclient_token_contracts(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeTokenContractQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePageTokenContract_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -1099,14 +1099,14 @@ open func tokenTransfers(query: TokenTransferQuery)async throws  -> PageTokenTra
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_token_transfers(
+                uniffi_dojo_uniffi_fn_method_toriiclient_token_transfers(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeTokenTransferQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePageTokenTransfer_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -1116,14 +1116,14 @@ open func tokens(query: TokenQuery)async throws  -> PageToken  {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_tokens(
+                uniffi_dojo_uniffi_fn_method_toriiclient_tokens(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeTokenQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePageToken_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -1133,14 +1133,14 @@ open func transactions(query: TransactionQuery)async throws  -> PageTransaction 
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_transactions(
+                uniffi_dojo_uniffi_fn_method_toriiclient_transactions(
                     self.uniffiCloneHandle(),
                     FfiConverterTypeTransactionQuery_lower(query)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypePageTransaction_lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -1150,14 +1150,14 @@ open func worlds(worldAddresses: [FieldElement])async throws  -> [World]  {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_dojo_c_fn_method_toriiclient_worlds(
+                uniffi_dojo_uniffi_fn_method_toriiclient_worlds(
                     self.uniffiCloneHandle(),
                     FfiConverterSequenceTypeFieldElement.lower(worldAddresses)
                 )
             },
-            pollFunc: ffi_dojo_c_rust_future_poll_rust_buffer,
-            completeFunc: ffi_dojo_c_rust_future_complete_rust_buffer,
-            freeFunc: ffi_dojo_c_rust_future_free_rust_buffer,
+            pollFunc: ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_dojo_uniffi_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceTypeWorld.lift,
             errorHandler: FfiConverterTypeDojoError_lift
         )
@@ -6519,7 +6519,7 @@ fileprivate struct UniffiCallbackInterfaceEntityUpdateCallback {
 }
 
 private func uniffiCallbackInitEntityUpdateCallback() {
-    uniffi_dojo_c_fn_init_callback_vtable_entityupdatecallback(UniffiCallbackInterfaceEntityUpdateCallback.vtable)
+    uniffi_dojo_uniffi_fn_init_callback_vtable_entityupdatecallback(UniffiCallbackInterfaceEntityUpdateCallback.vtable)
 }
 
 // FfiConverter protocol for callback interfaces
@@ -6669,7 +6669,7 @@ fileprivate struct UniffiCallbackInterfaceEventUpdateCallback {
 }
 
 private func uniffiCallbackInitEventUpdateCallback() {
-    uniffi_dojo_c_fn_init_callback_vtable_eventupdatecallback(UniffiCallbackInterfaceEventUpdateCallback.vtable)
+    uniffi_dojo_uniffi_fn_init_callback_vtable_eventupdatecallback(UniffiCallbackInterfaceEventUpdateCallback.vtable)
 }
 
 // FfiConverter protocol for callback interfaces
@@ -6819,7 +6819,7 @@ fileprivate struct UniffiCallbackInterfaceTokenBalanceUpdateCallback {
 }
 
 private func uniffiCallbackInitTokenBalanceUpdateCallback() {
-    uniffi_dojo_c_fn_init_callback_vtable_tokenbalanceupdatecallback(UniffiCallbackInterfaceTokenBalanceUpdateCallback.vtable)
+    uniffi_dojo_uniffi_fn_init_callback_vtable_tokenbalanceupdatecallback(UniffiCallbackInterfaceTokenBalanceUpdateCallback.vtable)
 }
 
 // FfiConverter protocol for callback interfaces
@@ -6969,7 +6969,7 @@ fileprivate struct UniffiCallbackInterfaceTokenUpdateCallback {
 }
 
 private func uniffiCallbackInitTokenUpdateCallback() {
-    uniffi_dojo_c_fn_init_callback_vtable_tokenupdatecallback(UniffiCallbackInterfaceTokenUpdateCallback.vtable)
+    uniffi_dojo_uniffi_fn_init_callback_vtable_tokenupdatecallback(UniffiCallbackInterfaceTokenUpdateCallback.vtable)
 }
 
 // FfiConverter protocol for callback interfaces
@@ -7119,7 +7119,7 @@ fileprivate struct UniffiCallbackInterfaceTransactionUpdateCallback {
 }
 
 private func uniffiCallbackInitTransactionUpdateCallback() {
-    uniffi_dojo_c_fn_init_callback_vtable_transactionupdatecallback(UniffiCallbackInterfaceTransactionUpdateCallback.vtable)
+    uniffi_dojo_uniffi_fn_init_callback_vtable_transactionupdatecallback(UniffiCallbackInterfaceTransactionUpdateCallback.vtable)
 }
 
 // FfiConverter protocol for callback interfaces
@@ -8450,7 +8450,7 @@ fileprivate func uniffiRustCallAsync<F, T>(
 ) async throws -> T {
     // Make sure to call the ensure init function since future creation doesn't have a
     // RustCallStatus param, so doesn't use makeRustCall()
-    uniffiEnsureDojoCInitialized()
+    uniffiEnsureDojoUniffiInitialized()
     let rustFuture = rustFutureFunc()
     defer {
         freeFunc(rustFuture)
@@ -8495,116 +8495,116 @@ private let initializationResult: InitializationResult = {
     // Get the bindings contract version from our ComponentInterface
     let bindings_contract_version = 30
     // Get the scaffolding contract version by calling the into the dylib
-    let scaffolding_contract_version = ffi_dojo_c_uniffi_contract_version()
+    let scaffolding_contract_version = ffi_dojo_uniffi_uniffi_contract_version()
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_achievements() != 53465) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_achievements() != 50963) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_activities() != 57395) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_activities() != 15275) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_aggregations() != 38469) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_aggregations() != 13292) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_cancel_subscription() != 30154) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_cancel_subscription() != 31182) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_contracts() != 25010) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_contracts() != 42677) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_controllers() != 20116) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_controllers() != 54199) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_entities() != 42902) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_entities() != 57743) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_event_messages() != 61368) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_event_messages() != 32606) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_player_achievements() != 7710) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_player_achievements() != 62482) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_publish_message() != 26581) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message() != 35636) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_publish_message_batch() != 12967) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch() != 42443) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_sql() != 47285) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_sql() != 35788) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_starknet_events() != 46078) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_starknet_events() != 33321) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_subscribe_entity_updates() != 44939) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_entity_updates() != 4807) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_subscribe_event_updates() != 43018) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_event_updates() != 60817) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_balance_updates() != 20) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_balance_updates() != 33985) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_updates() != 10959) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_updates() != 10575) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_subscribe_transaction_updates() != 60034) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_transaction_updates() != 28352) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_token_balances() != 54254) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_token_balances() != 28397) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_token_contracts() != 7124) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_token_contracts() != 13435) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_token_transfers() != 52205) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_token_transfers() != 28022) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_tokens() != 55378) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_tokens() != 26997) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_transactions() != 16952) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_transactions() != 32126) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_toriiclient_worlds() != 35445) {
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_worlds() != 54332) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_constructor_toriiclient_new() != 9333) {
+    if (uniffi_dojo_uniffi_checksum_constructor_toriiclient_new() != 59450) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_constructor_toriiclient_new_with_config() != 41101) {
+    if (uniffi_dojo_uniffi_checksum_constructor_toriiclient_new_with_config() != 61297) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_entityupdatecallback_on_update() != 29314) {
+    if (uniffi_dojo_uniffi_checksum_method_entityupdatecallback_on_update() != 15850) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_entityupdatecallback_on_error() != 30422) {
+    if (uniffi_dojo_uniffi_checksum_method_entityupdatecallback_on_error() != 340) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_eventupdatecallback_on_update() != 13422) {
+    if (uniffi_dojo_uniffi_checksum_method_eventupdatecallback_on_update() != 13627) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_eventupdatecallback_on_error() != 34950) {
+    if (uniffi_dojo_uniffi_checksum_method_eventupdatecallback_on_error() != 61050) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_tokenbalanceupdatecallback_on_update() != 11123) {
+    if (uniffi_dojo_uniffi_checksum_method_tokenbalanceupdatecallback_on_update() != 10763) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_tokenbalanceupdatecallback_on_error() != 61336) {
+    if (uniffi_dojo_uniffi_checksum_method_tokenbalanceupdatecallback_on_error() != 46610) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_tokenupdatecallback_on_update() != 40580) {
+    if (uniffi_dojo_uniffi_checksum_method_tokenupdatecallback_on_update() != 40037) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_tokenupdatecallback_on_error() != 48181) {
+    if (uniffi_dojo_uniffi_checksum_method_tokenupdatecallback_on_error() != 14408) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_transactionupdatecallback_on_update() != 22881) {
+    if (uniffi_dojo_uniffi_checksum_method_transactionupdatecallback_on_update() != 11896) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_dojo_c_checksum_method_transactionupdatecallback_on_error() != 17505) {
+    if (uniffi_dojo_uniffi_checksum_method_transactionupdatecallback_on_error() != 18113) {
         return InitializationResult.apiChecksumMismatch
     }
 
@@ -8618,7 +8618,7 @@ private let initializationResult: InitializationResult = {
 
 // Make the ensure init function public so that other modules which have external type references to
 // our types can call it.
-public func uniffiEnsureDojoCInitialized() {
+public func uniffiEnsureDojoUniffiInitialized() {
     switch initializationResult {
     case .ok:
         break

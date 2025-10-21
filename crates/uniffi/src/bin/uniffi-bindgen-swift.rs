@@ -13,7 +13,7 @@ fn main() {
         eprintln!("Usage: {} [library_path] [output_dir] [OPTIONS]", args[0]);
         eprintln!();
         eprintln!("Arguments:");
-        eprintln!("  library_path          Path to the compiled library (default: target/release/libdojo.dylib)");
+        eprintln!("  library_path          Path to the compiled library (default: target/release/libdojo_uniffi.dylib)");
         eprintln!("  output_dir            Output directory for bindings (default: bindings/swift)");
         eprintln!();
         eprintln!("Options:");
@@ -24,8 +24,9 @@ fn main() {
         eprintln!();
         eprintln!("Examples:");
         eprintln!("  {}                    # Use defaults", args[0]);
-        eprintln!("  {} target/release/libdojo.dylib bindings/swift", args[0]);
-        eprintln!("  {} target/release/libdojo.dylib bindings/swift --headers --modulemap", args[0]);
+        eprintln!("  {} target/release/libdojo_uniffi.dylib bindings/swift", args[0]);
+        eprintln!("  {} target/release/libdojo_uniffi.dylib bindings/swift --swift-sources", args[0]);
+        eprintln!("  {} target/release/libdojo_uniffi.dylib bindings/swift --headers --modulemap", args[0]);
         eprintln!();
         process::exit(0);
     }
@@ -39,8 +40,8 @@ fn main() {
         "so"
     };
     
-    // Default paths
-    let default_lib = format!("target/release/libdojo.{}", lib_ext);
+    // Default paths (must match the library output name)
+    let default_lib = format!("target/release/libdojo_uniffi.{}", lib_ext);
     let default_out = "bindings/swift";
     
     // Parse arguments

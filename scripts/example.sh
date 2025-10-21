@@ -16,14 +16,14 @@ done
 # Build the Rust library in release mode if requested
 if [ $REBUILD -eq 1 ]; then
     echo "Building Rust library in release mode..."
-    cargo build --release -p c
+    cargo build --release -p dojo-c
 fi
 
 # Check if the dylib/so was built successfully
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    LIB_PATH="./target/release/libc.dylib"
+    LIB_PATH="./target/release/libdojo_c.dylib"
 else
-    LIB_PATH="./target/release/libc.so"
+    LIB_PATH="./target/release/libdojo_c.so"
 fi
 
 if [ ! -f "$LIB_PATH" ]; then

@@ -5,7 +5,6 @@ edition.workspace = true
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "dojo"
 
 [dependencies]
 dojo-core = { workspace = true }

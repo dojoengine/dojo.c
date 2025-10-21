@@ -47,14 +47,14 @@ class _UniffiRustBuffer(ctypes.Structure):
 
     @staticmethod
     def alloc(size):
-        return _uniffi_rust_call(_UniffiLib.ffi_dojo_c_rustbuffer_alloc, size)
+        return _uniffi_rust_call(_UniffiLib.ffi_dojo_uniffi_rustbuffer_alloc, size)
 
     @staticmethod
     def reserve(rbuf, additional):
-        return _uniffi_rust_call(_UniffiLib.ffi_dojo_c_rustbuffer_reserve, rbuf, additional)
+        return _uniffi_rust_call(_UniffiLib.ffi_dojo_uniffi_rustbuffer_reserve, rbuf, additional)
 
     def free(self):
-        return _uniffi_rust_call(_UniffiLib.ffi_dojo_c_rustbuffer_free, self)
+        return _uniffi_rust_call(_UniffiLib.ffi_dojo_uniffi_rustbuffer_free, self)
 
     def __str__(self):
         return "_UniffiRustBuffer(capacity={}, len={}, data={})".format(
@@ -496,7 +496,7 @@ def _uniffi_load_indirect():
         # Anything else must be an ELF platform - Linux, *BSD, Solaris/illumos
         libname = "lib{}.so"
 
-    libname = libname.format("dojo_c")
+    libname = libname.format("dojo_uniffi")
     path = os.path.join(os.path.dirname(__file__), libname)
     lib = ctypes.cdll.LoadLibrary(path)
     return lib
@@ -505,89 +505,89 @@ def _uniffi_check_contract_api_version(lib):
     # Get the bindings contract version from our ComponentInterface
     bindings_contract_version = 30
     # Get the scaffolding contract version by calling the into the dylib
-    scaffolding_contract_version = lib.ffi_dojo_c_uniffi_contract_version()
+    scaffolding_contract_version = lib.ffi_dojo_uniffi_uniffi_contract_version()
     if bindings_contract_version != scaffolding_contract_version:
         raise InternalError("UniFFI contract version mismatch: try cleaning and rebuilding your project")
 
 def _uniffi_check_api_checksums(lib):
-    if lib.uniffi_dojo_c_checksum_constructor_toriiclient_new() != 9333:
+    if lib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new() != 59450:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_constructor_toriiclient_new_with_config() != 41101:
+    if lib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new_with_config() != 61297:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_achievements() != 25483:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_achievements() != 33200:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_activities() != 47526:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_activities() != 23788:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_aggregations() != 2286:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_aggregations() != 42587:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_cancel_subscription() != 30979:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_cancel_subscription() != 28338:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_contracts() != 19355:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_contracts() != 51206:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_controllers() != 57439:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_controllers() != 17954:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_entities() != 58651:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_entities() != 24646:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_event_messages() != 13178:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_event_messages() != 13846:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_player_achievements() != 23418:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_player_achievements() != 32047:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_publish_message() != 30337:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message() != 43553:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_publish_message_batch() != 62654:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch() != 13921:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_sql() != 51092:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_sql() != 24413:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_starknet_events() != 47081:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_starknet_events() != 9911:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_entity_updates() != 30649:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_entity_updates() != 9702:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_event_updates() != 61773:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_event_updates() != 27069:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_balance_updates() != 32318:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_balance_updates() != 13012:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_updates() != 21031:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_updates() != 20625:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_transaction_updates() != 9579:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_transaction_updates() != 1132:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_token_balances() != 31624:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_balances() != 10761:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_token_contracts() != 34016:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_contracts() != 7843:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_token_transfers() != 64003:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_transfers() != 51842:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_tokens() != 8250:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_tokens() != 6043:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_transactions() != 39655:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_transactions() != 24561:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_c_checksum_method_toriiclient_worlds() != 61633:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_worlds() != 32142:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
 
 # A ctypes library to expose the extern-C FFI definitions.
 # This is an implementation detail which will be called internally by the public API.
 
 _UniffiLib = _uniffi_load_indirect()
-_UniffiLib.ffi_dojo_c_rustbuffer_alloc.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rustbuffer_alloc.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rustbuffer_alloc.restype = _UniffiRustBuffer
-_UniffiLib.ffi_dojo_c_rustbuffer_from_bytes.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rustbuffer_alloc.restype = _UniffiRustBuffer
+_UniffiLib.ffi_dojo_uniffi_rustbuffer_from_bytes.argtypes = (
     _UniffiForeignBytes,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rustbuffer_from_bytes.restype = _UniffiRustBuffer
-_UniffiLib.ffi_dojo_c_rustbuffer_free.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rustbuffer_from_bytes.restype = _UniffiRustBuffer
+_UniffiLib.ffi_dojo_uniffi_rustbuffer_free.argtypes = (
     _UniffiRustBuffer,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rustbuffer_free.restype = None
-_UniffiLib.ffi_dojo_c_rustbuffer_reserve.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rustbuffer_free.restype = None
+_UniffiLib.ffi_dojo_uniffi_rustbuffer_reserve.argtypes = (
     _UniffiRustBuffer,
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rustbuffer_reserve.restype = _UniffiRustBuffer
+_UniffiLib.ffi_dojo_uniffi_rustbuffer_reserve.restype = _UniffiRustBuffer
 _UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK = ctypes.CFUNCTYPE(None,ctypes.c_uint64,ctypes.c_int8,
 )
 _UNIFFI_FOREIGN_FUTURE_DROPPED_CALLBACK = ctypes.CFUNCTYPE(None,ctypes.c_uint64,
@@ -597,244 +597,244 @@ class _UniffiForeignFutureDroppedCallbackStruct(ctypes.Structure):
         ("handle", ctypes.c_uint64),
         ("free", _UNIFFI_FOREIGN_FUTURE_DROPPED_CALLBACK),
     ]
-_UniffiLib.ffi_dojo_c_rust_future_poll_u8.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_u8.argtypes = (
     ctypes.c_uint64,
     _UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK,
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_poll_u8.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_cancel_u8.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_u8.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_u8.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_cancel_u8.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_complete_u8.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_u8.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_u8.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rust_future_complete_u8.restype = ctypes.c_uint8
-_UniffiLib.ffi_dojo_c_rust_future_free_u8.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_u8.restype = ctypes.c_uint8
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_u8.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_free_u8.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_poll_i8.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_u8.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_i8.argtypes = (
     ctypes.c_uint64,
     _UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK,
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_poll_i8.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_cancel_i8.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_i8.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_i8.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_cancel_i8.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_complete_i8.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_i8.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_i8.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rust_future_complete_i8.restype = ctypes.c_int8
-_UniffiLib.ffi_dojo_c_rust_future_free_i8.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_i8.restype = ctypes.c_int8
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_i8.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_free_i8.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_poll_u16.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_i8.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_u16.argtypes = (
     ctypes.c_uint64,
     _UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK,
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_poll_u16.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_cancel_u16.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_u16.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_u16.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_cancel_u16.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_complete_u16.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_u16.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_u16.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rust_future_complete_u16.restype = ctypes.c_uint16
-_UniffiLib.ffi_dojo_c_rust_future_free_u16.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_u16.restype = ctypes.c_uint16
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_u16.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_free_u16.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_poll_i16.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_u16.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_i16.argtypes = (
     ctypes.c_uint64,
     _UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK,
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_poll_i16.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_cancel_i16.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_i16.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_i16.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_cancel_i16.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_complete_i16.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_i16.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_i16.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rust_future_complete_i16.restype = ctypes.c_int16
-_UniffiLib.ffi_dojo_c_rust_future_free_i16.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_i16.restype = ctypes.c_int16
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_i16.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_free_i16.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_poll_u32.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_i16.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_u32.argtypes = (
     ctypes.c_uint64,
     _UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK,
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_poll_u32.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_cancel_u32.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_u32.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_u32.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_cancel_u32.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_complete_u32.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_u32.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_u32.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rust_future_complete_u32.restype = ctypes.c_uint32
-_UniffiLib.ffi_dojo_c_rust_future_free_u32.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_u32.restype = ctypes.c_uint32
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_u32.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_free_u32.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_poll_i32.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_u32.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_i32.argtypes = (
     ctypes.c_uint64,
     _UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK,
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_poll_i32.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_cancel_i32.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_i32.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_i32.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_cancel_i32.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_complete_i32.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_i32.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_i32.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rust_future_complete_i32.restype = ctypes.c_int32
-_UniffiLib.ffi_dojo_c_rust_future_free_i32.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_i32.restype = ctypes.c_int32
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_i32.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_free_i32.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_poll_u64.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_i32.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64.argtypes = (
     ctypes.c_uint64,
     _UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK,
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_poll_u64.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_cancel_u64.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_u64.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_cancel_u64.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_complete_u64.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_u64.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rust_future_complete_u64.restype = ctypes.c_uint64
-_UniffiLib.ffi_dojo_c_rust_future_free_u64.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64.restype = ctypes.c_uint64
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_u64.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_free_u64.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_poll_i64.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_u64.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_i64.argtypes = (
     ctypes.c_uint64,
     _UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK,
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_poll_i64.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_cancel_i64.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_i64.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_i64.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_cancel_i64.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_complete_i64.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_i64.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_i64.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rust_future_complete_i64.restype = ctypes.c_int64
-_UniffiLib.ffi_dojo_c_rust_future_free_i64.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_i64.restype = ctypes.c_int64
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_i64.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_free_i64.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_poll_f32.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_i64.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_f32.argtypes = (
     ctypes.c_uint64,
     _UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK,
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_poll_f32.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_cancel_f32.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_f32.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_f32.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_cancel_f32.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_complete_f32.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_f32.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_f32.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rust_future_complete_f32.restype = ctypes.c_float
-_UniffiLib.ffi_dojo_c_rust_future_free_f32.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_f32.restype = ctypes.c_float
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_f32.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_free_f32.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_poll_f64.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_f32.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_f64.argtypes = (
     ctypes.c_uint64,
     _UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK,
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_poll_f64.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_cancel_f64.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_f64.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_f64.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_cancel_f64.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_complete_f64.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_f64.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_f64.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rust_future_complete_f64.restype = ctypes.c_double
-_UniffiLib.ffi_dojo_c_rust_future_free_f64.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_f64.restype = ctypes.c_double
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_f64.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_free_f64.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_f64.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer.argtypes = (
     ctypes.c_uint64,
     _UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK,
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_cancel_rust_buffer.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_rust_buffer.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_cancel_rust_buffer.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_rust_buffer.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer.restype = _UniffiRustBuffer
-_UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer.restype = _UniffiRustBuffer
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_poll_void.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_void.argtypes = (
     ctypes.c_uint64,
     _UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK,
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_poll_void.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_cancel_void.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_poll_void.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_void.argtypes = (
     ctypes.c_uint64,
 )
-_UniffiLib.ffi_dojo_c_rust_future_cancel_void.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_complete_void.argtypes = (
-    ctypes.c_uint64,
-    ctypes.POINTER(_UniffiRustCallStatus),
-)
-_UniffiLib.ffi_dojo_c_rust_future_complete_void.restype = None
-_UniffiLib.ffi_dojo_c_rust_future_free_void.argtypes = (
-    ctypes.c_uint64,
-)
-_UniffiLib.ffi_dojo_c_rust_future_free_void.restype = None
-_UniffiLib.uniffi_dojo_c_fn_clone_toriiclient.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_cancel_void.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_void.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_c_fn_clone_toriiclient.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_free_toriiclient.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_rust_future_complete_void.restype = None
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_void.argtypes = (
+    ctypes.c_uint64,
+)
+_UniffiLib.ffi_dojo_uniffi_rust_future_free_void.restype = None
+_UniffiLib.uniffi_dojo_uniffi_fn_clone_toriiclient.argtypes = (
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_c_fn_free_toriiclient.restype = None
+_UniffiLib.uniffi_dojo_uniffi_fn_clone_toriiclient.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_free_toriiclient.argtypes = (
+    ctypes.c_uint64,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UniffiLib.uniffi_dojo_uniffi_fn_free_toriiclient.restype = None
 _UNIFFI_CALLBACK_INTERFACE_DOJO_ENTITY_UPDATE_CALLBACK_METHOD0 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
@@ -852,10 +852,10 @@ class _UniffiVTableCallbackInterfaceDojoEntityUpdateCallback(ctypes.Structure):
         ("on_update", _UNIFFI_CALLBACK_INTERFACE_DOJO_ENTITY_UPDATE_CALLBACK_METHOD0),
         ("on_error", _UNIFFI_CALLBACK_INTERFACE_DOJO_ENTITY_UPDATE_CALLBACK_METHOD1),
     ]
-_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_entityupdatecallback.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_entityupdatecallback.argtypes = (
     ctypes.POINTER(_UniffiVTableCallbackInterfaceDojoEntityUpdateCallback),
 )
-_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_entityupdatecallback.restype = None
+_UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_entityupdatecallback.restype = None
 _UNIFFI_CALLBACK_INTERFACE_DOJO_EVENT_UPDATE_CALLBACK_METHOD0 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
@@ -873,10 +873,10 @@ class _UniffiVTableCallbackInterfaceDojoEventUpdateCallback(ctypes.Structure):
         ("on_update", _UNIFFI_CALLBACK_INTERFACE_DOJO_EVENT_UPDATE_CALLBACK_METHOD0),
         ("on_error", _UNIFFI_CALLBACK_INTERFACE_DOJO_EVENT_UPDATE_CALLBACK_METHOD1),
     ]
-_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_eventupdatecallback.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_eventupdatecallback.argtypes = (
     ctypes.POINTER(_UniffiVTableCallbackInterfaceDojoEventUpdateCallback),
 )
-_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_eventupdatecallback.restype = None
+_UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_eventupdatecallback.restype = None
 _UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK_METHOD0 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
@@ -894,10 +894,10 @@ class _UniffiVTableCallbackInterfaceDojoTokenBalanceUpdateCallback(ctypes.Struct
         ("on_update", _UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK_METHOD0),
         ("on_error", _UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_BALANCE_UPDATE_CALLBACK_METHOD1),
     ]
-_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_tokenbalanceupdatecallback.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_tokenbalanceupdatecallback.argtypes = (
     ctypes.POINTER(_UniffiVTableCallbackInterfaceDojoTokenBalanceUpdateCallback),
 )
-_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_tokenbalanceupdatecallback.restype = None
+_UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_tokenbalanceupdatecallback.restype = None
 _UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_UPDATE_CALLBACK_METHOD0 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
@@ -915,10 +915,10 @@ class _UniffiVTableCallbackInterfaceDojoTokenUpdateCallback(ctypes.Structure):
         ("on_update", _UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_UPDATE_CALLBACK_METHOD0),
         ("on_error", _UNIFFI_CALLBACK_INTERFACE_DOJO_TOKEN_UPDATE_CALLBACK_METHOD1),
     ]
-_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_tokenupdatecallback.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_tokenupdatecallback.argtypes = (
     ctypes.POINTER(_UniffiVTableCallbackInterfaceDojoTokenUpdateCallback),
 )
-_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_tokenupdatecallback.restype = None
+_UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_tokenupdatecallback.restype = None
 _UNIFFI_CALLBACK_INTERFACE_DOJO_TRANSACTION_UPDATE_CALLBACK_METHOD0 = ctypes.CFUNCTYPE(None,ctypes.c_uint64,_UniffiRustBuffer,ctypes.c_void_p,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
@@ -936,230 +936,230 @@ class _UniffiVTableCallbackInterfaceDojoTransactionUpdateCallback(ctypes.Structu
         ("on_update", _UNIFFI_CALLBACK_INTERFACE_DOJO_TRANSACTION_UPDATE_CALLBACK_METHOD0),
         ("on_error", _UNIFFI_CALLBACK_INTERFACE_DOJO_TRANSACTION_UPDATE_CALLBACK_METHOD1),
     ]
-_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_transactionupdatecallback.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_transactionupdatecallback.argtypes = (
     ctypes.POINTER(_UniffiVTableCallbackInterfaceDojoTransactionUpdateCallback),
 )
-_UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_transactionupdatecallback.restype = None
-_UniffiLib.uniffi_dojo_c_fn_constructor_toriiclient_new.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_transactionupdatecallback.restype = None
+_UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new.argtypes = (
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_constructor_toriiclient_new.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_constructor_toriiclient_new_with_config.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new_with_config.argtypes = (
     _UniffiRustBuffer,
     ctypes.c_uint64,
 )
-_UniffiLib.uniffi_dojo_c_fn_constructor_toriiclient_new_with_config.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_achievements.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new_with_config.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_achievements.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_achievements.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_activities.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_achievements.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_activities.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_activities.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_aggregations.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_activities.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_aggregations.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_aggregations.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_cancel_subscription.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_aggregations.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_cancel_subscription.argtypes = (
     ctypes.c_uint64,
     ctypes.c_uint64,
     ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_cancel_subscription.restype = None
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_contracts.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_cancel_subscription.restype = None
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_contracts.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_contracts.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_controllers.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_contracts.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_controllers.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_controllers.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_entities.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_controllers.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_entities.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_entities.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_event_messages.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_entities.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_event_messages.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_event_messages.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_player_achievements.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_event_messages.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_player_achievements.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_publish_message.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_publish_message.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_publish_message_batch.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_publish_message_batch.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_sql.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_sql.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_sql.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_starknet_events.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_sql.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_starknet_events.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_starknet_events.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_entity_updates.argtypes = (
-    ctypes.c_uint64,
-    _UniffiRustBuffer,
-    _UniffiRustBuffer,
-    ctypes.c_uint64,
-)
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_entity_updates.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_event_updates.argtypes = (
-    ctypes.c_uint64,
-    _UniffiRustBuffer,
-    ctypes.c_uint64,
-)
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_event_updates.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_token_balance_updates.argtypes = (
-    ctypes.c_uint64,
-    _UniffiRustBuffer,
-    _UniffiRustBuffer,
-    _UniffiRustBuffer,
-    ctypes.c_uint64,
-)
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_token_balance_updates.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_token_updates.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_starknet_events.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_entity_updates.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
     _UniffiRustBuffer,
     ctypes.c_uint64,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_token_updates.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_transaction_updates.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_entity_updates.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_event_updates.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
     ctypes.c_uint64,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_transaction_updates.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_balances.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_event_updates.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_balance_updates.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+    _UniffiRustBuffer,
+    _UniffiRustBuffer,
+    ctypes.c_uint64,
+)
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_balance_updates.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_updates.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+    _UniffiRustBuffer,
+    ctypes.c_uint64,
+)
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_updates.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_transaction_updates.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+    ctypes.c_uint64,
+)
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_transaction_updates.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_balances.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_balances.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_contracts.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_balances.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_contracts.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_contracts.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_transfers.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_contracts.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_transfers.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_transfers.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_tokens.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_transfers.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_tokens.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_tokens.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_transactions.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_tokens.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_transactions.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_transactions.restype = ctypes.c_uint64
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_worlds.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_transactions.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_worlds.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
 )
-_UniffiLib.uniffi_dojo_c_fn_method_toriiclient_worlds.restype = ctypes.c_uint64
-_UniffiLib.ffi_dojo_c_uniffi_contract_version.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_worlds.restype = ctypes.c_uint64
+_UniffiLib.ffi_dojo_uniffi_uniffi_contract_version.argtypes = (
 )
-_UniffiLib.ffi_dojo_c_uniffi_contract_version.restype = ctypes.c_uint32
-_UniffiLib.uniffi_dojo_c_checksum_constructor_toriiclient_new.argtypes = (
+_UniffiLib.ffi_dojo_uniffi_uniffi_contract_version.restype = ctypes.c_uint32
+_UniffiLib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_constructor_toriiclient_new.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_constructor_toriiclient_new_with_config.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new_with_config.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_constructor_toriiclient_new_with_config.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_achievements.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new_with_config.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_achievements.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_achievements.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_activities.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_achievements.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_activities.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_activities.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_aggregations.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_activities.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_aggregations.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_aggregations.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_cancel_subscription.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_aggregations.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_cancel_subscription.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_cancel_subscription.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_contracts.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_cancel_subscription.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_contracts.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_contracts.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_controllers.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_contracts.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_controllers.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_controllers.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_entities.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_controllers.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_entities.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_entities.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_event_messages.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_entities.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_event_messages.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_event_messages.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_player_achievements.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_event_messages.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_player_achievements.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_player_achievements.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_publish_message.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_player_achievements.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_publish_message.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_publish_message_batch.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_publish_message_batch.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_sql.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_sql.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_sql.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_starknet_events.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_sql.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_starknet_events.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_starknet_events.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_entity_updates.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_starknet_events.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_entity_updates.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_entity_updates.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_event_updates.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_entity_updates.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_event_updates.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_event_updates.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_balance_updates.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_event_updates.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_balance_updates.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_balance_updates.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_updates.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_balance_updates.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_updates.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_token_updates.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_transaction_updates.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_updates.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_transaction_updates.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_subscribe_transaction_updates.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_balances.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_transaction_updates.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_balances.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_balances.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_contracts.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_balances.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_contracts.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_contracts.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_transfers.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_contracts.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_transfers.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_token_transfers.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_tokens.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_transfers.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_tokens.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_tokens.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_transactions.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_tokens.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_transactions.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_transactions.restype = ctypes.c_uint16
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_worlds.argtypes = (
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_transactions.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_worlds.argtypes = (
 )
-_UniffiLib.uniffi_dojo_c_checksum_method_toriiclient_worlds.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_worlds.restype = ctypes.c_uint16
 
 _uniffi_check_contract_api_version(_UniffiLib)
 # _uniffi_check_api_checksums(_UniffiLib)
@@ -7894,7 +7894,7 @@ class _UniffiTraitImplEntityUpdateCallbackImpl:
     )
     # Send Rust a pointer to the VTable.  Note: this means we need to keep the struct alive forever,
     # or else bad things will happen when Rust tries to access it.
-    _UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_entityupdatecallback(ctypes.byref(_uniffi_vtable))
+    _UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_entityupdatecallback(ctypes.byref(_uniffi_vtable))
 
 # The _UniffiConverter which transforms the Callbacks in to Handles to pass to Rust.
 _UniffiFfiConverterTypeEntityUpdateCallback = _UniffiCallbackInterfaceFfiConverter()
@@ -7990,7 +7990,7 @@ class _UniffiTraitImplEventUpdateCallbackImpl:
     )
     # Send Rust a pointer to the VTable.  Note: this means we need to keep the struct alive forever,
     # or else bad things will happen when Rust tries to access it.
-    _UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_eventupdatecallback(ctypes.byref(_uniffi_vtable))
+    _UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_eventupdatecallback(ctypes.byref(_uniffi_vtable))
 
 # The _UniffiConverter which transforms the Callbacks in to Handles to pass to Rust.
 _UniffiFfiConverterTypeEventUpdateCallback = _UniffiCallbackInterfaceFfiConverter()
@@ -8063,7 +8063,7 @@ class _UniffiTraitImplTokenBalanceUpdateCallbackImpl:
     )
     # Send Rust a pointer to the VTable.  Note: this means we need to keep the struct alive forever,
     # or else bad things will happen when Rust tries to access it.
-    _UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_tokenbalanceupdatecallback(ctypes.byref(_uniffi_vtable))
+    _UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_tokenbalanceupdatecallback(ctypes.byref(_uniffi_vtable))
 
 # The _UniffiConverter which transforms the Callbacks in to Handles to pass to Rust.
 _UniffiFfiConverterTypeTokenBalanceUpdateCallback = _UniffiCallbackInterfaceFfiConverter()
@@ -8136,7 +8136,7 @@ class _UniffiTraitImplTokenUpdateCallbackImpl:
     )
     # Send Rust a pointer to the VTable.  Note: this means we need to keep the struct alive forever,
     # or else bad things will happen when Rust tries to access it.
-    _UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_tokenupdatecallback(ctypes.byref(_uniffi_vtable))
+    _UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_tokenupdatecallback(ctypes.byref(_uniffi_vtable))
 
 # The _UniffiConverter which transforms the Callbacks in to Handles to pass to Rust.
 _UniffiFfiConverterTypeTokenUpdateCallback = _UniffiCallbackInterfaceFfiConverter()
@@ -8209,7 +8209,7 @@ class _UniffiTraitImplTransactionUpdateCallbackImpl:
     )
     # Send Rust a pointer to the VTable.  Note: this means we need to keep the struct alive forever,
     # or else bad things will happen when Rust tries to access it.
-    _UniffiLib.uniffi_dojo_c_fn_init_callback_vtable_transactionupdatecallback(ctypes.byref(_uniffi_vtable))
+    _UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_transactionupdatecallback(ctypes.byref(_uniffi_vtable))
 
 # The _UniffiConverter which transforms the Callbacks in to Handles to pass to Rust.
 _UniffiFfiConverterTypeTransactionUpdateCallback = _UniffiCallbackInterfaceFfiConverter()
@@ -8307,10 +8307,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypeToriiClient.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_constructor_toriiclient_new_with_config(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_u64,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_u64,
-            _UniffiLib.ffi_dojo_c_rust_future_free_u64,
+            _UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new_with_config(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_u64,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8319,10 +8319,10 @@ class ToriiClient(ToriiClientProtocol):
         # In case of partial initialization of instances.
         handle = getattr(self, "_handle", None)
         if handle is not None:
-            _uniffi_rust_call(_UniffiLib.uniffi_dojo_c_fn_free_toriiclient, handle)
+            _uniffi_rust_call(_UniffiLib.uniffi_dojo_uniffi_fn_free_toriiclient, handle)
 
     def _uniffi_clone_handle(self):
-        return _uniffi_rust_call(_UniffiLib.uniffi_dojo_c_fn_clone_toriiclient, self._handle)
+        return _uniffi_rust_call(_UniffiLib.uniffi_dojo_uniffi_fn_clone_toriiclient, self._handle)
 
     # Used by alternative constructors or any methods which return this type.
     @classmethod
@@ -8342,10 +8342,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypePageAchievement.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_achievements(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_achievements(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8359,10 +8359,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypePageActivity.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_activities(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_activities(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8376,10 +8376,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypePageAggregationEntry.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_aggregations(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_aggregations(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8394,7 +8394,7 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_cancel_subscription,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_cancel_subscription,
             *_uniffi_lowered_args,
         )
         return _uniffi_lift_return(_uniffi_ffi_result)
@@ -8408,10 +8408,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterSequenceTypeContract.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_contracts(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_contracts(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8425,10 +8425,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypePageController.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_controllers(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_controllers(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8442,10 +8442,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypePageEntity.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_entities(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_entities(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8459,10 +8459,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypePageEntity.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_event_messages(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_event_messages(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8476,10 +8476,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypePagePlayerAchievement.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_player_achievements(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8493,10 +8493,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterString.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_publish_message(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8510,10 +8510,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterSequenceString.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_publish_message_batch(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8527,10 +8527,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterSequenceTypeSqlRow.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_sql(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_sql(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8544,10 +8544,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypePageEvent.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_starknet_events(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_starknet_events(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8567,10 +8567,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_entity_updates(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_u64,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_u64,
-            _UniffiLib.ffi_dojo_c_rust_future_free_u64,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_entity_updates(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_u64,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8587,10 +8587,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_event_updates(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_u64,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_u64,
-            _UniffiLib.ffi_dojo_c_rust_future_free_u64,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_event_updates(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_u64,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8613,10 +8613,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_token_balance_updates(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_u64,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_u64,
-            _UniffiLib.ffi_dojo_c_rust_future_free_u64,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_balance_updates(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_u64,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8636,10 +8636,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_token_updates(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_u64,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_u64,
-            _UniffiLib.ffi_dojo_c_rust_future_free_u64,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_updates(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_u64,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8656,10 +8656,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_subscribe_transaction_updates(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_u64,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_u64,
-            _UniffiLib.ffi_dojo_c_rust_future_free_u64,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_transaction_updates(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_u64,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8673,10 +8673,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypePageTokenBalance.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_balances(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_balances(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8690,10 +8690,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypePageTokenContract.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_contracts(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_contracts(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8707,10 +8707,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypePageTokenTransfer.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_token_transfers(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_transfers(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8724,10 +8724,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypePageToken.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_tokens(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_tokens(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8741,10 +8741,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterTypePageTransaction.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_transactions(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_transactions(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )
@@ -8758,10 +8758,10 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_lift_return = _UniffiFfiConverterSequenceTypeWorld.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
         return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_c_fn_method_toriiclient_worlds(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_c_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_c_rust_future_free_rust_buffer,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_worlds(*_uniffi_lowered_args),
+            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
+            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
             _uniffi_lift_return,
             _uniffi_error_converter,
         )

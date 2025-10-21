@@ -1,5 +1,5 @@
 [package]
-name = "c"
+name = "dojo-c"
 version.workspace = true
 edition.workspace = true
 

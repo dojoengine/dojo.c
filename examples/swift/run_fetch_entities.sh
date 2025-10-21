@@ -8,7 +8,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$REPO_ROOT"
 
 # Check if library exists
-if [ ! -f "target/release/libdojo_c.dylib" ]; then
+if [ ! -f "target/release/libdojo_uniffi.dylib" ]; then
     echo "Error: Library not found. Please build it first:"
     echo "  cargo build --release"
     exit 1
@@ -17,13 +17,13 @@ fi
 # Check if Swift bindings exist
 if [ ! -f "bindings/swift/DojoEngine.swift" ]; then
     echo "Error: Swift bindings not found. Please generate them first:"
-    echo "  cargo run --bin uniffi-bindgen-swift --release -- target/release/libdojo_c.dylib bindings/swift --swift-sources --headers --modulemap"
+    echo "  cargo run --bin uniffi-bindgen-swift --release -- target/release/libdojo_uniffi.dylib bindings/swift --swift-sources --headers --modulemap"
     exit 1
 fi
 
 if [ ! -f "bindings/swift/DojoEngineFFI.h" ]; then
     echo "Error: Swift binding headers not found. Regenerating..."
-    cargo run --bin uniffi-bindgen-swift --release -- target/release/libdojo_c.dylib bindings/swift --swift-sources --headers --modulemap
+    cargo run --bin uniffi-bindgen-swift --release -- target/release/libdojo_uniffi.dylib bindings/swift --swift-sources --headers --modulemap
 fi
 
 # Parse arguments
@@ -37,7 +37,7 @@ trap "rm -rf $TEMP_DIR" EXIT
 # Copy all necessary files
 cp "bindings/swift/DojoEngine.swift" "$TEMP_DIR/"
 cp "bindings/swift/DojoEngineFFI.h" "$TEMP_DIR/"
-cp "bindings/swift/dojo_c.modulemap" "$TEMP_DIR/module.modulemap"
+cp "bindings/swift/dojo_uniffi.modulemap" "$TEMP_DIR/module.modulemap"
 cp "examples/swift/fetch_entities.swift" "$TEMP_DIR/"
 
 # Create a combined Swift file
@@ -66,7 +66,7 @@ swiftc -o fetch_entities \
     -import-objc-header DojoEngineFFI.h \
     -I . \
     -L "$REPO_ROOT/target/release" \
-    -ldojo_c \
+    -ldojo_uniffi \
     -Xlinker -rpath -Xlinker "$REPO_ROOT/target/release" \
     main.swift
 
