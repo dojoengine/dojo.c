@@ -31,13 +31,6 @@ import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.resume
-import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 
 // This is a helper for safely working with byte buffers returned from the Rust code.
 // A rust-owned buffer is represented by its capacity, its current length, and a
@@ -877,177 +870,177 @@ internal object UniffiLib {
         
     }
     external fun uniffi_dojo_uniffi_fn_clone_toriiclient(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_free_toriiclient(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    external fun uniffi_dojo_uniffi_fn_constructor_toriiclient_new(`toriiUrl`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_constructor_toriiclient_new_with_config(`toriiUrl`: RustBuffer.ByValue,`maxMessageSize`: Long,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_achievements(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_activities(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_aggregations(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_cancel_subscription(`ptr`: Long,`subscriptionId`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_contracts(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_controllers(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_entities(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_event_messages(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_publish_message(`ptr`: Long,`message`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch(`ptr`: Long,`messages`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_sql(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_starknet_events(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_entity_updates(`ptr`: Long,`clause`: RustBuffer.ByValue,`worldAddresses`: RustBuffer.ByValue,`callback`: Long,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_event_updates(`ptr`: Long,`keys`: RustBuffer.ByValue,`callback`: Long,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_balance_updates(`ptr`: Long,`contractAddresses`: RustBuffer.ByValue,`accountAddresses`: RustBuffer.ByValue,`tokenIds`: RustBuffer.ByValue,`callback`: Long,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_updates(`ptr`: Long,`contractAddresses`: RustBuffer.ByValue,`tokenIds`: RustBuffer.ByValue,`callback`: Long,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_transaction_updates(`ptr`: Long,`filter`: RustBuffer.ByValue,`callback`: Long,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_token_balances(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_token_contracts(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_token_transfers(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_tokens(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_transactions(`ptr`: Long,`query`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_method_toriiclient_worlds(`ptr`: Long,`worldAddresses`: RustBuffer.ByValue,
-    ): Long
-    external fun uniffi_dojo_uniffi_fn_init_callback_vtable_entityupdatecallback(`vtable`: UniffiVTableCallbackInterfaceEntityUpdateCallback,
-    ): Unit
-    external fun uniffi_dojo_uniffi_fn_init_callback_vtable_eventupdatecallback(`vtable`: UniffiVTableCallbackInterfaceEventUpdateCallback,
-    ): Unit
-    external fun uniffi_dojo_uniffi_fn_init_callback_vtable_tokenbalanceupdatecallback(`vtable`: UniffiVTableCallbackInterfaceTokenBalanceUpdateCallback,
-    ): Unit
-    external fun uniffi_dojo_uniffi_fn_init_callback_vtable_tokenupdatecallback(`vtable`: UniffiVTableCallbackInterfaceTokenUpdateCallback,
-    ): Unit
-    external fun uniffi_dojo_uniffi_fn_init_callback_vtable_transactionupdatecallback(`vtable`: UniffiVTableCallbackInterfaceTransactionUpdateCallback,
-    ): Unit
-    external fun ffi_dojo_uniffi_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    external fun ffi_dojo_uniffi_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    external fun ffi_dojo_uniffi_rustbuffer_free(`buf`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    external fun ffi_dojo_uniffi_rustbuffer_reserve(`buf`: RustBuffer.ByValue,`additional`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    external fun ffi_dojo_uniffi_rust_future_poll_u8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_cancel_u8(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_free_u8(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_complete_u8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Byte
-    external fun ffi_dojo_uniffi_rust_future_poll_i8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_cancel_i8(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_free_i8(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_complete_i8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Byte
-    external fun ffi_dojo_uniffi_rust_future_poll_u16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_cancel_u16(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_free_u16(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_complete_u16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Short
-    external fun ffi_dojo_uniffi_rust_future_poll_i16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_cancel_i16(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_free_i16(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_complete_i16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Short
-    external fun ffi_dojo_uniffi_rust_future_poll_u32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_cancel_u32(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_free_u32(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_complete_u32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Int
-    external fun ffi_dojo_uniffi_rust_future_poll_i32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_cancel_i32(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_free_i32(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_complete_i32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Int
-    external fun ffi_dojo_uniffi_rust_future_poll_u64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_cancel_u64(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_free_u64(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_complete_u64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Long
-    external fun ffi_dojo_uniffi_rust_future_poll_i64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_cancel_i64(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_free_i64(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_complete_i64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Long
-    external fun ffi_dojo_uniffi_rust_future_poll_f32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_cancel_f32(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_free_f32(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_complete_f32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Float
-    external fun ffi_dojo_uniffi_rust_future_poll_f64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_cancel_f64(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_free_f64(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_complete_f64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Double
-    external fun ffi_dojo_uniffi_rust_future_poll_rust_buffer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_cancel_rust_buffer(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_free_rust_buffer(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_complete_rust_buffer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    external fun ffi_dojo_uniffi_rust_future_poll_void(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_cancel_void(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_free_void(`handle`: Long,
-    ): Unit
-    external fun ffi_dojo_uniffi_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
+): Long
+external fun uniffi_dojo_uniffi_fn_free_toriiclient(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Unit
+external fun uniffi_dojo_uniffi_fn_constructor_toriiclient_new(`toriiUrl`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): Long
+external fun uniffi_dojo_uniffi_fn_constructor_toriiclient_new_with_config(`toriiUrl`: RustBuffer.ByValue,`maxMessageSize`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Long
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_achievements(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_activities(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_aggregations(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_cancel_subscription(`ptr`: Long,`subscriptionId`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Unit
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_contracts(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_controllers(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_entities(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_event_messages(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_publish_message(`ptr`: Long,`message`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch(`ptr`: Long,`messages`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_sql(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_starknet_events(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_entity_updates(`ptr`: Long,`clause`: RustBuffer.ByValue,`worldAddresses`: RustBuffer.ByValue,`callback`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Long
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_event_updates(`ptr`: Long,`keys`: RustBuffer.ByValue,`callback`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Long
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_balance_updates(`ptr`: Long,`contractAddresses`: RustBuffer.ByValue,`accountAddresses`: RustBuffer.ByValue,`tokenIds`: RustBuffer.ByValue,`callback`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Long
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_updates(`ptr`: Long,`contractAddresses`: RustBuffer.ByValue,`tokenIds`: RustBuffer.ByValue,`callback`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Long
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_transaction_updates(`ptr`: Long,`filter`: RustBuffer.ByValue,`callback`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Long
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_token_balances(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_token_contracts(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_token_transfers(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_tokens(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_transactions(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_worlds(`ptr`: Long,`worldAddresses`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_init_callback_vtable_entityupdatecallback(`vtable`: UniffiVTableCallbackInterfaceEntityUpdateCallback,
+): Unit
+external fun uniffi_dojo_uniffi_fn_init_callback_vtable_eventupdatecallback(`vtable`: UniffiVTableCallbackInterfaceEventUpdateCallback,
+): Unit
+external fun uniffi_dojo_uniffi_fn_init_callback_vtable_tokenbalanceupdatecallback(`vtable`: UniffiVTableCallbackInterfaceTokenBalanceUpdateCallback,
+): Unit
+external fun uniffi_dojo_uniffi_fn_init_callback_vtable_tokenupdatecallback(`vtable`: UniffiVTableCallbackInterfaceTokenUpdateCallback,
+): Unit
+external fun uniffi_dojo_uniffi_fn_init_callback_vtable_transactionupdatecallback(`vtable`: UniffiVTableCallbackInterfaceTransactionUpdateCallback,
+): Unit
+external fun ffi_dojo_uniffi_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun ffi_dojo_uniffi_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun ffi_dojo_uniffi_rustbuffer_free(`buf`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): Unit
+external fun ffi_dojo_uniffi_rustbuffer_reserve(`buf`: RustBuffer.ByValue,`additional`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun ffi_dojo_uniffi_rust_future_poll_u8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_cancel_u8(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_free_u8(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_complete_u8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Byte
+external fun ffi_dojo_uniffi_rust_future_poll_i8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_cancel_i8(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_free_i8(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_complete_i8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Byte
+external fun ffi_dojo_uniffi_rust_future_poll_u16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_cancel_u16(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_free_u16(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_complete_u16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Short
+external fun ffi_dojo_uniffi_rust_future_poll_i16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_cancel_i16(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_free_i16(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_complete_i16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Short
+external fun ffi_dojo_uniffi_rust_future_poll_u32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_cancel_u32(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_free_u32(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_complete_u32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Int
+external fun ffi_dojo_uniffi_rust_future_poll_i32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_cancel_i32(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_free_i32(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_complete_i32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Int
+external fun ffi_dojo_uniffi_rust_future_poll_u64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_cancel_u64(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_free_u64(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_complete_u64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Long
+external fun ffi_dojo_uniffi_rust_future_poll_i64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_cancel_i64(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_free_i64(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_complete_i64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Long
+external fun ffi_dojo_uniffi_rust_future_poll_f32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_cancel_f32(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_free_f32(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_complete_f32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Float
+external fun ffi_dojo_uniffi_rust_future_poll_f64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_cancel_f64(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_free_f64(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_complete_f64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Double
+external fun ffi_dojo_uniffi_rust_future_poll_rust_buffer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_cancel_rust_buffer(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_free_rust_buffer(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_complete_rust_buffer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun ffi_dojo_uniffi_rust_future_poll_void(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_cancel_void(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_free_void(`handle`: Long,
+): Unit
+external fun ffi_dojo_uniffi_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Unit
+
     
-        
 }
 
 private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
@@ -1061,82 +1054,82 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_achievements() != 50963.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_achievements() != 45327.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_activities() != 15275.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_activities() != 43349.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_aggregations() != 13292.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_aggregations() != 12858.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_cancel_subscription() != 31182.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_contracts() != 42677.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_contracts() != 1861.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_controllers() != 54199.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_controllers() != 55573.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_entities() != 57743.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_entities() != 50647.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_event_messages() != 32606.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_event_messages() != 35425.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_player_achievements() != 62482.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_player_achievements() != 61773.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message() != 35636.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message() != 30179.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch() != 42443.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch() != 2146.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_sql() != 35788.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_sql() != 38286.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_starknet_events() != 33321.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_starknet_events() != 44694.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_entity_updates() != 4807.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_entity_updates() != 17350.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_event_updates() != 60817.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_event_updates() != 63983.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_balance_updates() != 33985.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_balance_updates() != 26741.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_updates() != 10575.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_updates() != 54836.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_transaction_updates() != 28352.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_transaction_updates() != 10040.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_balances() != 28397.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_balances() != 1716.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_contracts() != 13435.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_contracts() != 49563.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_transfers() != 28022.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_transfers() != 10363.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_tokens() != 26997.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_tokens() != 10630.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_transactions() != 32126.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_transactions() != 46460.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_worlds() != 54332.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_worlds() != 23254.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new() != 59450.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new() != 18057.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new_with_config() != 61297.toShort()) {
+    if (lib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new_with_config() != 42232.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_dojo_uniffi_checksum_method_entityupdatecallback_on_update() != 15850.toShort()) {
@@ -1182,46 +1175,6 @@ public fun uniffiEnsureInitialized() {
 }
 
 // Async support
-// Async return type handlers
-
-internal const val UNIFFI_RUST_FUTURE_POLL_READY = 0.toByte()
-internal const val UNIFFI_RUST_FUTURE_POLL_WAKE = 1.toByte()
-
-internal val uniffiContinuationHandleMap = UniffiHandleMap<CancellableContinuation<Byte>>()
-
-// FFI type for Rust future continuations
-internal object uniffiRustFutureContinuationCallbackImpl: UniffiRustFutureContinuationCallback {
-    override fun callback(data: Long, pollResult: Byte) {
-        uniffiContinuationHandleMap.remove(data).resume(pollResult)
-    }
-}
-
-internal suspend fun<T, F, E: kotlin.Exception> uniffiRustCallAsync(
-    rustFuture: Long,
-    pollFunc: (Long, UniffiRustFutureContinuationCallback, Long) -> Unit,
-    completeFunc: (Long, UniffiRustCallStatus) -> F,
-    freeFunc: (Long) -> Unit,
-    liftFunc: (F) -> T,
-    errorHandler: UniffiRustCallStatusErrorHandler<E>
-): T {
-    try {
-        do {
-            val pollResult = suspendCancellableCoroutine<Byte> { continuation ->
-                pollFunc(
-                    rustFuture,
-                    uniffiRustFutureContinuationCallbackImpl,
-                    uniffiContinuationHandleMap.insert(continuation)
-                )
-            }
-        } while (pollResult != UNIFFI_RUST_FUTURE_POLL_READY);
-
-        return liftFunc(
-            uniffiRustCallWithError(errorHandler, { status -> completeFunc(rustFuture, status) })
-        )
-    } finally {
-        freeFunc(rustFuture)
-    }
-}
 
 // Public interface members begin here.
 
@@ -1783,53 +1736,53 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
 //
 public interface ToriiClientInterface {
     
-    suspend fun `achievements`(`query`: AchievementQuery): PageAchievement
+    fun `achievements`(`query`: AchievementQuery): PageAchievement
     
-    suspend fun `activities`(`query`: ActivityQuery): PageActivity
+    fun `activities`(`query`: ActivityQuery): PageActivity
     
-    suspend fun `aggregations`(`query`: AggregationQuery): PageAggregationEntry
+    fun `aggregations`(`query`: AggregationQuery): PageAggregationEntry
     
     fun `cancelSubscription`(`subscriptionId`: kotlin.ULong)
     
-    suspend fun `contracts`(`query`: ContractQuery): List<Contract>
+    fun `contracts`(`query`: ContractQuery): List<Contract>
     
-    suspend fun `controllers`(`query`: ControllerQuery): PageController
+    fun `controllers`(`query`: ControllerQuery): PageController
     
-    suspend fun `entities`(`query`: Query): PageEntity
+    fun `entities`(`query`: Query): PageEntity
     
-    suspend fun `eventMessages`(`query`: Query): PageEntity
+    fun `eventMessages`(`query`: Query): PageEntity
     
-    suspend fun `playerAchievements`(`query`: PlayerAchievementQuery): PagePlayerAchievement
+    fun `playerAchievements`(`query`: PlayerAchievementQuery): PagePlayerAchievement
     
-    suspend fun `publishMessage`(`message`: Message): kotlin.String
+    fun `publishMessage`(`message`: Message): kotlin.String
     
-    suspend fun `publishMessageBatch`(`messages`: List<Message>): List<kotlin.String>
+    fun `publishMessageBatch`(`messages`: List<Message>): List<kotlin.String>
     
-    suspend fun `sql`(`query`: kotlin.String): List<SqlRow>
+    fun `sql`(`query`: kotlin.String): List<SqlRow>
     
-    suspend fun `starknetEvents`(`query`: EventQuery): PageEvent
+    fun `starknetEvents`(`query`: EventQuery): PageEvent
     
-    suspend fun `subscribeEntityUpdates`(`clause`: Clause?, `worldAddresses`: List<FieldElement>, `callback`: EntityUpdateCallback): kotlin.ULong
+    fun `subscribeEntityUpdates`(`clause`: Clause?, `worldAddresses`: List<FieldElement>, `callback`: EntityUpdateCallback): kotlin.ULong
     
-    suspend fun `subscribeEventUpdates`(`keys`: List<KeysClause>, `callback`: EventUpdateCallback): kotlin.ULong
+    fun `subscribeEventUpdates`(`keys`: List<KeysClause>, `callback`: EventUpdateCallback): kotlin.ULong
     
-    suspend fun `subscribeTokenBalanceUpdates`(`contractAddresses`: List<FieldElement>, `accountAddresses`: List<FieldElement>, `tokenIds`: List<U256>, `callback`: TokenBalanceUpdateCallback): kotlin.ULong
+    fun `subscribeTokenBalanceUpdates`(`contractAddresses`: List<FieldElement>, `accountAddresses`: List<FieldElement>, `tokenIds`: List<U256>, `callback`: TokenBalanceUpdateCallback): kotlin.ULong
     
-    suspend fun `subscribeTokenUpdates`(`contractAddresses`: List<FieldElement>, `tokenIds`: List<U256>, `callback`: TokenUpdateCallback): kotlin.ULong
+    fun `subscribeTokenUpdates`(`contractAddresses`: List<FieldElement>, `tokenIds`: List<U256>, `callback`: TokenUpdateCallback): kotlin.ULong
     
-    suspend fun `subscribeTransactionUpdates`(`filter`: TransactionFilter?, `callback`: TransactionUpdateCallback): kotlin.ULong
+    fun `subscribeTransactionUpdates`(`filter`: TransactionFilter?, `callback`: TransactionUpdateCallback): kotlin.ULong
     
-    suspend fun `tokenBalances`(`query`: TokenBalanceQuery): PageTokenBalance
+    fun `tokenBalances`(`query`: TokenBalanceQuery): PageTokenBalance
     
-    suspend fun `tokenContracts`(`query`: TokenContractQuery): PageTokenContract
+    fun `tokenContracts`(`query`: TokenContractQuery): PageTokenContract
     
-    suspend fun `tokenTransfers`(`query`: TokenTransferQuery): PageTokenTransfer
+    fun `tokenTransfers`(`query`: TokenTransferQuery): PageTokenTransfer
     
-    suspend fun `tokens`(`query`: TokenQuery): PageToken
+    fun `tokens`(`query`: TokenQuery): PageToken
     
-    suspend fun `transactions`(`query`: TransactionQuery): PageTransaction
+    fun `transactions`(`query`: TransactionQuery): PageTransaction
     
-    suspend fun `worlds`(`worldAddresses`: List<FieldElement>): List<World>
+    fun `worlds`(`worldAddresses`: List<FieldElement>): List<World>
     
     companion object
 }
@@ -1858,7 +1811,14 @@ open class ToriiClient: Disposable, AutoCloseable, ToriiClientInterface
         this.handle = 0
         this.cleanable = UniffiLib.CLEANER.register(this, UniffiCleanAction(handle))
     }
-    // Note no constructor generated for this object as it is async.
+    constructor(`toriiUrl`: kotlin.String) :
+        this(UniffiWithHandle, 
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new(
+    
+        FfiConverterString.lower(`toriiUrl`),_status)
+}
+    )
 
     protected val handle: Long
     protected val cleanable: UniffiCleaner.Cleanable
@@ -1932,67 +1892,46 @@ open class ToriiClient: Disposable, AutoCloseable, ToriiClientInterface
     }
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `achievements`(`query`: AchievementQuery) : PageAchievement {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_achievements(
-                uniffiHandle,
-                FfiConverterTypeAchievementQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypePageAchievement.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `achievements`(`query`: AchievementQuery): PageAchievement {
+            return FfiConverterTypePageAchievement.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_achievements(
+        it,
+        FfiConverterTypeAchievementQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `activities`(`query`: ActivityQuery) : PageActivity {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_activities(
-                uniffiHandle,
-                FfiConverterTypeActivityQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypePageActivity.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `activities`(`query`: ActivityQuery): PageActivity {
+            return FfiConverterTypePageActivity.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_activities(
+        it,
+        FfiConverterTypeActivityQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `aggregations`(`query`: AggregationQuery) : PageAggregationEntry {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_aggregations(
-                uniffiHandle,
-                FfiConverterTypeAggregationQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypePageAggregationEntry.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `aggregations`(`query`: AggregationQuery): PageAggregationEntry {
+            return FfiConverterTypePageAggregationEntry.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_aggregations(
+        it,
+        FfiConverterTypeAggregationQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
     @Throws(DojoException::class)override fun `cancelSubscription`(`subscriptionId`: kotlin.ULong)
@@ -2008,424 +1947,284 @@ open class ToriiClient: Disposable, AutoCloseable, ToriiClientInterface
     
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `contracts`(`query`: ContractQuery) : List<Contract> {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_contracts(
-                uniffiHandle,
-                FfiConverterTypeContractQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterSequenceTypeContract.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `contracts`(`query`: ContractQuery): List<Contract> {
+            return FfiConverterSequenceTypeContract.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_contracts(
+        it,
+        FfiConverterTypeContractQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `controllers`(`query`: ControllerQuery) : PageController {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_controllers(
-                uniffiHandle,
-                FfiConverterTypeControllerQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypePageController.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `controllers`(`query`: ControllerQuery): PageController {
+            return FfiConverterTypePageController.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_controllers(
+        it,
+        FfiConverterTypeControllerQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `entities`(`query`: Query) : PageEntity {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_entities(
-                uniffiHandle,
-                FfiConverterTypeQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypePageEntity.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `entities`(`query`: Query): PageEntity {
+            return FfiConverterTypePageEntity.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_entities(
+        it,
+        FfiConverterTypeQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `eventMessages`(`query`: Query) : PageEntity {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_event_messages(
-                uniffiHandle,
-                FfiConverterTypeQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypePageEntity.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `eventMessages`(`query`: Query): PageEntity {
+            return FfiConverterTypePageEntity.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_event_messages(
+        it,
+        FfiConverterTypeQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `playerAchievements`(`query`: PlayerAchievementQuery) : PagePlayerAchievement {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements(
-                uniffiHandle,
-                FfiConverterTypePlayerAchievementQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypePagePlayerAchievement.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `playerAchievements`(`query`: PlayerAchievementQuery): PagePlayerAchievement {
+            return FfiConverterTypePagePlayerAchievement.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements(
+        it,
+        FfiConverterTypePlayerAchievementQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `publishMessage`(`message`: Message) : kotlin.String {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message(
-                uniffiHandle,
-                FfiConverterTypeMessage.lower(`message`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterString.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `publishMessage`(`message`: Message): kotlin.String {
+            return FfiConverterString.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message(
+        it,
+        FfiConverterTypeMessage.lower(`message`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `publishMessageBatch`(`messages`: List<Message>) : List<kotlin.String> {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch(
-                uniffiHandle,
-                FfiConverterSequenceTypeMessage.lower(`messages`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterSequenceString.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `publishMessageBatch`(`messages`: List<Message>): List<kotlin.String> {
+            return FfiConverterSequenceString.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch(
+        it,
+        FfiConverterSequenceTypeMessage.lower(`messages`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `sql`(`query`: kotlin.String) : List<SqlRow> {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_sql(
-                uniffiHandle,
-                FfiConverterString.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterSequenceTypeSqlRow.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `sql`(`query`: kotlin.String): List<SqlRow> {
+            return FfiConverterSequenceTypeSqlRow.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_sql(
+        it,
+        FfiConverterString.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `starknetEvents`(`query`: EventQuery) : PageEvent {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_starknet_events(
-                uniffiHandle,
-                FfiConverterTypeEventQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypePageEvent.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `starknetEvents`(`query`: EventQuery): PageEvent {
+            return FfiConverterTypePageEvent.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_starknet_events(
+        it,
+        FfiConverterTypeEventQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `subscribeEntityUpdates`(`clause`: Clause?, `worldAddresses`: List<FieldElement>, `callback`: EntityUpdateCallback) : kotlin.ULong {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_entity_updates(
-                uniffiHandle,
-                FfiConverterOptionalTypeClause.lower(`clause`),FfiConverterSequenceTypeFieldElement.lower(`worldAddresses`),FfiConverterTypeEntityUpdateCallback.lower(`callback`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_u64(future) },
-        // lift function
-        { FfiConverterULong.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `subscribeEntityUpdates`(`clause`: Clause?, `worldAddresses`: List<FieldElement>, `callback`: EntityUpdateCallback): kotlin.ULong {
+            return FfiConverterULong.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_entity_updates(
+        it,
+        FfiConverterOptionalTypeClause.lower(`clause`),FfiConverterSequenceTypeFieldElement.lower(`worldAddresses`),FfiConverterTypeEntityUpdateCallback.lower(`callback`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `subscribeEventUpdates`(`keys`: List<KeysClause>, `callback`: EventUpdateCallback) : kotlin.ULong {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_event_updates(
-                uniffiHandle,
-                FfiConverterSequenceTypeKeysClause.lower(`keys`),FfiConverterTypeEventUpdateCallback.lower(`callback`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_u64(future) },
-        // lift function
-        { FfiConverterULong.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `subscribeEventUpdates`(`keys`: List<KeysClause>, `callback`: EventUpdateCallback): kotlin.ULong {
+            return FfiConverterULong.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_event_updates(
+        it,
+        FfiConverterSequenceTypeKeysClause.lower(`keys`),FfiConverterTypeEventUpdateCallback.lower(`callback`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `subscribeTokenBalanceUpdates`(`contractAddresses`: List<FieldElement>, `accountAddresses`: List<FieldElement>, `tokenIds`: List<U256>, `callback`: TokenBalanceUpdateCallback) : kotlin.ULong {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_balance_updates(
-                uniffiHandle,
-                FfiConverterSequenceTypeFieldElement.lower(`contractAddresses`),FfiConverterSequenceTypeFieldElement.lower(`accountAddresses`),FfiConverterSequenceTypeU256.lower(`tokenIds`),FfiConverterTypeTokenBalanceUpdateCallback.lower(`callback`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_u64(future) },
-        // lift function
-        { FfiConverterULong.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `subscribeTokenBalanceUpdates`(`contractAddresses`: List<FieldElement>, `accountAddresses`: List<FieldElement>, `tokenIds`: List<U256>, `callback`: TokenBalanceUpdateCallback): kotlin.ULong {
+            return FfiConverterULong.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_balance_updates(
+        it,
+        FfiConverterSequenceTypeFieldElement.lower(`contractAddresses`),FfiConverterSequenceTypeFieldElement.lower(`accountAddresses`),FfiConverterSequenceTypeU256.lower(`tokenIds`),FfiConverterTypeTokenBalanceUpdateCallback.lower(`callback`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `subscribeTokenUpdates`(`contractAddresses`: List<FieldElement>, `tokenIds`: List<U256>, `callback`: TokenUpdateCallback) : kotlin.ULong {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_updates(
-                uniffiHandle,
-                FfiConverterSequenceTypeFieldElement.lower(`contractAddresses`),FfiConverterSequenceTypeU256.lower(`tokenIds`),FfiConverterTypeTokenUpdateCallback.lower(`callback`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_u64(future) },
-        // lift function
-        { FfiConverterULong.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `subscribeTokenUpdates`(`contractAddresses`: List<FieldElement>, `tokenIds`: List<U256>, `callback`: TokenUpdateCallback): kotlin.ULong {
+            return FfiConverterULong.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_updates(
+        it,
+        FfiConverterSequenceTypeFieldElement.lower(`contractAddresses`),FfiConverterSequenceTypeU256.lower(`tokenIds`),FfiConverterTypeTokenUpdateCallback.lower(`callback`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `subscribeTransactionUpdates`(`filter`: TransactionFilter?, `callback`: TransactionUpdateCallback) : kotlin.ULong {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_transaction_updates(
-                uniffiHandle,
-                FfiConverterOptionalTypeTransactionFilter.lower(`filter`),FfiConverterTypeTransactionUpdateCallback.lower(`callback`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_u64(future) },
-        // lift function
-        { FfiConverterULong.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `subscribeTransactionUpdates`(`filter`: TransactionFilter?, `callback`: TransactionUpdateCallback): kotlin.ULong {
+            return FfiConverterULong.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_transaction_updates(
+        it,
+        FfiConverterOptionalTypeTransactionFilter.lower(`filter`),FfiConverterTypeTransactionUpdateCallback.lower(`callback`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `tokenBalances`(`query`: TokenBalanceQuery) : PageTokenBalance {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_balances(
-                uniffiHandle,
-                FfiConverterTypeTokenBalanceQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypePageTokenBalance.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `tokenBalances`(`query`: TokenBalanceQuery): PageTokenBalance {
+            return FfiConverterTypePageTokenBalance.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_balances(
+        it,
+        FfiConverterTypeTokenBalanceQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `tokenContracts`(`query`: TokenContractQuery) : PageTokenContract {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_contracts(
-                uniffiHandle,
-                FfiConverterTypeTokenContractQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypePageTokenContract.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `tokenContracts`(`query`: TokenContractQuery): PageTokenContract {
+            return FfiConverterTypePageTokenContract.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_contracts(
+        it,
+        FfiConverterTypeTokenContractQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `tokenTransfers`(`query`: TokenTransferQuery) : PageTokenTransfer {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_transfers(
-                uniffiHandle,
-                FfiConverterTypeTokenTransferQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypePageTokenTransfer.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `tokenTransfers`(`query`: TokenTransferQuery): PageTokenTransfer {
+            return FfiConverterTypePageTokenTransfer.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_transfers(
+        it,
+        FfiConverterTypeTokenTransferQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `tokens`(`query`: TokenQuery) : PageToken {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_tokens(
-                uniffiHandle,
-                FfiConverterTypeTokenQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypePageToken.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `tokens`(`query`: TokenQuery): PageToken {
+            return FfiConverterTypePageToken.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_tokens(
+        it,
+        FfiConverterTypeTokenQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `transactions`(`query`: TransactionQuery) : PageTransaction {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_transactions(
-                uniffiHandle,
-                FfiConverterTypeTransactionQuery.lower(`query`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypePageTransaction.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `transactions`(`query`: TransactionQuery): PageTransaction {
+            return FfiConverterTypePageTransaction.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_transactions(
+        it,
+        FfiConverterTypeTransactionQuery.lower(`query`),_status)
+}
+    }
     )
     }
+    
 
     
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `worlds`(`worldAddresses`: List<FieldElement>) : List<World> {
-        return uniffiRustCallAsync(
-        callWithHandle { uniffiHandle ->
-            UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_worlds(
-                uniffiHandle,
-                FfiConverterSequenceTypeFieldElement.lower(`worldAddresses`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterSequenceTypeWorld.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class)override fun `worlds`(`worldAddresses`: List<FieldElement>): List<World> {
+            return FfiConverterSequenceTypeWorld.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_worlds(
+        it,
+        FfiConverterSequenceTypeFieldElement.lower(`worldAddresses`),_status)
+}
+    }
     )
     }
+    
 
     
 
@@ -2435,20 +2234,16 @@ open class ToriiClient: Disposable, AutoCloseable, ToriiClientInterface
     
     companion object {
         
-    @Throws(DojoException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-     suspend fun `newWithConfig`(`toriiUrl`: kotlin.String, `maxMessageSize`: kotlin.ULong) : ToriiClient {
-        return uniffiRustCallAsync(
-        UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new_with_config(FfiConverterString.lower(`toriiUrl`),FfiConverterULong.lower(`maxMessageSize`),),
-        { future, callback, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64(future, continuation) },
-        { future -> UniffiLib.ffi_dojo_uniffi_rust_future_free_u64(future) },
-        // lift function
-        { FfiConverterTypeToriiClient.lift(it) },
-        // Error FFI converter
-        DojoException.ErrorHandler,
+    @Throws(DojoException::class) fun `newWithConfig`(`toriiUrl`: kotlin.String, `maxMessageSize`: kotlin.ULong): ToriiClient {
+            return FfiConverterTypeToriiClient.lift(
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new_with_config(
+    
+        FfiConverterString.lower(`toriiUrl`),FfiConverterULong.lower(`maxMessageSize`),_status)
+}
     )
     }
+    
 
         
     }
@@ -8625,12 +8420,4 @@ public typealias FfiConverterTypeFieldElement = FfiConverterString
  */
 public typealias U256 = kotlin.String
 public typealias FfiConverterTypeU256 = FfiConverterString
-
-
-
-
-
-
-
-
 

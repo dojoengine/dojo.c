@@ -85,6 +85,18 @@ cargo run --bin uniffi-bindgen-python --release -- \
 
 See [`src/uniffi/README.md`](src/uniffi/README.md) for detailed UniFFI documentation.
 
+## Language Support Status
+
+| Language | Status | Notes |
+|----------|--------|-------|
+| **Swift** | ✅ Fully Functional | All features working, synchronous client |
+| **Python** | ✅ Fully Functional | All features working, synchronous client |
+| **C/C++** | ✅ Functional | Basic functionality via cbindgen |
+| **WebAssembly** | ✅ Functional | Browser and Node.js support |
+| **Kotlin** | 🚧 Not Working | UniFFI v0.30 limitations with complex types |
+
+See `examples/` directory for language-specific examples and documentation.
+
 ## Running Examples
 
 ### C Example
