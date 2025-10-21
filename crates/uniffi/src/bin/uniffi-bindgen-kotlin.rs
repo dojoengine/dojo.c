@@ -46,7 +46,7 @@ fn main() {
         args.iter().skip(1).filter(|arg| !arg.starts_with("--")).collect();
 
     let library_path =
-        Utf8PathBuf::from(positional_args.get(0).map(|s| s.as_str()).unwrap_or(&default_lib));
+        Utf8PathBuf::from(positional_args.first().map(|s| s.as_str()).unwrap_or(&default_lib));
     let out_dir =
         Utf8PathBuf::from(positional_args.get(1).map(|s| s.as_str()).unwrap_or(default_out));
 
