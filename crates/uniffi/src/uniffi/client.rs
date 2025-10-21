@@ -13,9 +13,7 @@ use super::types::*;
 static RUNTIME: OnceLock<Runtime> = OnceLock::new();
 
 fn runtime() -> &'static Runtime {
-    RUNTIME.get_or_init(|| {
-        Runtime::new().expect("Failed to create tokio runtime")
-    })
+    RUNTIME.get_or_init(|| Runtime::new().expect("Failed to create tokio runtime"))
 }
 
 // Callback traits for subscriptions
@@ -66,10 +64,7 @@ impl ToriiClient {
     }
 
     /// Create a new Torii client with custom max message size
-    pub fn new_with_config(
-        torii_url: String,
-        max_message_size: u64,
-    ) -> Result<Self, DojoError> {
+    pub fn new_with_config(torii_url: String, max_message_size: u64) -> Result<Self, DojoError> {
         let client = runtime()
             .block_on(torii_client::Client::new_with_config(torii_url, max_message_size as usize))
             .map_err(|_e| DojoError::ConnectionError)?;
@@ -91,20 +86,14 @@ impl ToriiClient {
 
     /// Publish multiple offchain messages to the world
     /// Returns the entity IDs of the published messages
-    pub fn publish_message_batch(
-        &self,
-        messages: Vec<Message>,
-    ) -> Result<Vec<String>, DojoError> {
+    pub fn publish_message_batch(&self, messages: Vec<Message>) -> Result<Vec<String>, DojoError> {
         let msgs: Vec<torii_proto::Message> = messages.into_iter().map(|m| m.into()).collect();
         let inner = self.inner.clone();
         runtime().block_on(inner.publish_message_batch(msgs)).map_err(|_| DojoError::PublishError)
     }
 
     /// Get world metadata for specified world addresses
-    pub fn worlds(
-        &self,
-        world_addresses: Vec<FieldElement>,
-    ) -> Result<Vec<World>, DojoError> {
+    pub fn worlds(&self, world_addresses: Vec<FieldElement>) -> Result<Vec<World>, DojoError> {
         let addrs: Result<Vec<starknet::core::types::Felt>, DojoError> =
             world_addresses.iter().map(field_element_to_felt).collect();
         let addrs = addrs?;
@@ -157,10 +146,7 @@ impl ToriiClient {
     }
 
     /// Retrieve token balances
-    pub fn token_balances(
-        &self,
-        query: TokenBalanceQuery,
-    ) -> Result<PageTokenBalance, DojoError> {
+    pub fn token_balances(&self, query: TokenBalanceQuery) -> Result<PageTokenBalance, DojoError> {
         let q: torii_proto::TokenBalanceQuery = query.into();
         let inner = self.inner.clone();
         let page = runtime()
@@ -208,10 +194,7 @@ impl ToriiClient {
     }
 
     /// Retrieve transactions
-    pub fn transactions(
-        &self,
-        query: TransactionQuery,
-    ) -> Result<PageTransaction, DojoError> {
+    pub fn transactions(&self, query: TransactionQuery) -> Result<PageTransaction, DojoError> {
         let q: torii_proto::TransactionQuery = query.into();
         let inner = self.inner.clone();
         let page = runtime()
@@ -225,10 +208,7 @@ impl ToriiClient {
     }
 
     /// Retrieve aggregations (leaderboards, stats, rankings)
-    pub fn aggregations(
-        &self,
-        query: AggregationQuery,
-    ) -> Result<PageAggregationEntry, DojoError> {
+    pub fn aggregations(&self, query: AggregationQuery) -> Result<PageAggregationEntry, DojoError> {
         let q: torii_proto::AggregationQuery = query.into();
         let inner = self.inner.clone();
         let page = runtime()
@@ -256,10 +236,7 @@ impl ToriiClient {
     }
 
     /// Retrieve achievements
-    pub fn achievements(
-        &self,
-        query: AchievementQuery,
-    ) -> Result<PageAchievement, DojoError> {
+    pub fn achievements(&self, query: AchievementQuery) -> Result<PageAchievement, DojoError> {
         let q: torii_proto::AchievementQuery = query.into();
         let inner = self.inner.clone();
         let page = runtime()
