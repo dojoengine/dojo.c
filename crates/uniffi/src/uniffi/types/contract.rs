@@ -82,4 +82,3 @@ impl From<ContractQuery> for torii_proto::ContractQuery {
         }
     }
 }
-

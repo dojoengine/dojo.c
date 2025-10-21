@@ -38,4 +38,3 @@ impl From<ControllerQuery> for torii_proto::ControllerQuery {
         }
     }
 }
-

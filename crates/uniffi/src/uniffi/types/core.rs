@@ -196,7 +196,11 @@ impl From<Call> for starknet::core::types::Call {
         starknet::core::types::Call {
             to: field_element_to_felt(&val.to).unwrap(),
             selector: starknet::core::utils::get_selector_from_name(&val.selector).unwrap(),
-            calldata: val.calldata.into_iter().map(|f| field_element_to_felt(&f).unwrap()).collect(),
+            calldata: val
+                .calldata
+                .into_iter()
+                .map(|f| field_element_to_felt(&f).unwrap())
+                .collect(),
         }
     }
 }
@@ -205,8 +209,13 @@ impl From<Call> for starknet::core::types::FunctionCall {
     fn from(val: Call) -> Self {
         starknet::core::types::FunctionCall {
             contract_address: field_element_to_felt(&val.to).unwrap(),
-            entry_point_selector: starknet::core::utils::get_selector_from_name(&val.selector).unwrap(),
-            calldata: val.calldata.into_iter().map(|f| field_element_to_felt(&f).unwrap()).collect(),
+            entry_point_selector: starknet::core::utils::get_selector_from_name(&val.selector)
+                .unwrap(),
+            calldata: val
+                .calldata
+                .into_iter()
+                .map(|f| field_element_to_felt(&f).unwrap())
+                .collect(),
         }
     }
 }
@@ -237,7 +246,9 @@ pub enum BlockId {
 impl From<BlockId> for starknet::core::types::BlockId {
     fn from(val: BlockId) -> Self {
         match val {
-            BlockId::Hash(hash) => starknet::core::types::BlockId::Hash(field_element_to_felt(&hash).unwrap()),
+            BlockId::Hash(hash) => {
+                starknet::core::types::BlockId::Hash(field_element_to_felt(&hash).unwrap())
+            }
             BlockId::Number(number) => starknet::core::types::BlockId::Number(number),
             BlockId::Tag(tag) => starknet::core::types::BlockId::Tag(tag.into()),
         }
@@ -247,14 +258,14 @@ impl From<BlockId> for starknet::core::types::BlockId {
 // Pagination wrapper types for different result types
 // These are used by the client but defined here for availability
 
-use super::controller::Controller;
-use super::token::{Token, TokenBalance, TokenContract, TokenTransfer};
-use super::transaction::Transaction;
-use super::aggregation::AggregationEntry;
-use super::activity::Activity;
 use super::achievement::{Achievement, PlayerAchievementEntry};
+use super::activity::Activity;
+use super::aggregation::AggregationEntry;
+use super::controller::Controller;
 use super::entity::Entity;
 use super::event::Event;
+use super::token::{Token, TokenBalance, TokenContract, TokenTransfer};
+use super::transaction::Transaction;
 
 #[derive(Debug, Clone)]
 pub struct PageController {

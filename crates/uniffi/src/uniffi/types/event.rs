@@ -46,7 +46,11 @@ impl From<Message> for torii_proto::Message {
     fn from(val: Message) -> Self {
         torii_proto::Message {
             message: val.message,
-            signature: val.signature.into_iter().map(|s| field_element_to_felt(&s).unwrap()).collect(),
+            signature: val
+                .signature
+                .into_iter()
+                .map(|s| field_element_to_felt(&s).unwrap())
+                .collect(),
             world_address: field_element_to_felt(&val.world_address).unwrap(),
         }
     }
@@ -54,7 +58,7 @@ impl From<Message> for torii_proto::Message {
 
 impl TryInto<torii_proto::EventQuery> for EventQuery {
     type Error = DojoError;
-    
+
     fn try_into(self) -> Result<torii_proto::EventQuery, Self::Error> {
         Ok(torii_proto::EventQuery {
             keys: self.keys.map(|k| k.into()),
@@ -62,4 +66,3 @@ impl TryInto<torii_proto::EventQuery> for EventQuery {
         })
     }
 }
-

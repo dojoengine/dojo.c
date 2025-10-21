@@ -121,7 +121,8 @@ pub struct PlayerAchievementProgress {
 
 impl From<torii_proto::PlayerAchievementProgress> for PlayerAchievementProgress {
     fn from(val: torii_proto::PlayerAchievementProgress) -> Self {
-        let task_progress: Vec<TaskProgress> = val.task_progress.into_iter().map(|t| t.into()).collect();
+        let task_progress: Vec<TaskProgress> =
+            val.task_progress.into_iter().map(|t| t.into()).collect();
 
         PlayerAchievementProgress {
             achievement: val.achievement.into(),
@@ -236,4 +237,3 @@ impl From<torii_proto::AchievementProgression> for AchievementProgression {
         }
     }
 }
-

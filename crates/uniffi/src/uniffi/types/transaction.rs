@@ -125,4 +125,3 @@ impl From<TransactionQuery> for torii_proto::TransactionQuery {
         }
     }
 }
-

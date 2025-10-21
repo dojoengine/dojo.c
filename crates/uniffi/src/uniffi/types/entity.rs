@@ -1,7 +1,8 @@
 // Entity, Model, and World types
+use chrono::DateTime;
+
 use super::core::*;
 use super::schema::{Struct, Ty};
-use chrono::DateTime;
 
 #[derive(Debug, Clone)]
 pub struct Entity {
@@ -113,12 +114,7 @@ impl From<World> for torii_proto::World {
         let models: Vec<torii_proto::Model> = value.models.into_iter().map(|m| m.into()).collect();
         let models = models
             .into_iter()
-            .map(|m| {
-                (
-                    dojo_types::naming::compute_selector_from_names(&m.namespace, &m.name),
-                    m,
-                )
-            })
+            .map(|m| (dojo_types::naming::compute_selector_from_names(&m.namespace, &m.name), m))
             .collect();
 
         torii_proto::World {
@@ -127,4 +123,3 @@ impl From<World> for torii_proto::World {
         }
     }
 }
-

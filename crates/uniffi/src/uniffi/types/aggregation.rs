@@ -46,4 +46,3 @@ impl From<torii_proto::AggregationEntry> for AggregationEntry {
         }
     }
 }
-

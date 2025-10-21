@@ -78,7 +78,10 @@ pub struct AttributeFilter {
 
 impl From<AttributeFilter> for torii_proto::TokenAttributeFilter {
     fn from(val: AttributeFilter) -> Self {
-        torii_proto::TokenAttributeFilter { trait_name: val.trait_name, trait_value: val.trait_value }
+        torii_proto::TokenAttributeFilter {
+            trait_name: val.trait_name,
+            trait_value: val.trait_value,
+        }
     }
 }
 
@@ -206,4 +209,3 @@ impl From<TokenTransferQuery> for torii_proto::TokenTransferQuery {
         }
     }
 }
-

@@ -7,12 +7,12 @@ pub enum Primitive {
     I16 { value: i16 },
     I32 { value: i32 },
     I64 { value: i64 },
-    I128 { value: Vec<u8> },  // 16 bytes
+    I128 { value: Vec<u8> }, // 16 bytes
     U8 { value: u8 },
     U16 { value: u16 },
     U32 { value: u32 },
     U64 { value: u64 },
-    U128 { value: Vec<u8> },  // 16 bytes
+    U128 { value: Vec<u8> }, // 16 bytes
     U256 { value: U256 },
     Bool { value: bool },
     Felt252 { value: FieldElement },
@@ -42,20 +42,24 @@ impl From<Primitive> for dojo_types::primitive::Primitive {
                 bytes.copy_from_slice(&v);
                 dojo_types::primitive::Primitive::U128(Some(u128::from_be_bytes(bytes)))
             }
-            Primitive::U256 { value: v } => dojo_types::primitive::Primitive::U256(Some(uniffi_to_u256(&v).unwrap())),
+            Primitive::U256 { value: v } => {
+                dojo_types::primitive::Primitive::U256(Some(uniffi_to_u256(&v).unwrap()))
+            }
             Primitive::Bool { value: v } => dojo_types::primitive::Primitive::Bool(Some(v)),
             Primitive::Felt252 { value: v } => {
                 dojo_types::primitive::Primitive::Felt252(Some(field_element_to_felt(&v).unwrap()))
             }
-            Primitive::ClassHash { value: v } => {
-                dojo_types::primitive::Primitive::ClassHash(Some(field_element_to_felt(&v).unwrap()))
-            }
+            Primitive::ClassHash { value: v } => dojo_types::primitive::Primitive::ClassHash(Some(
+                field_element_to_felt(&v).unwrap(),
+            )),
             Primitive::ContractAddress { value: v } => {
-                dojo_types::primitive::Primitive::ContractAddress(Some(field_element_to_felt(&v).unwrap()))
+                dojo_types::primitive::Primitive::ContractAddress(Some(
+                    field_element_to_felt(&v).unwrap(),
+                ))
             }
-            Primitive::EthAddress { value: v } => {
-                dojo_types::primitive::Primitive::EthAddress(Some(field_element_to_felt(&v).unwrap()))
-            }
+            Primitive::EthAddress { value: v } => dojo_types::primitive::Primitive::EthAddress(
+                Some(field_element_to_felt(&v).unwrap()),
+            ),
         }
     }
 }
@@ -77,22 +81,32 @@ impl From<dojo_types::primitive::Primitive> for Primitive {
             dojo_types::primitive::Primitive::U128(v) => {
                 Primitive::U128 { value: v.unwrap_or(0).to_be_bytes().to_vec() }
             }
-            dojo_types::primitive::Primitive::U256(v) => {
-                Primitive::U256 { value: v.map(u256_to_uniffi).unwrap_or_else(|| U256("0x0".to_string())) }
+            dojo_types::primitive::Primitive::U256(v) => Primitive::U256 {
+                value: v.map(u256_to_uniffi).unwrap_or_else(|| U256("0x0".to_string())),
+            },
+            dojo_types::primitive::Primitive::Bool(v) => {
+                Primitive::Bool { value: v.unwrap_or(false) }
             }
-            dojo_types::primitive::Primitive::Bool(v) => Primitive::Bool { value: v.unwrap_or(false) },
-            dojo_types::primitive::Primitive::Felt252(v) => {
-                Primitive::Felt252 { value: v.map(felt_to_field_element).unwrap_or_else(|| FieldElement("0x0".to_string())) }
-            }
-            dojo_types::primitive::Primitive::ClassHash(v) => {
-                Primitive::ClassHash { value: v.map(felt_to_field_element).unwrap_or_else(|| FieldElement("0x0".to_string())) }
-            }
-            dojo_types::primitive::Primitive::ContractAddress(v) => {
-                Primitive::ContractAddress { value: v.map(felt_to_field_element).unwrap_or_else(|| FieldElement("0x0".to_string())) }
-            }
-            dojo_types::primitive::Primitive::EthAddress(v) => {
-                Primitive::EthAddress { value: v.map(felt_to_field_element).unwrap_or_else(|| FieldElement("0x0".to_string())) }
-            }
+            dojo_types::primitive::Primitive::Felt252(v) => Primitive::Felt252 {
+                value: v
+                    .map(felt_to_field_element)
+                    .unwrap_or_else(|| FieldElement("0x0".to_string())),
+            },
+            dojo_types::primitive::Primitive::ClassHash(v) => Primitive::ClassHash {
+                value: v
+                    .map(felt_to_field_element)
+                    .unwrap_or_else(|| FieldElement("0x0".to_string())),
+            },
+            dojo_types::primitive::Primitive::ContractAddress(v) => Primitive::ContractAddress {
+                value: v
+                    .map(felt_to_field_element)
+                    .unwrap_or_else(|| FieldElement("0x0".to_string())),
+            },
+            dojo_types::primitive::Primitive::EthAddress(v) => Primitive::EthAddress {
+                value: v
+                    .map(felt_to_field_element)
+                    .unwrap_or_else(|| FieldElement("0x0".to_string())),
+            },
         }
     }
 }
@@ -119,7 +133,9 @@ impl From<MemberValue> for torii_proto::MemberValue {
 impl From<torii_proto::MemberValue> for MemberValue {
     fn from(val: torii_proto::MemberValue) -> Self {
         match val {
-            torii_proto::MemberValue::Primitive(value) => MemberValue::Primitive { value: value.into() },
+            torii_proto::MemberValue::Primitive(value) => {
+                MemberValue::Primitive { value: value.into() }
+            }
             torii_proto::MemberValue::String(value) => MemberValue::String { value },
             torii_proto::MemberValue::List(values) => {
                 MemberValue::List { values: values.into_iter().map(|v| v.into()).collect() }
@@ -148,7 +164,9 @@ pub enum Ty {
 impl From<dojo_types::schema::Ty> for Ty {
     fn from(val: dojo_types::schema::Ty) -> Self {
         match val {
-            dojo_types::schema::Ty::Primitive(primitive) => Ty::Primitive { value: primitive.into() },
+            dojo_types::schema::Ty::Primitive(primitive) => {
+                Ty::Primitive { value: primitive.into() }
+            }
             dojo_types::schema::Ty::Struct(struct_) => Ty::Struct { value: struct_.into() },
             dojo_types::schema::Ty::Enum(enum_) => Ty::Enum { value: enum_.into() },
             dojo_types::schema::Ty::Tuple(tuple) => {
@@ -157,10 +175,9 @@ impl From<dojo_types::schema::Ty> for Ty {
             dojo_types::schema::Ty::Array(array) => {
                 Ty::Array { values: array.into_iter().map(|t| t.into()).collect() }
             }
-            dojo_types::schema::Ty::FixedSizeArray((ty, size)) => Ty::FixedSizeArray { value: FixedSizeArray {
-                array: ty.into_iter().map(|t| t.into()).collect(),
-                size,
-            }},
+            dojo_types::schema::Ty::FixedSizeArray((ty, size)) => Ty::FixedSizeArray {
+                value: FixedSizeArray { array: ty.into_iter().map(|t| t.into()).collect(), size },
+            },
             dojo_types::schema::Ty::ByteArray(array) => Ty::ByteArray { value: array },
         }
     }
@@ -178,10 +195,12 @@ impl From<Ty> for dojo_types::schema::Ty {
             Ty::Array { values } => {
                 dojo_types::schema::Ty::Array(values.into_iter().map(|t| t.into()).collect())
             }
-            Ty::FixedSizeArray { value: fixed_size_array } => dojo_types::schema::Ty::FixedSizeArray((
-                fixed_size_array.array.into_iter().map(|t| t.into()).collect(),
-                fixed_size_array.size,
-            )),
+            Ty::FixedSizeArray { value: fixed_size_array } => {
+                dojo_types::schema::Ty::FixedSizeArray((
+                    fixed_size_array.array.into_iter().map(|t| t.into()).collect(),
+                    fixed_size_array.size,
+                ))
+            }
             Ty::ByteArray { value } => dojo_types::schema::Ty::ByteArray(value),
         }
     }
@@ -328,4 +347,3 @@ impl From<Value> for torii_proto::Value {
         }
     }
 }
-

@@ -25,18 +25,22 @@ pub enum SqlValue {
 
 impl TryInto<SqlRow> for torii_proto::SqlRow {
     type Error = DojoError;
-    
+
     fn try_into(self) -> Result<SqlRow, Self::Error> {
-        let fields = self.fields.into_iter().map(|(name, v)| {
-            let value = match v {
-                torii_proto::SqlValue::Text(s) => SqlValue::Text { value: s },
-                torii_proto::SqlValue::Integer(i) => SqlValue::Integer { value: i },
-                torii_proto::SqlValue::Real(r) => SqlValue::Real { value: r },
-                torii_proto::SqlValue::Blob(b) => SqlValue::Blob { value: b },
-                torii_proto::SqlValue::Null => SqlValue::Null,
-            };
-            SqlField { name, value }
-        }).collect();
+        let fields = self
+            .fields
+            .into_iter()
+            .map(|(name, v)| {
+                let value = match v {
+                    torii_proto::SqlValue::Text(s) => SqlValue::Text { value: s },
+                    torii_proto::SqlValue::Integer(i) => SqlValue::Integer { value: i },
+                    torii_proto::SqlValue::Real(r) => SqlValue::Real { value: r },
+                    torii_proto::SqlValue::Blob(b) => SqlValue::Blob { value: b },
+                    torii_proto::SqlValue::Null => SqlValue::Null,
+                };
+                SqlField { name, value }
+            })
+            .collect();
         Ok(SqlRow { fields })
     }
 }
@@ -307,4 +311,3 @@ impl From<torii_proto::Query> for Query {
         }
     }
 }
-

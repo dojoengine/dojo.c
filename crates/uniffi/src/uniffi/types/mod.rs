@@ -15,16 +15,16 @@ pub mod token;
 pub mod transaction;
 
 // Re-export all public types for convenience
+pub use core::*;
+
 pub use achievement::*;
 pub use activity::*;
 pub use aggregation::*;
 pub use contract::*;
 pub use controller::*;
-pub use core::*;
 pub use entity::*;
 pub use event::*;
 pub use query::*;
 pub use schema::*;
 pub use token::*;
 pub use transaction::*;
-

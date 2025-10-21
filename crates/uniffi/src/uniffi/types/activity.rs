@@ -1,6 +1,7 @@
 // Activity types
-use super::core::*;
 use chrono::DateTime;
+
+use super::core::*;
 
 #[derive(Debug, Clone)]
 pub struct ActionCount {
@@ -73,4 +74,3 @@ impl From<ActivityQuery> for torii_proto::ActivityQuery {
         }
     }
 }
-
