@@ -640,104 +640,104 @@ dictionary PageEvent {
 // Main Dojo client interface
 interface ToriiClient {
     // Constructor - create a new client with default config (4MB max message size)
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     constructor(string torii_url);
     
     // Constructor - create a new client with custom max message size
-    [Async, Throws=DojoError, Name=new_with_config]
+    [Throws=DojoError, Name=new_with_config]
     constructor(string torii_url, u64 max_message_size);
     
     // Publish offchain message
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     string publish_message(Message message);
     
     // Publish multiple offchain messages
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     sequence<string> publish_message_batch(sequence<Message> messages);
     
     // Get world metadata
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     sequence<World> worlds(sequence<FieldElement> world_addresses);
     
     // Query controllers
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     PageController controllers(ControllerQuery query);
     
     // Query contracts
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     sequence<Contract> contracts(ContractQuery query);
     
     // Query tokens
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     PageToken tokens(TokenQuery query);
     
     // Query token balances
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     PageTokenBalance token_balances(TokenBalanceQuery query);
     
     // Query token contracts
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     PageTokenContract token_contracts(TokenContractQuery query);
     
     // Query token transfers
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     PageTokenTransfer token_transfers(TokenTransferQuery query);
     
     // Query transactions
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     PageTransaction transactions(TransactionQuery query);
     
     // Query aggregations (leaderboards, stats, rankings)
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     PageAggregationEntry aggregations(AggregationQuery query);
     
     // Query activities (user session tracking)
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     PageActivity activities(ActivityQuery query);
     
     // Query achievements
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     PageAchievement achievements(AchievementQuery query);
     
     // Query player achievements
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     PagePlayerAchievement player_achievements(PlayerAchievementQuery query);
     
     // Query entities
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     PageEntity entities(Query query);
     
     // Query event messages
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     PageEntity event_messages(Query query);
     
     // Query Starknet events
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     PageEvent starknet_events(EventQuery query);
     
     // Execute SQL query
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     sequence<SqlRow> sql(string query);
     
     // Subscription methods
     // Subscribe to entity updates
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     u64 subscribe_entity_updates(Clause? clause, sequence<FieldElement> world_addresses, EntityUpdateCallback callback);
     
     // Subscribe to token balance updates
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     u64 subscribe_token_balance_updates(sequence<FieldElement> contract_addresses, sequence<FieldElement> account_addresses, sequence<U256> token_ids, TokenBalanceUpdateCallback callback);
     
     // Subscribe to token updates
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     u64 subscribe_token_updates(sequence<FieldElement> contract_addresses, sequence<U256> token_ids, TokenUpdateCallback callback);
     
     // Subscribe to transaction updates
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     u64 subscribe_transaction_updates(TransactionFilter? filter, TransactionUpdateCallback callback);
     
     // Subscribe to starknet event updates
-    [Async, Throws=DojoError]
+    [Throws=DojoError]
     u64 subscribe_event_updates(sequence<KeysClause> keys, EventUpdateCallback callback);
     
     // Cancel a subscription

@@ -9,11 +9,11 @@
 
 import Foundation
 
-func fetchEntities(toriiUrl: String, worldAddress: String) async throws {
+func fetchEntities(toriiUrl: String, worldAddress: String) throws {
         print("Connecting to Torii at \(toriiUrl)...")
         
         // Create a client with default configuration (4MB max message size)
-        let client = try await ToriiClient(toriiUrl: toriiUrl)
+        let client = try ToriiClient(toriiUrl: toriiUrl)
         
         print("✓ Connected successfully!")
         
@@ -33,7 +33,7 @@ func fetchEntities(toriiUrl: String, worldAddress: String) async throws {
         )
         
         print("\nFetching entities...")
-        let page = try await client.entities(query: query)
+        let page = try client.entities(query: query)
         
         print("\n✓ Retrieved \(page.items.count) entities")
         
@@ -82,19 +82,14 @@ let worldAddress = arguments.count > 2 ? arguments[2] : "0x0"
 print("Dojo Swift Example: Fetch Entities")
 print("====================================\n")
 
-// Run the async function
-Task {
-    do {
-        try await fetchEntities(toriiUrl: toriiUrl, worldAddress: worldAddress)
-        exit(0)
-    } catch {
-        print("\n❌ Error: \(error)")
-        print("\nUsage: swift fetch_entities.swift [torii_url] [world_address]")
-        print("Example: swift fetch_entities.swift http://localhost:8080 0x1234...")
-        exit(1)
-    }
+// Run the function
+do {
+    try fetchEntities(toriiUrl: toriiUrl, worldAddress: worldAddress)
+    exit(0)
+} catch {
+    print("\n❌ Error: \(error)")
+    print("\nUsage: swift fetch_entities.swift [torii_url] [world_address]")
+    print("Example: swift fetch_entities.swift http://localhost:8080 0x1234...")
+    exit(1)
 }
-
-// Keep the program running until the task completes
-RunLoop.main.run()
 

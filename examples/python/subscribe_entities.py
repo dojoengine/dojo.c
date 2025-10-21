@@ -13,8 +13,8 @@ from pathlib import Path
 # Setup paths
 repo_root = Path(__file__).parent.parent.parent
 bindings_path = repo_root / "bindings" / "python"
-lib_source = repo_root / "target" / "release" / "libdojo_c.dylib"
-lib_dest = bindings_path / "libdojo_c.dylib"
+lib_source = repo_root / "target" / "release" / "libdojo_uniffi.dylib"
+lib_dest = bindings_path / "libdojo_uniffi.dylib"
 
 # Copy library to bindings directory if it doesn't exist or is outdated
 if not lib_dest.exists() or lib_source.stat().st_mtime > lib_dest.stat().st_mtime:

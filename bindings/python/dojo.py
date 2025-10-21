@@ -26,7 +26,6 @@ import threading
 import itertools
 import traceback
 import typing
-import asyncio
 import platform
 
 
@@ -510,57 +509,57 @@ def _uniffi_check_contract_api_version(lib):
         raise InternalError("UniFFI contract version mismatch: try cleaning and rebuilding your project")
 
 def _uniffi_check_api_checksums(lib):
-    if lib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new() != 59450:
+    if lib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new() != 18057:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new_with_config() != 61297:
+    if lib.uniffi_dojo_uniffi_checksum_constructor_toriiclient_new_with_config() != 42232:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_achievements() != 33200:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_achievements() != 43588:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_activities() != 23788:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_activities() != 59928:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_aggregations() != 42587:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_aggregations() != 13428:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_cancel_subscription() != 28338:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_contracts() != 51206:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_contracts() != 57071:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_controllers() != 17954:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_controllers() != 33273:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_entities() != 24646:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_entities() != 32398:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_event_messages() != 13846:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_event_messages() != 18258:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_player_achievements() != 32047:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_player_achievements() != 47939:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message() != 43553:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message() != 64193:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch() != 13921:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch() != 10937:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_sql() != 24413:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_sql() != 38880:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_starknet_events() != 9911:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_starknet_events() != 49963:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_entity_updates() != 9702:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_entity_updates() != 65064:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_event_updates() != 27069:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_event_updates() != 51028:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_balance_updates() != 13012:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_balance_updates() != 40716:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_updates() != 20625:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_token_updates() != 57382:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_transaction_updates() != 1132:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_subscribe_transaction_updates() != 39990:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_balances() != 10761:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_balances() != 8144:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_contracts() != 7843:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_contracts() != 39069:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_transfers() != 51842:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_token_transfers() != 14518:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_tokens() != 6043:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_tokens() != 45937:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_transactions() != 24561:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_transactions() != 2466:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_worlds() != 32142:
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_worlds() != 39277:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
 
 # A ctypes library to expose the extern-C FFI definitions.
@@ -942,28 +941,33 @@ _UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_transactionupdatecallback.
 _UniffiLib.uniffi_dojo_uniffi_fn_init_callback_vtable_transactionupdatecallback.restype = None
 _UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new.argtypes = (
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
 _UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new.restype = ctypes.c_uint64
 _UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new_with_config.argtypes = (
     _UniffiRustBuffer,
     ctypes.c_uint64,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
 _UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new_with_config.restype = ctypes.c_uint64
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_achievements.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_achievements.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_achievements.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_activities.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_activities.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_activities.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_aggregations.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_aggregations.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_aggregations.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_cancel_subscription.argtypes = (
     ctypes.c_uint64,
     ctypes.c_uint64,
@@ -973,59 +977,70 @@ _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_cancel_subscription.restype 
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_contracts.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_contracts.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_contracts.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_controllers.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_controllers.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_controllers.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_entities.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_entities.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_entities.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_event_messages.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_event_messages.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_event_messages.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_sql.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_sql.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_sql.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_starknet_events.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_starknet_events.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_starknet_events.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_entity_updates.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
     _UniffiRustBuffer,
     ctypes.c_uint64,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_entity_updates.restype = ctypes.c_uint64
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_event_updates.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
     ctypes.c_uint64,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_event_updates.restype = ctypes.c_uint64
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_balance_updates.argtypes = (
@@ -1034,6 +1049,7 @@ _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_balance_upda
     _UniffiRustBuffer,
     _UniffiRustBuffer,
     ctypes.c_uint64,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_balance_updates.restype = ctypes.c_uint64
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_updates.argtypes = (
@@ -1041,44 +1057,52 @@ _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_updates.argt
     _UniffiRustBuffer,
     _UniffiRustBuffer,
     ctypes.c_uint64,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_updates.restype = ctypes.c_uint64
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_transaction_updates.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
     ctypes.c_uint64,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_transaction_updates.restype = ctypes.c_uint64
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_balances.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_balances.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_balances.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_contracts.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_contracts.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_contracts.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_transfers.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_transfers.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_transfers.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_tokens.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_tokens.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_tokens.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_transactions.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_transactions.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_transactions.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_worlds.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
 )
-_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_worlds.restype = ctypes.c_uint64
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_worlds.restype = _UniffiRustBuffer
 _UniffiLib.ffi_dojo_uniffi_uniffi_contract_version.argtypes = (
 )
 _UniffiLib.ffi_dojo_uniffi_uniffi_contract_version.restype = ctypes.c_uint32
@@ -1164,69 +1188,7 @@ _UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_worlds.restype = ctype
 _uniffi_check_contract_api_version(_UniffiLib)
 # _uniffi_check_api_checksums(_UniffiLib)
 
-# RustFuturePoll values
-_UNIFFI_RUST_FUTURE_POLL_READY = 0
-_UNIFFI_RUST_FUTURE_POLL_WAKE = 1
 
-# Stores futures for _uniffi_continuation_callback
-_UniffiContinuationHandleMap = _UniffiHandleMap()
-
-_UNIFFI_GLOBAL_EVENT_LOOP = None
-
-"""
-Set the event loop to use for async functions
-
-This is needed if some async functions run outside of the eventloop, for example:
-    - A non-eventloop thread is spawned, maybe from `EventLoop.run_in_executor` or maybe from the
-      Rust code spawning its own thread.
-    - The Rust code calls an async callback method from a sync callback function, using something
-      like `pollster` to block on the async call.
-
-In this case, we need an event loop to run the Python async function, but there's no eventloop set
-for the thread.  Use `uniffi_set_event_loop` to force an eventloop to be used in this case.
-"""
-def uniffi_set_event_loop(eventloop: asyncio.BaseEventLoop):
-    global _UNIFFI_GLOBAL_EVENT_LOOP
-    _UNIFFI_GLOBAL_EVENT_LOOP = eventloop
-
-def _uniffi_get_event_loop():
-    if _UNIFFI_GLOBAL_EVENT_LOOP is not None:
-        return _UNIFFI_GLOBAL_EVENT_LOOP
-    else:
-        return asyncio.get_running_loop()
-
-# Continuation callback for async functions
-# lift the return value or error and resolve the future, causing the async function to resume.
-@_UNIFFI_RUST_FUTURE_CONTINUATION_CALLBACK
-def _uniffi_continuation_callback(future_ptr, poll_code):
-    (eventloop, future) = _UniffiContinuationHandleMap.remove(future_ptr)
-    eventloop.call_soon_threadsafe(_uniffi_set_future_result, future, poll_code)
-
-def _uniffi_set_future_result(future, poll_code):
-    if not future.cancelled():
-        future.set_result(poll_code)
-
-async def _uniffi_rust_call_async(rust_future, ffi_poll, ffi_complete, ffi_free, lift_func, error_ffi_converter):
-    try:
-        eventloop = _uniffi_get_event_loop()
-
-        # Loop and poll until we see a _UNIFFI_RUST_FUTURE_POLL_READY value
-        while True:
-            future = eventloop.create_future()
-            ffi_poll(
-                rust_future,
-                _uniffi_continuation_callback,
-                _UniffiContinuationHandleMap.insert((eventloop, future)),
-            )
-            poll_code = await future
-            if poll_code == _UNIFFI_RUST_FUTURE_POLL_READY:
-                break
-
-        return lift_func(
-            _uniffi_rust_call_with_error(error_ffi_converter, ffi_complete, rust_future)
-        )
-    finally:
-        ffi_free(rust_future)
 
 # Public interface members begin here.
 
@@ -8240,62 +8202,74 @@ class _UniffiFfiConverterSequenceTypeWorld(_UniffiConverterRustBuffer):
 
 class ToriiClientProtocol(typing.Protocol):
     
-    async def achievements(self, query: AchievementQuery) -> PageAchievement:
+    def achievements(self, query: AchievementQuery) -> PageAchievement:
         raise NotImplementedError
-    async def activities(self, query: ActivityQuery) -> PageActivity:
+    def activities(self, query: ActivityQuery) -> PageActivity:
         raise NotImplementedError
-    async def aggregations(self, query: AggregationQuery) -> PageAggregationEntry:
+    def aggregations(self, query: AggregationQuery) -> PageAggregationEntry:
         raise NotImplementedError
     def cancel_subscription(self, subscription_id: int) -> None:
         raise NotImplementedError
-    async def contracts(self, query: ContractQuery) -> typing.List[Contract]:
+    def contracts(self, query: ContractQuery) -> typing.List[Contract]:
         raise NotImplementedError
-    async def controllers(self, query: ControllerQuery) -> PageController:
+    def controllers(self, query: ControllerQuery) -> PageController:
         raise NotImplementedError
-    async def entities(self, query: Query) -> PageEntity:
+    def entities(self, query: Query) -> PageEntity:
         raise NotImplementedError
-    async def event_messages(self, query: Query) -> PageEntity:
+    def event_messages(self, query: Query) -> PageEntity:
         raise NotImplementedError
-    async def player_achievements(self, query: PlayerAchievementQuery) -> PagePlayerAchievement:
+    def player_achievements(self, query: PlayerAchievementQuery) -> PagePlayerAchievement:
         raise NotImplementedError
-    async def publish_message(self, message: Message) -> str:
+    def publish_message(self, message: Message) -> str:
         raise NotImplementedError
-    async def publish_message_batch(self, messages: typing.List[Message]) -> typing.List[str]:
+    def publish_message_batch(self, messages: typing.List[Message]) -> typing.List[str]:
         raise NotImplementedError
-    async def sql(self, query: str) -> typing.List[SqlRow]:
+    def sql(self, query: str) -> typing.List[SqlRow]:
         raise NotImplementedError
-    async def starknet_events(self, query: EventQuery) -> PageEvent:
+    def starknet_events(self, query: EventQuery) -> PageEvent:
         raise NotImplementedError
-    async def subscribe_entity_updates(self, clause: typing.Optional[Clause],world_addresses: typing.List[FieldElement],callback: EntityUpdateCallback) -> int:
+    def subscribe_entity_updates(self, clause: typing.Optional[Clause],world_addresses: typing.List[FieldElement],callback: EntityUpdateCallback) -> int:
         raise NotImplementedError
-    async def subscribe_event_updates(self, keys: typing.List[KeysClause],callback: EventUpdateCallback) -> int:
+    def subscribe_event_updates(self, keys: typing.List[KeysClause],callback: EventUpdateCallback) -> int:
         raise NotImplementedError
-    async def subscribe_token_balance_updates(self, contract_addresses: typing.List[FieldElement],account_addresses: typing.List[FieldElement],token_ids: typing.List[U256],callback: TokenBalanceUpdateCallback) -> int:
+    def subscribe_token_balance_updates(self, contract_addresses: typing.List[FieldElement],account_addresses: typing.List[FieldElement],token_ids: typing.List[U256],callback: TokenBalanceUpdateCallback) -> int:
         raise NotImplementedError
-    async def subscribe_token_updates(self, contract_addresses: typing.List[FieldElement],token_ids: typing.List[U256],callback: TokenUpdateCallback) -> int:
+    def subscribe_token_updates(self, contract_addresses: typing.List[FieldElement],token_ids: typing.List[U256],callback: TokenUpdateCallback) -> int:
         raise NotImplementedError
-    async def subscribe_transaction_updates(self, filter: typing.Optional[TransactionFilter],callback: TransactionUpdateCallback) -> int:
+    def subscribe_transaction_updates(self, filter: typing.Optional[TransactionFilter],callback: TransactionUpdateCallback) -> int:
         raise NotImplementedError
-    async def token_balances(self, query: TokenBalanceQuery) -> PageTokenBalance:
+    def token_balances(self, query: TokenBalanceQuery) -> PageTokenBalance:
         raise NotImplementedError
-    async def token_contracts(self, query: TokenContractQuery) -> PageTokenContract:
+    def token_contracts(self, query: TokenContractQuery) -> PageTokenContract:
         raise NotImplementedError
-    async def token_transfers(self, query: TokenTransferQuery) -> PageTokenTransfer:
+    def token_transfers(self, query: TokenTransferQuery) -> PageTokenTransfer:
         raise NotImplementedError
-    async def tokens(self, query: TokenQuery) -> PageToken:
+    def tokens(self, query: TokenQuery) -> PageToken:
         raise NotImplementedError
-    async def transactions(self, query: TransactionQuery) -> PageTransaction:
+    def transactions(self, query: TransactionQuery) -> PageTransaction:
         raise NotImplementedError
-    async def worlds(self, world_addresses: typing.List[FieldElement]) -> typing.List[World]:
+    def worlds(self, world_addresses: typing.List[FieldElement]) -> typing.List[World]:
         raise NotImplementedError
 
 class ToriiClient(ToriiClientProtocol):
     
     _handle: ctypes.c_uint64
-    def __init__(self, *args, **kw):
-        raise ValueError("async constructors not supported.")
+    def __init__(self, torii_url: str):
+        
+        _UniffiFfiConverterString.check_lower(torii_url)
+        _uniffi_lowered_args = (
+            _UniffiFfiConverterString.lower(torii_url),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypeToriiClient.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
+            _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new,
+            *_uniffi_lowered_args,
+        )
+        self._handle = _uniffi_ffi_result
     @classmethod
-    async def new_with_config(cls, torii_url: str,max_message_size: int) -> ToriiClient:
+    def new_with_config(cls, torii_url: str,max_message_size: int) -> ToriiClient:
         
         _UniffiFfiConverterString.check_lower(torii_url)
         
@@ -8306,14 +8280,12 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypeToriiClient.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new_with_config(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_u64,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_constructor_toriiclient_new_with_config,
+            *_uniffi_lowered_args,
         )
+        return cls._uniffi_make_instance(_uniffi_ffi_result)
 
     def __del__(self):
         # In case of partial initialization of instances.
@@ -8332,7 +8304,7 @@ class ToriiClient(ToriiClientProtocol):
         inst = cls.__new__(cls)
         inst._handle = handle
         return inst
-    async def achievements(self, query: AchievementQuery) -> PageAchievement:
+    def achievements(self, query: AchievementQuery) -> PageAchievement:
         
         _UniffiFfiConverterTypeAchievementQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8341,15 +8313,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypePageAchievement.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_achievements(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_achievements,
+            *_uniffi_lowered_args,
         )
-    async def activities(self, query: ActivityQuery) -> PageActivity:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def activities(self, query: ActivityQuery) -> PageActivity:
         
         _UniffiFfiConverterTypeActivityQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8358,15 +8328,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypePageActivity.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_activities(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_activities,
+            *_uniffi_lowered_args,
         )
-    async def aggregations(self, query: AggregationQuery) -> PageAggregationEntry:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def aggregations(self, query: AggregationQuery) -> PageAggregationEntry:
         
         _UniffiFfiConverterTypeAggregationQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8375,14 +8343,12 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypePageAggregationEntry.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_aggregations(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_aggregations,
+            *_uniffi_lowered_args,
         )
+        return _uniffi_lift_return(_uniffi_ffi_result)
     def cancel_subscription(self, subscription_id: int) -> None:
         
         _UniffiFfiConverterUInt64.check_lower(subscription_id)
@@ -8398,7 +8364,7 @@ class ToriiClient(ToriiClientProtocol):
             *_uniffi_lowered_args,
         )
         return _uniffi_lift_return(_uniffi_ffi_result)
-    async def contracts(self, query: ContractQuery) -> typing.List[Contract]:
+    def contracts(self, query: ContractQuery) -> typing.List[Contract]:
         
         _UniffiFfiConverterTypeContractQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8407,15 +8373,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterSequenceTypeContract.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_contracts(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_contracts,
+            *_uniffi_lowered_args,
         )
-    async def controllers(self, query: ControllerQuery) -> PageController:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def controllers(self, query: ControllerQuery) -> PageController:
         
         _UniffiFfiConverterTypeControllerQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8424,15 +8388,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypePageController.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_controllers(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_controllers,
+            *_uniffi_lowered_args,
         )
-    async def entities(self, query: Query) -> PageEntity:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def entities(self, query: Query) -> PageEntity:
         
         _UniffiFfiConverterTypeQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8441,15 +8403,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypePageEntity.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_entities(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_entities,
+            *_uniffi_lowered_args,
         )
-    async def event_messages(self, query: Query) -> PageEntity:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def event_messages(self, query: Query) -> PageEntity:
         
         _UniffiFfiConverterTypeQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8458,15 +8418,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypePageEntity.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_event_messages(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_event_messages,
+            *_uniffi_lowered_args,
         )
-    async def player_achievements(self, query: PlayerAchievementQuery) -> PagePlayerAchievement:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def player_achievements(self, query: PlayerAchievementQuery) -> PagePlayerAchievement:
         
         _UniffiFfiConverterTypePlayerAchievementQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8475,15 +8433,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypePagePlayerAchievement.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements,
+            *_uniffi_lowered_args,
         )
-    async def publish_message(self, message: Message) -> str:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def publish_message(self, message: Message) -> str:
         
         _UniffiFfiConverterTypeMessage.check_lower(message)
         _uniffi_lowered_args = (
@@ -8492,15 +8448,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterString.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message,
+            *_uniffi_lowered_args,
         )
-    async def publish_message_batch(self, messages: typing.List[Message]) -> typing.List[str]:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def publish_message_batch(self, messages: typing.List[Message]) -> typing.List[str]:
         
         _UniffiFfiConverterSequenceTypeMessage.check_lower(messages)
         _uniffi_lowered_args = (
@@ -8509,15 +8463,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterSequenceString.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch,
+            *_uniffi_lowered_args,
         )
-    async def sql(self, query: str) -> typing.List[SqlRow]:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def sql(self, query: str) -> typing.List[SqlRow]:
         
         _UniffiFfiConverterString.check_lower(query)
         _uniffi_lowered_args = (
@@ -8526,15 +8478,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterSequenceTypeSqlRow.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_sql(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_sql,
+            *_uniffi_lowered_args,
         )
-    async def starknet_events(self, query: EventQuery) -> PageEvent:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def starknet_events(self, query: EventQuery) -> PageEvent:
         
         _UniffiFfiConverterTypeEventQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8543,15 +8493,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypePageEvent.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_starknet_events(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_starknet_events,
+            *_uniffi_lowered_args,
         )
-    async def subscribe_entity_updates(self, clause: typing.Optional[Clause],world_addresses: typing.List[FieldElement],callback: EntityUpdateCallback) -> int:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def subscribe_entity_updates(self, clause: typing.Optional[Clause],world_addresses: typing.List[FieldElement],callback: EntityUpdateCallback) -> int:
         
         _UniffiFfiConverterOptionalTypeClause.check_lower(clause)
         
@@ -8566,15 +8514,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_entity_updates(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_u64,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_entity_updates,
+            *_uniffi_lowered_args,
         )
-    async def subscribe_event_updates(self, keys: typing.List[KeysClause],callback: EventUpdateCallback) -> int:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def subscribe_event_updates(self, keys: typing.List[KeysClause],callback: EventUpdateCallback) -> int:
         
         _UniffiFfiConverterSequenceTypeKeysClause.check_lower(keys)
         
@@ -8586,15 +8532,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_event_updates(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_u64,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_event_updates,
+            *_uniffi_lowered_args,
         )
-    async def subscribe_token_balance_updates(self, contract_addresses: typing.List[FieldElement],account_addresses: typing.List[FieldElement],token_ids: typing.List[U256],callback: TokenBalanceUpdateCallback) -> int:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def subscribe_token_balance_updates(self, contract_addresses: typing.List[FieldElement],account_addresses: typing.List[FieldElement],token_ids: typing.List[U256],callback: TokenBalanceUpdateCallback) -> int:
         
         _UniffiFfiConverterSequenceTypeFieldElement.check_lower(contract_addresses)
         
@@ -8612,15 +8556,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_balance_updates(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_u64,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_balance_updates,
+            *_uniffi_lowered_args,
         )
-    async def subscribe_token_updates(self, contract_addresses: typing.List[FieldElement],token_ids: typing.List[U256],callback: TokenUpdateCallback) -> int:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def subscribe_token_updates(self, contract_addresses: typing.List[FieldElement],token_ids: typing.List[U256],callback: TokenUpdateCallback) -> int:
         
         _UniffiFfiConverterSequenceTypeFieldElement.check_lower(contract_addresses)
         
@@ -8635,15 +8577,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_updates(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_u64,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_token_updates,
+            *_uniffi_lowered_args,
         )
-    async def subscribe_transaction_updates(self, filter: typing.Optional[TransactionFilter],callback: TransactionUpdateCallback) -> int:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def subscribe_transaction_updates(self, filter: typing.Optional[TransactionFilter],callback: TransactionUpdateCallback) -> int:
         
         _UniffiFfiConverterOptionalTypeTransactionFilter.check_lower(filter)
         
@@ -8655,15 +8595,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterUInt64.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_transaction_updates(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_u64,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_u64,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_u64,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_subscribe_transaction_updates,
+            *_uniffi_lowered_args,
         )
-    async def token_balances(self, query: TokenBalanceQuery) -> PageTokenBalance:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def token_balances(self, query: TokenBalanceQuery) -> PageTokenBalance:
         
         _UniffiFfiConverterTypeTokenBalanceQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8672,15 +8610,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypePageTokenBalance.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_balances(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_balances,
+            *_uniffi_lowered_args,
         )
-    async def token_contracts(self, query: TokenContractQuery) -> PageTokenContract:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def token_contracts(self, query: TokenContractQuery) -> PageTokenContract:
         
         _UniffiFfiConverterTypeTokenContractQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8689,15 +8625,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypePageTokenContract.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_contracts(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_contracts,
+            *_uniffi_lowered_args,
         )
-    async def token_transfers(self, query: TokenTransferQuery) -> PageTokenTransfer:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def token_transfers(self, query: TokenTransferQuery) -> PageTokenTransfer:
         
         _UniffiFfiConverterTypeTokenTransferQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8706,15 +8640,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypePageTokenTransfer.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_transfers(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_token_transfers,
+            *_uniffi_lowered_args,
         )
-    async def tokens(self, query: TokenQuery) -> PageToken:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def tokens(self, query: TokenQuery) -> PageToken:
         
         _UniffiFfiConverterTypeTokenQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8723,15 +8655,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypePageToken.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_tokens(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_tokens,
+            *_uniffi_lowered_args,
         )
-    async def transactions(self, query: TransactionQuery) -> PageTransaction:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def transactions(self, query: TransactionQuery) -> PageTransaction:
         
         _UniffiFfiConverterTypeTransactionQuery.check_lower(query)
         _uniffi_lowered_args = (
@@ -8740,15 +8670,13 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterTypePageTransaction.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_transactions(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_transactions,
+            *_uniffi_lowered_args,
         )
-    async def worlds(self, world_addresses: typing.List[FieldElement]) -> typing.List[World]:
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def worlds(self, world_addresses: typing.List[FieldElement]) -> typing.List[World]:
         
         _UniffiFfiConverterSequenceTypeFieldElement.check_lower(world_addresses)
         _uniffi_lowered_args = (
@@ -8757,14 +8685,12 @@ class ToriiClient(ToriiClientProtocol):
         )
         _uniffi_lift_return = _UniffiFfiConverterSequenceTypeWorld.lift
         _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
-        return await _uniffi_rust_call_async(
-            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_worlds(*_uniffi_lowered_args),
-            _UniffiLib.ffi_dojo_uniffi_rust_future_poll_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_complete_rust_buffer,
-            _UniffiLib.ffi_dojo_uniffi_rust_future_free_rust_buffer,
-            _uniffi_lift_return,
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_worlds,
+            *_uniffi_lowered_args,
         )
+        return _uniffi_lift_return(_uniffi_ffi_result)
 
 
 

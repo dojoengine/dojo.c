@@ -2,11 +2,21 @@
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 
+use tokio::runtime::Runtime;
 use tokio::task::JoinHandle;
 
 use super::types::*;
+
+// Static tokio runtime for all async operations
+static RUNTIME: OnceLock<Runtime> = OnceLock::new();
+
+fn runtime() -> &'static Runtime {
+    RUNTIME.get_or_init(|| {
+        Runtime::new().expect("Failed to create tokio runtime")
+    })
+}
 
 // Callback traits for subscriptions
 pub trait EntityUpdateCallback: Send + Sync {
@@ -43,9 +53,10 @@ pub struct ToriiClient {
 
 impl ToriiClient {
     /// Create a new Torii client with default configuration (4MB max message size)
-    pub async fn new(torii_url: String) -> Result<Self, DojoError> {
-        let client =
-            torii_client::Client::new(torii_url).await.map_err(|_e| DojoError::ConnectionError)?;
+    pub fn new(torii_url: String) -> Result<Self, DojoError> {
+        let client = runtime()
+            .block_on(torii_client::Client::new(torii_url))
+            .map_err(|_e| DojoError::ConnectionError)?;
 
         Ok(Self {
             inner: Arc::new(client),
@@ -55,12 +66,12 @@ impl ToriiClient {
     }
 
     /// Create a new Torii client with custom max message size
-    pub async fn new_with_config(
+    pub fn new_with_config(
         torii_url: String,
         max_message_size: u64,
     ) -> Result<Self, DojoError> {
-        let client = torii_client::Client::new_with_config(torii_url, max_message_size as usize)
-            .await
+        let client = runtime()
+            .block_on(torii_client::Client::new_with_config(torii_url, max_message_size as usize))
             .map_err(|_e| DojoError::ConnectionError)?;
 
         Ok(Self {
@@ -72,23 +83,25 @@ impl ToriiClient {
 
     /// Publish an offchain message to the world
     /// Returns the entity ID of the published message
-    pub async fn publish_message(&self, message: Message) -> Result<String, DojoError> {
+    pub fn publish_message(&self, message: Message) -> Result<String, DojoError> {
         let msg: torii_proto::Message = message.into();
-        self.inner.publish_message(msg).await.map_err(|_| DojoError::PublishError)
+        let inner = self.inner.clone();
+        runtime().block_on(inner.publish_message(msg)).map_err(|_| DojoError::PublishError)
     }
 
     /// Publish multiple offchain messages to the world
     /// Returns the entity IDs of the published messages
-    pub async fn publish_message_batch(
+    pub fn publish_message_batch(
         &self,
         messages: Vec<Message>,
     ) -> Result<Vec<String>, DojoError> {
         let msgs: Vec<torii_proto::Message> = messages.into_iter().map(|m| m.into()).collect();
-        self.inner.publish_message_batch(msgs).await.map_err(|_| DojoError::PublishError)
+        let inner = self.inner.clone();
+        runtime().block_on(inner.publish_message_batch(msgs)).map_err(|_| DojoError::PublishError)
     }
 
     /// Get world metadata for specified world addresses
-    pub async fn worlds(
+    pub fn worlds(
         &self,
         world_addresses: Vec<FieldElement>,
     ) -> Result<Vec<World>, DojoError> {
@@ -96,22 +109,20 @@ impl ToriiClient {
             world_addresses.iter().map(field_element_to_felt).collect();
         let addrs = addrs?;
 
-        let worlds = self
-            .inner
-            .worlds(addrs)
-            .await
+        let inner = self.inner.clone();
+        let worlds = runtime()
+            .block_on(inner.worlds(addrs))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(worlds.into_iter().map(|w| w.into()).collect())
     }
 
     /// Retrieve controllers matching the query
-    pub async fn controllers(&self, query: ControllerQuery) -> Result<PageController, DojoError> {
+    pub fn controllers(&self, query: ControllerQuery) -> Result<PageController, DojoError> {
         let q: torii_proto::ControllerQuery = query.into();
-        let page = self
-            .inner
-            .controllers(q)
-            .await
+        let inner = self.inner.clone();
+        let page = runtime()
+            .block_on(inner.controllers(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(PageController {
@@ -121,24 +132,22 @@ impl ToriiClient {
     }
 
     /// Retrieve contracts matching the query
-    pub async fn contracts(&self, query: ContractQuery) -> Result<Vec<Contract>, DojoError> {
+    pub fn contracts(&self, query: ContractQuery) -> Result<Vec<Contract>, DojoError> {
         let q: torii_proto::ContractQuery = query.into();
-        let contracts = self
-            .inner
-            .contracts(q)
-            .await
+        let inner = self.inner.clone();
+        let contracts = runtime()
+            .block_on(inner.contracts(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(contracts.into_iter().map(|c| c.into()).collect())
     }
 
     /// Retrieve tokens matching the query
-    pub async fn tokens(&self, query: TokenQuery) -> Result<PageToken, DojoError> {
+    pub fn tokens(&self, query: TokenQuery) -> Result<PageToken, DojoError> {
         let q: torii_proto::TokenQuery = query.into();
-        let page = self
-            .inner
-            .tokens(q)
-            .await
+        let inner = self.inner.clone();
+        let page = runtime()
+            .block_on(inner.tokens(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(PageToken {
@@ -148,15 +157,14 @@ impl ToriiClient {
     }
 
     /// Retrieve token balances
-    pub async fn token_balances(
+    pub fn token_balances(
         &self,
         query: TokenBalanceQuery,
     ) -> Result<PageTokenBalance, DojoError> {
         let q: torii_proto::TokenBalanceQuery = query.into();
-        let page = self
-            .inner
-            .token_balances(q)
-            .await
+        let inner = self.inner.clone();
+        let page = runtime()
+            .block_on(inner.token_balances(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(PageTokenBalance {
@@ -166,15 +174,14 @@ impl ToriiClient {
     }
 
     /// Retrieve token contracts
-    pub async fn token_contracts(
+    pub fn token_contracts(
         &self,
         query: TokenContractQuery,
     ) -> Result<PageTokenContract, DojoError> {
         let q: torii_proto::TokenContractQuery = query.into();
-        let page = self
-            .inner
-            .token_contracts(q)
-            .await
+        let inner = self.inner.clone();
+        let page = runtime()
+            .block_on(inner.token_contracts(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(PageTokenContract {
@@ -184,15 +191,14 @@ impl ToriiClient {
     }
 
     /// Retrieve token transfers
-    pub async fn token_transfers(
+    pub fn token_transfers(
         &self,
         query: TokenTransferQuery,
     ) -> Result<PageTokenTransfer, DojoError> {
         let q: torii_proto::TokenTransferQuery = query.into();
-        let page = self
-            .inner
-            .token_transfers(q)
-            .await
+        let inner = self.inner.clone();
+        let page = runtime()
+            .block_on(inner.token_transfers(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(PageTokenTransfer {
@@ -202,15 +208,14 @@ impl ToriiClient {
     }
 
     /// Retrieve transactions
-    pub async fn transactions(
+    pub fn transactions(
         &self,
         query: TransactionQuery,
     ) -> Result<PageTransaction, DojoError> {
         let q: torii_proto::TransactionQuery = query.into();
-        let page = self
-            .inner
-            .transactions(q)
-            .await
+        let inner = self.inner.clone();
+        let page = runtime()
+            .block_on(inner.transactions(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(PageTransaction {
@@ -220,15 +225,14 @@ impl ToriiClient {
     }
 
     /// Retrieve aggregations (leaderboards, stats, rankings)
-    pub async fn aggregations(
+    pub fn aggregations(
         &self,
         query: AggregationQuery,
     ) -> Result<PageAggregationEntry, DojoError> {
         let q: torii_proto::AggregationQuery = query.into();
-        let page = self
-            .inner
-            .aggregations(q)
-            .await
+        let inner = self.inner.clone();
+        let page = runtime()
+            .block_on(inner.aggregations(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(PageAggregationEntry {
@@ -238,12 +242,11 @@ impl ToriiClient {
     }
 
     /// Retrieve activities (user session tracking)
-    pub async fn activities(&self, query: ActivityQuery) -> Result<PageActivity, DojoError> {
+    pub fn activities(&self, query: ActivityQuery) -> Result<PageActivity, DojoError> {
         let q: torii_proto::ActivityQuery = query.into();
-        let page = self
-            .inner
-            .activities(q)
-            .await
+        let inner = self.inner.clone();
+        let page = runtime()
+            .block_on(inner.activities(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(PageActivity {
@@ -253,15 +256,14 @@ impl ToriiClient {
     }
 
     /// Retrieve achievements
-    pub async fn achievements(
+    pub fn achievements(
         &self,
         query: AchievementQuery,
     ) -> Result<PageAchievement, DojoError> {
         let q: torii_proto::AchievementQuery = query.into();
-        let page = self
-            .inner
-            .achievements(q)
-            .await
+        let inner = self.inner.clone();
+        let page = runtime()
+            .block_on(inner.achievements(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(PageAchievement {
@@ -271,15 +273,14 @@ impl ToriiClient {
     }
 
     /// Retrieve player achievements
-    pub async fn player_achievements(
+    pub fn player_achievements(
         &self,
         query: PlayerAchievementQuery,
     ) -> Result<PagePlayerAchievement, DojoError> {
         let q: torii_proto::PlayerAchievementQuery = query.into();
-        let page = self
-            .inner
-            .player_achievements(q)
-            .await
+        let inner = self.inner.clone();
+        let page = runtime()
+            .block_on(inner.player_achievements(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(PagePlayerAchievement {
@@ -289,12 +290,11 @@ impl ToriiClient {
     }
 
     /// Retrieve entities matching the query
-    pub async fn entities(&self, query: Query) -> Result<PageEntity, DojoError> {
+    pub fn entities(&self, query: Query) -> Result<PageEntity, DojoError> {
         let q: torii_proto::Query = query.into();
-        let page = self
-            .inner
-            .entities(q)
-            .await
+        let inner = self.inner.clone();
+        let page = runtime()
+            .block_on(inner.entities(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(PageEntity {
@@ -304,12 +304,11 @@ impl ToriiClient {
     }
 
     /// Retrieve event messages matching the query
-    pub async fn event_messages(&self, query: Query) -> Result<PageEntity, DojoError> {
+    pub fn event_messages(&self, query: Query) -> Result<PageEntity, DojoError> {
         let q: torii_proto::Query = query.into();
-        let page = self
-            .inner
-            .event_messages(q)
-            .await
+        let inner = self.inner.clone();
+        let page = runtime()
+            .block_on(inner.event_messages(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(PageEntity {
@@ -319,12 +318,11 @@ impl ToriiClient {
     }
 
     /// Retrieve raw Starknet events
-    pub async fn starknet_events(&self, query: EventQuery) -> Result<PageEvent, DojoError> {
+    pub fn starknet_events(&self, query: EventQuery) -> Result<PageEvent, DojoError> {
         let q: torii_proto::EventQuery = query.try_into()?;
-        let page = self
-            .inner
-            .starknet_events(q)
-            .await
+        let inner = self.inner.clone();
+        let page = runtime()
+            .block_on(inner.starknet_events(q))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         Ok(PageEvent {
@@ -334,18 +332,17 @@ impl ToriiClient {
     }
 
     /// Execute a SQL query against the Torii database
-    pub async fn sql(&self, query: String) -> Result<Vec<SqlRow>, DojoError> {
-        let rows = self
-            .inner
-            .sql(query)
-            .await
+    pub fn sql(&self, query: String) -> Result<Vec<SqlRow>, DojoError> {
+        let inner = self.inner.clone();
+        let rows = runtime()
+            .block_on(inner.sql(query))
             .map_err(|e| DojoError::QueryError { message: e.to_string() })?;
 
         rows.into_iter().map(|r| r.try_into()).collect()
     }
 
     /// Subscribe to entity updates
-    pub async fn subscribe_entity_updates(
+    pub fn subscribe_entity_updates(
         &self,
         clause: Option<Clause>,
         world_addresses: Vec<FieldElement>,
@@ -359,14 +356,14 @@ impl ToriiClient {
 
         let clause_proto = clause.map(|c| c.into());
 
-        let mut stream = self
-            .inner
-            .on_entity_updated(clause_proto, addrs)
-            .await
+        let inner = self.inner.clone();
+        let stream = runtime()
+            .block_on(inner.on_entity_updated(clause_proto, addrs))
             .map_err(|_| DojoError::SubscriptionError)?;
 
-        let handle = tokio::spawn(async move {
+        let handle = runtime().spawn(async move {
             use futures_util::StreamExt;
+            let mut stream = stream;
             // Skip the first message which contains the subscription ID
             let _ = stream.next().await;
 
@@ -388,7 +385,7 @@ impl ToriiClient {
     }
 
     /// Subscribe to token balance updates
-    pub async fn subscribe_token_balance_updates(
+    pub fn subscribe_token_balance_updates(
         &self,
         contract_addresses: Vec<FieldElement>,
         account_addresses: Vec<FieldElement>,
@@ -404,14 +401,14 @@ impl ToriiClient {
         let ids: Result<Vec<crypto_bigint::U256>, DojoError> =
             token_ids.iter().map(uniffi_to_u256).collect();
 
-        let mut stream = self
-            .inner
-            .on_token_balance_updated(contracts?, accounts?, ids?)
-            .await
+        let inner = self.inner.clone();
+        let stream = runtime()
+            .block_on(inner.on_token_balance_updated(contracts?, accounts?, ids?))
             .map_err(|_| DojoError::SubscriptionError)?;
 
-        let handle = tokio::spawn(async move {
+        let handle = runtime().spawn(async move {
             use futures_util::StreamExt;
+            let mut stream = stream;
             // Skip the first message which contains the subscription ID
             let _ = stream.next().await;
 
@@ -433,7 +430,7 @@ impl ToriiClient {
     }
 
     /// Subscribe to token updates
-    pub async fn subscribe_token_updates(
+    pub fn subscribe_token_updates(
         &self,
         contract_addresses: Vec<FieldElement>,
         token_ids: Vec<U256>,
@@ -446,14 +443,14 @@ impl ToriiClient {
         let ids: Result<Vec<crypto_bigint::U256>, DojoError> =
             token_ids.iter().map(uniffi_to_u256).collect();
 
-        let mut stream = self
-            .inner
-            .on_token_updated(contracts?, ids?)
-            .await
+        let inner = self.inner.clone();
+        let stream = runtime()
+            .block_on(inner.on_token_updated(contracts?, ids?))
             .map_err(|_| DojoError::SubscriptionError)?;
 
-        let handle = tokio::spawn(async move {
+        let handle = runtime().spawn(async move {
             use futures_util::StreamExt;
+            let mut stream = stream;
             // Skip the first message which contains the subscription ID
             let _ = stream.next().await;
 
@@ -475,7 +472,7 @@ impl ToriiClient {
     }
 
     /// Subscribe to transaction updates
-    pub async fn subscribe_transaction_updates(
+    pub fn subscribe_transaction_updates(
         &self,
         filter: Option<TransactionFilter>,
         callback: Box<dyn TransactionUpdateCallback>,
@@ -484,14 +481,14 @@ impl ToriiClient {
 
         let filter_proto = filter.map(|f| f.into());
 
-        let mut stream = self
-            .inner
-            .on_transaction(filter_proto)
-            .await
+        let inner = self.inner.clone();
+        let stream = runtime()
+            .block_on(inner.on_transaction(filter_proto))
             .map_err(|_| DojoError::SubscriptionError)?;
 
-        let handle = tokio::spawn(async move {
+        let handle = runtime().spawn(async move {
             use futures_util::StreamExt;
+            let mut stream = stream;
             // Skip the first message which contains the subscription ID
             let _ = stream.next().await;
 
@@ -513,7 +510,7 @@ impl ToriiClient {
     }
 
     /// Subscribe to Starknet event updates
-    pub async fn subscribe_event_updates(
+    pub fn subscribe_event_updates(
         &self,
         keys: Vec<KeysClause>,
         callback: Box<dyn EventUpdateCallback>,
@@ -522,14 +519,14 @@ impl ToriiClient {
 
         let keys_proto: Vec<torii_proto::KeysClause> = keys.into_iter().map(|k| k.into()).collect();
 
-        let mut stream = self
-            .inner
-            .on_starknet_event(keys_proto)
-            .await
+        let inner = self.inner.clone();
+        let stream = runtime()
+            .block_on(inner.on_starknet_event(keys_proto))
             .map_err(|_| DojoError::SubscriptionError)?;
 
-        let handle = tokio::spawn(async move {
+        let handle = runtime().spawn(async move {
             use futures_util::StreamExt;
+            let mut stream = stream;
             // Skip the first message which contains the subscription ID
             let _ = stream.next().await;
 
