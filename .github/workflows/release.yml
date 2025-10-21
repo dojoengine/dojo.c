@@ -67,6 +67,108 @@ jobs:
             torii-wasm-no-modules.tar.gz
             torii-wasm-web.tar.gz
 
+  build-uniffi:
+    name: Build UniFFI bindings
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            target: x86_64-unknown-linux-gnu
+            lib_name: libdojo_uniffi.so
+          - os: macos-latest
+            platform: darwin
+            target: x86_64-apple-darwin
+            lib_name: libdojo_uniffi.dylib
+          - os: macos-latest
+            platform: darwin
+            target: aarch64-apple-darwin
+            lib_name: libdojo_uniffi.dylib
+          - os: windows-latest
+            platform: windows
+            target: x86_64-pc-windows-msvc
+            lib_name: dojo_uniffi.dll
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: dtolnay/rust-toolchain@master
+        name: Rust Toolchain Setup
+        with:
+          targets: ${{ matrix.target }}
+          toolchain: ${{ env.RUST_VERSION }}
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          cache-on-failure: true
+
+      - uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config
+
+      - name: Install target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build UniFFI library
+        run: cargo build --release --target ${{ matrix.target }} -p dojo-uniffi
+
+      - name: Build bindgen tools
+        run: |
+          cargo build --release --target ${{ matrix.target }} --bin uniffi-bindgen-swift
+          cargo build --release --target ${{ matrix.target }} --bin uniffi-bindgen-python
+          cargo build --release --target ${{ matrix.target }} --bin uniffi-bindgen-kotlin
+
+      - name: Generate Swift bindings
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            ./target/${{ matrix.target }}/release/uniffi-bindgen-swift.exe
+          else
+            ./target/${{ matrix.target }}/release/uniffi-bindgen-swift
+          fi
+
+      - name: Generate Python bindings
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            ./target/${{ matrix.target }}/release/uniffi-bindgen-python.exe
+          else
+            ./target/${{ matrix.target }}/release/uniffi-bindgen-python
+          fi
+
+      - name: Generate Kotlin bindings
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            ./target/${{ matrix.target }}/release/uniffi-bindgen-kotlin.exe
+          else
+            ./target/${{ matrix.target }}/release/uniffi-bindgen-kotlin
+          fi
+
+      - name: Package UniFFI bindings
+        shell: bash
+        run: |
+          mkdir -p dojo-uniffi-${{ matrix.target }}
+          cp target/${{ matrix.target }}/release/${{ matrix.lib_name }} dojo-uniffi-${{ matrix.target }}/
+          cp -r bindings/swift dojo-uniffi-${{ matrix.target }}/
+          cp -r bindings/python dojo-uniffi-${{ matrix.target }}/
+          cp -r bindings/kotlin dojo-uniffi-${{ matrix.target }}/
+          cp -r examples dojo-uniffi-${{ matrix.target }}/
+          tar -czvf dojo-uniffi-${{ matrix.target }}.tar.gz dojo-uniffi-${{ matrix.target }}/
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dojo-uniffi-${{ matrix.target }}.tar.gz
+
   build-and-release:
     name: ${{ matrix.job.target }} (${{ matrix.job.os }})
     needs: prepare

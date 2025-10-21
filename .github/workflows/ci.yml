@@ -46,7 +46,7 @@ jobs:
       - name: Install wasm32 target
         run: rustup target add wasm32-unknown-unknown
       - name: Compile WASM
-        run: cargo build --release --target wasm32-unknown-unknown -p wasm
+        run: cargo build --release --target wasm32-unknown-unknown -p dojo-wasm
 
   ensure-c:
     name: Check C bindings compilation
@@ -64,7 +64,42 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Compile C bindings
-        run: cargo build --release -p c
+        run: cargo build --release -p dojo-c
+
+  ensure-uniffi:
+    name: Check UniFFI bindings compilation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      # Install system dependencies
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - uses: Swatinem/rust-cache@v2
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compile UniFFI library
+        run: cargo build --release -p dojo-uniffi
+      - name: Build UniFFI bindgen tools
+        run: |
+          cargo build --release --bin uniffi-bindgen-swift
+          cargo build --release --bin uniffi-bindgen-python
+          cargo build --release --bin uniffi-bindgen-kotlin
+      - name: Generate Swift bindings
+        run: ./target/release/uniffi-bindgen-swift
+      - name: Generate Python bindings
+        run: ./target/release/uniffi-bindgen-python
+      - name: Generate Kotlin bindings
+        run: ./target/release/uniffi-bindgen-kotlin
+      - name: Verify bindings generated
+        run: |
+          test -f bindings/swift/DojoEngine.swift || exit 1
+          test -f bindings/python/dojo.py || exit 1
+          test -f bindings/kotlin/com/dojoengine/dojo/dojo.kt || exit 1
+          echo "✓ All UniFFI bindings generated successfully"
 
   clippy:
     runs-on: ubuntu-latest
