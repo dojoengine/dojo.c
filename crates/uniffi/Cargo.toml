@@ -41,6 +41,8 @@ camino = "1.1"
 thiserror = "2"
 hex = "0.4"
 cargo_metadata = "0.19"
+which = "7.0"
+walkdir = "2.5"
 
 # Platform-specific dependencies
 axum = "0.8.1"
@@ -73,6 +75,14 @@ path = "src/bin/uniffi-bindgen-kotlin.rs"
 [[bin]]
 name = "uniffi-bindgen-python"
 path = "src/bin/uniffi-bindgen-python.rs"
+
+[[bin]]
+name = "uniffi-bindgen-csharp"
+path = "src/bin/uniffi-bindgen-csharp.rs"
+
+[[bin]]
+name = "uniffi-bindgen-go"
+path = "src/bin/uniffi-bindgen-go.rs"
 
 [features]
 default = []
