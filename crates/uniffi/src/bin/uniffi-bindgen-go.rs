@@ -15,9 +15,7 @@ fn main() {
         eprintln!(
             "  udl_path              Path to the .udl file (default: crates/uniffi/src/dojo.udl)"
         );
-        eprintln!(
-            "  output_dir            Output directory for bindings (default: bindings/go)"
-        );
+        eprintln!("  output_dir            Output directory for bindings (default: bindings/go)");
         eprintln!();
         eprintln!("Options:");
         eprintln!("  --config <path>       Path to uniffi.toml config file");
@@ -111,11 +109,9 @@ fn main() {
                 // uniffi-bindgen-go generates files in a specific structure
                 // The output will be in uniffi/<namespace>/<namespace>.go
                 println!("✓ Go bindings generated successfully!");
-                println!(
-                    "\nNote: Bindings are generated relative to the UDL file location."
-                );
+                println!("\nNote: Bindings are generated relative to the UDL file location.");
                 println!("Look for the generated .go files in the uniffi subdirectory.");
-                
+
                 if !output.stdout.is_empty() {
                     println!("{}", String::from_utf8_lossy(&output.stdout));
                 }
@@ -123,8 +119,8 @@ fn main() {
                 // Try to copy the generated files to the desired output directory
                 // uniffi-bindgen-go creates files in <namespace>/<namespace>.go relative to UDL
                 let udl_dir = udl_path.parent().unwrap();
-                let dojo_dir = udl_dir.join("dojo");  // namespace is "dojo"
-                
+                let dojo_dir = udl_dir.join("dojo"); // namespace is "dojo"
+
                 if dojo_dir.exists() {
                     println!("\nCopying generated files to {}...", out_dir);
                     if let Err(e) = copy_dir_recursive(&dojo_dir, &out_dir) {
@@ -156,12 +152,13 @@ fn main() {
 
 fn copy_dir_recursive(src: &Utf8PathBuf, dst: &Utf8PathBuf) -> std::io::Result<()> {
     use std::fs;
+
     use walkdir::WalkDir;
 
     for entry in WalkDir::new(src.as_str()) {
         let entry = entry?;
         let path = entry.path();
-        
+
         let relative_path = path.strip_prefix(src.as_str()).unwrap();
         let target_path = dst.join(relative_path.to_str().unwrap());
 
@@ -174,7 +171,6 @@ fn copy_dir_recursive(src: &Utf8PathBuf, dst: &Utf8PathBuf) -> std::io::Result<(
             fs::copy(path, &target_path)?;
         }
     }
-    
+
     Ok(())
 }
-

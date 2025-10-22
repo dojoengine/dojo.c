@@ -29,7 +29,8 @@ fn main() {
         eprintln!("  {}                    # Use defaults", args[0]);
         eprintln!("  {} target/release/libdojo_uniffi.dylib bindings/csharp", args[0]);
         eprintln!(
-            "  {} target/release/libdojo_uniffi.dylib bindings/csharp --config crates/uniffi/uniffi.toml",
+            "  {} target/release/libdojo_uniffi.dylib bindings/csharp --config \
+             crates/uniffi/uniffi.toml",
             args[0]
         );
         eprintln!();
@@ -94,7 +95,7 @@ fn main() {
     // Build command for uniffi-bindgen-cs
     let mut cmd = process::Command::new("uniffi-bindgen-cs");
     cmd.arg(&library_path.to_string());
-    cmd.arg("--library");  // Always use --library flag when passing library path
+    cmd.arg("--library"); // Always use --library flag when passing library path
     cmd.arg("--out-dir").arg(&out_dir.to_string());
 
     if args.contains(&"--no-format".to_string()) {
@@ -136,4 +137,3 @@ fn main() {
         }
     }
 }
-
