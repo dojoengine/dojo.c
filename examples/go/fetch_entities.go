@@ -29,9 +29,10 @@ func fetchEntities(toriiURL string, worldAddress string) error {
 	fmt.Println("✓ Connected successfully!")
 
 	// Create pagination settings
+	limit := uint32(10)
 	pagination := dojo.Pagination{
-		Cursor:    nil, // Start from beginning
-		Limit:     10,  // Fetch 10 entities
+		Cursor:    nil,    // Start from beginning
+		Limit:     &limit, // Fetch 10 entities
 		Direction: dojo.PaginationDirectionForward,
 		OrderBy:   []dojo.OrderBy{},
 	}

@@ -1,5 +1,7 @@
 package dojo
 
+// #cgo CFLAGS: -I${SRCDIR}
+// #cgo LDFLAGS: -L${SRCDIR}/../../target/release -ldojo_uniffi
 // #include <dojo.h>
 import "C"
 
