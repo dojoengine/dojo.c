@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>enable</Nullable>
+    <RootNamespace>DojoExamples</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Include the generated bindings -->
+  <ItemGroup>
+    <Compile Include="../../bindings/csharp/**/*.cs" />
+  </ItemGroup>
+
+  <!-- For .NET Framework 4.6.1 support, uncomment the following: -->
+  <!--
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="IsExternalInit" Version="1.0.3"/>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+  </ItemGroup>
+  -->
+
+</Project>
+
