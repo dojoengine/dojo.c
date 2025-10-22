@@ -30,17 +30,14 @@ use wasm_bindgen::prelude::*;
 mod types;
 
 use types::{
-    AchievementProgression, AchievementQuery, Achievements, Activities, Activity, AggregationEntry,
-    Aggregations, BlockId, Call, Calls, Clause, ClientConfig, Contract, Contracts, Controllers,
-    Entities, Entity, KeysClauses, Message, PlayerAchievementQuery, PlayerAchievements, Query,
-    Signature, Token, TokenBalance, TokenBalances, TokenContracts, TokenTransfer, TokenTransfers,
-    Tokens, Transaction, Transactions, WasmU256,
-};
-
-use crate::types::{
-    Account, ActivityQuery, AggregationQuery, ContractQuery, ControllerQuery, Provider,
-    Subscription, TokenBalanceQuery, TokenContractQuery, TokenQuery, TokenTransferQuery,
-    ToriiClient, TransactionFilter, TransactionQuery,
+    Account, AchievementProgression, AchievementQuery, Achievements, Activities, Activity,
+    ActivityQuery, AggregationEntry, AggregationQuery, Aggregations, BlockId, Call, Calls, Clause,
+    ClientConfig, Contract, ContractQuery, Contracts, ControllerQuery, Controllers, Entities,
+    Entity, KeysClauses, Message, PlayerAchievementQuery, PlayerAchievements, Provider, Query,
+    Signature, Subscription, Token, TokenBalance, TokenBalanceQuery, TokenBalances,
+    TokenContractQuery, TokenContracts, TokenQuery, TokenTransfer, TokenTransferQuery,
+    TokenTransfers, Tokens, ToriiClient, Transaction, TransactionFilter, TransactionQuery,
+    Transactions, WasmU256,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =

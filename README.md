@@ -1,8 +1,36 @@
 # dojo.c
 
-This package provides C and low-level Wasm32 bindings for the Torii Client SDK, as well as for the starknet-rs library.
+Multi-language bindings for the Dojo Torii Client SDK, providing seamless integration across multiple platforms and languages.
 
-The approach is to generate a C client using `cbindgen` and a wasm module using `wasm-bindgen` that are interropeable in applications exporting to both native platforms and web browsers.
+## Features
+
+This package provides multiple binding strategies for maximum compatibility:
+
+- **C/C++ Bindings** - Generated with `cbindgen` for native applications
+- **WebAssembly** - Browser and Node.js support via `wasm-bindgen`
+- **UniFFI Bindings** - Modern Swift, Kotlin, and Python bindings via Mozilla's UniFFI
+
+## Project Structure
+
+```
+dojo.c/
+├── src/
+│   ├── c/                  # C FFI implementation
+│   ├── wasm/               # WebAssembly implementation
+│   ├── uniffi/             # UniFFI implementation
+│   │   ├── types/          # Domain types (organized by category)
+│   │   ├── client.rs       # ToriiClient with queries & subscriptions
+│   │   └── README.md       # UniFFI-specific documentation
+│   ├── dojo.udl            # UniFFI interface definition
+│   └── lib.rs              # Main library entry point
+├── src/bin/                # Binding generator binaries
+├── scripts/                # Build and generation scripts
+├── bindings/               # Generated bindings output
+│   ├── swift/
+│   ├── kotlin/
+│   └── python/
+└── example/                # C usage examples
+```
 
 ## Building
 
@@ -27,13 +55,79 @@ cargo build --release --target wasm32-unknown-unknown
 cd pkg && bunx wasm-pack build --release
 ```
 
-## Running
+## Generating Bindings
+
+### C/C++ Headers
+
+Headers are automatically generated during `cargo build`:
+- `dojo.h` - C header
+- `dojo.hpp` - C++ header  
+- `dojo.pyx` - Cython definitions
+
+### UniFFI Bindings (Swift, Kotlin, Python)
 
 ```bash
-# Building dojo.c
+# Build the library first
 cargo build --release
-# Linking dojo.c and building example
+
+# Generate Swift bindings (iOS/macOS)
+cargo run --bin uniffi-bindgen-swift --release -- \
+    target/release/libdojo_c.dylib bindings/swift --swift-sources
+
+# Generate Kotlin bindings (Android)
+cargo run --bin uniffi-bindgen-kotlin --release -- \
+    target/release/libdojo_c.dylib bindings/kotlin
+
+# Generate Python bindings
+cargo run --bin uniffi-bindgen-python --release -- \
+    target/release/libdojo_c.dylib bindings/python
+```
+
+See [`src/uniffi/README.md`](src/uniffi/README.md) for detailed UniFFI documentation.
+
+## Language Support Status
+
+| Language | Status | Notes |
+|----------|--------|-------|
+| **Swift** | ✅ Fully Functional | All features working, synchronous client |
+| **Python** | ✅ Fully Functional | All features working, synchronous client |
+| **C/C++** | ✅ Functional | Basic functionality via cbindgen |
+| **WebAssembly** | ✅ Functional | Browser and Node.js support |
+| **Kotlin** | 🚧 Not Working | UniFFI v0.30 limitations with complex types |
+
+See `examples/` directory for language-specific examples and documentation.
+
+## Running Examples
+
+### C Example
+
+```bash
+# Build dojo.c
+cargo build --release
+# Compile and link C example
 clang example/main.c target/release/libdojo_c.dylib
-# Running example
+# Run example
 ./a.out
+```
+
+### Python Example
+
+```python
+from dojo import ToriiClient
+
+# Create client
+client = await ToriiClient("http://localhost:8080")
+
+# Subscribe to entity updates
+def on_entity_update(entity):
+    print(f"Entity updated: {entity}")
+
+def on_error(error):
+    print(f"Error: {error}")
+
+sub_id = await client.subscribe_entity_updates(
+    None,  # clause
+    [],    # world_addresses
+    EntityUpdateCallback(on_entity_update, on_error)
+)
 ```

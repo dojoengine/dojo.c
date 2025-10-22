@@ -1,0 +1,746 @@
+// Simplified UDL - just the types that work easily with UniFFI
+// Complex recursive types (Primitive, Ty, Clause, etc.) should be handled
+// via procmacros in Rust rather than UDL
+
+namespace dojo {
+};
+
+// Core types
+[Custom]
+typedef string FieldElement;
+
+[Custom]
+typedef string U256;
+
+// Enums
+enum PaginationDirection {
+    "Forward",
+    "Backward",
+};
+
+enum OrderDirection {
+    "Asc",
+    "Desc",
+};
+
+enum ContractType {
+    "WORLD",
+    "ERC20",
+    "ERC721",
+    "ERC1155",
+    "UDC",
+    "OTHER",
+};
+
+enum CallType {
+    "Execute",
+    "ExecuteFromOutside",
+};
+
+enum PatternMatching {
+    "FixedLen",
+    "VariableLen",
+};
+
+enum LogicalOperator {
+    "And",
+    "Or",
+};
+
+enum ComparisonOperator {
+    "Eq",
+    "Neq",
+    "Gt",
+    "Gte",
+    "Lt",
+    "Lte",
+    "In",
+    "NotIn",
+    "Contains",
+    "ContainsAll",
+    "ContainsAny",
+    "ArrayLengthEq",
+    "ArrayLengthGt",
+    "ArrayLengthLt",
+};
+
+// Basic structures
+dictionary Signature {
+    FieldElement r;
+    FieldElement s;
+};
+
+dictionary OrderBy {
+    string field;
+    OrderDirection direction;
+};
+
+dictionary Pagination {
+    string? cursor;
+    u32? limit;
+    PaginationDirection direction;
+    sequence<OrderBy> order_by;
+};
+
+// Controller
+dictionary Controller {
+    FieldElement address;
+    string username;
+    u64 deployed_at_timestamp;
+};
+
+dictionary ControllerQuery {
+    Pagination pagination;
+    sequence<FieldElement> contract_addresses;
+    sequence<string> usernames;
+};
+
+// Token types
+dictionary Token {
+    FieldElement contract_address;
+    U256? token_id;
+    string name;
+    string symbol;
+    u8 decimals;
+    string metadata;
+    U256? total_supply;
+};
+
+dictionary TokenBalance {
+    U256 balance;
+    FieldElement account_address;
+    FieldElement contract_address;
+    U256? token_id;
+};
+
+dictionary TokenContract {
+    FieldElement contract_address;
+    string name;
+    string symbol;
+    u8 decimals;
+    string metadata;
+    string token_metadata;
+    U256? total_supply;
+};
+
+dictionary AttributeFilter {
+    string trait_name;
+    string trait_value;
+};
+
+dictionary TokenQuery {
+    sequence<FieldElement> contract_addresses;
+    sequence<U256> token_ids;
+    sequence<AttributeFilter> attribute_filters;
+    Pagination pagination;
+};
+
+dictionary TokenBalanceQuery {
+    sequence<FieldElement> contract_addresses;
+    sequence<FieldElement> account_addresses;
+    sequence<U256> token_ids;
+    Pagination pagination;
+};
+
+dictionary TokenContractQuery {
+    sequence<FieldElement> contract_addresses;
+    sequence<ContractType> contract_types;
+    Pagination pagination;
+};
+
+dictionary TokenTransfer {
+    string id;
+    FieldElement contract_address;
+    FieldElement from_address;
+    FieldElement to_address;
+    U256 amount;
+    U256? token_id;
+    u64 executed_at;
+    string? event_id;
+};
+
+dictionary TokenTransferQuery {
+    sequence<FieldElement> contract_addresses;
+    sequence<FieldElement> account_addresses;
+    sequence<U256> token_ids;
+    Pagination pagination;
+};
+
+// Contract
+dictionary Contract {
+    FieldElement contract_address;
+    ContractType contract_type;
+    u64? head;
+    u64? tps;
+    u64? last_block_timestamp;
+    FieldElement? last_pending_block_tx;
+    u64 updated_at;
+    u64 created_at;
+};
+
+dictionary ContractQuery {
+    sequence<FieldElement> contract_addresses;
+    sequence<ContractType> contract_types;
+};
+
+// Transaction types
+dictionary TransactionCall {
+    FieldElement contract_address;
+    string entrypoint;
+    sequence<FieldElement> calldata;
+    CallType call_type;
+    FieldElement caller_address;
+};
+
+dictionary Transaction {
+    FieldElement transaction_hash;
+    FieldElement sender_address;
+    sequence<FieldElement> calldata;
+    FieldElement max_fee;
+    sequence<FieldElement> signature;
+    FieldElement nonce;
+    u64 block_number;
+    string transaction_type;
+    u64 block_timestamp;
+    sequence<TransactionCall> calls;
+    sequence<FieldElement> unique_models;
+};
+
+dictionary TransactionFilter {
+    sequence<FieldElement> transaction_hashes;
+    sequence<FieldElement> caller_addresses;
+    sequence<FieldElement> contract_addresses;
+    sequence<string> entrypoints;
+    sequence<FieldElement> model_selectors;
+    u64? from_block;
+    u64? to_block;
+};
+
+dictionary TransactionQuery {
+    TransactionFilter? filter;
+    Pagination pagination;
+};
+
+// Aggregation
+dictionary AggregationQuery {
+    sequence<string> aggregator_ids;
+    sequence<string> entity_ids;
+    Pagination pagination;
+};
+
+dictionary AggregationEntry {
+    string id;
+    string aggregator_id;
+    string entity_id;
+    U256 value;
+    string display_value;
+    u64 position;
+    string model_id;
+    u64 created_at;
+    u64 updated_at;
+};
+
+// Activity
+dictionary ActionCount {
+    string action_name;
+    u32 count;
+};
+
+dictionary Activity {
+    string id;
+    FieldElement world_address;
+    string namespace;
+    FieldElement caller_address;
+    u64 session_start;
+    u64 session_end;
+    u32 action_count;
+    sequence<ActionCount> actions;
+    u64 updated_at;
+};
+
+dictionary ActivityQuery {
+    sequence<FieldElement> world_addresses;
+    sequence<string> namespaces;
+    sequence<FieldElement> caller_addresses;
+    u64? from_time;
+    u64? to_time;
+    Pagination pagination;
+};
+
+// Achievement
+dictionary AchievementTask {
+    string task_id;
+    string description;
+    u32 total;
+    u32 total_completions;
+    f64 completion_rate;
+    u64 created_at;
+};
+
+dictionary Achievement {
+    string id;
+    FieldElement world_address;
+    string namespace;
+    string entity_id;
+    boolean hidden;
+    u32 index;
+    u32 points;
+    string start;
+    string end;
+    string group;
+    string icon;
+    string title;
+    string description;
+    sequence<AchievementTask> tasks;
+    string? data;
+    u32 total_completions;
+    f64 completion_rate;
+    u64 created_at;
+    u64 updated_at;
+};
+
+dictionary AchievementQuery {
+    sequence<FieldElement> world_addresses;
+    sequence<string> namespaces;
+    boolean? hidden;
+    Pagination pagination;
+};
+
+dictionary TaskProgress {
+    string task_id;
+    u32 count;
+    boolean completed;
+};
+
+dictionary PlayerAchievementProgress {
+    Achievement achievement;
+    sequence<TaskProgress> task_progress;
+    boolean completed;
+    f64 progress_percentage;
+};
+
+dictionary PlayerAchievementStats {
+    u32 total_points;
+    u32 completed_achievements;
+    u32 total_achievements;
+    f64 completion_percentage;
+    u64? last_achievement_at;
+    u64 created_at;
+    u64 updated_at;
+};
+
+dictionary PlayerAchievementEntry {
+    FieldElement player_address;
+    PlayerAchievementStats stats;
+    sequence<PlayerAchievementProgress> achievements;
+};
+
+dictionary PlayerAchievementQuery {
+    sequence<FieldElement> world_addresses;
+    sequence<string> namespaces;
+    sequence<FieldElement> player_addresses;
+    Pagination pagination;
+};
+
+// General entity query  
+dictionary Query {
+    sequence<FieldElement> world_addresses;
+    Pagination pagination;
+    Clause? clause;
+    boolean no_hashed_keys;
+    sequence<string> models;
+    boolean historical;
+};
+
+// Event query
+dictionary EventQuery {
+    KeysClause? keys;
+    Pagination pagination;
+};
+
+// SQL query result types
+dictionary SqlField {
+    string name;
+    SqlValue value;
+};
+
+dictionary SqlRow {
+    sequence<SqlField> fields;
+};
+
+[Enum]
+interface SqlValue {
+    Text(string value);
+    Integer(i64 value);
+    Real(f64 value);
+    Blob(sequence<u8> value);
+    Null();
+};
+
+dictionary AchievementProgression {
+    string id;
+    string achievement_id;
+    string task_id;
+    FieldElement world_address;
+    string namespace;
+    FieldElement player_id;
+    u32 count;
+    boolean completed;
+    u64? completed_at;
+    u64 created_at;
+    u64 updated_at;
+};
+
+// Schema types - Complex enums with associated data
+
+[Enum]
+interface Primitive {
+    I8(i8 value);
+    I16(i16 value);
+    I32(i32 value);
+    I64(i64 value);
+    I128(sequence<u8> value);
+    U8(u8 value);
+    U16(u16 value);
+    U32(u32 value);
+    U64(u64 value);
+    U128(sequence<u8> value);
+    U256(U256 value);
+    Bool(boolean value);
+    Felt252(FieldElement value);
+    ClassHash(FieldElement value);
+    ContractAddress(FieldElement value);
+    EthAddress(FieldElement value);
+};
+
+[Enum]
+interface MemberValue {
+    Primitive(Primitive value);
+    String(string value);
+    List(sequence<MemberValue> values);
+};
+
+dictionary Member {
+    string name;
+    Ty ty;
+    boolean key;
+};
+
+dictionary Struct {
+    string name;
+    sequence<Member> children;
+};
+
+dictionary EnumOption {
+    string name;
+    Ty ty;
+};
+
+dictionary EnumType {
+    string name;
+    u8 option;
+    sequence<EnumOption> options;
+};
+
+dictionary FixedSizeArray {
+    sequence<Ty> array;
+    u32 size;
+};
+
+[Enum]
+interface Ty {
+    Primitive(Primitive value);
+    Struct(Struct value);
+    Enum(EnumType value);
+    Tuple(sequence<Ty> values);
+    Array(sequence<Ty> values);
+    FixedSizeArray(FixedSizeArray value);
+    ByteArray(string value);
+};
+
+[Enum]
+interface ValueType {
+    String(string value);
+    Int(i64 value);
+    UInt(u64 value);
+    Bool(boolean value);
+    Bytes(sequence<u8> value);
+};
+
+// Query types - Complex enums for query building
+
+dictionary KeysClause {
+    sequence<FieldElement?> keys;
+    PatternMatching pattern_matching;
+    sequence<string> models;
+};
+
+dictionary MemberClause {
+    string model;
+    string member;
+    ComparisonOperator operator;
+    MemberValue value;
+};
+
+dictionary CompositeClause {
+    LogicalOperator operator;
+    sequence<Clause> clauses;
+};
+
+[Enum]
+interface Clause {
+    HashedKeys(sequence<FieldElement> keys);
+    Keys(KeysClause clause);
+    Member(MemberClause clause);
+    Composite(CompositeClause clause);
+};
+
+// Event and Message types
+dictionary Event {
+    sequence<FieldElement> keys;
+    sequence<FieldElement> data;
+    FieldElement transaction_hash;
+};
+
+dictionary Message {
+    string message;
+    sequence<FieldElement> signature;
+    FieldElement world_address;
+};
+
+// Entity, Model, and World types
+dictionary Entity {
+    FieldElement world_address;
+    FieldElement hashed_keys;
+    sequence<Struct> models;
+    u64 created_at;
+    u64 updated_at;
+    u64 executed_at;
+};
+
+dictionary Model {
+    FieldElement world_address;
+    Ty schema;
+    string namespace;
+    string name;
+    FieldElement selector;
+    u32 packed_size;
+    u32 unpacked_size;
+    FieldElement class_hash;
+    FieldElement contract_address;
+    string layout;
+    boolean use_legacy_store;
+};
+
+dictionary World {
+    FieldElement world_address;
+    sequence<Model> models;
+};
+
+// Error type
+[Error]
+enum DojoError {
+    "ClientError",
+    "SerializationError",
+    "NetworkError",
+    "InvalidInput",
+    "ConnectionError",
+    "PublishError",
+    "QueryError",
+    "SubscriptionError",
+};
+
+// Callback interfaces for subscriptions
+callback interface EntityUpdateCallback {
+    void on_update(Entity entity);
+    void on_error(string error);
+};
+
+callback interface TokenBalanceUpdateCallback {
+    void on_update(TokenBalance balance);
+    void on_error(string error);
+};
+
+callback interface TokenUpdateCallback {
+    void on_update(Token token);
+    void on_error(string error);
+};
+
+callback interface TransactionUpdateCallback {
+    void on_update(Transaction transaction);
+    void on_error(string error);
+};
+
+callback interface EventUpdateCallback {
+    void on_update(Event event);
+    void on_error(string error);
+};
+
+// Pagination wrapper types for different result types
+dictionary PageController {
+    sequence<Controller> items;
+    string? next_cursor;
+};
+
+dictionary PageToken {
+    sequence<Token> items;
+    string? next_cursor;
+};
+
+dictionary PageTokenBalance {
+    sequence<TokenBalance> items;
+    string? next_cursor;
+};
+
+dictionary PageTokenContract {
+    sequence<TokenContract> items;
+    string? next_cursor;
+};
+
+dictionary PageTokenTransfer {
+    sequence<TokenTransfer> items;
+    string? next_cursor;
+};
+
+dictionary PageTransaction {
+    sequence<Transaction> items;
+    string? next_cursor;
+};
+
+dictionary PageAggregationEntry {
+    sequence<AggregationEntry> items;
+    string? next_cursor;
+};
+
+dictionary PageActivity {
+    sequence<Activity> items;
+    string? next_cursor;
+};
+
+dictionary PageAchievement {
+    sequence<Achievement> items;
+    string? next_cursor;
+};
+
+dictionary PagePlayerAchievement {
+    sequence<PlayerAchievementEntry> items;
+    string? next_cursor;
+};
+
+dictionary PageEntity {
+    sequence<Entity> items;
+    string? next_cursor;
+};
+
+dictionary PageEvent {
+    sequence<Event> items;
+    string? next_cursor;
+};
+
+// Main Dojo client interface
+interface ToriiClient {
+    // Constructor - create a new client with default config (4MB max message size)
+    [Throws=DojoError]
+    constructor(string torii_url);
+    
+    // Constructor - create a new client with custom max message size
+    [Throws=DojoError, Name=new_with_config]
+    constructor(string torii_url, u64 max_message_size);
+    
+    // Publish offchain message
+    [Throws=DojoError]
+    string publish_message(Message message);
+    
+    // Publish multiple offchain messages
+    [Throws=DojoError]
+    sequence<string> publish_message_batch(sequence<Message> messages);
+    
+    // Get world metadata
+    [Throws=DojoError]
+    sequence<World> worlds(sequence<FieldElement> world_addresses);
+    
+    // Query controllers
+    [Throws=DojoError]
+    PageController controllers(ControllerQuery query);
+    
+    // Query contracts
+    [Throws=DojoError]
+    sequence<Contract> contracts(ContractQuery query);
+    
+    // Query tokens
+    [Throws=DojoError]
+    PageToken tokens(TokenQuery query);
+    
+    // Query token balances
+    [Throws=DojoError]
+    PageTokenBalance token_balances(TokenBalanceQuery query);
+    
+    // Query token contracts
+    [Throws=DojoError]
+    PageTokenContract token_contracts(TokenContractQuery query);
+    
+    // Query token transfers
+    [Throws=DojoError]
+    PageTokenTransfer token_transfers(TokenTransferQuery query);
+    
+    // Query transactions
+    [Throws=DojoError]
+    PageTransaction transactions(TransactionQuery query);
+    
+    // Query aggregations (leaderboards, stats, rankings)
+    [Throws=DojoError]
+    PageAggregationEntry aggregations(AggregationQuery query);
+    
+    // Query activities (user session tracking)
+    [Throws=DojoError]
+    PageActivity activities(ActivityQuery query);
+    
+    // Query achievements
+    [Throws=DojoError]
+    PageAchievement achievements(AchievementQuery query);
+    
+    // Query player achievements
+    [Throws=DojoError]
+    PagePlayerAchievement player_achievements(PlayerAchievementQuery query);
+    
+    // Query entities
+    [Throws=DojoError]
+    PageEntity entities(Query query);
+    
+    // Query event messages
+    [Throws=DojoError]
+    PageEntity event_messages(Query query);
+    
+    // Query Starknet events
+    [Throws=DojoError]
+    PageEvent starknet_events(EventQuery query);
+    
+    // Execute SQL query
+    [Throws=DojoError]
+    sequence<SqlRow> sql(string query);
+    
+    // Subscription methods
+    // Subscribe to entity updates
+    [Throws=DojoError]
+    u64 subscribe_entity_updates(Clause? clause, sequence<FieldElement> world_addresses, EntityUpdateCallback callback);
+    
+    // Subscribe to token balance updates
+    [Throws=DojoError]
+    u64 subscribe_token_balance_updates(sequence<FieldElement> contract_addresses, sequence<FieldElement> account_addresses, sequence<U256> token_ids, TokenBalanceUpdateCallback callback);
+    
+    // Subscribe to token updates
+    [Throws=DojoError]
+    u64 subscribe_token_updates(sequence<FieldElement> contract_addresses, sequence<U256> token_ids, TokenUpdateCallback callback);
+    
+    // Subscribe to transaction updates
+    [Throws=DojoError]
+    u64 subscribe_transaction_updates(TransactionFilter? filter, TransactionUpdateCallback callback);
+    
+    // Subscribe to starknet event updates
+    [Throws=DojoError]
+    u64 subscribe_event_updates(sequence<KeysClause> keys, EventUpdateCallback callback);
+    
+    // Cancel a subscription
+    [Throws=DojoError]
+    void cancel_subscription(u64 subscription_id);
+};

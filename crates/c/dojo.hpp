@@ -1376,8 +1376,8 @@ Result<Page<Achievement>> client_achievements(ToriiClient *client, AchievementQu
 ///
 /// # Parameters
 /// * `client` - Pointer to ToriiClient instance
-/// * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses, and
-///   pagination
+/// * `query` - PlayerAchievementQuery containing world_addresses, namespaces, player_addresses,
+///   and pagination
 ///
 /// # Returns
 /// Result containing Page of PlayerAchievementEntry or error

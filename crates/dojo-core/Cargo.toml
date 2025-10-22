@@ -7,7 +7,6 @@ edition.workspace = true
 starknet.workspace = true
 starknet-crypto.workspace = true
 anyhow.workspace = true
-tokio.workspace = true
 url.workspace = true
 stream-cancel.workspace = true
 
@@ -15,6 +14,13 @@ dojo-world.workspace = true
 dojo-types.workspace = true
 torii-client.workspace = true
 torii-proto.workspace = true
+
+# Platform-specific tokio configuration
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+tokio = { version = "1.39.2", default-features = false }
 
 [lib]
 crate-type = ["rlib"]

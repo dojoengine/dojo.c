@@ -1,5 +1,5 @@
 [package]
-name = "wasm"
+name = "dojo-wasm"
 version.workspace = true
 edition.workspace = true
 
