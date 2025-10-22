@@ -94,9 +94,9 @@ fn main() {
 
     // Build command for uniffi-bindgen-cs
     let mut cmd = process::Command::new("uniffi-bindgen-cs");
-    cmd.arg(&library_path.to_string());
+    cmd.arg(&library_path);
     cmd.arg("--library"); // Always use --library flag when passing library path
-    cmd.arg("--out-dir").arg(&out_dir.to_string());
+    cmd.arg("--out-dir").arg(&out_dir);
 
     if args.contains(&"--no-format".to_string()) {
         cmd.arg("--no-format");
@@ -111,7 +111,7 @@ fn main() {
         // Try default config path
         let default_config = Utf8PathBuf::from("crates/uniffi/uniffi.toml");
         if default_config.exists() {
-            cmd.arg("--config").arg(default_config.to_string());
+            cmd.arg("--config").arg(&default_config);
         }
     }
 

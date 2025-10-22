@@ -82,7 +82,7 @@ fn main() {
 
     // Build command for uniffi-bindgen-go
     let mut cmd = process::Command::new("uniffi-bindgen-go");
-    cmd.arg(&udl_path.to_string());
+    cmd.arg(&udl_path);
 
     // Add config file if specified
     if let Some(config_idx) = args.iter().position(|arg| arg == "--config") {
@@ -93,7 +93,7 @@ fn main() {
         // Try default config path
         let default_config = Utf8PathBuf::from("crates/uniffi/uniffi.toml");
         if default_config.exists() {
-            cmd.arg("--config").arg(default_config.to_string());
+            cmd.arg("--config").arg(&default_config);
         }
     }
 
