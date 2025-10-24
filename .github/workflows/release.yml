@@ -115,6 +115,9 @@ jobs:
       - name: Install target
         run: rustup target add ${{ matrix.target }}
 
+      - name: Install uniffi-bindgen-cpp
+        run: cargo install --git https://github.com/Larkooo/uniffi-bindgen-cpp --branch update-0.30 uniffi-bindgen-cpp
+
       - name: Build UniFFI library
         run: cargo build --release --target ${{ matrix.target }} -p dojo-uniffi
 
@@ -123,6 +126,7 @@ jobs:
           cargo build --release --target ${{ matrix.target }} --bin uniffi-bindgen-swift
           cargo build --release --target ${{ matrix.target }} --bin uniffi-bindgen-python
           cargo build --release --target ${{ matrix.target }} --bin uniffi-bindgen-kotlin
+          cargo build --release --target ${{ matrix.target }} --bin uniffi-bindgen-cpp
 
       - name: Generate Swift bindings
         shell: bash
@@ -151,6 +155,15 @@ jobs:
             ./target/${{ matrix.target }}/release/uniffi-bindgen-kotlin
           fi
 
+      - name: Generate C++ bindings
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            ./target/${{ matrix.target }}/release/uniffi-bindgen-cpp.exe
+          else
+            ./target/${{ matrix.target }}/release/uniffi-bindgen-cpp
+          fi
+
       - name: Package UniFFI bindings
         shell: bash
         run: |
@@ -159,6 +172,7 @@ jobs:
           cp -r bindings/swift dojo-uniffi-${{ matrix.target }}/
           cp -r bindings/python dojo-uniffi-${{ matrix.target }}/
           cp -r bindings/kotlin dojo-uniffi-${{ matrix.target }}/
+          cp -r bindings/cpp dojo-uniffi-${{ matrix.target }}/
           cp -r examples dojo-uniffi-${{ matrix.target }}/
           tar -czvf dojo-uniffi-${{ matrix.target }}.tar.gz dojo-uniffi-${{ matrix.target }}/
 
