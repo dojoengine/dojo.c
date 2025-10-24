@@ -17,12 +17,16 @@ fn main() {
              target/release/libdojo_uniffi.dylib)"
         );
         eprintln!(
-            "  output_dir            Output directory for bindings (default: bindings/react-native)"
+            "  output_dir            Output directory for bindings (default: \
+             bindings/react-native)"
         );
         eprintln!();
         eprintln!("Requirements:");
         eprintln!("  This tool requires uniffi-bindgen-react-native to be installed:");
-        eprintln!("  cargo install --git https://github.com/jhugman/uniffi-bindgen-react-native --branch update-uniffi-0.30 uniffi-bindgen-react-native");
+        eprintln!(
+            "  cargo install --git https://github.com/jhugman/uniffi-bindgen-react-native \
+             --branch update-uniffi-0.30 uniffi-bindgen-react-native"
+        );
         eprintln!();
         eprintln!("Examples:");
         eprintln!("  {}                    # Use defaults", args[0]);
@@ -36,7 +40,10 @@ fn main() {
         eprintln!("Error: uniffi-bindgen-react-native is not installed or not in PATH");
         eprintln!();
         eprintln!("Please install it with:");
-        eprintln!("  cargo install --git https://github.com/jhugman/uniffi-bindgen-react-native --branch update-uniffi-0.30 uniffi-bindgen-react-native");
+        eprintln!(
+            "  cargo install --git https://github.com/jhugman/uniffi-bindgen-react-native \
+             --branch update-uniffi-0.30 uniffi-bindgen-react-native"
+        );
         eprintln!();
         eprintln!("Or add it to your PATH if already installed");
         process::exit(1);
@@ -92,7 +99,7 @@ fn main() {
         Ok(output) => {
             if output.status.success() {
                 println!("✓ React Native bindings generated successfully!");
-                
+
                 if !output.stdout.is_empty() {
                     println!("{}", String::from_utf8_lossy(&output.stdout));
                 }
@@ -113,4 +120,3 @@ fn main() {
         }
     }
 }
-
