@@ -88,6 +88,10 @@ path = "src/bin/uniffi-bindgen-go.rs"
 name = "uniffi-bindgen-cpp"
 path = "src/bin/uniffi-bindgen-cpp.rs"
 
+[[bin]]
+name = "uniffi-bindgen-react-native"
+path = "src/bin/uniffi-bindgen-react-native.rs"
+
 [features]
 default = []
 
