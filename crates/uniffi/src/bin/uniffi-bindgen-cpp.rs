@@ -1,4 +1,5 @@
 use std::{env, process};
+
 use camino::Utf8PathBuf;
 
 fn main() {
@@ -12,7 +13,9 @@ fn main() {
         eprintln!();
         eprintln!("Arguments:");
         eprintln!("  udl_path              Path to the .udl file (default: src/dojo.udl)");
-        eprintln!("  output_dir            Output directory for bindings (default: ../../bindings/cpp)");
+        eprintln!(
+            "  output_dir            Output directory for bindings (default: ../../bindings/cpp)"
+        );
         eprintln!();
         eprintln!("Options:");
         eprintln!("  --config <path>       Path to uniffi.toml config file");
@@ -132,5 +135,3 @@ fn main() {
         }
     }
 }
-
-
