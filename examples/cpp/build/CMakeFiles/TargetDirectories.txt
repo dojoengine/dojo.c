@@ -1,0 +1,3 @@
+/Users/nasr/Documents/development.nosync/dojo.c/examples/cpp/build/CMakeFiles/fetch_entities.dir
+/Users/nasr/Documents/development.nosync/dojo.c/examples/cpp/build/CMakeFiles/edit_cache.dir
+/Users/nasr/Documents/development.nosync/dojo.c/examples/cpp/build/CMakeFiles/rebuild_cache.dir
