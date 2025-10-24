@@ -3,7 +3,7 @@ use std::path::Path;
 
 fn main() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    
+
     // Create bindings/c directory if it doesn't exist
     let bindings_dir = Path::new(&crate_dir).join("../../bindings/c");
     std::fs::create_dir_all(&bindings_dir).expect("Unable to create bindings/c directory");
