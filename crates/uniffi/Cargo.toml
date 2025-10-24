@@ -37,7 +37,7 @@ num-traits.workspace = true
 # UniFFI
 uniffi = { version = "0.30", features = ["bindgen", "cli"] }
 uniffi_bindgen = "0.30"
-uniffi-bindgen-cpp = { path = "../../../uniffi-bindgen-cpp/bindgen" }
+uniffi-bindgen-cpp = { git = "https://github.com/Larkooo/uniffi-bindgen-cpp", branch = "update-0.30" }
 camino = "1.1"
 thiserror = "2"
 hex = "0.4"

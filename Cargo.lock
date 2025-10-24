@@ -4953,6 +4953,7 @@ dependencies = [
 [[package]]
 name = "uniffi-bindgen-cpp"
 version = "0.8.0+v0.30.0"
+source = "git+https://github.com/Larkooo/uniffi-bindgen-cpp?branch=update-0.30#62062a7ad7a8269f69f488a806ee87615693936c"
 dependencies = [
  "anyhow",
  "askama 0.12.1",
