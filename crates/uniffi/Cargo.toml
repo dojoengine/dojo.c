@@ -37,6 +37,7 @@ num-traits.workspace = true
 # UniFFI
 uniffi = { version = "0.30", features = ["bindgen", "cli"] }
 uniffi_bindgen = "0.30"
+uniffi-bindgen-cpp = { path = "../../../uniffi-bindgen-cpp/bindgen" }
 camino = "1.1"
 thiserror = "2"
 hex = "0.4"
@@ -83,6 +84,10 @@ path = "src/bin/uniffi-bindgen-csharp.rs"
 [[bin]]
 name = "uniffi-bindgen-go"
 path = "src/bin/uniffi-bindgen-go.rs"
+
+[[bin]]
+name = "uniffi-bindgen-cpp"
+path = "src/bin/uniffi-bindgen-cpp.rs"
 
 [features]
 default = []
