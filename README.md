@@ -6,10 +6,11 @@ Multi-language bindings for the Dojo Torii Client SDK, providing seamless integr
 
 This package provides multiple binding strategies for maximum compatibility:
 
-- **C/C++ Bindings** - Generated with `cbindgen` for native applications
+- **C Bindings** - Generated with `cbindgen` for native C applications
 - **WebAssembly** - Browser and Node.js support via `wasm-bindgen`
 - **UniFFI Bindings** - Modern bindings via Mozilla's UniFFI
   - Swift, Kotlin, Python (built-in)
+  - C++ (via uniffi-bindgen-cpp fork)
   - C# and Go (via external generators)
 
 ## Project Structure
@@ -31,6 +32,7 @@ dojo.c/
 │   ├── swift/
 │   ├── kotlin/
 │   ├── python/
+│   ├── cpp/
 │   ├── csharp/
 │   └── go/
 └── example/                # C usage examples
@@ -91,6 +93,18 @@ cargo run --bin uniffi-bindgen-python --release -- \
     target/release/libdojo_uniffi.dylib bindings/python
 ```
 
+#### C++ (External Generator)
+
+C++ bindings use [uniffi-bindgen-cpp](https://github.com/Larkooo/uniffi-bindgen-cpp):
+
+```bash
+# Install uniffi-bindgen-cpp (one-time setup)
+cargo install --git https://github.com/Larkooo/uniffi-bindgen-cpp --branch update-0.30 uniffi-bindgen-cpp
+
+# Generate C++ bindings
+cargo run --bin uniffi-bindgen-cpp --release
+```
+
 #### C# and Go (External Generators)
 
 C# and Go bindings use external tools. Install them first:
@@ -137,9 +151,10 @@ See [`src/uniffi/README.md`](src/uniffi/README.md) for detailed UniFFI documenta
 |----------|--------|-------|
 | **Swift** | ✅ Fully Functional | All features working, synchronous client |
 | **Python** | ✅ Fully Functional | All features working, synchronous client |
+| **C++** | ✅ Functional | Via uniffi-bindgen-cpp fork |
 | **C#** | ✅ Functional | Via external uniffi-bindgen-cs (v0.10.0+v0.29.4) |
 | **Go** | ✅ Functional | Via external uniffi-bindgen-go (v0.4.0+v0.28.3) |
-| **C/C++** | ✅ Functional | Basic functionality via cbindgen |
+| **C** | ✅ Functional | Basic functionality via cbindgen |
 | **WebAssembly** | ✅ Functional | Browser and Node.js support |
 | **Kotlin** | 🚧 Not Working | UniFFI v0.30 limitations with complex types |
 
@@ -180,6 +195,48 @@ sub_id = await client.subscribe_entity_updates(
     [],    # world_addresses
     EntityUpdateCallback(on_entity_update, on_error)
 )
+```
+
+### C++ Example
+
+See `examples/cpp/` for complete examples.
+
+```bash
+cd examples/cpp
+./build.sh
+./build/fetch_entities
+```
+
+```cpp
+#include "dojo.hpp"
+#include <iostream>
+
+int main() {
+    // Create client
+    auto client = dojo::client_new("http://localhost:8080");
+    
+    // Create query
+    dojo::Query query{
+        .world_addresses = {},
+        .pagination = {
+            .cursor = {},
+            .limit = 10,
+            .direction = dojo::Direction::Forward
+        },
+        .clause = {},
+        .no_hashed_keys = false,
+        .models = {},
+        .historical = false
+    };
+    
+    // Fetch entities
+    auto result = dojo::client_entities(client, query);
+    
+    std::cout << "Retrieved " << result.ok.items.size() << " entities" << std::endl;
+    
+    dojo::client_free(client);
+    return 0;
+}
 ```
 
 ### C# Example
