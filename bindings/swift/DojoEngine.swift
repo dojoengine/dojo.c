@@ -658,6 +658,8 @@ public protocol ToriiClientProtocol: AnyObject, Sendable {
     
     func publishMessageBatch(messages: [Message]) throws  -> [String]
     
+    func search(query: SearchQuery) throws  -> SearchResponse
+    
     func sql(query: String) throws  -> [SqlRow]
     
     func starknetEvents(query: EventQuery) throws  -> PageEvent
@@ -844,6 +846,15 @@ open func publishMessageBatch(messages: [Message])throws  -> [String]  {
     uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch(
             self.uniffiCloneHandle(),
         FfiConverterSequenceTypeMessage.lower(messages),$0
+    )
+})
+}
+    
+open func search(query: SearchQuery)throws  -> SearchResponse  {
+    return try  FfiConverterTypeSearchResponse_lift(try rustCallWithError(FfiConverterTypeDojoError_lift) {
+    uniffi_dojo_uniffi_fn_method_toriiclient_search(
+            self.uniffiCloneHandle(),
+        FfiConverterTypeSearchQuery_lower(query),$0
     )
 })
 }
@@ -3742,6 +3753,218 @@ public func FfiConverterTypeQuery_lower(_ value: Query) -> RustBuffer {
 }
 
 
+public struct SearchField: Equatable, Hashable {
+    public let key: String
+    public let value: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(key: String, value: String) {
+        self.key = key
+        self.value = value
+    }
+
+    
+}
+
+#if compiler(>=6)
+extension SearchField: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSearchField: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SearchField {
+        return
+            try SearchField(
+                key: FfiConverterString.read(from: &buf), 
+                value: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: SearchField, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.key, into: &buf)
+        FfiConverterString.write(value.value, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchField_lift(_ buf: RustBuffer) throws -> SearchField {
+    return try FfiConverterTypeSearchField.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchField_lower(_ value: SearchField) -> RustBuffer {
+    return FfiConverterTypeSearchField.lower(value)
+}
+
+
+public struct SearchMatch: Equatable, Hashable {
+    public let id: String
+    public let fields: [SearchField]
+    public let score: Double?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(id: String, fields: [SearchField], score: Double?) {
+        self.id = id
+        self.fields = fields
+        self.score = score
+    }
+
+    
+}
+
+#if compiler(>=6)
+extension SearchMatch: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSearchMatch: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SearchMatch {
+        return
+            try SearchMatch(
+                id: FfiConverterString.read(from: &buf), 
+                fields: FfiConverterSequenceTypeSearchField.read(from: &buf), 
+                score: FfiConverterOptionDouble.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: SearchMatch, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.id, into: &buf)
+        FfiConverterSequenceTypeSearchField.write(value.fields, into: &buf)
+        FfiConverterOptionDouble.write(value.score, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchMatch_lift(_ buf: RustBuffer) throws -> SearchMatch {
+    return try FfiConverterTypeSearchMatch.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchMatch_lower(_ value: SearchMatch) -> RustBuffer {
+    return FfiConverterTypeSearchMatch.lower(value)
+}
+
+
+public struct SearchQuery: Equatable, Hashable {
+    public let query: String
+    public let limit: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(query: String, limit: UInt32) {
+        self.query = query
+        self.limit = limit
+    }
+
+    
+}
+
+#if compiler(>=6)
+extension SearchQuery: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSearchQuery: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SearchQuery {
+        return
+            try SearchQuery(
+                query: FfiConverterString.read(from: &buf), 
+                limit: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: SearchQuery, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.query, into: &buf)
+        FfiConverterUInt32.write(value.limit, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchQuery_lift(_ buf: RustBuffer) throws -> SearchQuery {
+    return try FfiConverterTypeSearchQuery.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchQuery_lower(_ value: SearchQuery) -> RustBuffer {
+    return FfiConverterTypeSearchQuery.lower(value)
+}
+
+
+public struct SearchResponse: Equatable, Hashable {
+    public let total: UInt32
+    public let results: [TableSearchResults]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(total: UInt32, results: [TableSearchResults]) {
+        self.total = total
+        self.results = results
+    }
+
+    
+}
+
+#if compiler(>=6)
+extension SearchResponse: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSearchResponse: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SearchResponse {
+        return
+            try SearchResponse(
+                total: FfiConverterUInt32.read(from: &buf), 
+                results: FfiConverterSequenceTypeTableSearchResults.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: SearchResponse, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.total, into: &buf)
+        FfiConverterSequenceTypeTableSearchResults.write(value.results, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchResponse_lift(_ buf: RustBuffer) throws -> SearchResponse {
+    return try FfiConverterTypeSearchResponse.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchResponse_lower(_ value: SearchResponse) -> RustBuffer {
+    return FfiConverterTypeSearchResponse.lower(value)
+}
+
+
 public struct Signature: Equatable, Hashable {
     public let r: FieldElement
     public let s: FieldElement
@@ -3943,6 +4166,62 @@ public func FfiConverterTypeStruct_lift(_ buf: RustBuffer) throws -> Struct {
 #endif
 public func FfiConverterTypeStruct_lower(_ value: Struct) -> RustBuffer {
     return FfiConverterTypeStruct.lower(value)
+}
+
+
+public struct TableSearchResults: Equatable, Hashable {
+    public let table: String
+    public let count: UInt32
+    public let matches: [SearchMatch]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(table: String, count: UInt32, matches: [SearchMatch]) {
+        self.table = table
+        self.count = count
+        self.matches = matches
+    }
+
+    
+}
+
+#if compiler(>=6)
+extension TableSearchResults: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTableSearchResults: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TableSearchResults {
+        return
+            try TableSearchResults(
+                table: FfiConverterString.read(from: &buf), 
+                count: FfiConverterUInt32.read(from: &buf), 
+                matches: FfiConverterSequenceTypeSearchMatch.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TableSearchResults, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.table, into: &buf)
+        FfiConverterUInt32.write(value.count, into: &buf)
+        FfiConverterSequenceTypeSearchMatch.write(value.matches, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTableSearchResults_lift(_ buf: RustBuffer) throws -> TableSearchResults {
+    return try FfiConverterTypeTableSearchResults.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTableSearchResults_lower(_ value: TableSearchResults) -> RustBuffer {
+    return FfiConverterTypeTableSearchResults.lower(value)
 }
 
 
@@ -7044,6 +7323,30 @@ fileprivate struct FfiConverterOptionUInt64: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionDouble: FfiConverterRustBuffer {
+    typealias SwiftType = Double?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterDouble.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterDouble.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionBool: FfiConverterRustBuffer {
     typealias SwiftType = Bool?
 
@@ -7712,6 +8015,56 @@ fileprivate struct FfiConverterSequenceTypePlayerAchievementProgress: FfiConvert
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceTypeSearchField: FfiConverterRustBuffer {
+    typealias SwiftType = [SearchField]
+
+    public static func write(_ value: [SearchField], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeSearchField.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [SearchField] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [SearchField]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeSearchField.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeSearchMatch: FfiConverterRustBuffer {
+    typealias SwiftType = [SearchMatch]
+
+    public static func write(_ value: [SearchMatch], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeSearchMatch.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [SearchMatch] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [SearchMatch]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeSearchMatch.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceTypeSqlField: FfiConverterRustBuffer {
     typealias SwiftType = [SqlField]
 
@@ -7779,6 +8132,31 @@ fileprivate struct FfiConverterSequenceTypeStruct: FfiConverterRustBuffer {
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeStruct.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeTableSearchResults: FfiConverterRustBuffer {
+    typealias SwiftType = [TableSearchResults]
+
+    public static func write(_ value: [TableSearchResults], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeTableSearchResults.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [TableSearchResults] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [TableSearchResults]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeTableSearchResults.read(from: &buf))
         }
         return seq
     }
@@ -8293,6 +8671,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch() != 2146) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dojo_uniffi_checksum_method_toriiclient_search() != 20622) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_dojo_uniffi_checksum_method_toriiclient_sql() != 38286) {

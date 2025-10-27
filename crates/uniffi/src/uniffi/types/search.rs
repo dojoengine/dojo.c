@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -15,15 +13,26 @@ impl From<SearchQuery> for torii_proto::SearchQuery {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SearchField {
+    pub key: String,
+    pub value: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchMatch {
     pub id: String,
-    pub fields: HashMap<String, String>,
+    pub fields: Vec<SearchField>,
     pub score: Option<f64>,
 }
 
 impl From<torii_proto::SearchMatch> for SearchMatch {
     fn from(val: torii_proto::SearchMatch) -> Self {
-        Self { id: val.id, fields: val.fields, score: val.score }
+        let fields = val
+            .fields
+            .into_iter()
+            .map(|(key, value)| SearchField { key, value })
+            .collect();
+        Self { id: val.id, fields, score: val.score }
     }
 }
 

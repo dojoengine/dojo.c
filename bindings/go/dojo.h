@@ -638,6 +638,11 @@ RustBuffer uniffi_dojo_uniffi_fn_method_toriiclient_publish_message(void* ptr, R
 RustBuffer uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch(void* ptr, RustBuffer messages, RustCallStatus *out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_DOJO_UNIFFI_FN_METHOD_TORIICLIENT_SEARCH
+#define UNIFFI_FFIDEF_UNIFFI_DOJO_UNIFFI_FN_METHOD_TORIICLIENT_SEARCH
+RustBuffer uniffi_dojo_uniffi_fn_method_toriiclient_search(void* ptr, RustBuffer query, RustCallStatus *out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_DOJO_UNIFFI_FN_METHOD_TORIICLIENT_SQL
 #define UNIFFI_FFIDEF_UNIFFI_DOJO_UNIFFI_FN_METHOD_TORIICLIENT_SQL
 RustBuffer uniffi_dojo_uniffi_fn_method_toriiclient_sql(void* ptr, RustBuffer query, RustCallStatus *out_status
@@ -1071,6 +1076,12 @@ uint16_t uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_DOJO_UNIFFI_CHECKSUM_METHOD_TORIICLIENT_PUBLISH_MESSAGE_BATCH
 #define UNIFFI_FFIDEF_UNIFFI_DOJO_UNIFFI_CHECKSUM_METHOD_TORIICLIENT_PUBLISH_MESSAGE_BATCH
 uint16_t uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_DOJO_UNIFFI_CHECKSUM_METHOD_TORIICLIENT_SEARCH
+#define UNIFFI_FFIDEF_UNIFFI_DOJO_UNIFFI_CHECKSUM_METHOD_TORIICLIENT_SEARCH
+uint16_t uniffi_dojo_uniffi_checksum_method_toriiclient_search(void
     
 );
 #endif

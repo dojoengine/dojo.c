@@ -1,7 +1,5 @@
 package dojo
 
-// #cgo CFLAGS: -I${SRCDIR}
-// #cgo LDFLAGS: -L${SRCDIR}/../../target/release -ldojo_uniffi
 // #include <dojo.h>
 import "C"
 
@@ -451,6 +449,15 @@ func uniffiCheckChecksums() {
 		if checksum != 50961 {
 			// If this happens try cleaning and rebuilding your project
 			panic("dojo: uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch: UniFFI API checksum mismatch")
+		}
+	}
+	{
+		checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {
+			return C.uniffi_dojo_uniffi_checksum_method_toriiclient_search()
+		})
+		if checksum != 24059 {
+			// If this happens try cleaning and rebuilding your project
+			panic("dojo: uniffi_dojo_uniffi_checksum_method_toriiclient_search: UniFFI API checksum mismatch")
 		}
 	}
 	{
@@ -1052,6 +1059,7 @@ type ToriiClientInterface interface {
 	PlayerAchievements(query PlayerAchievementQuery) (PagePlayerAchievement, error)
 	PublishMessage(message Message) (string, error)
 	PublishMessageBatch(messages []Message) ([]string, error)
+	Search(query SearchQuery) (SearchResponse, error)
 	Sql(query string) ([]SqlRow, error)
 	StarknetEvents(query EventQuery) (PageEvent, error)
 	SubscribeEntityUpdates(clause *Clause, worldAddresses []FieldElement, callback EntityUpdateCallback) (uint64, error)
@@ -1272,6 +1280,23 @@ func (_self *ToriiClient) PublishMessageBatch(messages []Message) ([]string, err
 		return _uniffiDefaultValue, _uniffiErr
 	} else {
 		return FfiConverterSequenceStringINSTANCE.Lift(_uniffiRV), nil
+	}
+}
+
+func (_self *ToriiClient) Search(query SearchQuery) (SearchResponse, error) {
+	_pointer := _self.ffiObject.incrementPointer("*ToriiClient")
+	defer _self.ffiObject.decrementPointer()
+	_uniffiRV, _uniffiErr := rustCallWithError[DojoError](FfiConverterDojoError{}, func(_uniffiStatus *C.RustCallStatus) RustBufferI {
+		return GoRustBuffer{
+			inner: C.uniffi_dojo_uniffi_fn_method_toriiclient_search(
+				_pointer, FfiConverterSearchQueryINSTANCE.Lower(query), _uniffiStatus),
+		}
+	})
+	if _uniffiErr != nil {
+		var _uniffiDefaultValue SearchResponse
+		return _uniffiDefaultValue, _uniffiErr
+	} else {
+		return FfiConverterSearchResponseINSTANCE.Lift(_uniffiRV), nil
 	}
 }
 
@@ -3714,6 +3739,170 @@ func (_ FfiDestroyerQuery) Destroy(value Query) {
 	value.Destroy()
 }
 
+type SearchField struct {
+	Key   string
+	Value string
+}
+
+func (r *SearchField) Destroy() {
+	FfiDestroyerString{}.Destroy(r.Key)
+	FfiDestroyerString{}.Destroy(r.Value)
+}
+
+type FfiConverterSearchField struct{}
+
+var FfiConverterSearchFieldINSTANCE = FfiConverterSearchField{}
+
+func (c FfiConverterSearchField) Lift(rb RustBufferI) SearchField {
+	return LiftFromRustBuffer[SearchField](c, rb)
+}
+
+func (c FfiConverterSearchField) Read(reader io.Reader) SearchField {
+	return SearchField{
+		FfiConverterStringINSTANCE.Read(reader),
+		FfiConverterStringINSTANCE.Read(reader),
+	}
+}
+
+func (c FfiConverterSearchField) Lower(value SearchField) C.RustBuffer {
+	return LowerIntoRustBuffer[SearchField](c, value)
+}
+
+func (c FfiConverterSearchField) Write(writer io.Writer, value SearchField) {
+	FfiConverterStringINSTANCE.Write(writer, value.Key)
+	FfiConverterStringINSTANCE.Write(writer, value.Value)
+}
+
+type FfiDestroyerSearchField struct{}
+
+func (_ FfiDestroyerSearchField) Destroy(value SearchField) {
+	value.Destroy()
+}
+
+type SearchMatch struct {
+	Id     string
+	Fields []SearchField
+	Score  *float64
+}
+
+func (r *SearchMatch) Destroy() {
+	FfiDestroyerString{}.Destroy(r.Id)
+	FfiDestroyerSequenceSearchField{}.Destroy(r.Fields)
+	FfiDestroyerOptionalFloat64{}.Destroy(r.Score)
+}
+
+type FfiConverterSearchMatch struct{}
+
+var FfiConverterSearchMatchINSTANCE = FfiConverterSearchMatch{}
+
+func (c FfiConverterSearchMatch) Lift(rb RustBufferI) SearchMatch {
+	return LiftFromRustBuffer[SearchMatch](c, rb)
+}
+
+func (c FfiConverterSearchMatch) Read(reader io.Reader) SearchMatch {
+	return SearchMatch{
+		FfiConverterStringINSTANCE.Read(reader),
+		FfiConverterSequenceSearchFieldINSTANCE.Read(reader),
+		FfiConverterOptionalFloat64INSTANCE.Read(reader),
+	}
+}
+
+func (c FfiConverterSearchMatch) Lower(value SearchMatch) C.RustBuffer {
+	return LowerIntoRustBuffer[SearchMatch](c, value)
+}
+
+func (c FfiConverterSearchMatch) Write(writer io.Writer, value SearchMatch) {
+	FfiConverterStringINSTANCE.Write(writer, value.Id)
+	FfiConverterSequenceSearchFieldINSTANCE.Write(writer, value.Fields)
+	FfiConverterOptionalFloat64INSTANCE.Write(writer, value.Score)
+}
+
+type FfiDestroyerSearchMatch struct{}
+
+func (_ FfiDestroyerSearchMatch) Destroy(value SearchMatch) {
+	value.Destroy()
+}
+
+type SearchQuery struct {
+	Query string
+	Limit uint32
+}
+
+func (r *SearchQuery) Destroy() {
+	FfiDestroyerString{}.Destroy(r.Query)
+	FfiDestroyerUint32{}.Destroy(r.Limit)
+}
+
+type FfiConverterSearchQuery struct{}
+
+var FfiConverterSearchQueryINSTANCE = FfiConverterSearchQuery{}
+
+func (c FfiConverterSearchQuery) Lift(rb RustBufferI) SearchQuery {
+	return LiftFromRustBuffer[SearchQuery](c, rb)
+}
+
+func (c FfiConverterSearchQuery) Read(reader io.Reader) SearchQuery {
+	return SearchQuery{
+		FfiConverterStringINSTANCE.Read(reader),
+		FfiConverterUint32INSTANCE.Read(reader),
+	}
+}
+
+func (c FfiConverterSearchQuery) Lower(value SearchQuery) C.RustBuffer {
+	return LowerIntoRustBuffer[SearchQuery](c, value)
+}
+
+func (c FfiConverterSearchQuery) Write(writer io.Writer, value SearchQuery) {
+	FfiConverterStringINSTANCE.Write(writer, value.Query)
+	FfiConverterUint32INSTANCE.Write(writer, value.Limit)
+}
+
+type FfiDestroyerSearchQuery struct{}
+
+func (_ FfiDestroyerSearchQuery) Destroy(value SearchQuery) {
+	value.Destroy()
+}
+
+type SearchResponse struct {
+	Total   uint32
+	Results []TableSearchResults
+}
+
+func (r *SearchResponse) Destroy() {
+	FfiDestroyerUint32{}.Destroy(r.Total)
+	FfiDestroyerSequenceTableSearchResults{}.Destroy(r.Results)
+}
+
+type FfiConverterSearchResponse struct{}
+
+var FfiConverterSearchResponseINSTANCE = FfiConverterSearchResponse{}
+
+func (c FfiConverterSearchResponse) Lift(rb RustBufferI) SearchResponse {
+	return LiftFromRustBuffer[SearchResponse](c, rb)
+}
+
+func (c FfiConverterSearchResponse) Read(reader io.Reader) SearchResponse {
+	return SearchResponse{
+		FfiConverterUint32INSTANCE.Read(reader),
+		FfiConverterSequenceTableSearchResultsINSTANCE.Read(reader),
+	}
+}
+
+func (c FfiConverterSearchResponse) Lower(value SearchResponse) C.RustBuffer {
+	return LowerIntoRustBuffer[SearchResponse](c, value)
+}
+
+func (c FfiConverterSearchResponse) Write(writer io.Writer, value SearchResponse) {
+	FfiConverterUint32INSTANCE.Write(writer, value.Total)
+	FfiConverterSequenceTableSearchResultsINSTANCE.Write(writer, value.Results)
+}
+
+type FfiDestroyerSearchResponse struct{}
+
+func (_ FfiDestroyerSearchResponse) Destroy(value SearchResponse) {
+	value.Destroy()
+}
+
 type Signature struct {
 	R FieldElement
 	S FieldElement
@@ -3867,6 +4056,50 @@ func (c FfiConverterStruct) Write(writer io.Writer, value Struct) {
 type FfiDestroyerStruct struct{}
 
 func (_ FfiDestroyerStruct) Destroy(value Struct) {
+	value.Destroy()
+}
+
+type TableSearchResults struct {
+	Table   string
+	Count   uint32
+	Matches []SearchMatch
+}
+
+func (r *TableSearchResults) Destroy() {
+	FfiDestroyerString{}.Destroy(r.Table)
+	FfiDestroyerUint32{}.Destroy(r.Count)
+	FfiDestroyerSequenceSearchMatch{}.Destroy(r.Matches)
+}
+
+type FfiConverterTableSearchResults struct{}
+
+var FfiConverterTableSearchResultsINSTANCE = FfiConverterTableSearchResults{}
+
+func (c FfiConverterTableSearchResults) Lift(rb RustBufferI) TableSearchResults {
+	return LiftFromRustBuffer[TableSearchResults](c, rb)
+}
+
+func (c FfiConverterTableSearchResults) Read(reader io.Reader) TableSearchResults {
+	return TableSearchResults{
+		FfiConverterStringINSTANCE.Read(reader),
+		FfiConverterUint32INSTANCE.Read(reader),
+		FfiConverterSequenceSearchMatchINSTANCE.Read(reader),
+	}
+}
+
+func (c FfiConverterTableSearchResults) Lower(value TableSearchResults) C.RustBuffer {
+	return LowerIntoRustBuffer[TableSearchResults](c, value)
+}
+
+func (c FfiConverterTableSearchResults) Write(writer io.Writer, value TableSearchResults) {
+	FfiConverterStringINSTANCE.Write(writer, value.Table)
+	FfiConverterUint32INSTANCE.Write(writer, value.Count)
+	FfiConverterSequenceSearchMatchINSTANCE.Write(writer, value.Matches)
+}
+
+type FfiDestroyerTableSearchResults struct{}
+
+func (_ FfiDestroyerTableSearchResults) Destroy(value TableSearchResults) {
 	value.Destroy()
 }
 
@@ -6479,6 +6712,43 @@ func (_ FfiDestroyerOptionalUint64) Destroy(value *uint64) {
 	}
 }
 
+type FfiConverterOptionalFloat64 struct{}
+
+var FfiConverterOptionalFloat64INSTANCE = FfiConverterOptionalFloat64{}
+
+func (c FfiConverterOptionalFloat64) Lift(rb RustBufferI) *float64 {
+	return LiftFromRustBuffer[*float64](c, rb)
+}
+
+func (_ FfiConverterOptionalFloat64) Read(reader io.Reader) *float64 {
+	if readInt8(reader) == 0 {
+		return nil
+	}
+	temp := FfiConverterFloat64INSTANCE.Read(reader)
+	return &temp
+}
+
+func (c FfiConverterOptionalFloat64) Lower(value *float64) C.RustBuffer {
+	return LowerIntoRustBuffer[*float64](c, value)
+}
+
+func (_ FfiConverterOptionalFloat64) Write(writer io.Writer, value *float64) {
+	if value == nil {
+		writeInt8(writer, 0)
+	} else {
+		writeInt8(writer, 1)
+		FfiConverterFloat64INSTANCE.Write(writer, *value)
+	}
+}
+
+type FfiDestroyerOptionalFloat64 struct{}
+
+func (_ FfiDestroyerOptionalFloat64) Destroy(value *float64) {
+	if value != nil {
+		FfiDestroyerFloat64{}.Destroy(*value)
+	}
+}
+
 type FfiConverterOptionalBool struct{}
 
 var FfiConverterOptionalBoolINSTANCE = FfiConverterOptionalBool{}
@@ -7598,6 +7868,92 @@ func (FfiDestroyerSequencePlayerAchievementProgress) Destroy(sequence []PlayerAc
 	}
 }
 
+type FfiConverterSequenceSearchField struct{}
+
+var FfiConverterSequenceSearchFieldINSTANCE = FfiConverterSequenceSearchField{}
+
+func (c FfiConverterSequenceSearchField) Lift(rb RustBufferI) []SearchField {
+	return LiftFromRustBuffer[[]SearchField](c, rb)
+}
+
+func (c FfiConverterSequenceSearchField) Read(reader io.Reader) []SearchField {
+	length := readInt32(reader)
+	if length == 0 {
+		return nil
+	}
+	result := make([]SearchField, 0, length)
+	for i := int32(0); i < length; i++ {
+		result = append(result, FfiConverterSearchFieldINSTANCE.Read(reader))
+	}
+	return result
+}
+
+func (c FfiConverterSequenceSearchField) Lower(value []SearchField) C.RustBuffer {
+	return LowerIntoRustBuffer[[]SearchField](c, value)
+}
+
+func (c FfiConverterSequenceSearchField) Write(writer io.Writer, value []SearchField) {
+	if len(value) > math.MaxInt32 {
+		panic("[]SearchField is too large to fit into Int32")
+	}
+
+	writeInt32(writer, int32(len(value)))
+	for _, item := range value {
+		FfiConverterSearchFieldINSTANCE.Write(writer, item)
+	}
+}
+
+type FfiDestroyerSequenceSearchField struct{}
+
+func (FfiDestroyerSequenceSearchField) Destroy(sequence []SearchField) {
+	for _, value := range sequence {
+		FfiDestroyerSearchField{}.Destroy(value)
+	}
+}
+
+type FfiConverterSequenceSearchMatch struct{}
+
+var FfiConverterSequenceSearchMatchINSTANCE = FfiConverterSequenceSearchMatch{}
+
+func (c FfiConverterSequenceSearchMatch) Lift(rb RustBufferI) []SearchMatch {
+	return LiftFromRustBuffer[[]SearchMatch](c, rb)
+}
+
+func (c FfiConverterSequenceSearchMatch) Read(reader io.Reader) []SearchMatch {
+	length := readInt32(reader)
+	if length == 0 {
+		return nil
+	}
+	result := make([]SearchMatch, 0, length)
+	for i := int32(0); i < length; i++ {
+		result = append(result, FfiConverterSearchMatchINSTANCE.Read(reader))
+	}
+	return result
+}
+
+func (c FfiConverterSequenceSearchMatch) Lower(value []SearchMatch) C.RustBuffer {
+	return LowerIntoRustBuffer[[]SearchMatch](c, value)
+}
+
+func (c FfiConverterSequenceSearchMatch) Write(writer io.Writer, value []SearchMatch) {
+	if len(value) > math.MaxInt32 {
+		panic("[]SearchMatch is too large to fit into Int32")
+	}
+
+	writeInt32(writer, int32(len(value)))
+	for _, item := range value {
+		FfiConverterSearchMatchINSTANCE.Write(writer, item)
+	}
+}
+
+type FfiDestroyerSequenceSearchMatch struct{}
+
+func (FfiDestroyerSequenceSearchMatch) Destroy(sequence []SearchMatch) {
+	for _, value := range sequence {
+		FfiDestroyerSearchMatch{}.Destroy(value)
+	}
+}
+
 type FfiConverterSequenceSqlField struct{}
 
 var FfiConverterSequenceSqlFieldINSTANCE = FfiConverterSequenceSqlField{}
@@ -7724,6 +8080,49 @@ type FfiDestroyerSequenceStruct struct{}
 func (FfiDestroyerSequenceStruct) Destroy(sequence []Struct) {
 	for _, value := range sequence {
 		FfiDestroyerStruct{}.Destroy(value)
+	}
+}
+
+type FfiConverterSequenceTableSearchResults struct{}
+
+var FfiConverterSequenceTableSearchResultsINSTANCE = FfiConverterSequenceTableSearchResults{}
+
+func (c FfiConverterSequenceTableSearchResults) Lift(rb RustBufferI) []TableSearchResults {
+	return LiftFromRustBuffer[[]TableSearchResults](c, rb)
+}
+
+func (c FfiConverterSequenceTableSearchResults) Read(reader io.Reader) []TableSearchResults {
+	length := readInt32(reader)
+	if length == 0 {
+		return nil
+	}
+	result := make([]TableSearchResults, 0, length)
+	for i := int32(0); i < length; i++ {
+		result = append(result, FfiConverterTableSearchResultsINSTANCE.Read(reader))
+	}
+	return result
+}
+
+func (c FfiConverterSequenceTableSearchResults) Lower(value []TableSearchResults) C.RustBuffer {
+	return LowerIntoRustBuffer[[]TableSearchResults](c, value)
+}
+
+func (c FfiConverterSequenceTableSearchResults) Write(writer io.Writer, value []TableSearchResults) {
+	if len(value) > math.MaxInt32 {
+		panic("[]TableSearchResults is too large to fit into Int32")
+	}
+
+	writeInt32(writer, int32(len(value)))
+	for _, item := range value {
+		FfiConverterTableSearchResultsINSTANCE.Write(writer, item)
+	}
+}
+
+type FfiDestroyerSequenceTableSearchResults struct{}
+
+func (FfiDestroyerSequenceTableSearchResults) Destroy(sequence []TableSearchResults) {
+	for _, value := range sequence {
+		FfiDestroyerTableSearchResults{}.Destroy(value)
 	}
 }
 
