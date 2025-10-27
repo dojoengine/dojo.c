@@ -27,11 +27,8 @@ pub struct SearchMatch {
 
 impl From<torii_proto::SearchMatch> for SearchMatch {
     fn from(val: torii_proto::SearchMatch) -> Self {
-        let fields = val
-            .fields
-            .into_iter()
-            .map(|(key, value)| SearchField { key, value })
-            .collect();
+        let fields =
+            val.fields.into_iter().map(|(key, value)| SearchField { key, value }).collect();
         Self { id: val.id, fields, score: val.score }
     }
 }
