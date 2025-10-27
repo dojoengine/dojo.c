@@ -2187,11 +2187,8 @@ impl ToriiClient {
     /// ```
     #[wasm_bindgen(js_name = search)]
     pub async fn search(&self, query: SearchQuery) -> Result<SearchResponse, JsValue> {
-        let response = self
-            .inner
-            .search(query.into())
-            .await
-            .map_err(|err| JsValue::from(err.to_string()))?;
+        let response =
+            self.inner.search(query.into()).await.map_err(|err| JsValue::from(err.to_string()))?;
 
         Ok(response.into())
     }

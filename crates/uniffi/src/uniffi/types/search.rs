@@ -1,5 +1,6 @@
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchQuery {
@@ -54,4 +55,3 @@ impl From<torii_proto::SearchResponse> for SearchResponse {
         Self { total: val.total, results: val.results.into_iter().map(Into::into).collect() }
     }
 }
-
