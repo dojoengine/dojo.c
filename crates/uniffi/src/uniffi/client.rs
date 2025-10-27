@@ -318,6 +318,21 @@ impl ToriiClient {
         rows.into_iter().map(|r| r.try_into()).collect()
     }
 
+    /// Perform a full-text search across indexed entities using FTS5.
+    ///
+    /// # Arguments
+    /// * `query` - Search query containing the search text and limit
+    ///
+    /// # Returns
+    /// A `SearchResponse` containing results grouped by table with relevance scores
+    pub fn search(&self, query: SearchQuery) -> Result<SearchResponse, DojoError> {
+        let inner = self.inner.clone();
+        runtime()
+            .block_on(inner.search(query.into()))
+            .map(Into::into)
+            .map_err(|e| DojoError::QueryError { message: e.to_string() })
+    }
+
     /// Subscribe to entity updates
     pub fn subscribe_entity_updates(
         &self,

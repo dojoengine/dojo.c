@@ -796,6 +796,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Short
     external fun uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch(
     ): Short
+    external fun uniffi_dojo_uniffi_checksum_method_toriiclient_search(
+    ): Short
     external fun uniffi_dojo_uniffi_checksum_method_toriiclient_sql(
     ): Short
     external fun uniffi_dojo_uniffi_checksum_method_toriiclient_starknet_events(
@@ -898,6 +900,8 @@ external fun uniffi_dojo_uniffi_fn_method_toriiclient_player_achievements(`ptr`:
 external fun uniffi_dojo_uniffi_fn_method_toriiclient_publish_message(`ptr`: Long,`message`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 external fun uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch(`ptr`: Long,`messages`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_dojo_uniffi_fn_method_toriiclient_search(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 external fun uniffi_dojo_uniffi_fn_method_toriiclient_sql(`ptr`: Long,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
@@ -1085,6 +1089,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch() != 2146.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_search() != 20622.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_dojo_uniffi_checksum_method_toriiclient_sql() != 38286.toShort()) {
@@ -1758,6 +1765,8 @@ public interface ToriiClientInterface {
     
     fun `publishMessageBatch`(`messages`: List<Message>): List<kotlin.String>
     
+    fun `search`(`query`: SearchQuery): SearchResponse
+    
     fun `sql`(`query`: kotlin.String): List<SqlRow>
     
     fun `starknetEvents`(`query`: EventQuery): PageEvent
@@ -2038,6 +2047,20 @@ open class ToriiClient: Disposable, AutoCloseable, ToriiClientInterface
     UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch(
         it,
         FfiConverterSequenceTypeMessage.lower(`messages`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(DojoException::class)override fun `search`(`query`: SearchQuery): SearchResponse {
+            return FfiConverterTypeSearchResponse.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DojoException) { _status ->
+    UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_search(
+        it,
+        FfiConverterTypeSearchQuery.lower(`query`),_status)
 }
     }
     )
@@ -4371,6 +4394,155 @@ public object FfiConverterTypeQuery: FfiConverterRustBuffer<Query> {
 
 
 
+data class SearchField (
+    val `key`: kotlin.String
+    , 
+    val `value`: kotlin.String
+    
+){
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSearchField: FfiConverterRustBuffer<SearchField> {
+    override fun read(buf: ByteBuffer): SearchField {
+        return SearchField(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SearchField) = (
+            FfiConverterString.allocationSize(value.`key`) +
+            FfiConverterString.allocationSize(value.`value`)
+    )
+
+    override fun write(value: SearchField, buf: ByteBuffer) {
+            FfiConverterString.write(value.`key`, buf)
+            FfiConverterString.write(value.`value`, buf)
+    }
+}
+
+
+
+data class SearchMatch (
+    val `id`: kotlin.String
+    , 
+    val `fields`: List<SearchField>
+    , 
+    val `score`: kotlin.Double?
+    
+){
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSearchMatch: FfiConverterRustBuffer<SearchMatch> {
+    override fun read(buf: ByteBuffer): SearchMatch {
+        return SearchMatch(
+            FfiConverterString.read(buf),
+            FfiConverterSequenceTypeSearchField.read(buf),
+            FfiConverterOptionalDouble.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SearchMatch) = (
+            FfiConverterString.allocationSize(value.`id`) +
+            FfiConverterSequenceTypeSearchField.allocationSize(value.`fields`) +
+            FfiConverterOptionalDouble.allocationSize(value.`score`)
+    )
+
+    override fun write(value: SearchMatch, buf: ByteBuffer) {
+            FfiConverterString.write(value.`id`, buf)
+            FfiConverterSequenceTypeSearchField.write(value.`fields`, buf)
+            FfiConverterOptionalDouble.write(value.`score`, buf)
+    }
+}
+
+
+
+data class SearchQuery (
+    val `query`: kotlin.String
+    , 
+    val `limit`: kotlin.UInt
+    
+){
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSearchQuery: FfiConverterRustBuffer<SearchQuery> {
+    override fun read(buf: ByteBuffer): SearchQuery {
+        return SearchQuery(
+            FfiConverterString.read(buf),
+            FfiConverterUInt.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SearchQuery) = (
+            FfiConverterString.allocationSize(value.`query`) +
+            FfiConverterUInt.allocationSize(value.`limit`)
+    )
+
+    override fun write(value: SearchQuery, buf: ByteBuffer) {
+            FfiConverterString.write(value.`query`, buf)
+            FfiConverterUInt.write(value.`limit`, buf)
+    }
+}
+
+
+
+data class SearchResponse (
+    val `total`: kotlin.UInt
+    , 
+    val `results`: List<TableSearchResults>
+    
+){
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSearchResponse: FfiConverterRustBuffer<SearchResponse> {
+    override fun read(buf: ByteBuffer): SearchResponse {
+        return SearchResponse(
+            FfiConverterUInt.read(buf),
+            FfiConverterSequenceTypeTableSearchResults.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SearchResponse) = (
+            FfiConverterUInt.allocationSize(value.`total`) +
+            FfiConverterSequenceTypeTableSearchResults.allocationSize(value.`results`)
+    )
+
+    override fun write(value: SearchResponse, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`total`, buf)
+            FfiConverterSequenceTypeTableSearchResults.write(value.`results`, buf)
+    }
+}
+
+
+
 data class Signature (
     val `r`: FieldElement
     , 
@@ -4505,6 +4677,47 @@ public object FfiConverterTypeStruct: FfiConverterRustBuffer<Struct> {
     override fun write(value: Struct, buf: ByteBuffer) {
             FfiConverterString.write(value.`name`, buf)
             FfiConverterSequenceTypeMember.write(value.`children`, buf)
+    }
+}
+
+
+
+data class TableSearchResults (
+    val `table`: kotlin.String
+    , 
+    val `count`: kotlin.UInt
+    , 
+    val `matches`: List<SearchMatch>
+    
+){
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTableSearchResults: FfiConverterRustBuffer<TableSearchResults> {
+    override fun read(buf: ByteBuffer): TableSearchResults {
+        return TableSearchResults(
+            FfiConverterString.read(buf),
+            FfiConverterUInt.read(buf),
+            FfiConverterSequenceTypeSearchMatch.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TableSearchResults) = (
+            FfiConverterString.allocationSize(value.`table`) +
+            FfiConverterUInt.allocationSize(value.`count`) +
+            FfiConverterSequenceTypeSearchMatch.allocationSize(value.`matches`)
+    )
+
+    override fun write(value: TableSearchResults, buf: ByteBuffer) {
+            FfiConverterString.write(value.`table`, buf)
+            FfiConverterUInt.write(value.`count`, buf)
+            FfiConverterSequenceTypeSearchMatch.write(value.`matches`, buf)
     }
 }
 
@@ -7119,6 +7332,38 @@ public object FfiConverterOptionalULong: FfiConverterRustBuffer<kotlin.ULong?> {
 /**
  * @suppress
  */
+public object FfiConverterOptionalDouble: FfiConverterRustBuffer<kotlin.Double?> {
+    override fun read(buf: ByteBuffer): kotlin.Double? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterDouble.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.Double?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterDouble.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.Double?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterDouble.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterOptionalBoolean: FfiConverterRustBuffer<kotlin.Boolean?> {
     override fun read(buf: ByteBuffer): kotlin.Boolean? {
         if (buf.get().toInt() == 0) {
@@ -7903,6 +8148,62 @@ public object FfiConverterSequenceTypePlayerAchievementProgress: FfiConverterRus
 /**
  * @suppress
  */
+public object FfiConverterSequenceTypeSearchField: FfiConverterRustBuffer<List<SearchField>> {
+    override fun read(buf: ByteBuffer): List<SearchField> {
+        val len = buf.getInt()
+        return List<SearchField>(len) {
+            FfiConverterTypeSearchField.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<SearchField>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeSearchField.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<SearchField>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeSearchField.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeSearchMatch: FfiConverterRustBuffer<List<SearchMatch>> {
+    override fun read(buf: ByteBuffer): List<SearchMatch> {
+        val len = buf.getInt()
+        return List<SearchMatch>(len) {
+            FfiConverterTypeSearchMatch.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<SearchMatch>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeSearchMatch.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<SearchMatch>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeSearchMatch.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceTypeSqlField: FfiConverterRustBuffer<List<SqlField>> {
     override fun read(buf: ByteBuffer): List<SqlField> {
         val len = buf.getInt()
@@ -7977,6 +8278,34 @@ public object FfiConverterSequenceTypeStruct: FfiConverterRustBuffer<List<Struct
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeStruct.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeTableSearchResults: FfiConverterRustBuffer<List<TableSearchResults>> {
+    override fun read(buf: ByteBuffer): List<TableSearchResults> {
+        val len = buf.getInt()
+        return List<TableSearchResults>(len) {
+            FfiConverterTypeTableSearchResults.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<TableSearchResults>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeTableSearchResults.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<TableSearchResults>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeTableSearchResults.write(it, buf)
         }
     }
 }

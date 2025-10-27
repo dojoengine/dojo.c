@@ -891,6 +891,8 @@ static class _UniFFILib {
     
     
     
+    
+    
 
     static _UniFFILib() {
         _UniFFILib.uniffiCheckContractApiVersion();
@@ -961,6 +963,10 @@ static class _UniFFILib {
 
     [DllImport("dojo_uniffi", CallingConvention = CallingConvention.Cdecl)]
     public static extern RustBuffer uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch(IntPtr @ptr,RustBuffer @messages,ref UniffiRustCallStatus _uniffi_out_err
+    );
+
+    [DllImport("dojo_uniffi", CallingConvention = CallingConvention.Cdecl)]
+    public static extern RustBuffer uniffi_dojo_uniffi_fn_method_toriiclient_search(IntPtr @ptr,RustBuffer @query,ref UniffiRustCallStatus _uniffi_out_err
     );
 
     [DllImport("dojo_uniffi", CallingConvention = CallingConvention.Cdecl)]
@@ -1304,6 +1310,10 @@ static class _UniFFILib {
     );
 
     [DllImport("dojo_uniffi", CallingConvention = CallingConvention.Cdecl)]
+    public static extern ushort uniffi_dojo_uniffi_checksum_method_toriiclient_search(
+    );
+
+    [DllImport("dojo_uniffi", CallingConvention = CallingConvention.Cdecl)]
     public static extern ushort uniffi_dojo_uniffi_checksum_method_toriiclient_sql(
     );
 
@@ -1481,6 +1491,12 @@ static class _UniFFILib {
             var checksum = _UniFFILib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch();
             if (checksum != 50961) {
                 throw new UniffiContractChecksumException($"uniffi.dojo: uniffi bindings expected function `uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch` checksum `50961`, library returned `{checksum}`");
+            }
+        }
+        {
+            var checksum = _UniFFILib.uniffi_dojo_uniffi_checksum_method_toriiclient_search();
+            if (checksum != 24059) {
+                throw new UniffiContractChecksumException($"uniffi.dojo: uniffi bindings expected function `uniffi_dojo_uniffi_checksum_method_toriiclient_search` checksum `24059`, library returned `{checksum}`");
             }
         }
         {
@@ -1974,6 +1990,8 @@ internal interface IToriiClient {
     /// <exception cref="DojoException"></exception>
     string[] PublishMessageBatch(Message[] @messages);
     /// <exception cref="DojoException"></exception>
+    SearchResponse Search(SearchQuery @query);
+    /// <exception cref="DojoException"></exception>
     SqlRow[] Sql(string @query);
     /// <exception cref="DojoException"></exception>
     PageEvent StarknetEvents(EventQuery @query);
@@ -2190,6 +2208,15 @@ internal class ToriiClient : IToriiClient, IDisposable {
         return CallWithPointer(thisPtr => FfiConverterSequenceString.INSTANCE.Lift(
     _UniffiHelpers.RustCallWithError(FfiConverterTypeDojoError.INSTANCE, (ref UniffiRustCallStatus _status) =>
     _UniFFILib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch(thisPtr, FfiConverterSequenceTypeMessage.INSTANCE.Lower(@messages), ref _status)
+)));
+    }
+    
+    
+    /// <exception cref="DojoException"></exception>
+    public SearchResponse Search(SearchQuery @query) {
+        return CallWithPointer(thisPtr => FfiConverterTypeSearchResponse.INSTANCE.Lift(
+    _UniffiHelpers.RustCallWithError(FfiConverterTypeDojoError.INSTANCE, (ref UniffiRustCallStatus _status) =>
+    _UniFFILib.uniffi_dojo_uniffi_fn_method_toriiclient_search(thisPtr, FfiConverterTypeSearchQuery.INSTANCE.Lower(@query), ref _status)
 )));
     }
     
@@ -4080,6 +4107,130 @@ class FfiConverterTypeQuery: FfiConverterRustBuffer<Query> {
 
 
 
+internal record SearchField (
+    string @key, 
+    string @value
+) {
+}
+
+class FfiConverterTypeSearchField: FfiConverterRustBuffer<SearchField> {
+    public static FfiConverterTypeSearchField INSTANCE = new FfiConverterTypeSearchField();
+
+    public override SearchField Read(BigEndianStream stream) {
+        return new SearchField(
+            @key: FfiConverterString.INSTANCE.Read(stream),
+            @value: FfiConverterString.INSTANCE.Read(stream)
+        );
+    }
+
+    public override int AllocationSize(SearchField value) {
+        return 0
+            + FfiConverterString.INSTANCE.AllocationSize(value.@key)
+            + FfiConverterString.INSTANCE.AllocationSize(value.@value);
+    }
+
+    public override void Write(SearchField value, BigEndianStream stream) {
+            FfiConverterString.INSTANCE.Write(value.@key, stream);
+            FfiConverterString.INSTANCE.Write(value.@value, stream);
+    }
+}
+
+
+
+internal record SearchMatch (
+    string @id, 
+    SearchField[] @fields, 
+    double? @score
+) {
+}
+
+class FfiConverterTypeSearchMatch: FfiConverterRustBuffer<SearchMatch> {
+    public static FfiConverterTypeSearchMatch INSTANCE = new FfiConverterTypeSearchMatch();
+
+    public override SearchMatch Read(BigEndianStream stream) {
+        return new SearchMatch(
+            @id: FfiConverterString.INSTANCE.Read(stream),
+            @fields: FfiConverterSequenceTypeSearchField.INSTANCE.Read(stream),
+            @score: FfiConverterOptionalDouble.INSTANCE.Read(stream)
+        );
+    }
+
+    public override int AllocationSize(SearchMatch value) {
+        return 0
+            + FfiConverterString.INSTANCE.AllocationSize(value.@id)
+            + FfiConverterSequenceTypeSearchField.INSTANCE.AllocationSize(value.@fields)
+            + FfiConverterOptionalDouble.INSTANCE.AllocationSize(value.@score);
+    }
+
+    public override void Write(SearchMatch value, BigEndianStream stream) {
+            FfiConverterString.INSTANCE.Write(value.@id, stream);
+            FfiConverterSequenceTypeSearchField.INSTANCE.Write(value.@fields, stream);
+            FfiConverterOptionalDouble.INSTANCE.Write(value.@score, stream);
+    }
+}
+
+
+
+internal record SearchQuery (
+    string @query, 
+    uint @limit
+) {
+}
+
+class FfiConverterTypeSearchQuery: FfiConverterRustBuffer<SearchQuery> {
+    public static FfiConverterTypeSearchQuery INSTANCE = new FfiConverterTypeSearchQuery();
+
+    public override SearchQuery Read(BigEndianStream stream) {
+        return new SearchQuery(
+            @query: FfiConverterString.INSTANCE.Read(stream),
+            @limit: FfiConverterUInt32.INSTANCE.Read(stream)
+        );
+    }
+
+    public override int AllocationSize(SearchQuery value) {
+        return 0
+            + FfiConverterString.INSTANCE.AllocationSize(value.@query)
+            + FfiConverterUInt32.INSTANCE.AllocationSize(value.@limit);
+    }
+
+    public override void Write(SearchQuery value, BigEndianStream stream) {
+            FfiConverterString.INSTANCE.Write(value.@query, stream);
+            FfiConverterUInt32.INSTANCE.Write(value.@limit, stream);
+    }
+}
+
+
+
+internal record SearchResponse (
+    uint @total, 
+    TableSearchResults[] @results
+) {
+}
+
+class FfiConverterTypeSearchResponse: FfiConverterRustBuffer<SearchResponse> {
+    public static FfiConverterTypeSearchResponse INSTANCE = new FfiConverterTypeSearchResponse();
+
+    public override SearchResponse Read(BigEndianStream stream) {
+        return new SearchResponse(
+            @total: FfiConverterUInt32.INSTANCE.Read(stream),
+            @results: FfiConverterSequenceTypeTableSearchResults.INSTANCE.Read(stream)
+        );
+    }
+
+    public override int AllocationSize(SearchResponse value) {
+        return 0
+            + FfiConverterUInt32.INSTANCE.AllocationSize(value.@total)
+            + FfiConverterSequenceTypeTableSearchResults.INSTANCE.AllocationSize(value.@results);
+    }
+
+    public override void Write(SearchResponse value, BigEndianStream stream) {
+            FfiConverterUInt32.INSTANCE.Write(value.@total, stream);
+            FfiConverterSequenceTypeTableSearchResults.INSTANCE.Write(value.@results, stream);
+    }
+}
+
+
+
 internal record Signature (
     FieldElement @r, 
     FieldElement @s
@@ -4191,6 +4342,40 @@ class FfiConverterTypeStruct: FfiConverterRustBuffer<Struct> {
     public override void Write(Struct value, BigEndianStream stream) {
             FfiConverterString.INSTANCE.Write(value.@name, stream);
             FfiConverterSequenceTypeMember.INSTANCE.Write(value.@children, stream);
+    }
+}
+
+
+
+internal record TableSearchResults (
+    string @table, 
+    uint @count, 
+    SearchMatch[] @matches
+) {
+}
+
+class FfiConverterTypeTableSearchResults: FfiConverterRustBuffer<TableSearchResults> {
+    public static FfiConverterTypeTableSearchResults INSTANCE = new FfiConverterTypeTableSearchResults();
+
+    public override TableSearchResults Read(BigEndianStream stream) {
+        return new TableSearchResults(
+            @table: FfiConverterString.INSTANCE.Read(stream),
+            @count: FfiConverterUInt32.INSTANCE.Read(stream),
+            @matches: FfiConverterSequenceTypeSearchMatch.INSTANCE.Read(stream)
+        );
+    }
+
+    public override int AllocationSize(TableSearchResults value) {
+        return 0
+            + FfiConverterString.INSTANCE.AllocationSize(value.@table)
+            + FfiConverterUInt32.INSTANCE.AllocationSize(value.@count)
+            + FfiConverterSequenceTypeSearchMatch.INSTANCE.AllocationSize(value.@matches);
+    }
+
+    public override void Write(TableSearchResults value, BigEndianStream stream) {
+            FfiConverterString.INSTANCE.Write(value.@table, stream);
+            FfiConverterUInt32.INSTANCE.Write(value.@count, stream);
+            FfiConverterSequenceTypeSearchMatch.INSTANCE.Write(value.@matches, stream);
     }
 }
 
@@ -6467,6 +6652,37 @@ class FfiConverterOptionalUInt64: FfiConverterRustBuffer<ulong?> {
 
 
 
+class FfiConverterOptionalDouble: FfiConverterRustBuffer<double?> {
+    public static FfiConverterOptionalDouble INSTANCE = new FfiConverterOptionalDouble();
+
+    public override double? Read(BigEndianStream stream) {
+        if (stream.ReadByte() == 0) {
+            return null;
+        }
+        return FfiConverterDouble.INSTANCE.Read(stream);
+    }
+
+    public override int AllocationSize(double? value) {
+        if (value == null) {
+            return 1;
+        } else {
+            return 1 + FfiConverterDouble.INSTANCE.AllocationSize((double)value);
+        }
+    }
+
+    public override void Write(double? value, BigEndianStream stream) {
+        if (value == null) {
+            stream.WriteByte(0);
+        } else {
+            stream.WriteByte(1);
+            FfiConverterDouble.INSTANCE.Write((double)value, stream);
+        }
+    }
+}
+
+
+
+
 class FfiConverterOptionalBoolean: FfiConverterRustBuffer<bool?> {
     public static FfiConverterOptionalBoolean INSTANCE = new FfiConverterOptionalBoolean();
 
@@ -7604,6 +7820,98 @@ class FfiConverterSequenceTypePlayerAchievementProgress: FfiConverterRustBuffer<
 
 
 
+class FfiConverterSequenceTypeSearchField: FfiConverterRustBuffer<SearchField[]> {
+    public static FfiConverterSequenceTypeSearchField INSTANCE = new FfiConverterSequenceTypeSearchField();
+
+    public override SearchField[]  Read(BigEndianStream stream) {
+        var length = stream.ReadInt();
+        if (length == 0) {
+            return [];
+        }
+
+        var result = new SearchField[(length)];
+        var readFn = FfiConverterTypeSearchField.INSTANCE.Read;
+        for (int i = 0; i < length; i++) {
+            result[i] = readFn(stream);
+        }
+        return result;
+    }
+
+    public override int AllocationSize(SearchField[]  value) {
+        var sizeForLength = 4;
+
+        // details/1-empty-list-as-default-method-parameter.md
+        if (value == null) {
+            return sizeForLength;
+        }
+
+        var allocationSizeFn = FfiConverterTypeSearchField.INSTANCE.AllocationSize;
+        var sizeForItems = value.Sum(item => allocationSizeFn(item));
+        return sizeForLength + sizeForItems;
+    }
+
+    public override void Write(SearchField[] value, BigEndianStream stream) {
+        // details/1-empty-list-as-default-method-parameter.md
+        if (value == null) {
+            stream.WriteInt(0);
+            return;
+        }
+
+        stream.WriteInt(value.Length);
+        var writerFn = FfiConverterTypeSearchField.INSTANCE.Write;
+        value.ForEach(item => writerFn(item, stream));
+    }
+}
+
+
+
+
+class FfiConverterSequenceTypeSearchMatch: FfiConverterRustBuffer<SearchMatch[]> {
+    public static FfiConverterSequenceTypeSearchMatch INSTANCE = new FfiConverterSequenceTypeSearchMatch();
+
+    public override SearchMatch[]  Read(BigEndianStream stream) {
+        var length = stream.ReadInt();
+        if (length == 0) {
+            return [];
+        }
+
+        var result = new SearchMatch[(length)];
+        var readFn = FfiConverterTypeSearchMatch.INSTANCE.Read;
+        for (int i = 0; i < length; i++) {
+            result[i] = readFn(stream);
+        }
+        return result;
+    }
+
+    public override int AllocationSize(SearchMatch[]  value) {
+        var sizeForLength = 4;
+
+        // details/1-empty-list-as-default-method-parameter.md
+        if (value == null) {
+            return sizeForLength;
+        }
+
+        var allocationSizeFn = FfiConverterTypeSearchMatch.INSTANCE.AllocationSize;
+        var sizeForItems = value.Sum(item => allocationSizeFn(item));
+        return sizeForLength + sizeForItems;
+    }
+
+    public override void Write(SearchMatch[] value, BigEndianStream stream) {
+        // details/1-empty-list-as-default-method-parameter.md
+        if (value == null) {
+            stream.WriteInt(0);
+            return;
+        }
+
+        stream.WriteInt(value.Length);
+        var writerFn = FfiConverterTypeSearchMatch.INSTANCE.Write;
+        value.ForEach(item => writerFn(item, stream));
+    }
+}
+
+
+
+
 class FfiConverterSequenceTypeSqlField: FfiConverterRustBuffer<SqlField[]> {
     public static FfiConverterSequenceTypeSqlField INSTANCE = new FfiConverterSequenceTypeSqlField();
 
@@ -7735,6 +8043,52 @@ class FfiConverterSequenceTypeStruct: FfiConverterRustBuffer<Struct[]> {
 
         stream.WriteInt(value.Length);
         var writerFn = FfiConverterTypeStruct.INSTANCE.Write;
+        value.ForEach(item => writerFn(item, stream));
+    }
+}
+
+
+
+
+class FfiConverterSequenceTypeTableSearchResults: FfiConverterRustBuffer<TableSearchResults[]> {
+    public static FfiConverterSequenceTypeTableSearchResults INSTANCE = new FfiConverterSequenceTypeTableSearchResults();
+
+    public override TableSearchResults[]  Read(BigEndianStream stream) {
+        var length = stream.ReadInt();
+        if (length == 0) {
+            return [];
+        }
+
+        var result = new TableSearchResults[(length)];
+        var readFn = FfiConverterTypeTableSearchResults.INSTANCE.Read;
+        for (int i = 0; i < length; i++) {
+            result[i] = readFn(stream);
+        }
+        return result;
+    }
+
+    public override int AllocationSize(TableSearchResults[]  value) {
+        var sizeForLength = 4;
+
+        // details/1-empty-list-as-default-method-parameter.md
+        if (value == null) {
+            return sizeForLength;
+        }
+
+        var allocationSizeFn = FfiConverterTypeTableSearchResults.INSTANCE.AllocationSize;
+        var sizeForItems = value.Sum(item => allocationSizeFn(item));
+        return sizeForLength + sizeForItems;
+    }
+
+    public override void Write(TableSearchResults[] value, BigEndianStream stream) {
+        // details/1-empty-list-as-default-method-parameter.md
+        if (value == null) {
+            stream.WriteInt(0);
+            return;
+        }
+
+        stream.WriteInt(value.Length);
+        var writerFn = FfiConverterTypeTableSearchResults.INSTANCE.Write;
         value.ForEach(item => writerFn(item, stream));
     }
 }

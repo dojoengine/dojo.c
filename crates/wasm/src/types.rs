@@ -1455,6 +1455,65 @@ pub struct Achievements(pub Page<Achievement>);
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct PlayerAchievements(pub Page<PlayerAchievementEntry>);
 
+// Search types
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct SearchQuery {
+    pub query: String,
+    pub limit: u32,
+}
+
+impl From<SearchQuery> for torii_proto::SearchQuery {
+    fn from(value: SearchQuery) -> Self {
+        Self { query: value.query, limit: value.limit }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi, hashmap_as_object)]
+pub struct SearchMatch {
+    pub id: String,
+    pub fields: HashMap<String, String>,
+    pub score: Option<f64>,
+}
+
+impl From<torii_proto::SearchMatch> for SearchMatch {
+    fn from(value: torii_proto::SearchMatch) -> Self {
+        Self { id: value.id, fields: value.fields, score: value.score }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct TableSearchResults {
+    pub table: String,
+    pub count: u32,
+    pub matches: Vec<SearchMatch>,
+}
+
+impl From<torii_proto::TableSearchResults> for TableSearchResults {
+    fn from(value: torii_proto::TableSearchResults) -> Self {
+        Self {
+            table: value.table,
+            count: value.count,
+            matches: value.matches.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+#[derive(Tsify, Serialize, Deserialize, Debug)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct SearchResponse {
+    pub total: u32,
+    pub results: Vec<TableSearchResults>,
+}
+
+impl From<torii_proto::SearchResponse> for SearchResponse {
+    fn from(value: torii_proto::SearchResponse) -> Self {
+        Self { total: value.total, results: value.results.into_iter().map(Into::into).collect() }
+    }
+}
+
 // WASM-specific client types
 #[wasm_bindgen]
 pub struct ToriiClient {

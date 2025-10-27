@@ -535,6 +535,8 @@ def _uniffi_check_api_checksums(lib):
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch() != 10937:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_search() != 24151:
+        raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_sql() != 38880:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     if lib.uniffi_dojo_uniffi_checksum_method_toriiclient_starknet_events() != 49963:
@@ -1016,6 +1018,12 @@ _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch.argtyp
     ctypes.POINTER(_UniffiRustCallStatus),
 )
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch.restype = _UniffiRustBuffer
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_search.argtypes = (
+    ctypes.c_uint64,
+    _UniffiRustBuffer,
+    ctypes.POINTER(_UniffiRustCallStatus),
+)
+_UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_search.restype = _UniffiRustBuffer
 _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_sql.argtypes = (
     ctypes.c_uint64,
     _UniffiRustBuffer,
@@ -1145,6 +1153,9 @@ _UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message.restyp
 _UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch.argtypes = (
 )
 _UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_publish_message_batch.restype = ctypes.c_uint16
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_search.argtypes = (
+)
+_UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_search.restype = ctypes.c_uint16
 _UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_sql.argtypes = (
 )
 _UniffiLib.uniffi_dojo_uniffi_checksum_method_toriiclient_sql.restype = ctypes.c_uint16
@@ -6611,6 +6622,292 @@ class _UniffiFfiConverterTypeQuery(_UniffiConverterRustBuffer):
         _UniffiFfiConverterBoolean.write(value.historical, buf)
 
 @dataclass
+class SearchField:
+    def __init__(self, *, key:str, value:str):
+        self.key = key
+        self.value = value
+        
+        
+
+    
+    def __str__(self):
+        return "SearchField(key={}, value={})".format(self.key, self.value)
+    def __eq__(self, other):
+        if self.key != other.key:
+            return False
+        if self.value != other.value:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeSearchField(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return SearchField(
+            key=_UniffiFfiConverterString.read(buf),
+            value=_UniffiFfiConverterString.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterString.check_lower(value.key)
+        _UniffiFfiConverterString.check_lower(value.value)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterString.write(value.key, buf)
+        _UniffiFfiConverterString.write(value.value, buf)
+
+class _UniffiFfiConverterSequenceTypeSearchField(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeSearchField.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeSearchField.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeSearchField.read(buf) for i in range(count)
+        ]
+
+class _UniffiFfiConverterOptionalFloat64(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        if value is not None:
+            _UniffiFfiConverterFloat64.check_lower(value)
+
+    @classmethod
+    def write(cls, value, buf):
+        if value is None:
+            buf.write_u8(0)
+            return
+
+        buf.write_u8(1)
+        _UniffiFfiConverterFloat64.write(value, buf)
+
+    @classmethod
+    def read(cls, buf):
+        flag = buf.read_u8()
+        if flag == 0:
+            return None
+        elif flag == 1:
+            return _UniffiFfiConverterFloat64.read(buf)
+        else:
+            raise InternalError("Unexpected flag byte for optional type")
+
+@dataclass
+class SearchMatch:
+    def __init__(self, *, id:str, fields:typing.List[SearchField], score:typing.Optional[float]):
+        self.id = id
+        self.fields = fields
+        self.score = score
+        
+        
+
+    
+    def __str__(self):
+        return "SearchMatch(id={}, fields={}, score={})".format(self.id, self.fields, self.score)
+    def __eq__(self, other):
+        if self.id != other.id:
+            return False
+        if self.fields != other.fields:
+            return False
+        if self.score != other.score:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeSearchMatch(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return SearchMatch(
+            id=_UniffiFfiConverterString.read(buf),
+            fields=_UniffiFfiConverterSequenceTypeSearchField.read(buf),
+            score=_UniffiFfiConverterOptionalFloat64.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterString.check_lower(value.id)
+        _UniffiFfiConverterSequenceTypeSearchField.check_lower(value.fields)
+        _UniffiFfiConverterOptionalFloat64.check_lower(value.score)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterString.write(value.id, buf)
+        _UniffiFfiConverterSequenceTypeSearchField.write(value.fields, buf)
+        _UniffiFfiConverterOptionalFloat64.write(value.score, buf)
+
+@dataclass
+class SearchQuery:
+    def __init__(self, *, query:str, limit:int):
+        self.query = query
+        self.limit = limit
+        
+        
+
+    
+    def __str__(self):
+        return "SearchQuery(query={}, limit={})".format(self.query, self.limit)
+    def __eq__(self, other):
+        if self.query != other.query:
+            return False
+        if self.limit != other.limit:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeSearchQuery(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return SearchQuery(
+            query=_UniffiFfiConverterString.read(buf),
+            limit=_UniffiFfiConverterUInt32.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterString.check_lower(value.query)
+        _UniffiFfiConverterUInt32.check_lower(value.limit)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterString.write(value.query, buf)
+        _UniffiFfiConverterUInt32.write(value.limit, buf)
+
+class _UniffiFfiConverterSequenceTypeSearchMatch(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeSearchMatch.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeSearchMatch.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeSearchMatch.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class TableSearchResults:
+    def __init__(self, *, table:str, count:int, matches:typing.List[SearchMatch]):
+        self.table = table
+        self.count = count
+        self.matches = matches
+        
+        
+
+    
+    def __str__(self):
+        return "TableSearchResults(table={}, count={}, matches={})".format(self.table, self.count, self.matches)
+    def __eq__(self, other):
+        if self.table != other.table:
+            return False
+        if self.count != other.count:
+            return False
+        if self.matches != other.matches:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeTableSearchResults(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return TableSearchResults(
+            table=_UniffiFfiConverterString.read(buf),
+            count=_UniffiFfiConverterUInt32.read(buf),
+            matches=_UniffiFfiConverterSequenceTypeSearchMatch.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterString.check_lower(value.table)
+        _UniffiFfiConverterUInt32.check_lower(value.count)
+        _UniffiFfiConverterSequenceTypeSearchMatch.check_lower(value.matches)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterString.write(value.table, buf)
+        _UniffiFfiConverterUInt32.write(value.count, buf)
+        _UniffiFfiConverterSequenceTypeSearchMatch.write(value.matches, buf)
+
+class _UniffiFfiConverterSequenceTypeTableSearchResults(_UniffiConverterRustBuffer):
+    @classmethod
+    def check_lower(cls, value):
+        for item in value:
+            _UniffiFfiConverterTypeTableSearchResults.check_lower(item)
+
+    @classmethod
+    def write(cls, value, buf):
+        items = len(value)
+        buf.write_i32(items)
+        for item in value:
+            _UniffiFfiConverterTypeTableSearchResults.write(item, buf)
+
+    @classmethod
+    def read(cls, buf):
+        count = buf.read_i32()
+        if count < 0:
+            raise InternalError("Unexpected negative sequence length")
+
+        return [
+            _UniffiFfiConverterTypeTableSearchResults.read(buf) for i in range(count)
+        ]
+
+@dataclass
+class SearchResponse:
+    def __init__(self, *, total:int, results:typing.List[TableSearchResults]):
+        self.total = total
+        self.results = results
+        
+        
+
+    
+    def __str__(self):
+        return "SearchResponse(total={}, results={})".format(self.total, self.results)
+    def __eq__(self, other):
+        if self.total != other.total:
+            return False
+        if self.results != other.results:
+            return False
+        return True
+
+class _UniffiFfiConverterTypeSearchResponse(_UniffiConverterRustBuffer):
+    @staticmethod
+    def read(buf):
+        return SearchResponse(
+            total=_UniffiFfiConverterUInt32.read(buf),
+            results=_UniffiFfiConverterSequenceTypeTableSearchResults.read(buf),
+        )
+
+    @staticmethod
+    def check_lower(value):
+        _UniffiFfiConverterUInt32.check_lower(value.total)
+        _UniffiFfiConverterSequenceTypeTableSearchResults.check_lower(value.results)
+
+    @staticmethod
+    def write(value, buf):
+        _UniffiFfiConverterUInt32.write(value.total, buf)
+        _UniffiFfiConverterSequenceTypeTableSearchResults.write(value.results, buf)
+
+@dataclass
 class Signature:
     def __init__(self, *, r:FieldElement, s:FieldElement):
         self.r = r
@@ -8224,6 +8521,8 @@ class ToriiClientProtocol(typing.Protocol):
         raise NotImplementedError
     def publish_message_batch(self, messages: typing.List[Message]) -> typing.List[str]:
         raise NotImplementedError
+    def search(self, query: SearchQuery) -> SearchResponse:
+        raise NotImplementedError
     def sql(self, query: str) -> typing.List[SqlRow]:
         raise NotImplementedError
     def starknet_events(self, query: EventQuery) -> PageEvent:
@@ -8466,6 +8765,21 @@ class ToriiClient(ToriiClientProtocol):
         _uniffi_ffi_result = _uniffi_rust_call_with_error(
             _uniffi_error_converter,
             _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_publish_message_batch,
+            *_uniffi_lowered_args,
+        )
+        return _uniffi_lift_return(_uniffi_ffi_result)
+    def search(self, query: SearchQuery) -> SearchResponse:
+        
+        _UniffiFfiConverterTypeSearchQuery.check_lower(query)
+        _uniffi_lowered_args = (
+            self._uniffi_clone_handle(),
+            _UniffiFfiConverterTypeSearchQuery.lower(query),
+        )
+        _uniffi_lift_return = _UniffiFfiConverterTypeSearchResponse.lift
+        _uniffi_error_converter = _UniffiFfiConverterTypeDojoError
+        _uniffi_ffi_result = _uniffi_rust_call_with_error(
+            _uniffi_error_converter,
+            _UniffiLib.uniffi_dojo_uniffi_fn_method_toriiclient_search,
             *_uniffi_lowered_args,
         )
         return _uniffi_lift_return(_uniffi_ffi_result)
@@ -8790,6 +9104,11 @@ __all__ = [
     "PageTransaction",
     "PlayerAchievementQuery",
     "Query",
+    "SearchField",
+    "SearchMatch",
+    "SearchQuery",
+    "TableSearchResults",
+    "SearchResponse",
     "Signature",
     "SqlField",
     "SqlRow",

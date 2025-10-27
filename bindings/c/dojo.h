@@ -29,6 +29,7 @@ struct TokenBalance;
 struct TokenContract;
 struct Contract;
 struct TokenTransfer;
+struct TableSearchResults;
 struct Provider;
 struct Account;
 struct Ty;
@@ -36,8 +37,10 @@ struct Model;
 struct Member;
 struct AchievementTask;
 struct PlayerAchievementProgress;
+struct SearchMatch;
 struct EnumOption;
 struct TaskProgress;
+struct SearchMatchField;
 
 typedef enum BlockTag {
   Latest,
@@ -1052,6 +1055,38 @@ typedef struct TokenTransfer {
   struct COptionc_char event_id;
 } TokenTransfer;
 
+typedef struct CArrayTableSearchResults {
+  struct TableSearchResults *data;
+  uintptr_t data_len;
+} CArrayTableSearchResults;
+
+typedef struct SearchResponse {
+  uint32_t total;
+  struct CArrayTableSearchResults results;
+} SearchResponse;
+
+typedef enum ResultSearchResponse_Tag {
+  OkSearchResponse,
+  ErrSearchResponse,
+} ResultSearchResponse_Tag;
+
+typedef struct ResultSearchResponse {
+  ResultSearchResponse_Tag tag;
+  union {
+    struct {
+      struct SearchResponse ok;
+    };
+    struct {
+      struct Error err;
+    };
+  };
+} ResultSearchResponse;
+
+typedef struct SearchQuery {
+  const char *query;
+  uint32_t limit;
+} SearchQuery;
+
 typedef enum ResultCArrayFieldElement_Tag {
   OkCArrayFieldElement,
   ErrCArrayFieldElement,
@@ -1285,6 +1320,17 @@ typedef struct TokenContract {
   struct COptionU256 total_supply;
 } TokenContract;
 
+typedef struct CArraySearchMatch {
+  struct SearchMatch *data;
+  uintptr_t data_len;
+} CArraySearchMatch;
+
+typedef struct TableSearchResults {
+  const char *table;
+  uint32_t count;
+  struct CArraySearchMatch matches;
+} TableSearchResults;
+
 typedef struct CArrayEnumOption {
   struct EnumOption *data;
   uintptr_t data_len;
@@ -1384,6 +1430,31 @@ typedef struct PlayerAchievementProgress {
   double progress_percentage;
 } PlayerAchievementProgress;
 
+typedef struct CArraySearchMatchField {
+  struct SearchMatchField *data;
+  uintptr_t data_len;
+} CArraySearchMatchField;
+
+typedef enum COptionf64_Tag {
+  Somef64,
+  Nonef64,
+} COptionf64_Tag;
+
+typedef struct COptionf64 {
+  COptionf64_Tag tag;
+  union {
+    struct {
+      double some;
+    };
+  };
+} COptionf64;
+
+typedef struct SearchMatch {
+  const char *id;
+  struct CArraySearchMatchField fields;
+  struct COptionf64 score;
+} SearchMatch;
+
 typedef struct EnumOption {
   const char *name;
   struct Ty *ty;
@@ -1394,6 +1465,11 @@ typedef struct TaskProgress {
   uint32_t count;
   bool completed;
 } TaskProgress;
+
+typedef struct SearchMatchField {
+  const char *key;
+  const char *value;
+} SearchMatchField;
 
 #ifdef __cplusplus
 extern "C" {
@@ -2033,6 +2109,18 @@ struct Resultbool client_update_token_transfer_subscription(struct ToriiClient *
                                                             uintptr_t account_addresses_len,
                                                             const struct U256 *token_ids,
                                                             uintptr_t token_ids_len);
+
+/**
+ * Performs a full-text search across indexed entities using FTS5
+ *
+ * # Parameters
+ * * `client` - Pointer to ToriiClient instance
+ * * `query` - Search query containing the search text and limit
+ *
+ * # Returns
+ * Result containing SearchResponse with results grouped by table or error
+ */
+struct ResultSearchResponse client_search(struct ToriiClient *client, struct SearchQuery query);
 
 /**
  * Serializes a string into a byte array

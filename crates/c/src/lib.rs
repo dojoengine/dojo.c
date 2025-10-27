@@ -1893,6 +1893,28 @@ mod ffi {
         }
     }
 
+    /// Performs a full-text search across indexed entities using FTS5
+    ///
+    /// # Parameters
+    /// * `client` - Pointer to ToriiClient instance
+    /// * `query` - Search query containing the search text and limit
+    ///
+    /// # Returns
+    /// Result containing SearchResponse with results grouped by table or error
+    #[no_mangle]
+    pub unsafe extern "C" fn client_search(
+        client: *mut ToriiClient,
+        query: types::SearchQuery,
+    ) -> Result<types::SearchResponse> {
+        let query = query.into();
+        let search_future = unsafe { (*client).inner.search(query) };
+
+        match RUNTIME.block_on(search_future) {
+            Ok(response) => Result::Ok(response.into()),
+            Err(e) => Result::Err(e.into()),
+        }
+    }
+
     /// Serializes a string into a byte array
     ///
     /// # Parameters
