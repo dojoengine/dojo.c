@@ -637,6 +637,29 @@ dictionary PageEvent {
     string? next_cursor;
 };
 
+// Search types
+dictionary SearchQuery {
+    string query;
+    u32 limit;
+};
+
+dictionary SearchMatch {
+    string id;
+    record<string, string> fields;
+    f64? score;
+};
+
+dictionary TableSearchResults {
+    string table;
+    u32 count;
+    sequence<SearchMatch> matches;
+};
+
+dictionary SearchResponse {
+    u32 total;
+    sequence<TableSearchResults> results;
+};
+
 // Main Dojo client interface
 interface ToriiClient {
     // Constructor - create a new client with default config (4MB max message size)
@@ -718,6 +741,10 @@ interface ToriiClient {
     // Execute SQL query
     [Async, Throws=DojoError]
     sequence<SqlRow> sql(string query);
+    
+    // Perform full-text search across indexed entities
+    [Async, Throws=DojoError]
+    SearchResponse search(SearchQuery query);
     
     // Subscription methods
     // Subscribe to entity updates
