@@ -34,10 +34,10 @@ use types::{
     ActivityQuery, AggregationEntry, AggregationQuery, Aggregations, BlockId, Call, Calls, Clause,
     ClientConfig, Contract, ContractQuery, Contracts, ControllerQuery, Controllers, Entities,
     Entity, KeysClauses, Message, PlayerAchievementQuery, PlayerAchievements, Provider, Query,
-    Signature, Subscription, Token, TokenBalance, TokenBalanceQuery, TokenBalances,
-    TokenContractQuery, TokenContracts, TokenQuery, TokenTransfer, TokenTransferQuery,
-    TokenTransfers, Tokens, ToriiClient, Transaction, TransactionFilter, TransactionQuery,
-    Transactions, WasmU256,
+    SearchQuery, SearchResponse, Signature, Subscription, Token, TokenBalance, TokenBalanceQuery,
+    TokenBalances, TokenContractQuery, TokenContracts, TokenQuery, TokenTransfer,
+    TokenTransferQuery, TokenTransfers, Tokens, ToriiClient, Transaction, TransactionFilter,
+    TransactionQuery, Transactions, WasmU256,
 };
 
 const JSON_COMPAT_SERIALIZER: serde_wasm_bindgen::Serializer =
@@ -2161,6 +2161,39 @@ impl ToriiClient {
             )
             .await
             .map_err(|err| JsValue::from(format!("failed to update subscription: {err}")))
+    }
+
+    /// Perform a full-text search across indexed entities using FTS5.
+    ///
+    /// # Parameters
+    /// * `query` - Search query containing the search text and limit
+    ///
+    /// # Returns
+    /// A `SearchResponse` containing results grouped by table with relevance scores
+    ///
+    /// # Example
+    /// ```javascript
+    /// const results = await client.search({ query: "dragon", limit: 10 });
+    /// console.log(`Found ${results.total} total matches`);
+    /// for (const tableResults of results.results) {
+    ///     console.log(`Table ${tableResults.table}: ${tableResults.count} matches`);
+    ///     for (const match of tableResults.matches) {
+    ///         console.log(`  ID: ${match.id}, Score: ${match.score}`);
+    ///         for (const [field, value] of Object.entries(match.fields)) {
+    ///             console.log(`    ${field}: ${value}`);
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    #[wasm_bindgen(js_name = search)]
+    pub async fn search(&self, query: SearchQuery) -> Result<SearchResponse, JsValue> {
+        let response = self
+            .inner
+            .search(query.into())
+            .await
+            .map_err(|err| JsValue::from(err.to_string()))?;
+
+        Ok(response.into())
     }
 
     /// Publishes a message to the network

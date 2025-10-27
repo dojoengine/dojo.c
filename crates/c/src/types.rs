@@ -2094,6 +2094,85 @@ impl From<torii_proto::AchievementProgression> for AchievementProgression {
     }
 }
 
+// Search types
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct SearchQuery {
+    pub query: *const c_char,
+    pub limit: u32,
+}
+
+impl From<SearchQuery> for torii_proto::SearchQuery {
+    fn from(val: SearchQuery) -> Self {
+        let query = unsafe { CStr::from_ptr(val.query).to_string_lossy().to_string() };
+        Self { query, limit: val.limit }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct SearchMatchField {
+    pub key: *const c_char,
+    pub value: *const c_char,
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct SearchMatch {
+    pub id: *const c_char,
+    pub fields: CArray<SearchMatchField>,
+    pub score: COption<f64>,
+}
+
+impl From<torii_proto::SearchMatch> for SearchMatch {
+    fn from(val: torii_proto::SearchMatch) -> Self {
+        let fields: Vec<SearchMatchField> = val
+            .fields
+            .into_iter()
+            .map(|(k, v)| SearchMatchField {
+                key: CString::new(k).unwrap().into_raw(),
+                value: CString::new(v).unwrap().into_raw(),
+            })
+            .collect();
+        Self {
+            id: CString::new(val.id).unwrap().into_raw(),
+            fields: fields.into(),
+            score: val.score.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct TableSearchResults {
+    pub table: *const c_char,
+    pub count: u32,
+    pub matches: CArray<SearchMatch>,
+}
+
+impl From<torii_proto::TableSearchResults> for TableSearchResults {
+    fn from(val: torii_proto::TableSearchResults) -> Self {
+        Self {
+            table: CString::new(val.table).unwrap().into_raw(),
+            count: val.count,
+            matches: val.matches.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct SearchResponse {
+    pub total: u32,
+    pub results: CArray<TableSearchResults>,
+}
+
+impl From<torii_proto::SearchResponse> for SearchResponse {
+    fn from(val: torii_proto::SearchResponse) -> Self {
+        Self { total: val.total, results: val.results.into() }
+    }
+}
+
 // C-specific types for accounts and providers
 pub struct Provider(
     pub(crate)  std::sync::Arc<

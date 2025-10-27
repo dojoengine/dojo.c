@@ -11,6 +11,7 @@ pub mod entity;
 pub mod event;
 pub mod query;
 pub mod schema;
+pub mod search;
 pub mod token;
 pub mod transaction;
 
@@ -26,5 +27,6 @@ pub use entity::*;
 pub use event::*;
 pub use query::*;
 pub use schema::*;
+pub use search::*;
 pub use token::*;
 pub use transaction::*;

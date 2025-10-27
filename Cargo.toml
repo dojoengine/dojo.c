@@ -15,9 +15,9 @@ version = "1.8.3"
 # Dojo dependencies
 dojo-world = { git = "https://github.com/dojoengine/dojo", rev = "0afeb1bc" }
 dojo-types = { git = "https://github.com/dojoengine/dojo", rev = "0afeb1bc" }
-torii-proto = { git = "https://github.com/dojoengine/torii", rev = "8378c63" }
-torii-client = { git = "https://github.com/dojoengine/torii", rev = "8378c63" }
-torii-grpc-client = { git = "https://github.com/dojoengine/torii", rev = "8378c63" }
+torii-proto = { git = "https://github.com/dojoengine/torii", rev = "ffd7139" }
+torii-client = { git = "https://github.com/dojoengine/torii", rev = "ffd7139" }
+torii-grpc-client = { git = "https://github.com/dojoengine/torii", rev = "ffd7139" }
 
 # Starknet dependencies
 starknet = "0.17.0"

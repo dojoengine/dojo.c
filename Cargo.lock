@@ -4523,8 +4523,8 @@ dependencies = [
 
 [[package]]
 name = "torii-client"
-version = "1.8.2"
-source = "git+https://github.com/dojoengine/torii?rev=8378c63#8378c636a6904f17ce04a011d2aee1bc3d84751a"
+version = "1.8.7"
+source = "git+https://github.com/dojoengine/torii?rev=ffd7139#ffd71390e0a71c06892a9681d155515f36efa988"
 dependencies = [
  "async-trait",
  "crypto-bigint",
@@ -4547,8 +4547,8 @@ dependencies = [
 
 [[package]]
 name = "torii-grpc-client"
-version = "1.8.2"
-source = "git+https://github.com/dojoengine/torii?rev=8378c63#8378c636a6904f17ce04a011d2aee1bc3d84751a"
+version = "1.8.7"
+source = "git+https://github.com/dojoengine/torii?rev=ffd7139#ffd71390e0a71c06892a9681d155515f36efa988"
 dependencies = [
  "crypto-bigint",
  "dojo-types",
@@ -4573,8 +4573,8 @@ dependencies = [
 
 [[package]]
 name = "torii-proto"
-version = "1.8.2"
-source = "git+https://github.com/dojoengine/torii?rev=8378c63#8378c636a6904f17ce04a011d2aee1bc3d84751a"
+version = "1.8.7"
+source = "git+https://github.com/dojoengine/torii?rev=ffd7139#ffd71390e0a71c06892a9681d155515f36efa988"
 dependencies = [
  "chrono",
  "crypto-bigint",
