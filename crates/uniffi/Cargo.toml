@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [lib]
-crate-type = ["cdylib", "lib"]
+crate-type = ["staticlib", "cdylib", "lib"]
 
 [dependencies]
 dojo-core = { workspace = true }
