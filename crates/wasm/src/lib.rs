@@ -217,7 +217,7 @@ impl TypedData {
 
         self.0
             .message_hash(address)
-            .map(|felt| format!("{:#x}", felt))
+            .map(|felt| format!("{felt:#x}"))
             .map_err(|err| JsValue::from(err.to_string()))
     }
 }
@@ -260,7 +260,7 @@ impl Provider {
             .await;
 
         match result {
-            Ok(res) => Ok(res.iter().map(|f| JsValue::from(format!("{:#x}", f))).collect()),
+            Ok(res) => Ok(res.iter().map(|f| JsValue::from(format!("{f:#x}"))).collect()),
             Err(e) => Err(JsValue::from_str(&e.to_string())),
         }
     }
@@ -291,7 +291,7 @@ impl Provider {
     #[wasm_bindgen(js_name = chainId)]
     pub async fn chain_id(&self) -> Result<String, JsValue> {
         let chain_id = self.0.chain_id().await.map_err(|e| JsValue::from(e.to_string()))?;
-        Ok(format!("{:#x}", chain_id))
+        Ok(format!("{chain_id:#x}"))
     }
 }
 
@@ -355,7 +355,7 @@ impl Account {
     #[wasm_bindgen(js_name = address)]
     pub unsafe fn address(&self) -> Result<String, JsValue> {
         let address = self.0.address();
-        Ok(format!("{:#x}", address))
+        Ok(format!("{address:#x}"))
     }
 
     /// Returns the account's chain ID
@@ -365,7 +365,7 @@ impl Account {
     #[wasm_bindgen(js_name = chainId)]
     pub unsafe fn chain_id(&self) -> Result<String, JsValue> {
         let chain_id = self.0.chain_id();
-        Ok(format!("{:#x}", chain_id))
+        Ok(format!("{chain_id:#x}"))
     }
 
     /// Sets the block ID for subsequent operations
@@ -467,7 +467,7 @@ impl Account {
     #[wasm_bindgen(js_name = nonce)]
     pub async unsafe fn nonce(&self) -> Result<String, JsValue> {
         let nonce = self.0.get_nonce().await.map_err(|e| JsValue::from(e.to_string()))?;
-        Ok(format!("{:#x}", nonce))
+        Ok(format!("{nonce:#x}"))
     }
 
     /// Gets the provider of the account
@@ -520,7 +520,7 @@ pub fn get_contract_address(
         deployer_address,
     );
 
-    Ok(format!("{:#x}", address))
+    Ok(format!("{address:#x}"))
 }
 
 /// Computes a selector from a tag string
@@ -533,7 +533,7 @@ pub fn get_contract_address(
 #[wasm_bindgen(js_name = getSelectorFromTag)]
 pub fn get_selector_from_tag(tag: &str) -> String {
     let selector = compute_selector_from_tag(tag);
-    format!("{:#x}", selector)
+    format!("{selector:#x}")
 }
 
 #[wasm_bindgen]
@@ -561,7 +561,7 @@ impl ByteArray {
     #[wasm_bindgen(js_name = toRaw)]
     pub fn to_raw(&self) -> Result<Vec<String>, JsValue> {
         let felts = cairo_serde::ByteArray::cairo_serialize(&self.0);
-        Ok(felts.iter().map(|f| format!("{:#x}", f)).collect())
+        Ok(felts.iter().map(|f| format!("{f:#x}")).collect())
     }
 
     /// Deserializes a Cairo byte array into a string
@@ -626,7 +626,7 @@ pub fn poseidon_hash(inputs: Vec<String>) -> Result<String, JsValue> {
 pub fn get_selector_from_name(name: &str) -> Result<String, JsValue> {
     let selector = starknet::core::utils::get_selector_from_name(name)
         .map_err(|e| JsValue::from(e.to_string()))?;
-    Ok(format!("{:#x}", selector))
+    Ok(format!("{selector:#x}"))
 }
 
 /// Computes the Starknet variant of Keccak hash
@@ -641,7 +641,7 @@ pub fn starknet_keccak(inputs: js_sys::Uint8Array) -> Result<String, JsValue> {
     let inputs = inputs.to_vec();
 
     let hash = starknet::core::utils::starknet_keccak(&inputs);
-    Ok(format!("{:#x}", hash))
+    Ok(format!("{hash:#x}"))
 }
 
 /// Converts a short string to a Cairo field element
@@ -656,7 +656,7 @@ pub fn cairo_short_string_to_felt(str: &str) -> Result<String, JsValue> {
     let felt = starknet::core::utils::cairo_short_string_to_felt(str)
         .map_err(|e| JsValue::from(e.to_string()))?;
 
-    Ok(format!("{:#x}", felt))
+    Ok(format!("{felt:#x}"))
 }
 
 /// Parses a Cairo field element into a short string

@@ -99,12 +99,12 @@ impl From<torii_proto::Token> for Token {
     fn from(value: torii_proto::Token) -> Self {
         Self {
             contract_address: format!("{:#x}", value.contract_address),
-            token_id: value.token_id.map(|t| format!("0x{:x}", t)),
+            token_id: value.token_id.map(|t| format!("0x{t:x}")),
             name: value.name.clone(),
             symbol: value.symbol.clone(),
             decimals: value.decimals,
             metadata: value.metadata.clone(),
-            total_supply: value.total_supply.map(|t| format!("0x{:x}", t)),
+            total_supply: value.total_supply.map(|t| format!("0x{t:x}")),
         }
     }
 }
@@ -129,7 +129,7 @@ impl From<torii_proto::TokenContract> for TokenContract {
             symbol: value.symbol.clone(),
             decimals: value.decimals,
             token_metadata: value.token_metadata.clone(),
-            total_supply: value.total_supply.map(|t| format!("0x{:x}", t)),
+            total_supply: value.total_supply.map(|t| format!("0x{t:x}")),
             metadata: value.metadata.clone(),
         }
     }
@@ -150,7 +150,7 @@ impl From<torii_proto::TokenBalance> for TokenBalance {
             balance: format!("0x{:x}", value.balance),
             account_address: format!("{:#x}", value.account_address),
             contract_address: format!("{:#x}", value.contract_address),
-            token_id: value.token_id.map(|t| format!("0x{:x}", t)),
+            token_id: value.token_id.map(|t| format!("0x{t:x}")),
         }
     }
 }
@@ -176,7 +176,7 @@ impl From<torii_proto::TokenTransfer> for TokenTransfer {
             from_address: format!("{:#x}", value.from_address),
             to_address: format!("{:#x}", value.to_address),
             amount: format!("0x{:x}", value.amount),
-            token_id: value.token_id.map(|t| format!("0x{:x}", t)),
+            token_id: value.token_id.map(|t| format!("0x{t:x}")),
             executed_at: value.executed_at.timestamp() as u64,
             event_id: value.event_id,
         }
@@ -294,15 +294,15 @@ impl From<torii_proto::Transaction> for Transaction {
         Transaction {
             transaction_hash: format!("{:#x}", val.transaction_hash),
             sender_address: format!("{:#x}", val.sender_address),
-            calldata: val.calldata.into_iter().map(|c| format!("{:#x}", c)).collect(),
+            calldata: val.calldata.into_iter().map(|c| format!("{c:#x}")).collect(),
             max_fee: format!("{:#x}", val.max_fee),
-            signature: val.signature.into_iter().map(|s| format!("{:#x}", s)).collect(),
+            signature: val.signature.into_iter().map(|s| format!("{s:#x}")).collect(),
             nonce: format!("{:#x}", val.nonce),
             block_number: val.block_number,
             transaction_type: val.transaction_type,
             block_timestamp: val.block_timestamp.timestamp() as u64,
             calls: val.calls.into_iter().map(|c| c.into()).collect(),
-            unique_models: val.unique_models.into_iter().map(|m| format!("{:#x}", m)).collect(),
+            unique_models: val.unique_models.into_iter().map(|m| format!("{m:#x}")).collect(),
         }
     }
 }
@@ -338,7 +338,7 @@ impl From<torii_proto::TransactionCall> for TransactionCall {
         TransactionCall {
             contract_address: format!("{:#x}", val.contract_address),
             entrypoint: val.entrypoint,
-            calldata: val.calldata.into_iter().map(|c| format!("{:#x}", c)).collect(),
+            calldata: val.calldata.into_iter().map(|c| format!("{c:#x}")).collect(),
             call_type: val.call_type.into(),
             caller_address: format!("{:#x}", val.caller_address),
         }
@@ -520,7 +520,7 @@ impl From<torii_proto::Contract> for Contract {
             head: value.head,
             tps: value.tps,
             last_block_timestamp: value.last_block_timestamp,
-            last_pending_block_tx: value.last_pending_block_tx.map(|tx| format!("{:#x}", tx)),
+            last_pending_block_tx: value.last_pending_block_tx.map(|tx| format!("{tx:#x}")),
             updated_at: value.updated_at.timestamp() as u64,
             created_at: value.created_at.timestamp() as u64,
         }

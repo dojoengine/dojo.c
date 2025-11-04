@@ -2096,9 +2096,7 @@ mod ffi {
             Ok(typed_data) => typed_data,
             Err(err) => {
                 return Result::Err(Error {
-                    message: CString::new(format!("Invalid typed data: {}", err))
-                        .unwrap()
-                        .into_raw(),
+                    message: CString::new(format!("Invalid typed data: {err}")).unwrap().into_raw(),
                 });
             }
         };

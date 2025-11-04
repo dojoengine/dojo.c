@@ -113,7 +113,7 @@ pub fn pad_to_hex(input: &str) -> Result<String, String> {
         // Parse hexadecimal with prefix
         match BigUint::from_str_radix(&input[2..], 16) {
             Ok(v) => v,
-            Err(_) => return Err(format!("Invalid hexadecimal input: {}", input)),
+            Err(_) => return Err(format!("Invalid hexadecimal input: {input}")),
         }
     } else if input.chars().all(|c| c.is_ascii_hexdigit())
         && input.chars().any(|c| !c.is_ascii_digit())
@@ -121,13 +121,13 @@ pub fn pad_to_hex(input: &str) -> Result<String, String> {
         // Input contains non-decimal digits (a-f, A-F) without 0x prefix, assume hex
         match BigUint::from_str_radix(input, 16) {
             Ok(v) => v,
-            Err(_) => return Err(format!("Invalid hexadecimal input: {}", input)),
+            Err(_) => return Err(format!("Invalid hexadecimal input: {input}")),
         }
     } else {
         // Assume decimal otherwise
         match input.parse::<BigUint>() {
             Ok(v) => v,
-            Err(_) => return Err(format!("Invalid numeric input: {}", input)),
+            Err(_) => return Err(format!("Invalid numeric input: {input}")),
         }
     };
 
@@ -135,7 +135,7 @@ pub fn pad_to_hex(input: &str) -> Result<String, String> {
     let hex_string = big_value.to_str_radix(16);
 
     // Pad to 64 characters
-    let padded_hex = format!("{:0>64}", hex_string);
+    let padded_hex = format!("{hex_string:0>64}");
 
     Ok(padded_hex)
 }
