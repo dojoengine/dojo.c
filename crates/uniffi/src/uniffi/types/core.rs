@@ -16,7 +16,7 @@ uniffi::custom_newtype!(U256, String);
 
 // Helper functions to convert between internal types and UniFFI types
 pub fn felt_to_field_element(felt: starknet::core::types::Felt) -> FieldElement {
-    FieldElement(format!("0x{:064x}", felt))
+    FieldElement(format!("0x{felt:064x}"))
 }
 
 pub fn field_element_to_felt(fe: &FieldElement) -> Result<starknet::core::types::Felt, DojoError> {
@@ -24,7 +24,7 @@ pub fn field_element_to_felt(fe: &FieldElement) -> Result<starknet::core::types:
 }
 
 pub fn u256_to_uniffi(u: crypto_bigint::U256) -> U256 {
-    U256(format!("0x{:064x}", u))
+    U256(format!("0x{u:064x}"))
 }
 
 pub fn uniffi_to_u256(u: &U256) -> Result<crypto_bigint::U256, DojoError> {
