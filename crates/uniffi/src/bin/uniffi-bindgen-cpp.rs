@@ -61,7 +61,7 @@ fn main() {
         Utf8PathBuf::from(positional_args.get(1).map(|s| s.as_str()).unwrap_or(default_out));
 
     if !udl_path.exists() {
-        eprintln!("Error: UDL file not found: {}", udl_path);
+        eprintln!("Error: UDL file not found: {udl_path}");
         eprintln!();
         eprintln!("Hint: Run with --help to see usage information");
         process::exit(1);
@@ -69,13 +69,13 @@ fn main() {
 
     // Create output directory if it doesn't exist
     if let Err(e) = std::fs::create_dir_all(&out_dir) {
-        eprintln!("Error: Failed to create output directory {}: {}", out_dir, e);
+        eprintln!("Error: Failed to create output directory {out_dir}: {e}");
         process::exit(1);
     }
 
     println!("Generating C++ bindings for Dojo...");
-    println!("UDL file: {}", udl_path);
-    println!("Output:   {}", out_dir);
+    println!("UDL file: {udl_path}");
+    println!("Output:   {out_dir}");
 
     // Build command for uniffi-bindgen-cpp
     let mut cmd = process::Command::new("uniffi-bindgen-cpp");
@@ -104,7 +104,7 @@ fn main() {
         Ok(output) => {
             if output.status.success() {
                 println!("✓ C++ bindings generated successfully!");
-                println!("\nGenerated files in {}:", out_dir);
+                println!("\nGenerated files in {out_dir}:");
                 println!("  - dojo.hpp (C++ header)");
                 println!("  - dojo.cpp (C++ implementation)");
                 println!("  - dojo_scaffolding.hpp (FFI scaffolding)");
@@ -129,7 +129,7 @@ fn main() {
             }
         }
         Err(e) => {
-            eprintln!("Error executing uniffi-bindgen-cpp: {}", e);
+            eprintln!("Error executing uniffi-bindgen-cpp: {e}");
             eprintln!("\nMake sure uniffi-bindgen-cpp is installed and in your PATH");
             process::exit(1);
         }

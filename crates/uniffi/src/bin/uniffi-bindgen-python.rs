@@ -40,7 +40,7 @@ fn main() {
     };
 
     // Default paths (must match the library output name)
-    let default_lib = format!("target/release/libdojo_uniffi.{}", lib_ext);
+    let default_lib = format!("target/release/libdojo_uniffi.{lib_ext}");
     let default_out = "bindings/python";
 
     // Parse arguments
@@ -53,7 +53,7 @@ fn main() {
         Utf8PathBuf::from(positional_args.get(1).map(|s| s.as_str()).unwrap_or(default_out));
 
     if !library_path.exists() {
-        eprintln!("Error: Library file not found: {}", library_path);
+        eprintln!("Error: Library file not found: {library_path}");
         eprintln!("Build the library first with: cargo build --release -p dojo-uniffi");
         eprintln!();
         eprintln!("Hint: Run with --help to see usage information");
@@ -62,25 +62,25 @@ fn main() {
 
     // Create output directory if it doesn't exist
     if let Err(e) = std::fs::create_dir_all(&out_dir) {
-        eprintln!("Error: Failed to create output directory {}: {}", out_dir, e);
+        eprintln!("Error: Failed to create output directory {out_dir}: {e}");
         process::exit(1);
     }
 
     println!("Generating Python bindings...");
-    println!("Library: {}", library_path);
-    println!("Output:  {}", out_dir);
+    println!("Library: {library_path}");
+    println!("Output:  {out_dir}");
 
     // Find uniffi.toml config file
     let config_file = Utf8PathBuf::from("crates/uniffi/uniffi.toml");
     if !config_file.exists() {
-        eprintln!("Warning: uniffi.toml not found at {}", config_file);
+        eprintln!("Warning: uniffi.toml not found at {config_file}");
     }
 
     // Use cargo metadata to get crate configuration
     let metadata = match cargo_metadata::MetadataCommand::new().exec() {
         Ok(m) => m,
         Err(e) => {
-            eprintln!("Error getting cargo metadata: {}", e);
+            eprintln!("Error getting cargo metadata: {e}");
             eprintln!("Make sure you're running this from a cargo project directory");
             process::exit(1);
         }
@@ -91,15 +91,15 @@ fn main() {
     match Root::from_library(config_supplier, &library_path, Some(config_file.to_string())) {
         Ok(root) => match run_pipeline(root, &out_dir) {
             Ok(_) => {
-                println!("✓ Python bindings generated successfully in {}", out_dir);
+                println!("✓ Python bindings generated successfully in {out_dir}");
             }
             Err(e) => {
-                eprintln!("Error generating Python bindings: {}", e);
+                eprintln!("Error generating Python bindings: {e}");
                 process::exit(1);
             }
         },
         Err(e) => {
-            eprintln!("Error loading library metadata: {}", e);
+            eprintln!("Error loading library metadata: {e}");
             process::exit(1);
         }
     }

@@ -38,7 +38,7 @@ fn main() {
     };
 
     // Default paths (must match the library output name)
-    let default_lib = format!("target/release/libdojo_uniffi.{}", lib_ext);
+    let default_lib = format!("target/release/libdojo_uniffi.{lib_ext}");
     let default_out = "bindings/kotlin";
 
     // Parse arguments
@@ -51,7 +51,7 @@ fn main() {
         Utf8PathBuf::from(positional_args.get(1).map(|s| s.as_str()).unwrap_or(default_out));
 
     if !library_path.exists() {
-        eprintln!("Error: Library file not found: {}", library_path);
+        eprintln!("Error: Library file not found: {library_path}");
         eprintln!("Build the library first with: cargo build --release -p dojo-uniffi");
         eprintln!();
         eprintln!("Hint: Run with --help to see usage information");
@@ -60,20 +60,20 @@ fn main() {
 
     // Create output directory if it doesn't exist
     if let Err(e) = fs::create_dir_all(&out_dir) {
-        eprintln!("Error: Failed to create output directory {}: {}", out_dir, e);
+        eprintln!("Error: Failed to create output directory {out_dir}: {e}");
         process::exit(1);
     }
 
     println!("Generating Kotlin bindings...");
-    println!("Library: {}", library_path);
-    println!("Output:  {}", out_dir);
+    println!("Library: {library_path}");
+    println!("Output:  {out_dir}");
 
     match generate_kotlin_bindings(&library_path, &out_dir) {
         Ok(_) => {
             println!("✓ Kotlin bindings generated successfully!");
         }
         Err(e) => {
-            eprintln!("Error generating bindings: {}", e);
+            eprintln!("Error generating bindings: {e}");
             process::exit(1);
         }
     }
@@ -89,7 +89,7 @@ fn generate_kotlin_bindings(
     // Get cargo metadata for config
     let metadata = cargo_metadata::MetadataCommand::new()
         .exec()
-        .map_err(|e| anyhow::anyhow!("Failed to get cargo metadata: {}", e))?;
+        .map_err(|e| anyhow::anyhow!("Failed to get cargo metadata: {e}"))?;
 
     let config_supplier = CrateConfigSupplier::from(metadata);
 
