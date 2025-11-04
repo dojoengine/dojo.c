@@ -64,7 +64,7 @@ fn main() {
         Utf8PathBuf::from(positional_args.get(1).map(|s| s.as_str()).unwrap_or(default_out));
 
     if !udl_path.exists() {
-        eprintln!("Error: UDL file not found: {}", udl_path);
+        eprintln!("Error: UDL file not found: {udl_path}");
         eprintln!();
         eprintln!("Hint: Run with --help to see usage information");
         process::exit(1);
@@ -72,13 +72,13 @@ fn main() {
 
     // Create output directory if it doesn't exist
     if let Err(e) = std::fs::create_dir_all(&out_dir) {
-        eprintln!("Error: Failed to create output directory {}: {}", out_dir, e);
+        eprintln!("Error: Failed to create output directory {out_dir}: {e}");
         process::exit(1);
     }
 
     println!("Generating Go bindings...");
-    println!("UDL file: {}", udl_path);
-    println!("Output:   {}", out_dir);
+    println!("UDL file: {udl_path}");
+    println!("Output:   {out_dir}");
 
     // Build command for uniffi-bindgen-go
     let mut cmd = process::Command::new("uniffi-bindgen-go");
@@ -122,17 +122,17 @@ fn main() {
                 let dojo_dir = udl_dir.join("dojo"); // namespace is "dojo"
 
                 if dojo_dir.exists() {
-                    println!("\nCopying generated files to {}...", out_dir);
+                    println!("\nCopying generated files to {out_dir}...");
                     if let Err(e) = copy_dir_recursive(&dojo_dir, &out_dir) {
-                        eprintln!("Warning: Failed to copy files: {}", e);
-                        eprintln!("You may need to manually copy files from {}", dojo_dir);
+                        eprintln!("Warning: Failed to copy files: {e}");
+                        eprintln!("You may need to manually copy files from {dojo_dir}");
                     } else {
-                        println!("✓ Files copied to {}", out_dir);
+                        println!("✓ Files copied to {out_dir}");
                         // Clean up the generated directory in src
                         let _ = std::fs::remove_dir_all(&dojo_dir);
                     }
                 } else {
-                    eprintln!("Warning: Generated Go files not found at {}", dojo_dir);
+                    eprintln!("Warning: Generated Go files not found at {dojo_dir}");
                     eprintln!("They may be in a different location.");
                 }
             } else {
@@ -144,7 +144,7 @@ fn main() {
             }
         }
         Err(e) => {
-            eprintln!("Error executing uniffi-bindgen-go: {}", e);
+            eprintln!("Error executing uniffi-bindgen-go: {e}");
             process::exit(1);
         }
     }

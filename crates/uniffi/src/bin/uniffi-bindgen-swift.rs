@@ -52,7 +52,7 @@ fn main() {
     };
 
     // Default paths (must match the library output name)
-    let default_lib = format!("target/release/libdojo_uniffi.{}", lib_ext);
+    let default_lib = format!("target/release/libdojo_uniffi.{lib_ext}");
     let default_out = "bindings/swift";
 
     // Parse arguments
@@ -65,7 +65,7 @@ fn main() {
         Utf8PathBuf::from(positional_args.get(1).map(|s| s.as_str()).unwrap_or(default_out));
 
     if !library_path.exists() {
-        eprintln!("Error: Library file not found: {}", library_path);
+        eprintln!("Error: Library file not found: {library_path}");
         eprintln!("Build the library first with: cargo build --release -p dojo-uniffi");
         eprintln!();
         eprintln!("Hint: Run with --help to see usage information");
@@ -74,7 +74,7 @@ fn main() {
 
     // Create output directory if it doesn't exist
     if let Err(e) = std::fs::create_dir_all(&out_dir) {
-        eprintln!("Error: Failed to create output directory {}: {}", out_dir, e);
+        eprintln!("Error: Failed to create output directory {out_dir}: {e}");
         process::exit(1);
     }
 
@@ -85,14 +85,12 @@ fn main() {
     let has_xcframework = args.contains(&"--xcframework".to_string());
 
     // Default to generating Swift sources and headers if no specific flags are provided
-    let generate_swift_sources =
-        has_swift_sources || (!has_headers && !has_modulemap) || (has_headers);
-    let generate_headers =
-        has_headers || (!has_swift_sources && !has_modulemap) || has_swift_sources;
+    let generate_swift_sources = has_swift_sources || has_headers || !has_modulemap;
+    let generate_headers = has_headers || has_swift_sources || !has_modulemap;
 
     println!("Generating Swift bindings...");
-    println!("Library: {}", library_path);
-    println!("Output:  {}", out_dir);
+    println!("Library: {library_path}");
+    println!("Output:  {out_dir}");
 
     let options = SwiftBindingsOptions {
         generate_swift_sources,
@@ -112,7 +110,7 @@ fn main() {
             println!("✓ Swift bindings generated successfully!");
         }
         Err(e) => {
-            eprintln!("Error generating bindings: {}", e);
+            eprintln!("Error generating bindings: {e}");
             process::exit(1);
         }
     }

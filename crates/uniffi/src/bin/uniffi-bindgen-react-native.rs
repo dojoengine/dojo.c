@@ -59,7 +59,7 @@ fn main() {
     };
 
     // Default paths
-    let default_lib = format!("target/release/libdojo_uniffi.{}", lib_ext);
+    let default_lib = format!("target/release/libdojo_uniffi.{lib_ext}");
     let default_out = "bindings/react-native";
 
     // Parse arguments
@@ -72,7 +72,7 @@ fn main() {
         Utf8PathBuf::from(positional_args.get(1).map(|s| s.as_str()).unwrap_or(default_out));
 
     if !library_path.exists() {
-        eprintln!("Error: Library file not found: {}", library_path);
+        eprintln!("Error: Library file not found: {library_path}");
         eprintln!("Build the library first with: cargo build --release -p dojo-uniffi");
         eprintln!();
         eprintln!("Hint: Run with --help to see usage information");
@@ -81,13 +81,13 @@ fn main() {
 
     // Create output directory if it doesn't exist
     if let Err(e) = std::fs::create_dir_all(&out_dir) {
-        eprintln!("Error: Failed to create output directory {}: {}", out_dir, e);
+        eprintln!("Error: Failed to create output directory {out_dir}: {e}");
         process::exit(1);
     }
 
     println!("Generating React Native bindings...");
-    println!("Library: {}", library_path);
-    println!("Output:  {}", out_dir);
+    println!("Library: {library_path}");
+    println!("Output:  {out_dir}");
 
     // Build command for uniffi-bindgen-react-native
     let mut cmd = process::Command::new("uniffi-bindgen-react-native");
@@ -115,7 +115,7 @@ fn main() {
             }
         }
         Err(e) => {
-            eprintln!("Error executing uniffi-bindgen-react-native: {}", e);
+            eprintln!("Error executing uniffi-bindgen-react-native: {e}");
             process::exit(1);
         }
     }
