@@ -1,0 +1,10 @@
+{
+  "name": "dojo-c",
+  "version": "1.6.0",
+  "private": true,
+  "scripts": {
+    "build": "pnpm build:wasm && pnpm build:client",
+    "build:wasm": "pnpm --filter @dojoengine/torii-wasm build:wasm",
+    "build:client": "pnpm --filter @dojoengine/torii-client build"
+  }
+}

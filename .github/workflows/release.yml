@@ -28,6 +28,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Extract tag version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Update package versions
+        run: |
+          cd packages/torii-wasm && npm version $VERSION --no-git-tag-version
+          cd ../torii-client && npm version $VERSION --no-git-tag-version
+
       - uses: dtolnay/rust-toolchain@master
         name: Rust Toolchain Setup
         with:
@@ -41,15 +50,30 @@ jobs:
       - uses: arduino/setup-protoc@v3
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Build WASM (no-modules)
         run: wasm-pack build crates/wasm --out-dir ../../pkg-no-modules --release --target no-modules
 
       - name: Build WASM (web)
         run: wasm-pack build crates/wasm --out-dir ../../pkg-web --release --target web
+
+      - name: Build packages
+        run: pnpm run build
 
       - name: Package WASM builds
         id: wasm_artifacts
@@ -66,6 +90,20 @@ jobs:
           files: |
             torii-wasm-no-modules.tar.gz
             torii-wasm-web.tar.gz
+
+      - name: Publish torii-wasm
+        working-directory: packages/torii-wasm
+        run: pnpm publish --access public
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish torii-client
+        working-directory: packages/torii-client
+        run: pnpm publish --access public
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   build-uniffi:
     name: Build UniFFI bindings
@@ -290,3 +328,4 @@ jobs:
         with:
           files: |
             ${{ steps.artifacts.outputs.file_name }}
+
