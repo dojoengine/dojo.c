@@ -1,32 +1,121 @@
 name: release
 
 on:
-  push:
-    tags:
-      - "*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version tag (example: v1.2.3)"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark as pre-release"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
 
 env:
   CARGO_TERM_COLOR: always
   RUST_VERSION: 1.85.0
 
+concurrency:
+  group: release-${{ github.event.inputs.version }}
+  cancel-in-progress: false
+
 jobs:
-  prepare:
-    name: Prepare release
+  prepare-release:
+    name: Prepare Release
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.prepare.outputs.version }}
+      tag: ${{ steps.prepare.outputs.tag }}
+      target_sha: ${{ steps.prepare.outputs.target_sha }}
 
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Validate, bump version, tag and create draft release
+        id: prepare
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          set -euo pipefail
+
+          if ! [[ "$INPUT_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid version format: $INPUT_VERSION"
+            echo "Expected: v1.2.3 (optionally with prerelease suffix)"
+            exit 1
+          fi
+
+          VERSION="$INPUT_VERSION"
+          VERSION_NUMBER="${VERSION#v}"
+
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "Tag already exists locally: $VERSION"
+            exit 1
+          fi
+
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            echo "Release already exists: $VERSION"
+            exit 1
+          fi
+
+          awk -v ver="$VERSION_NUMBER" '
+            BEGIN { in_workspace_package = 0; done = 0 }
+            /^\[workspace\.package\]$/ { in_workspace_package = 1 }
+            /^\[/ && $0 != "[workspace.package]" && in_workspace_package { in_workspace_package = 0 }
+            in_workspace_package && /^version = "/ && !done {
+              print "version = \"" ver "\""
+              done = 1
+              next
+            }
+            { print }
+          ' Cargo.toml > Cargo.toml.tmp && mv Cargo.toml.tmp Cargo.toml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if ! git diff --quiet -- Cargo.toml; then
+            git add Cargo.toml
+            git commit -m "chore(release): bump version to $VERSION"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
+
+          TARGET_SHA="$(git rev-parse HEAD)"
+
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "$VERSION"
+
+          RELEASE_ARGS=()
+          if [ "$INPUT_PRERELEASE" = "true" ]; then
+            RELEASE_ARGS+=(--prerelease)
+          fi
+
+          gh release create "$VERSION" \
+            --title "Release $VERSION" \
+            --target "$TARGET_SHA" \
+            --draft \
+            "${RELEASE_ARGS[@]}"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "target_sha=$TARGET_SHA" >> "$GITHUB_OUTPUT"
+
   build-wasm:
     name: Build WASM packages
-    needs: prepare
+    needs: prepare-release
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare-release.outputs.tag }}
 
       - uses: dtolnay/rust-toolchain@master
         name: Rust Toolchain Setup
@@ -34,14 +123,12 @@ jobs:
           targets: wasm32-unknown-unknown
           toolchain: ${{ env.RUST_VERSION }}
 
-      - uses: Swatinem/rust-cache@v1
-        with:
-          cache-on-failure: true
+      - uses: Swatinem/rust-cache@v2
 
       - uses: arduino/setup-protoc@v3
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
@@ -52,24 +139,23 @@ jobs:
         run: wasm-pack build crates/wasm --out-dir ../../pkg-web --release --target web
 
       - name: Package WASM builds
-        id: wasm_artifacts
         shell: bash
         run: |
           tar -czvf torii-wasm-no-modules.tar.gz pkg-no-modules/
           tar -czvf torii-wasm-web.tar.gz pkg-web/
-          echo "files=torii-wasm-no-modules.tar.gz,torii-wasm-web.tar.gz" >> $GITHUB_OUTPUT
 
-      - name: Create release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: |
+          name: release-wasm
+          path: |
             torii-wasm-no-modules.tar.gz
             torii-wasm-web.tar.gz
+          if-no-files-found: error
 
   build-uniffi:
-    name: Build UniFFI bindings
-    needs: prepare
+    name: Build UniFFI bindings (${{ matrix.target }})
+    needs: prepare-release
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -92,7 +178,9 @@ jobs:
             lib_name: dojo_uniffi.dll
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare-release.outputs.tag }}
 
       - uses: dtolnay/rust-toolchain@master
         name: Rust Toolchain Setup
@@ -100,9 +188,7 @@ jobs:
           targets: ${{ matrix.target }}
           toolchain: ${{ env.RUST_VERSION }}
 
-      - uses: Swatinem/rust-cache@v1
-        with:
-          cache-on-failure: true
+      - uses: Swatinem/rust-cache@v2
 
       - uses: arduino/setup-protoc@v3
         with:
@@ -176,16 +262,16 @@ jobs:
           cp -r examples dojo-uniffi-${{ matrix.target }}/
           tar -czvf dojo-uniffi-${{ matrix.target }}.tar.gz dojo-uniffi-${{ matrix.target }}/
 
-      - name: Create release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: |
-            dojo-uniffi-${{ matrix.target }}.tar.gz
+          name: release-uniffi-${{ matrix.target }}
+          path: dojo-uniffi-${{ matrix.target }}.tar.gz
+          if-no-files-found: error
 
-  build-and-release:
-    name: ${{ matrix.job.target }} (${{ matrix.job.os }})
-    needs: prepare
+  build-c:
+    name: Build C bindings (${{ matrix.job.target }})
+    needs: prepare-release
     runs-on: ${{ matrix.job.os }}
     strategy:
       matrix:
@@ -228,7 +314,9 @@ jobs:
             arch: amd64
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare-release.outputs.tag }}
 
       - uses: dtolnay/rust-toolchain@master
         name: Rust Toolchain Setup
@@ -237,31 +325,25 @@ jobs:
           toolchain: ${{ env.RUST_VERSION }}
           components: rustfmt, clippy
 
-      - uses: Swatinem/rust-cache@v1
-        with:
-          cache-on-failure: true
+      - uses: Swatinem/rust-cache@v2
 
       - uses: arduino/setup-protoc@v3
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Install cross for Linux builds
       - name: Install cross
         if: runner.os == 'Linux'
         run: cargo install cross
 
-      # Apple M1 setup
       - name: Apple M1 setup
         if: ${{ matrix.job.target == 'aarch64-apple-darwin' }}
         run: |
           echo "SDKROOT=$(xcrun -sdk macosx --show-sdk-path)" >> $GITHUB_ENV
           echo "MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version)" >> $GITHUB_ENV
 
-      # Add this step to explicitly install the target
       - name: Install Target
         run: rustup target add ${{ matrix.job.target }}
 
-      # Build step
       - name: Build binaries
         run: |
           if [[ "${{ runner.os }}" == "Linux" ]]; then
@@ -271,7 +353,7 @@ jobs:
           fi
         shell: bash
 
-      - name: Package
+      - name: Package artifacts
         id: artifacts
         shell: bash
         run: |
@@ -282,11 +364,49 @@ jobs:
           else
             tar -czvf dojo-c-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz crates/c/dojo.h target/${{ matrix.job.target }}/release/libc.so
           fi
-          echo "file_name=dojo-c-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz" >> $GITHUB_OUTPUT
 
-      - name: Create release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: |
-            ${{ steps.artifacts.outputs.file_name }}
+          name: release-c-${{ matrix.job.target }}-${{ matrix.job.arch }}
+          path: dojo-c-${{ matrix.job.target }}-${{ matrix.job.arch }}.tar.gz
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish Release Assets
+    runs-on: ubuntu-latest
+    needs:
+      - prepare-release
+      - build-wasm
+      - build-uniffi
+      - build-c
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          set -euo pipefail
+          cd release-assets
+          ls -lah
+          sha256sum *.tar.gz > CHECKSUMS.txt
+
+      - name: Upload assets to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare-release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" release-assets/*.tar.gz release-assets/CHECKSUMS.txt --clobber
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare-release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release edit "$TAG" --draft=false --latest --title "Release $TAG"
