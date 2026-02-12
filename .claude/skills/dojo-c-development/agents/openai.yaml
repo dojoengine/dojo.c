@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dojo C Development"
+  short_description: "Contributor workflow for dojoengine/dojo.c"
+  default_prompt: "Use $dojo-c-development to implement and validate changes in dojo.c."
