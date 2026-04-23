@@ -1,0 +1,36 @@
+name: docs-sync
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Commit SHA to analyze for documentation updates"
+        required: true
+        type: string
+
+jobs:
+  docs-sync:
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    uses: dojoengine/book/.github/workflows/docs-sync.yml@main
+    with:
+      target-docs-repo: dojoengine/book
+      source-repo-slug: dojoengine/dojo.c
+      diff-globs: |
+        *.rs
+        *.h
+        *.hpp
+        *.cpp
+        *.c
+        *.toml
+        *.md
+      docs-patterns: |
+        ^crates/.*\.rs$
+        ^bindings/[^/]+/.*\.(h|hpp|cpp|c)$
+      canonical-desc: |
+        The C/C++ bindings (dojo.c) are documented under docs-repo/docs/pages/client/sdk/c/ — this is a subdirectory (unlike other SDKs which are single pages). All dojo.c docs edits go under this directory.
+      docs-structure-desc: |
+        The site uses Vocs. Content lives in `docs-repo/docs/pages/`. Navigation is in `docs-repo/routes.ts`. SDK docs at `docs-repo/docs/pages/client/sdk/` are single `.md` files (bevy.md, javascript.md, unity.md, unrealengine.md, godot.md, rust.md, telegram.md), not subdirectories — the sole exception is `c/` which is a subdir.
+    secrets: inherit
